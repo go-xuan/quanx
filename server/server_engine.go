@@ -16,7 +16,8 @@ type Engine struct {
 	Config           *Config      // 应用配置
 	GinEngine        *gin.Engine  // gin引擎
 	GinRouterLoaders []RouterLoad // gin路由加载方法
-	ConfigBinders    []EngineFunc // 配置加载方法
+	BeforeFunc       EngineFunc   // 前置函数
+	AfterFunc        EngineFunc   // 后置函数
 }
 
 // 应用运行函数
@@ -26,12 +27,12 @@ type EngineFunc func()
 type RouterLoad func(router *gin.RouterGroup)
 
 // 服务启动
-func (e *Engine) Run(functions ...RouterLoad) {
+func (e *Engine) Run(loads ...RouterLoad) {
 	defer Recover()
+	// 执行前置函数
+	e.ExecBeforeFunc()
 	// 初始化配置
 	e.InitConfig()
-	// 执行配置绑定函数
-	e.ExecConfigBinders()
 	// 初始化日志
 	logx.InitLogger(&e.Config.Log)
 	// 初始化Nacos
@@ -44,8 +45,10 @@ func (e *Engine) Run(functions ...RouterLoad) {
 	gormx.InitGormCTL(&e.Config.Database)
 	// 初始化redis
 	redisx.InitRedisCTL(&e.Config.Redis)
-	// 启动
-	e.AddRouterLoaders(functions...)
+	// 执行后置函数
+	e.ExecAfterFunc()
+	// 启动gin
+	e.AddRouterLoaders(loads...)
 	e.StartGin()
 }
 
@@ -67,19 +70,17 @@ func (e *Engine) InitConfig() {
 	}
 }
 
-// 添加配置绑定函数
-func (e *Engine) AddConfigBinders(funcs ...EngineFunc) {
-	e.ConfigBinders = append(e.ConfigBinders, funcs...)
+// 执行前置函数
+func (e *Engine) ExecBeforeFunc() {
+	if e.BeforeFunc != nil {
+		e.BeforeFunc()
+	}
 }
 
-// 执行配置绑定函数
-func (e *Engine) ExecConfigBinders() {
-	if e.ConfigBinders != nil && len(e.ConfigBinders) > 0 {
-		for _, binder := range e.ConfigBinders {
-			binder()
-		}
-	} else {
-		log.Warn("ExecConfigBinders is empty !")
+// 执行后置函数
+func (e *Engine) ExecAfterFunc() {
+	if e.AfterFunc != nil {
+		e.AfterFunc()
 	}
 }
 

@@ -17,33 +17,34 @@ import (
 // 配置项
 type ConfigItemList []ConfigItem
 type ConfigItem struct {
-	Name   string `json:"name" yaml:"name"`     // 配置项
-	Group  string `json:"group" yaml:"group"`   // 配置分组
-	DataId string `json:"dataId" yaml:"dataId"` // 配置文件ID
-	Listen bool   `json:"listen" yaml:"listen"` // 是否监听
+	Name    string `yaml:"name"`    // 配置项
+	Group   string `yaml:"group"`   // 配置分组
+	DataId  string `yaml:"dataId"`  // 配置文件ID
+	Listen  bool   `yaml:"listen"`  // 是否启用监听
+	Isolate bool   `yaml:"isolate"` // 是否隔离，将应用启动配置隔离
 }
 
 // 加载nacos配置
 func LoadNacosConfig(list ConfigItemList, appName string, config interface{}) {
 	if list != nil && len(list) > 0 {
 		// 区分应用配置和其他配置项
-		var app ConfigItem        // 应用配置
-		var others ConfigItemList // 其他通用配置
+		var primary ConfigItem     // 应用配置
+		var commons ConfigItemList // 其他通用配置
 		for _, item := range list {
 			if item.Name == appName {
-				app = item
-			} else {
-				others = append(others, item)
+				primary = item
+			} else if !item.Isolate {
+				commons = append(commons, item)
 			}
 		}
-		// 加载其他配置
-		err := others.LoadNacosConfig(config)
+		// 加载公共配置
+		err := commons.LoadNacosConfig(config)
 		if err != nil {
 			log.Error("加载nacos其他配置失败！", err)
 		}
-		// 加载应用配置
+		// 加载首要配置
 		defer func() {
-			err = app.LoadNacosConfig(config)
+			err = primary.LoadNacosConfig(config)
 			if err != nil {
 				log.Error("加载nacos应用配置失败!", err)
 			}
