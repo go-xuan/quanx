@@ -17,10 +17,10 @@ type Control struct {
 }
 
 // 初始化redis控制器
-func InitHugegraphCTL() {
+func InitHugegraphCTL(conf *Config) {
 	if CTL == nil {
-		CTL = CONFIG.NewHugegraphCTL()
-		log.Info("初始化hugegraph连接-成功！", CONFIG.Format())
+		CTL = conf.NewHugegraphCTL()
+		log.Info("初始化hugegraph连接-成功！", conf.Format())
 	}
 }
 

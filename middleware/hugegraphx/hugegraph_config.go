@@ -27,8 +27,6 @@ const (
 	IndexTypeAll   = "SECONDARY,RANGE,SEARCH"                                                         // 索引类型
 )
 
-var CONFIG *Config
-
 // hugegraph配置
 type Config struct {
 	Host  string `json:"host" yaml:"host" nacos:"hugegraph.host"`    // 主机

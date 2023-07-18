@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/configor"
 	"github.com/quanxiaoxuan/quanx/middleware/gormx"
+	"github.com/quanxiaoxuan/quanx/middleware/hugegraphx"
 	"github.com/quanxiaoxuan/quanx/middleware/logx"
 	"github.com/quanxiaoxuan/quanx/middleware/nacosx"
 	"github.com/quanxiaoxuan/quanx/middleware/redisx"
@@ -13,46 +14,37 @@ import (
 
 // 服务启动器
 type Engine struct {
-	Config           *Config      // 应用配置
-	GinEngine        *gin.Engine  // gin引擎
-	GinRouterLoaders []RouterLoad // gin路由加载方法
-	BeforeFunc       EngineFunc   // 前置函数
-	AfterFunc        EngineFunc   // 后置函数
+	Config           *Config           // 应用配置
+	MiddlewareInits  []EngineFunc      // 中间件初始化函数
+	BeforeFunc       EngineFunc        // 前置函数
+	AfterFunc        EngineFunc        // 后置函数
+	GinEngine        *gin.Engine       // gin引擎
+	GinRouterLoaders []RouterLoad      // gin路由加载方法
+	GinMiddleware    []gin.HandlerFunc // gin路由加载方法
 }
 
-// 应用运行函数
+// 引擎函数
 type EngineFunc func()
 
-// 加载gin路由
+// gin路由加载函数
 type RouterLoad func(router *gin.RouterGroup)
 
 // 服务启动
-func (e *Engine) Run(loads ...RouterLoad) {
+func (e *Engine) Run() {
 	defer Recover()
 	// 执行前置函数
 	e.ExecBeforeFunc()
 	// 初始化配置
 	e.InitConfig()
-	// 初始化日志
-	logx.InitLogger(&e.Config.Log)
-	// 初始化Nacos
-	nacosx.InitNacosCTL(&e.Config.Nacos)
-	// 加载Nacos配置
-	loadNacosConfig(e.Config)
-	// 注册Nacos服务
-	registerNacosServer(e.Config.Server)
-	// 初始化Gorm
-	gormx.InitGormCTL(&e.Config.Database)
-	// 初始化redis
-	redisx.InitRedisCTL(&e.Config.Redis)
+	// 初始化中间件
+	e.InitMiddlewares()
 	// 执行后置函数
 	e.ExecAfterFunc()
 	// 启动gin
-	e.AddRouterLoaders(loads...)
 	e.StartGin()
 }
 
-// 初始化应用配置
+// 初始化配置
 func (e *Engine) InitConfig() {
 	if e.Config == nil {
 		var config Config
@@ -67,6 +59,62 @@ func (e *Engine) InitConfig() {
 		}
 		config.Log.Name = config.Server.Name
 		e.Config = &config
+	}
+}
+
+// 初始化日志
+func (e *Engine) InitLogger() {
+	// 初始化日志
+	logx.InitLogger(&e.Config.Log)
+}
+
+// 初始化nacos
+func (e *Engine) InitNacos() {
+	if e.Config.Nacos.Address != "" {
+		// 初始化Nacos
+		nacosx.InitNacosCTL(&e.Config.Nacos)
+		// 加载Nacos配置
+		loadNacosConfig(e.Config)
+		// 注册Nacos服务
+		registerNacosServer(e.Config.Server)
+	}
+}
+
+// 初始化gorm
+func (e *Engine) InitGorm() {
+	if e.Config.Database.Host != "" {
+		// 初始化gorm
+		gormx.InitGormCTL(&e.Config.Database)
+	}
+}
+
+// 初始化redis
+func (e *Engine) InitRedis() {
+	if e.Config.Redis.Host != "" {
+		// 初始化redis
+		redisx.InitRedisCTL(&e.Config.Redis)
+	}
+}
+
+// 初始化hugegraph
+func (e *Engine) InitHugegraph() {
+	if e.Config.Hugegraph.Host != "" {
+		// 初始化hugegraph
+		hugegraphx.InitHugegraphCTL(&e.Config.Hugegraph)
+	}
+}
+
+// 添加中间件初始化函数
+func (e *Engine) AddMiddleware(middleware ...EngineFunc) {
+	e.MiddlewareInits = append(e.MiddlewareInits, middleware...)
+}
+
+// 执行前置函数
+func (e *Engine) InitMiddlewares() {
+	if e.MiddlewareInits != nil && len(e.MiddlewareInits) > 0 {
+		for _, init := range e.MiddlewareInits {
+			init()
+		}
 	}
 }
 
@@ -85,8 +133,8 @@ func (e *Engine) ExecAfterFunc() {
 }
 
 // 添加gin的路由加载函数
-func (e *Engine) AddRouterLoaders(loads ...RouterLoad) {
-	e.GinRouterLoaders = append(e.GinRouterLoaders, loads...)
+func (e *Engine) AddRouterLoaders(load ...RouterLoad) {
+	e.GinRouterLoaders = append(e.GinRouterLoaders, load...)
 }
 
 // 执行gin的路由加载函数
@@ -100,6 +148,11 @@ func (e *Engine) ExecRouterLoaders(group *gin.RouterGroup) {
 	}
 }
 
+// 执行gin的路由加载函数
+func (e *Engine) AddGinUse(middleware ...gin.HandlerFunc) {
+	e.GinMiddleware = append(e.GinMiddleware, middleware...)
+}
+
 // 启动gin
 func (e *Engine) StartGin() {
 	if e.Config.Server.Env == gin.ReleaseMode {
@@ -107,6 +160,9 @@ func (e *Engine) StartGin() {
 	}
 	e.GinEngine = gin.New()
 	e.GinEngine.Use(logx.LoggerToFile(), gin.Recovery())
+	if e.GinMiddleware != nil && len(e.GinMiddleware) > 0 {
+		e.GinEngine.Use(e.GinMiddleware...)
+	}
 	_ = e.GinEngine.SetTrustedProxies([]string{e.Config.Server.Host})
 	// 注册根路由
 	group := e.GinEngine.Group(e.Config.Server.Prefix)
