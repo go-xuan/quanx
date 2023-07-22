@@ -15,14 +15,6 @@ func NewEngine() *Engine {
 	return &Engine{}
 }
 
-// 获取服务配置
-func GetConfig() *Config {
-	if Runner != nil && Runner.Config != nil {
-		return Runner.Config
-	}
-	return nil
-}
-
 // 加载Nacos配置
 func loadNacosConfig(conf *Config) {
 	if nacosx.CTL.ConfigClient != nil {
