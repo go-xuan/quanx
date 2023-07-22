@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/quanxiaoxuan/quanx/middleware/elasticx"
 	"github.com/quanxiaoxuan/quanx/middleware/gormx"
 	"github.com/quanxiaoxuan/quanx/middleware/hugegraphx"
 	"github.com/quanxiaoxuan/quanx/middleware/logx"
@@ -16,6 +17,7 @@ type Config struct {
 	Configs   nacosx.ConfigItemList `yaml:"configs"`   // nacos配置清单
 	Database  gormx.Config          `yaml:"database"`  // 数据库访问配置
 	Redis     redisx.Config         `yaml:"redis"`     // redis配置
+	Elastic   elasticx.Config       `yaml:"elastic"`   // redis配置
 	Hugegraph hugegraphx.Config     `yaml:"hugegraph"` // hugegraph配置
 }
 

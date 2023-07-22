@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/configor"
+	"github.com/quanxiaoxuan/quanx/middleware/elasticx"
 	"github.com/quanxiaoxuan/quanx/middleware/gormx"
 	"github.com/quanxiaoxuan/quanx/middleware/hugegraphx"
 	"github.com/quanxiaoxuan/quanx/middleware/logx"
@@ -63,7 +64,7 @@ func (e *Engine) InitLogger() {
 	logx.InitLogger(&e.Config.Log)
 }
 
-// 初始化nacos
+// 初始化Nacos
 func (e *Engine) InitNacos() {
 	if e.Config.Nacos.Address != "" {
 		// 初始化Nacos
@@ -75,7 +76,7 @@ func (e *Engine) InitNacos() {
 	}
 }
 
-// 初始化gorm
+// 初始化Gorm
 func (e *Engine) InitGorm() {
 	if e.Config.Database.Host != "" {
 		// 初始化gorm
@@ -83,11 +84,19 @@ func (e *Engine) InitGorm() {
 	}
 }
 
-// 初始化redis
+// 初始化Redis
 func (e *Engine) InitRedis() {
 	if e.Config.Redis.Host != "" {
 		// 初始化redis
 		redisx.InitRedisCTL(&e.Config.Redis)
+	}
+}
+
+// 初始化ElasticSearch
+func (e *Engine) InitElasticSearch() {
+	if e.Config.Elastic.Host != "" {
+		// 初始化redis
+		elasticx.InitEsCTL(&e.Config.Elastic)
 	}
 }
 
