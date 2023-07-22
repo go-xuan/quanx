@@ -118,7 +118,12 @@ func ExcelReader(excelPath, sheetName string, headerMap map[string]string) ([]ma
 				if x >= len(headers) {
 					break
 				}
-				rowMap[headers[x]] = cell.Value
+				if cell.IsTime() {
+					cell.SetFormat("yyyy-mm-dd h:mm:ss")
+					rowMap[headers[x]] = cell.String()
+				} else {
+					rowMap[headers[x]] = cell.String()
+				}
 			}
 			resultMapList = append(resultMapList, rowMap)
 		}

@@ -15,12 +15,11 @@ import (
 // 服务启动器
 type Engine struct {
 	Config           *Config           // 应用配置
-	MiddlewareInits  []EngineFunc      // 中间件初始化函数
 	BeforeFunc       EngineFunc        // 前置函数
-	AfterFunc        EngineFunc        // 后置函数
+	Middleware       []EngineFunc      // 中间件函数
 	GinEngine        *gin.Engine       // gin引擎
 	GinRouterLoaders []RouterLoad      // gin路由加载方法
-	GinMiddleware    []gin.HandlerFunc // gin路由加载方法
+	GinMiddleware    []gin.HandlerFunc // gin中间件
 }
 
 // 引擎函数
@@ -37,29 +36,25 @@ func (e *Engine) Run() {
 	// 初始化配置
 	e.InitConfig()
 	// 初始化中间件
-	e.InitMiddlewares()
-	// 执行后置函数
-	e.ExecAfterFunc()
+	e.ExecMiddlewares()
 	// 启动gin
 	e.StartGin()
 }
 
 // 初始化配置
 func (e *Engine) InitConfig() {
-	if e.Config == nil {
-		var config Config
-		if err := configor.New(&configor.Config{
-			Debug:       true,
-			Environment: configor.ENV(),
-		}).Load(&config, "config.yaml"); err != nil {
-			panic(err)
-		}
-		if ipx.GetWLANIP() != "" {
-			config.Server.Host = ipx.GetWLANIP()
-		}
-		config.Log.Name = config.Server.Name
-		e.Config = &config
+	var config Config
+	if err := configor.New(&configor.Config{
+		Debug:       true,
+		Environment: configor.ENV(),
+	}).Load(&config, "config.yaml"); err != nil {
+		panic(err)
 	}
+	if ipx.GetWLANIP() != "" {
+		config.Server.Host = ipx.GetWLANIP()
+	}
+	config.Log.Name = config.Server.Name
+	e.Config = &config
 }
 
 // 初始化日志
@@ -104,20 +99,6 @@ func (e *Engine) InitHugegraph() {
 	}
 }
 
-// 添加中间件初始化函数
-func (e *Engine) AddMiddleware(middleware ...EngineFunc) {
-	e.MiddlewareInits = append(e.MiddlewareInits, middleware...)
-}
-
-// 执行前置函数
-func (e *Engine) InitMiddlewares() {
-	if e.MiddlewareInits != nil && len(e.MiddlewareInits) > 0 {
-		for _, init := range e.MiddlewareInits {
-			init()
-		}
-	}
-}
-
 // 执行前置函数
 func (e *Engine) ExecBeforeFunc() {
 	if e.BeforeFunc != nil {
@@ -125,11 +106,18 @@ func (e *Engine) ExecBeforeFunc() {
 	}
 }
 
-// 执行后置函数
-func (e *Engine) ExecAfterFunc() {
-	if e.AfterFunc != nil {
-		e.AfterFunc()
+// 执行前置函数
+func (e *Engine) ExecMiddlewares() {
+	if e.Middleware != nil && len(e.Middleware) > 0 {
+		for _, init := range e.Middleware {
+			init()
+		}
 	}
+}
+
+// 添加中间件初始化函数
+func (e *Engine) AddMiddleware(middleware ...EngineFunc) {
+	e.Middleware = append(e.Middleware, middleware...)
 }
 
 // 添加gin的路由加载函数

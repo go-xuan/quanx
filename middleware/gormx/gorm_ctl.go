@@ -10,8 +10,8 @@ var CTL *Control
 // Gorm控制器
 type Control struct {
 	Config *Config
-	Func   func()
 	DB     *gorm.DB
+	Init   func()
 }
 
 // 初始化表结构
@@ -24,14 +24,14 @@ func (ctl *Control) InitTable(dst interface{}) error {
 }
 
 // 初始化方法
-func (ctl *Control) InitFunc(f func()) {
-	ctl.Func = f
+func (ctl *Control) SetInit(f func()) {
+	ctl.Init = f
 }
 
 // 执行方法
-func (ctl *Control) ExecFunc() {
-	if ctl.Func != nil {
-		ctl.Func()
+func (ctl *Control) ExecInit() {
+	if ctl.Init != nil {
+		ctl.Init()
 	}
 }
 
