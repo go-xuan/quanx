@@ -5,17 +5,17 @@ import (
 	"gorm.io/gorm"
 )
 
-var CTL *Control
+var CTL *Controller
 
 // Gorm控制器
-type Control struct {
+type Controller struct {
 	Config *Config
 	DB     *gorm.DB
 	Init   func()
 }
 
 // 初始化表结构
-func (ctl *Control) InitTable(dst interface{}) error {
+func (ctl *Controller) InitTable(dst interface{}) error {
 	if ctl.DB.Migrator().HasTable(dst) {
 		return ctl.DB.Migrator().AutoMigrate(dst)
 	} else {
@@ -24,42 +24,29 @@ func (ctl *Control) InitTable(dst interface{}) error {
 }
 
 // 初始化方法
-func (ctl *Control) SetInit(f func()) {
+func (ctl *Controller) SetInit(f func()) {
 	ctl.Init = f
 }
 
 // 执行方法
-func (ctl *Control) ExecInit() {
+func (ctl *Controller) ExecInit() {
 	if ctl.Init != nil {
 		ctl.Init()
 	}
 }
 
 // 初始化Gorm控制器
-func InitGormCTL(conf *Config) {
+func Init(conf *Config) {
 	if conf.Type == "" {
+		log.Error("数据库类型配置不可为空 : ", conf.Format())
 		return
 	}
-	var err error
-	msg := conf.Format()
-	if CTL == nil {
-		CTL, err = conf.NewGormCTL()
-		if err != nil {
-			log.Error("初始化gorm连接-失败! ", msg)
-			log.Error("error : ", err)
-		} else {
-			log.Info("初始化gorm连接-成功! ", msg)
-		}
+	newDB, err := conf.NewGormDB()
+	if err != nil {
+		log.Error("gorm连接失败! ", conf.Format())
+		log.Error("error : ", err)
 	} else {
-		var newDB *gorm.DB
-		newDB, err = conf.NewGormDB()
-		if err != nil {
-			log.Error("更新gorm连接-失败! ", msg)
-			log.Error("error : ", err)
-		} else {
-			CTL.DB = newDB
-			CTL.Config = conf
-			log.Error("更新gorm连接-成功! ", msg)
-		}
+		CTL = &Controller{Config: conf, DB: newDB}
+		log.Info("gorm连接成功! ", conf.Format())
 	}
 }

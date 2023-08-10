@@ -14,14 +14,15 @@ import (
 )
 
 const (
-	Post            = "POST"
-	Get             = "GET"
-	Put             = "PUT"
-	Delete          = "DELETE"
+	POST            = "POST"
+	GET             = "GET"
+	PUT             = "PUT"
+	DELETE          = "DELETE"
 	HttpPrefix      = "http://"
 	HttpsPrefix     = "https://"
-	ContentTypeKey  = "Content-Type"
+	ContentType     = "Content-Type"
 	ContentTypeJson = "application/json"
+	ContentTypeForm = "application/x-www-form-urlencoded"
 	ContentTypeGBK  = "application/javascript;charset=GBK"
 )
 
@@ -38,7 +39,7 @@ func RequestHttp(method string, host string, header map[string]string, param int
 		log.Error(err)
 		return
 	}
-	req.Header.Set(ContentTypeKey, ContentTypeJson)
+	req.Header.Set(ContentType, ContentTypeJson)
 	for key, val := range header {
 		req.Header.Set(key, val)
 	}
@@ -48,15 +49,17 @@ func RequestHttp(method string, host string, header map[string]string, param int
 		log.Error(err)
 		return
 	}
-	defer resp.Body.Close()
+	defer func(Body *http.Response) {
+		_ = resp.Body.Close()
+	}(resp)
 	var body []byte
 	body, err = io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	if len(resp.Header[ContentTypeKey]) > 0 {
-		if resp.Header[ContentTypeKey][0] == ContentTypeGBK {
+	if len(resp.Header[ContentType]) > 0 {
+		if resp.Header[ContentType][0] == ContentTypeGBK {
 			result = DecodeBody(string(body))
 		} else {
 			result = string(body)
@@ -78,13 +81,13 @@ func DecodeBody(src string) (dst string) {
 
 // map转为Url
 func MapToUrl(params map[string]interface{}) (s string) {
-	isfirst := false
+	isFirst := false
 	for k, v := range params {
-		if isfirst {
+		if isFirst {
 			s = s + "&"
 		}
 		s = s + k + "=" + url.QueryEscape(typeSwitcher(v))
-		isfirst = true
+		isFirst = true
 	}
 	return
 }

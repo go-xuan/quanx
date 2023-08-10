@@ -8,26 +8,26 @@ import (
 	"github.com/quanxiaoxuan/quanx/common/httpx"
 )
 
-var CTL *Control
+var CTL *Controller
 
 // hugegraph制器
-type Control struct {
+type Controller struct {
 	Config     *Config // hugegraph配置
 	GremlinUrl string  // gremlin查询接口url
 }
 
 // 初始化redis控制器
-func InitHugegraphCTL(conf *Config) {
+func Init(conf *Config) {
 	if CTL == nil {
-		CTL = conf.NewHugegraphCTL()
+		CTL = &Controller{Config: conf, GremlinUrl: conf.GremlinHttpUrl()}
 		log.Info("初始化hugegraph连接-成功！", conf.Format())
 	}
 }
 
 // gremlin查询API-get请求
-func (ctl *Control) GremlinApiGet(gremlin string) (result Result, err error) {
+func (ctl *Controller) GremlinApiGet(gremlin string) (result Result, err error) {
 	var bytes []byte
-	bytes, err = httpx.GetHttp(ctl.GremlinUrl + `?gremlin=` + gremlin)
+	bytes, err = httpx.HttpGet(ctl.GremlinUrl + `?gremlin=` + gremlin)
 	if err != nil {
 		return
 	}
@@ -48,9 +48,9 @@ func GremlinApiParam(gremlin string) Param {
 }
 
 // gremlin查询API-Post请求
-func (ctl *Control) GremlinApiPost(gremlin string) (result Result, err error) {
+func (ctl *Controller) GremlinApiPost(gremlin string) (result Result, err error) {
 	var bytes []byte
-	bytes, err = httpx.PostHttp(ctl.GremlinUrl, GremlinApiParam(gremlin))
+	bytes, err = httpx.HttpPost(ctl.GremlinUrl, GremlinApiParam(gremlin))
 	if err != nil {
 		return
 	}
@@ -62,7 +62,7 @@ func (ctl *Control) GremlinApiPost(gremlin string) (result Result, err error) {
 }
 
 // 查询顶点
-func (ctl *Control) QueryVertexsPost(gremlin string) (vertexs Vertexs, requestId string, err error) {
+func (ctl *Controller) QueryVertexsPost(gremlin string) (vertexs Vertexs, requestId string, err error) {
 	var apiResult Result
 	apiResult, err = ctl.GremlinApiPost(gremlin)
 	if err != nil {
@@ -84,7 +84,7 @@ func (ctl *Control) QueryVertexsPost(gremlin string) (vertexs Vertexs, requestId
 }
 
 // 查询顶点
-func (ctl *Control) QueryVertexsGet(gremlin string) (vertexs Vertexs, requestId string, err error) {
+func (ctl *Controller) QueryVertexsGet(gremlin string) (vertexs Vertexs, requestId string, err error) {
 	var apiResult Result
 	apiResult, err = ctl.GremlinApiGet(gremlin)
 	if err != nil {
@@ -106,7 +106,7 @@ func (ctl *Control) QueryVertexsGet(gremlin string) (vertexs Vertexs, requestId 
 }
 
 // 查询边
-func (ctl *Control) QueryEdgesPost(gremlin string) (edges Edges, requestId string, err error) {
+func (ctl *Controller) QueryEdgesPost(gremlin string) (edges Edges, requestId string, err error) {
 	var apiResult Result
 	apiResult, err = ctl.GremlinApiPost(gremlin)
 	if err != nil {
@@ -128,7 +128,7 @@ func (ctl *Control) QueryEdgesPost(gremlin string) (edges Edges, requestId strin
 }
 
 // 查询边
-func (ctl *Control) QueryEdgesGet(gremlin string) (edges Edges, requestId string, err error) {
+func (ctl *Controller) QueryEdgesGet(gremlin string) (edges Edges, requestId string, err error) {
 	var apiResult Result
 	apiResult, err = ctl.GremlinApiGet(gremlin)
 	if err != nil {
@@ -150,7 +150,7 @@ func (ctl *Control) QueryEdgesGet(gremlin string) (edges Edges, requestId string
 }
 
 // 查询path()
-func (ctl *Control) QueryPathsPost(gremlin string) (paths Paths, requestId string, err error) {
+func (ctl *Controller) QueryPathsPost(gremlin string) (paths Paths, requestId string, err error) {
 	var apiResult Result
 	apiResult, err = ctl.GremlinApiPost(gremlin)
 	if err != nil {
@@ -169,7 +169,7 @@ func (ctl *Control) QueryPathsPost(gremlin string) (paths Paths, requestId strin
 }
 
 // 查询path()
-func (ctl *Control) QueryPathsGet(gremlin string) (paths Paths, requestId string, err error) {
+func (ctl *Controller) QueryPathsGet(gremlin string) (paths Paths, requestId string, err error) {
 	var apiResult Result
 	apiResult, err = ctl.GremlinApiGet(gremlin)
 	if err != nil {
@@ -188,7 +188,7 @@ func (ctl *Control) QueryPathsGet(gremlin string) (paths Paths, requestId string
 }
 
 // 调用hugegraph的POST接口，返回属性值
-func (ctl *Control) QueryValuesPost(gremlin string) (values []string, err error) {
+func (ctl *Controller) QueryValuesPost(gremlin string) (values []string, err error) {
 	var apiResult Result
 	apiResult, err = ctl.GremlinApiPost(gremlin)
 	if err != nil {
@@ -207,11 +207,11 @@ func (ctl *Control) QueryValuesPost(gremlin string) (values []string, err error)
 }
 
 // (属性/顶点/边/索引)新增
-func (ctl *Control) SchemaPostHttp(url string, param interface{}) (result interface{}, err error) {
+func (ctl *Controller) SchemaPostHttp(url string, param interface{}) (result interface{}, err error) {
 	httpUrl := ctl.Config.SchemaHttpUrl(url)
 	log.Info("请求URL : ", httpUrl)
 	var resp []byte
-	resp, err = httpx.PostHttp(httpUrl, param)
+	resp, err = httpx.HttpPost(httpUrl, param)
 	if err != nil {
 		return
 	}
@@ -220,11 +220,11 @@ func (ctl *Control) SchemaPostHttp(url string, param interface{}) (result interf
 }
 
 // (顶点/边)附加属性
-func (ctl *Control) SchemaPutHttp(url string, param interface{}) (result interface{}, err error) {
+func (ctl *Controller) SchemaPutHttp(url string, param interface{}) (result interface{}, err error) {
 	httpUrl := ctl.Config.SchemaHttpUrl(url)
 	log.Info("请求URL : ", httpUrl)
 	var resp []byte
-	resp, err = httpx.PutHttp(httpUrl, param)
+	resp, err = httpx.HttpPut(httpUrl, param)
 	if err != nil {
 		return
 	}
@@ -233,11 +233,11 @@ func (ctl *Control) SchemaPutHttp(url string, param interface{}) (result interfa
 }
 
 // (属性/顶点/边/索引)查询
-func (ctl *Control) SchemaGetHttp(url string) (result interface{}, err error) {
+func (ctl *Controller) SchemaGetHttp(url string) (result interface{}, err error) {
 	httpUrl := ctl.Config.SchemaHttpUrl(url)
 	log.Info("请求URL : ", httpUrl)
 	var resp []byte
-	resp, err = httpx.GetHttp(httpUrl)
+	resp, err = httpx.HttpGet(httpUrl)
 	if err != nil {
 		return
 	}
@@ -246,11 +246,11 @@ func (ctl *Control) SchemaGetHttp(url string) (result interface{}, err error) {
 }
 
 // (属性/顶点/边/索引)删除
-func (ctl *Control) SchemaDeleteHttp(url string) (result interface{}, err error) {
+func (ctl *Controller) SchemaDeleteHttp(url string) (result interface{}, err error) {
 	httpUrl := ctl.Config.SchemaHttpUrl(url)
 	log.Info("请求URL : ", httpUrl)
 	var resp []byte
-	resp, err = httpx.DeleteHttp(httpUrl)
+	resp, err = httpx.HttpDelete(httpUrl)
 	if err != nil {
 		return
 	}

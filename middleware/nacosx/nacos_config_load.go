@@ -15,21 +15,22 @@ import (
 )
 
 // 配置项
-type ConfigItemList []ConfigItem
-type ConfigItem struct {
-	Name    string `yaml:"name"`    // 配置项
-	Group   string `yaml:"group"`   // 配置分组
-	DataId  string `yaml:"dataId"`  // 配置文件ID
-	Listen  bool   `yaml:"listen"`  // 是否启用监听
-	Isolate bool   `yaml:"isolate"` // 是否隔离，将应用启动配置隔离
+type ModuleList []Module
+type Module struct {
+	Name    string        `yaml:"name"`   // 配置项
+	Group   string        `yaml:"group"`  // 配置分组
+	DataId  string        `yaml:"dataId"` // 配置文件ID
+	Type    vo.ConfigType `yaml:"type"`
+	Listen  bool          `yaml:"listen"`  // 是否启用监听
+	Isolate bool          `yaml:"isolate"` // 是否隔离，将应用启动配置隔离
 }
 
 // 加载nacos配置
-func LoadNacosConfig(list ConfigItemList, appName string, config interface{}) {
+func LoadNacosConfig(list ModuleList, appName string, config interface{}) {
 	if list != nil && len(list) > 0 {
 		// 区分应用配置和其他配置项
-		var primary ConfigItem     // 应用配置
-		var commons ConfigItemList // 其他通用配置
+		var primary Module     // 应用配置
+		var commons ModuleList // 其他通用配置
 		for _, item := range list {
 			if item.Name == appName {
 				primary = item
@@ -53,17 +54,17 @@ func LoadNacosConfig(list ConfigItemList, appName string, config interface{}) {
 }
 
 // 配置信息格式化
-func (item ConfigItem) Format() string {
+func (item Module) Format() string {
 	return fmt.Sprintf("group=%s dataId=%s", item.Group, item.DataId)
 }
 
 // 转化配置项
-func (item ConfigItem) Transform() vo.ConfigParam {
+func (item Module) Transform() vo.ConfigParam {
 	return vo.ConfigParam{DataId: item.DataId, Group: item.Group}
 }
 
 // 获取配置文件类型
-func (item ConfigItem) Type() (confType string) {
+func (item Module) FileType() (confType string) {
 	for i := len(item.DataId) - 1; i >= 0; i-- {
 		if item.DataId[i] == '.' {
 			confType = item.DataId[i+1:]
@@ -73,15 +74,8 @@ func (item ConfigItem) Type() (confType string) {
 	return
 }
 
-const (
-	YAML       = "yaml"
-	YML        = "yml"
-	JSON       = "json"
-	PROPERTIES = "properties"
-)
-
 // 加载nacos配置
-func (item ConfigItem) LoadNacosConfig(config interface{}) (err error) {
+func (item Module) LoadNacosConfig(config interface{}) (err error) {
 	valueRef := reflect.ValueOf(config)
 	// 修改值必须是指针类型否则不可行
 	if valueRef.Type().Kind() != reflect.Ptr {
@@ -96,14 +90,14 @@ func (item ConfigItem) LoadNacosConfig(config interface{}) (err error) {
 		log.Error("获取nacos配置内容失败 ", err)
 		return
 	}
-	switch item.Type() {
-	case YAML, YML:
+	switch item.Type {
+	case vo.YAML:
 		err = yaml.Unmarshal([]byte(content), config)
 		break
-	case JSON:
+	case vo.JSON:
 		err = json.Unmarshal([]byte(content), &config)
 		break
-	case PROPERTIES:
+	case vo.PROPERTIES:
 		var p *properties.Properties
 		p, err = properties.LoadString(content)
 		if err != nil {
@@ -133,8 +127,8 @@ func (item ConfigItem) LoadNacosConfig(config interface{}) (err error) {
 }
 
 // 根据配置名获取配置
-func (list ConfigItemList) Get(name string) ConfigItem {
-	var target ConfigItem
+func (list ModuleList) Get(name string) Module {
+	var target Module
 	for _, item := range list {
 		if item.Name == name {
 			target = item
@@ -144,9 +138,9 @@ func (list ConfigItemList) Get(name string) ConfigItem {
 }
 
 // 将配置项进行单项分离
-func (list ConfigItemList) Separate(name string) (ConfigItem, ConfigItemList) {
-	var target ConfigItem
-	var residue ConfigItemList
+func (list ModuleList) Separate(name string) (Module, ModuleList) {
+	var target Module
+	var residue ModuleList
 	for _, item := range list {
 		if item.Name == name {
 			target = item
@@ -158,7 +152,7 @@ func (list ConfigItemList) Separate(name string) (ConfigItem, ConfigItemList) {
 }
 
 // 批量加载nacos配置
-func (list ConfigItemList) LoadNacosConfig(config interface{}) (err error) {
+func (list ModuleList) LoadNacosConfig(config interface{}) (err error) {
 	for _, item := range list {
 		err = item.LoadNacosConfig(config)
 		if err != nil {

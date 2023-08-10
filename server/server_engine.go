@@ -60,7 +60,6 @@ func (e *Engine) InitConfig() {
 
 // 初始化日志
 func (e *Engine) InitLogger() {
-	// 初始化日志
 	logx.InitLogger(&e.Config.Log)
 }
 
@@ -68,7 +67,7 @@ func (e *Engine) InitLogger() {
 func (e *Engine) InitNacos() {
 	if e.Config.Nacos.Address != "" {
 		// 初始化Nacos
-		nacosx.InitNacosCTL(&e.Config.Nacos)
+		nacosx.Init(&e.Config.Nacos)
 		// 加载Nacos配置
 		loadNacosConfig(e.Config)
 		// 注册Nacos服务
@@ -79,32 +78,28 @@ func (e *Engine) InitNacos() {
 // 初始化Gorm
 func (e *Engine) InitGorm() {
 	if e.Config.Database.Host != "" {
-		// 初始化gorm
-		gormx.InitGormCTL(&e.Config.Database)
+		gormx.Init(&e.Config.Database)
 	}
 }
 
 // 初始化Redis
 func (e *Engine) InitRedis() {
 	if e.Config.Redis.Host != "" {
-		// 初始化redis
-		redisx.InitRedisCTL(&e.Config.Redis)
+		redisx.Init(&e.Config.Redis)
 	}
 }
 
 // 初始化ElasticSearch
 func (e *Engine) InitElasticSearch() {
 	if e.Config.Elastic.Host != "" {
-		// 初始化redis
-		elasticx.InitEsCTL(&e.Config.Elastic)
+		elasticx.Init(&e.Config.Elastic)
 	}
 }
 
 // 初始化hugegraph
 func (e *Engine) InitHugegraph() {
 	if e.Config.Hugegraph.Host != "" {
-		// 初始化hugegraph
-		hugegraphx.InitHugegraphCTL(&e.Config.Hugegraph)
+		hugegraphx.Init(&e.Config.Hugegraph)
 	}
 }
 
@@ -118,8 +113,8 @@ func (e *Engine) ExecBeforeFunc() {
 // 执行前置函数
 func (e *Engine) ExecMiddlewares() {
 	if e.Middleware != nil && len(e.Middleware) > 0 {
-		for _, init := range e.Middleware {
-			init()
+		for _, engineFunc := range e.Middleware {
+			engineFunc()
 		}
 	}
 }

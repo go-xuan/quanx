@@ -9,28 +9,24 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-type TimeFunc func() error
+var TimeCron *cron.Cron
 
-func TimeTask(spec string, timeFunc TimeFunc) {
-	//初始化一个定时任务
-	c := cron.New(cron.WithSeconds(),
-		cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger)),
-		cron.WithLogger(cron.VerbosePrintfLogger(log.New(os.Stdout, "cron: ", log.LstdFlags))))
-	var i = 1
+func Init() {
+	if TimeCron == nil {
+		//初始化一个定时任务
+		TimeCron = cron.New(cron.WithSeconds(),
+			cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger)),
+			cron.WithLogger(cron.VerbosePrintfLogger(log.New(os.Stdout, "cron: ", log.LstdFlags))))
+	}
+}
+
+func AddTask(spec string, execFunc func()) {
 	// 给初始化的定时任务指定时间表达式和具体执行的函数
-	entryId, err := c.AddFunc(spec, func() {
-		fmt.Printf("时间 : %d 次数 : %d ", time.Now().UnixMilli(), i)
-		err := timeFunc
-		if err != nil {
-			return
-		}
-		i++
-	})
+	entryId, err := TimeCron.AddFunc(spec, execFunc)
 	if err != nil {
 		fmt.Println(err)
 	}
+	go execFunc()
 	fmt.Println(time.Now(), entryId, err)
 	//运行定时任务
-	c.Start()
-	select {}
 }

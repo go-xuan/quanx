@@ -3,15 +3,13 @@ package httpx
 import (
 	"net"
 	"net/http"
-	"sync"
 	"time"
 )
 
-var syncOnce sync.Once
+var Client *http.Client
 
 func getHttpClient() *http.Client {
-	var Client *http.Client
-	syncOnce.Do(func() {
+	if Client == nil {
 		dialer := &net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}
 		Client = &http.Client{
 			Transport: &http.Transport{
@@ -22,6 +20,6 @@ func getHttpClient() *http.Client {
 				IdleConnTimeout:       90 * time.Second,
 				ExpectContinueTimeout: 1 * time.Second,
 			}}
-	})
+	}
 	return Client
 }

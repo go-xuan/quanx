@@ -54,8 +54,13 @@ func ModifyFile(filePath string, replaces map[string]string) error {
 	return WriteFile(filePath, content, Overwrite)
 }
 
+type File struct {
+	Path string
+	Info os.FileInfo
+}
+
 // 获取目录下所有文件路径
-func FileScan(dir string, ft FileType) (fileInfos FileList, err error) {
+func FileScan(dir string, ft string) (fileInfos []*File, err error) {
 	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -73,7 +78,7 @@ func FileScan(dir string, ft FileType) (fileInfos FileList, err error) {
 				fileInfos = append(fileInfos, &file)
 			}
 		default:
-			if FileTypeMatch(info.Name(), ft) {
+			if info.Name() == ft {
 				fileInfos = append(fileInfos, &file)
 			}
 		}

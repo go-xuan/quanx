@@ -10,22 +10,22 @@ import (
 )
 
 // 服务注册
-type ServerConfig struct {
-	Ip    string `yaml:"ip"`    // IP
-	Port  string `yaml:"port"`  // 端口
-	Group string `yaml:"group"` // 分组
-	Name  string `yaml:"name"`  // 名称
+type Server struct {
+	Name  string `yaml:"name"`  // 实例名称
+	Host  string `yaml:"host"`  // 服务实例host
+	Port  string `yaml:"port"`  // 实例端口
+	Group string `yaml:"group"` // 实例分组
 }
 
-func (s ServerConfig) Format() string {
+func (s Server) Format() string {
 	return fmt.Sprintf("group=%s name=%s", s.Group, s.Name)
 }
 
 // 注册Nacos服务实例
-func RegisterInstance(server ServerConfig) {
+func RegisterInstance(server Server) {
 	port, _ := strconv.Atoi(server.Port)
 	_, err := CTL.NamingClient.RegisterInstance(vo.RegisterInstanceParam{
-		Ip:          server.Ip,
+		Ip:          server.Host,
 		Port:        uint64(port),
 		GroupName:   server.Group,
 		ServiceName: server.Name,

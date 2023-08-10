@@ -27,10 +27,10 @@ func loadNacosConfig(conf *Config) {
 // 注册Nacos服务
 func registerNacosServer(server Server) {
 	if nacosx.CTL.NamingClient != nil {
-		nacosx.RegisterInstance(nacosx.ServerConfig{
+		nacosx.RegisterInstance(nacosx.Server{
 			Group: server.Env,
 			Name:  server.Name,
-			Ip:    server.Host,
+			Host:  server.Host,
 			Port:  server.Port,
 		})
 	} else {

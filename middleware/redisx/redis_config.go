@@ -1,7 +1,6 @@
 package redisx
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -9,8 +8,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 )
-
-var CONFIG *Config
 
 // redis连接配置
 type Config struct {
@@ -23,13 +20,7 @@ type Config struct {
 
 // 配置信息格式化
 func (conf *Config) Format() string {
-	return fmt.Sprintf("host=%s port=%d DbName=%d", conf.Host, conf.Port, conf.Database)
-}
-
-// 初始化redisCTL，默认单机模式
-func (conf *Config) NewRedisCTL() (ctl *Control) {
-	ctl = &Control{Config: conf, Cmd: conf.NewRedisCmdable(), Ctx: context.Background()}
-	return
+	return fmt.Sprintf("host=%s port=%d Database=%d", conf.Host, conf.Port, conf.Database)
 }
 
 const (
