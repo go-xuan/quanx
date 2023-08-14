@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/quanxiaoxuan/go-utils/stringx"
+	"github.com/quanxiaoxuan/quanx/utils/stringx"
 )
 
 // 随机字符串

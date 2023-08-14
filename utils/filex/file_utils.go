@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/quanxiaoxuan/go-utils/stringx"
+	"github.com/quanxiaoxuan/quanx/utils/stringx"
 )
 
 const (

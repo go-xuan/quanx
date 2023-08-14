@@ -1,7 +1,7 @@
 package filex
 
 import (
-	"github.com/quanxiaoxuan/go-utils/stringx"
+	"github.com/quanxiaoxuan/quanx/utils/stringx"
 	log "github.com/sirupsen/logrus"
 	"github.com/tealeg/xlsx"
 )

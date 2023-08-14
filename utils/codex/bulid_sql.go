@@ -1,8 +1,8 @@
 package codex
 
 import (
-	"github.com/quanxiaoxuan/go-utils/sqlx"
-	"github.com/quanxiaoxuan/go-utils/stringx"
+	"github.com/quanxiaoxuan/quanx/utils/sqlx"
+	"github.com/quanxiaoxuan/quanx/utils/stringx"
 	"strings"
 )
 

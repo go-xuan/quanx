@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/quanxiaoxuan/go-utils/timex"
+	"github.com/quanxiaoxuan/quanx/utils/timex"
 )
 
 const (

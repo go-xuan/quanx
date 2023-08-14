@@ -3,8 +3,8 @@ package codex
 import (
 	"strings"
 
-	"github.com/quanxiaoxuan/go-utils/sqlx"
-	"github.com/quanxiaoxuan/go-utils/stringx"
+	"github.com/quanxiaoxuan/quanx/utils/sqlx"
+	"github.com/quanxiaoxuan/quanx/utils/stringx"
 )
 
 // 构建go结构体代码

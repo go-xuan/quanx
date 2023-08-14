@@ -1,11 +1,12 @@
 package randx
 
 import (
-	"github.com/quanxiaoxuan/go-utils/stringx"
-	"github.com/quanxiaoxuan/go-utils/timex"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/quanxiaoxuan/quanx/utils/stringx"
+	"github.com/quanxiaoxuan/quanx/utils/timex"
 )
 
 // 随机数模型

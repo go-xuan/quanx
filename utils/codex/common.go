@@ -4,9 +4,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/quanxiaoxuan/go-utils/codex/template"
-	"github.com/quanxiaoxuan/go-utils/filex"
-	"github.com/quanxiaoxuan/go-utils/stringx"
+	"github.com/quanxiaoxuan/quanx/utils/codex/template"
+	"github.com/quanxiaoxuan/quanx/utils/filex"
+	"github.com/quanxiaoxuan/quanx/utils/stringx"
 )
 
 const (
