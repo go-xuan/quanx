@@ -21,7 +21,7 @@ type MicroServer struct {
 
 // 获取微服务url
 func GetMicroServerHttpUrl(group, dataId, uri string) (string, bool, error) {
-	configData, ok := nacosx.ConfigMonitor.GetConfigData(group, dataId)
+	configData, ok := nacosx.GetNacosConfigMonitor().GetConfigData(group, dataId)
 	if ok && configData.Changed {
 		err := json.Unmarshal([]byte(configData.Content), &microServerList)
 		if err != nil {

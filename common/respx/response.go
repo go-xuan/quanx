@@ -13,6 +13,23 @@ type Response struct {
 	Data interface{} `json:"data"` // 响应数据
 }
 
+// 结果响应
+func BuildResultResponse(context *gin.Context, data interface{}, err error) {
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, &Response{
+			Code: Error.Code,
+			Msg:  Error.Msg,
+			Data: data,
+		})
+	} else {
+		context.JSON(http.StatusOK, &Response{
+			Code: Success.Code,
+			Msg:  Success.Msg,
+			Data: data,
+		})
+	}
+}
+
 // 自定义响应
 func BuildResponse(context *gin.Context, code int, message string, data interface{}) {
 	response := Response{
@@ -31,16 +48,6 @@ func BuildSuccessResponse(context *gin.Context, data interface{}) {
 		Data: data,
 	}
 	context.JSON(http.StatusOK, &response)
-}
-
-// 失败响应
-func BuildFailResponse(context *gin.Context, data interface{}) {
-	response := Response{
-		Code: Fail.Code,
-		Msg:  Fail.Msg,
-		Data: data,
-	}
-	context.JSON(http.StatusBadRequest, &response)
 }
 
 // 错误响应

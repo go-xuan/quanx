@@ -11,7 +11,18 @@ import (
 	"github.com/quanxiaoxuan/quanx/middleware/redisx"
 	"github.com/quanxiaoxuan/quanx/utils/ipx"
 	log "github.com/sirupsen/logrus"
+	"strconv"
 )
+
+var engine *Engine
+
+// 初始化运行器
+func NewEngine() *Engine {
+	if engine == nil {
+		engine = &Engine{}
+	}
+	return engine
+}
 
 // 服务启动器
 type Engine struct {
@@ -19,7 +30,7 @@ type Engine struct {
 	BeforeFunc       EngineFunc        // 前置函数
 	Middleware       []EngineFunc      // 中间件函数
 	GinEngine        *gin.Engine       // gin引擎
-	GinRouterLoaders []RouterLoad      // gin路由加载方法
+	GinRouterLoaders []RouterLoader    // gin路由加载方法
 	GinMiddleware    []gin.HandlerFunc // gin中间件
 }
 
@@ -27,10 +38,10 @@ type Engine struct {
 type EngineFunc func()
 
 // gin路由加载函数
-type RouterLoad func(router *gin.RouterGroup)
+type RouterLoader func(router *gin.RouterGroup)
 
 // 服务启动
-func (e *Engine) Run() {
+func (e *Engine) RUN() {
 	defer Recover()
 	// 执行前置函数
 	e.ExecBeforeFunc()
@@ -69,9 +80,14 @@ func (e *Engine) InitNacos() {
 		// 初始化Nacos
 		nacosx.Init(&e.Config.Nacos)
 		// 加载Nacos配置
-		loadNacosConfig(e.Config)
+		nacosx.LoadNacosConfig(e.Config.Configs, e.Config.Server.Name, e.Config)
 		// 注册Nacos服务
-		registerNacosServer(e.Config.Server)
+		nacosx.RegisterInstance(nacosx.ServerInstance{
+			Group: e.Config.Server.Env,
+			Name:  e.Config.Server.Name,
+			Host:  e.Config.Server.Host,
+			Port:  e.Config.Server.Port,
+		})
 	}
 }
 
@@ -103,6 +119,13 @@ func (e *Engine) InitHugegraph() {
 	}
 }
 
+// 初始化hugegraph
+func (e *Engine) InitMinio() {
+	if e.Config.Minio.Host != "" {
+		hugegraphx.Init(&e.Config.Hugegraph)
+	}
+}
+
 // 执行前置函数
 func (e *Engine) ExecBeforeFunc() {
 	if e.BeforeFunc != nil {
@@ -124,8 +147,13 @@ func (e *Engine) AddMiddleware(middleware ...EngineFunc) {
 	e.Middleware = append(e.Middleware, middleware...)
 }
 
+// 执行gin的路由加载函数
+func (e *Engine) AddGinMiddleware(middleware ...gin.HandlerFunc) {
+	e.GinMiddleware = append(e.GinMiddleware, middleware...)
+}
+
 // 添加gin的路由加载函数
-func (e *Engine) AddRouterLoaders(load ...RouterLoad) {
+func (e *Engine) AddRouterLoaders(load ...RouterLoader) {
 	e.GinRouterLoaders = append(e.GinRouterLoaders, load...)
 }
 
@@ -140,11 +168,6 @@ func (e *Engine) ExecRouterLoaders(group *gin.RouterGroup) {
 	}
 }
 
-// 执行gin的路由加载函数
-func (e *Engine) AddGinUse(middleware ...gin.HandlerFunc) {
-	e.GinMiddleware = append(e.GinMiddleware, middleware...)
-}
-
 // 启动gin
 func (e *Engine) StartGin() {
 	if e.Config.Server.Env == gin.ReleaseMode {
@@ -156,13 +179,28 @@ func (e *Engine) StartGin() {
 		e.GinEngine.Use(e.GinMiddleware...)
 	}
 	_ = e.GinEngine.SetTrustedProxies([]string{e.Config.Server.Host})
-	// 注册根路由
-	group := e.GinEngine.Group(e.Config.Server.Prefix)
-	// 执行路由注册函数
+	// 注册根路由，并执行路由注册函数
+	var group = e.GinEngine.Group(e.Config.Server.Prefix)
 	e.ExecRouterLoaders(group)
-	log.Info("=== API接口请求地址: http://" + e.Config.Server.Host + ":" + e.Config.Server.Port)
-	if err := e.GinEngine.Run(":" + e.Config.Server.Port); err != nil {
+	var port = strconv.Itoa(e.Config.Server.Port)
+	if err := e.GinEngine.Run(":" + port); err != nil {
+		log.Error("gin-Engine 运行失败！！！")
 		panic(err)
 	}
 	log.Info("服务启动成功！！！")
+	log.Infof("API接口请求地址: http://%s:%s ", e.Config.Server.Host, port)
+}
+
+// 获取配置
+func (e *Engine) GetConfig(config *Config) {
+	config = e.Config
+}
+
+// 服务保活
+func Recover() {
+	if err := recover(); err != nil {
+		log.Errorf("服务启动失败！错误为 : %s", err)
+		return
+	}
+	select {}
 }

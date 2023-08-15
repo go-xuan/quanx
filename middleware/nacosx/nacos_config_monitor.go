@@ -24,15 +24,14 @@ type MonitorData struct {
 }
 
 // 初始化nacos配置监听
-func InitNacosConfigMonitor() {
-	var syncOnce sync.Once
-	syncOnce.Do(func() {
+func GetNacosConfigMonitor() *Monitor {
+	if ConfigMonitor == nil {
 		ConfigMonitor = &Monitor{
 			Datas:     make(map[string]map[string]*MonitorData),
 			ConfigNum: 0,
 		}
-	})
-	return
+	}
+	return ConfigMonitor
 }
 
 // 获取nacos配置

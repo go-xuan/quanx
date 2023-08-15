@@ -42,7 +42,7 @@ func (ctl *Controller) BuildConfigFromFile(filePath string) (err error) {
 }
 
 func (ctl *Controller) BuildConfigFromNacos(group, dataId string) (err error) {
-	module := &Module{Group: group, DataId: dataId}
+	module := &Option{Group: group, DataId: dataId}
 	err = module.LoadNacosConfig(ctl.Config)
 	if err != nil {
 		return
