@@ -6,10 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
@@ -55,10 +53,8 @@ func (conf *Config) NewGormDB() (gormDB *gorm.DB, err error) {
 
 // 数据库类型
 const (
-	Mysql      = "mysql"
-	Postgres   = "postgres"
-	ClickHouse = "clickhouse"
-	SqlServer  = "sqlserver"
+	Mysql    = "mysql"
+	Postgres = "postgres"
 )
 
 // 获取数据库连接DSN
@@ -71,12 +67,6 @@ func (conf *Config) GetDSN() (dsn string) {
 	case Postgres:
 		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 			conf.Host, conf.Port, conf.UserName, conf.Password, conf.Database)
-	case ClickHouse:
-		dsn = fmt.Sprintf("tcp://%s:%d?username=%s&password=%s",
-			conf.Host, conf.Port, conf.UserName, conf.Password)
-	case SqlServer:
-		dsn = fmt.Sprintf("sqlserver://%s:%s@%s:%d?database=%s",
-			conf.UserName, conf.Password, conf.Host, conf.Port, conf.Database)
 	}
 	return
 }
@@ -88,10 +78,6 @@ func GetGormDB(dsn, dialect string) (gormDb *gorm.DB, err error) {
 		return gorm.Open(mysql.Open(dsn), &gorm.Config{NamingStrategy: schema.NamingStrategy{SingularTable: true}})
 	case Postgres:
 		return gorm.Open(postgres.Open(dsn), &gorm.Config{NamingStrategy: schema.NamingStrategy{SingularTable: true}})
-	case ClickHouse:
-		return gorm.Open(clickhouse.Open(dsn), &gorm.Config{NamingStrategy: schema.NamingStrategy{SingularTable: true}})
-	case SqlServer:
-		return gorm.Open(sqlserver.Open(dsn), &gorm.Config{NamingStrategy: schema.NamingStrategy{SingularTable: true}})
 	}
 	return
 }

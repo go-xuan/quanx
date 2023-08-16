@@ -1,6 +1,8 @@
 package server
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/configor"
 	"github.com/quanxiaoxuan/quanx/middleware/elasticx"
@@ -11,7 +13,6 @@ import (
 	"github.com/quanxiaoxuan/quanx/middleware/redisx"
 	"github.com/quanxiaoxuan/quanx/utils/ipx"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
 var engine *Engine
@@ -80,7 +81,7 @@ func (e *Engine) InitNacos() {
 		// 初始化Nacos
 		nacosx.Init(&e.Config.Nacos)
 		// 加载Nacos配置
-		nacosx.LoadNacosConfig(e.Config.Configs, e.Config.Server.Name, e.Config)
+		nacosx.LoadNacosConfig(e.Config.NacosOptions, e.Config.Server.Name, e.Config)
 		// 注册Nacos服务
 		nacosx.RegisterInstance(nacosx.ServerInstance{
 			Group: e.Config.Server.Env,
