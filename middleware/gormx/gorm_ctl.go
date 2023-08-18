@@ -11,28 +11,23 @@ var CTL *Controller
 type Controller struct {
 	Config *Config
 	DB     *gorm.DB
-	Init   func()
 }
 
 // 初始化表结构
-func (ctl *Controller) InitTable(dst interface{}) error {
-	if ctl.DB.Migrator().HasTable(dst) {
-		return ctl.DB.Migrator().AutoMigrate(dst)
-	} else {
-		return ctl.DB.Migrator().CreateTable(dst)
+func (ctl *Controller) InitTable(dst ...interface{}) (err error) {
+	if len(dst) > 0 {
+		for _, item := range dst {
+			if ctl.DB.Migrator().HasTable(item) {
+				err = ctl.DB.Migrator().AutoMigrate(item)
+			} else {
+				err = ctl.DB.Migrator().CreateTable(item)
+			}
+			if err != nil {
+				return
+			}
+		}
 	}
-}
-
-// 初始化方法
-func (ctl *Controller) SetInit(f func()) {
-	ctl.Init = f
-}
-
-// 执行方法
-func (ctl *Controller) ExecInit() {
-	if ctl.Init != nil {
-		ctl.Init()
-	}
+	return
 }
 
 // 初始化Gorm控制器

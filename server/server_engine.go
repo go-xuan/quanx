@@ -18,7 +18,7 @@ import (
 var engine *Engine
 
 // 初始化运行器
-func NewEngine() *Engine {
+func GetEngine() *Engine {
 	if engine == nil {
 		engine = &Engine{}
 	}
@@ -33,6 +33,7 @@ type Engine struct {
 	GinEngine        *gin.Engine       // gin引擎
 	GinRouterLoaders []RouterLoader    // gin路由加载方法
 	GinMiddleware    []gin.HandlerFunc // gin中间件
+	GormModels       []interface{}
 }
 
 // 引擎函数
@@ -96,6 +97,12 @@ func (e *Engine) InitNacos() {
 func (e *Engine) InitGorm() {
 	if e.Config.Database.Host != "" {
 		gormx.Init(&e.Config.Database)
+		// 初始化表结构
+		if e.Config.Database.InitTable {
+			if err := gormx.CTL.InitTable(e.GormModels...); err != nil {
+				panic(err)
+			}
+		}
 	}
 }
 
@@ -193,8 +200,13 @@ func (e *Engine) StartGin() {
 }
 
 // 获取配置
-func (e *Engine) GetConfig(config *Config) {
+func (e *Engine) LoadConfig(config *Config) {
 	config = e.Config
+}
+
+// 获取配置
+func (e *Engine) AddGormModel(dst ...interface{}) {
+	e.GormModels = append(e.GormModels, dst...)
 }
 
 // 服务保活

@@ -59,21 +59,25 @@ func LoadNacosConfig(list Options, appName string, config interface{}) {
 
 // 配置信息格式化
 func (item Option) Format() string {
-	return fmt.Sprintf("group=%s dataId=%s", item.Group, item.DataId)
+	return fmt.Sprintf("group=%s dataId=%s type=%s", item.Group, item.DataId, item.ConfigType())
 }
 
 // 转化配置项
-func (item Option) Transform() vo.ConfigParam {
-	return vo.ConfigParam{DataId: item.DataId, Group: item.Group}
+func (item Option) TransToConfigParam() vo.ConfigParam {
+	return vo.ConfigParam{DataId: item.DataId, Group: item.Group, Type: item.ConfigType()}
 }
 
 // 获取配置文件类型
-func (item Option) FileType() (confType string) {
-	for i := len(item.DataId) - 1; i >= 0; i-- {
-		if item.DataId[i] == '.' {
-			confType = item.DataId[i+1:]
-			return
+func (item Option) ConfigType() (confType vo.ConfigType) {
+	if item.Type == "" {
+		for i := len(item.DataId) - 1; i >= 0; i-- {
+			if item.DataId[i] == '.' {
+				confType = vo.ConfigType(item.DataId[i+1:])
+				return
+			}
 		}
+	} else {
+		confType = item.Type
 	}
 	return
 }
@@ -88,13 +92,13 @@ func (item Option) LoadNacosConfig(config interface{}) (err error) {
 	}
 	// 读取Nacos配置
 	var content string
-	param := item.Transform()
+	var param = item.TransToConfigParam()
 	content, err = CTL.ConfigClient.GetConfig(param)
 	if err != nil {
 		log.Error("获取nacos配置内容失败 ", err)
 		return
 	}
-	switch item.Type {
+	switch param.Type {
 	case vo.YAML:
 		err = yaml.Unmarshal([]byte(content), config)
 		break
@@ -108,6 +112,8 @@ func (item Option) LoadNacosConfig(config interface{}) (err error) {
 			break
 		}
 		refreshValueByTag(p, valueRef)
+	default:
+		err = errors.New("配置项option.type不符合规范")
 	}
 	msg := item.Format()
 	if err != nil {

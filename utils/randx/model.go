@@ -96,8 +96,6 @@ func (m *RandModel) GetRandString() (result string) {
 func (m *RandModel) randString() (result string) {
 	constraint := m.Constraint
 	switch m.Type {
-	case DateType:
-		result = Date()
 	case PhoneType:
 		result = Phone()
 	case NameType:
@@ -120,6 +118,9 @@ func (m *RandModel) randString() (result string) {
 		result = Password(ParseConstraintOfPassword(constraint))
 	case IntStringType:
 		result = strconv.Itoa(IntRange(ParseConstraintOfInt(constraint)))
+	case DateType:
+		min, max, _ := ParseConstraintOfTime(constraint)
+		result = DateRange(min, max)
 	case TimeType:
 		min, max, format := ParseConstraintOfTime(constraint)
 		result = TimeRange(min, max).Format(format)
