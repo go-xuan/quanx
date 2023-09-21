@@ -3,10 +3,11 @@ package gatewayx
 import (
 	"encoding/json"
 	"errors"
-	"github.com/quanxiaoxuan/quanx/common/httpx"
-	"github.com/quanxiaoxuan/quanx/middleware/nacosx"
 	"strings"
 	"time"
+
+	"github.com/quanxiaoxuan/quanx/public/nacosx"
+	"github.com/quanxiaoxuan/quanx/utils/httpx"
 )
 
 var microServerList []*MicroServer

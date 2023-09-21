@@ -144,7 +144,7 @@ func ParseConstraint(constraint string) map[string]string {
 		kvMap := make(map[string]string)
 		kvs := strings.Split(constraint, Split)
 		for _, kv := range kvs {
-			k, v := stringx.SplitByFirst(kv, Equal, false)
+			k, v := stringx.SplitByFirst(kv, Equal)
 			kvMap[k] = v
 		}
 		return kvMap

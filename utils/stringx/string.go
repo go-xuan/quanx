@@ -56,37 +56,27 @@ func SubString(str string, start, end int) string {
 	return string(r[start:end])
 }
 
-// 将字符以最后一个符号拆分拆分
-func SplitByFirst(str, sep string, withSep bool) (string, string) {
+// 将字符以最后一个符号拆分
+func SplitByFirst(str, sep string) (string, string) {
 	if str == "" {
 		return "", ""
 	}
 	if strings.Contains(str, sep) && sep != "" {
 		i := strings.Index(str, sep)
-		l := len(sep)
-		if withSep {
-			return str[:i+l], str[i+l:]
-		} else {
-			return str[:i], str[i+l:]
-		}
+		return str[:i], str[i+len(sep):]
 	} else {
 		return str, ""
 	}
 }
 
-// 将字符以最后一个符号拆分拆分
-func SplitByLast(str, sep string, withSep bool) (string, string) {
+// 将字符以最后一个符号拆分
+func SplitByLast(str, sep string) (string, string) {
 	if str == "" {
 		return "", ""
 	}
 	if strings.Contains(str, sep) && sep != "" {
 		i := strings.LastIndex(str, sep)
-		l := len(sep)
-		if withSep {
-			return str[:i+l], str[i+l:]
-		} else {
-			return str[:i], str[i+l:]
-		}
+		return str[:i], str[i+len(sep):]
 	} else {
 		return str, ""
 	}
@@ -163,4 +153,47 @@ func UpperCamelCase(s string) string {
 		data = append(data, d)
 	}
 	return string(data[:])
+}
+
+// 文本相似度计算
+func TextSimilarity(source, target string) float64 {
+	sLen, tLen := len(source), len(target)
+	if (sLen == 0 && tLen == 0) || source == target {
+		return 1.0
+	}
+	matrix := make([][]int, sLen+1)
+	for i := range matrix {
+		matrix[i] = make([]int, tLen+1)
+		matrix[i][0] = i
+	}
+
+	for j := 0; j <= tLen; j++ {
+		matrix[0][j] = j
+	}
+
+	for i := 1; i <= sLen; i++ {
+		for j := 1; j <= tLen; j++ {
+			cost := 0
+			if source[i-1] != target[j-1] {
+				cost = 1
+			}
+			matrix[i][j] = min(matrix[i-1][j]+1, matrix[i][j-1]+1, matrix[i-1][j-1]+cost)
+		}
+	}
+
+	distance := matrix[sLen][tLen]
+	maxLen := float64(sLen)
+	if tLen > sLen {
+		maxLen = float64(tLen)
+	}
+	return 1.0 - float64(distance)/maxLen
+}
+
+func min(a, b, c int) int {
+	if a <= b && a <= c {
+		return a
+	} else if b <= a && b <= c {
+		return b
+	}
+	return c
 }

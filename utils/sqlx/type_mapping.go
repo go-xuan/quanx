@@ -8,6 +8,7 @@ const (
 	Text       = "text"
 	Int        = "int"
 	Smallint   = "smallint"
+	Tinyint    = "tinyint"
 	Bigint     = "bigint"
 	Int2       = "int2"
 	Int4       = "int4"
@@ -56,6 +57,22 @@ func initPg2GoTypeMap() map[string]string {
 	typeMap[Varchar] = String
 	typeMap[Text] = String
 	typeMap[Int2] = Int
+	typeMap[Int4] = Int
+	typeMap[Int8] = Int64
+	typeMap[Timestamp] = Time
+	typeMap[Date] = Time
+	typeMap[Float4] = Float4
+	typeMap[Numeric] = Float4
+	typeMap[Bool] = Bool
+	return typeMap
+}
+
+// mysql-Go类型映射
+func initMysql2GoTypeMap() map[string]string {
+	var typeMap = make(map[string]string)
+	typeMap[Varchar] = String
+	typeMap[Text] = String
+	typeMap[Tinyint] = Int
 	typeMap[Int4] = Int
 	typeMap[Int8] = Int64
 	typeMap[Timestamp] = Time

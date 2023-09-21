@@ -10,14 +10,13 @@ import (
 )
 
 // 导出表头
-type HeaderList []*Header
 type Header struct {
 	Key  string
 	Name string
 }
 
 // Gin框架返回Excel文件流
-func BuildExcelExport(ctx *gin.Context, headers HeaderList, dataList interface{}, fileName string) (err error) {
+func BuildExcelExport(ctx *gin.Context, headers []*Header, dataList interface{}, fileName string) (err error) {
 	var xlsxFile = xlsx.NewFile()
 	var sheet *xlsx.Sheet
 	sheet, err = xlsxFile.AddSheet("Sheet1")

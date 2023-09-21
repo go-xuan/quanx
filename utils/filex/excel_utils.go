@@ -4,6 +4,7 @@ import (
 	"github.com/quanxiaoxuan/quanx/utils/stringx"
 	log "github.com/sirupsen/logrus"
 	"github.com/tealeg/xlsx"
+	"path"
 )
 
 type SheetInfoList []*SheetInfo
@@ -73,9 +74,9 @@ func ExcelSplit(excelPath, sheetName string) (string, error) {
 			}
 		}
 	}
-	dir, excelName := stringx.SplitByLast(excelPath, "\\", true)
-	excelName, _ = stringx.SplitByFirst(excelName, ".", false)
-	newExcelPath := dir + excelName + "_split.xlsx"
+	dir, excelName := stringx.SplitByLast(excelPath, "\\")
+	excelName, _ = stringx.SplitByFirst(excelName, ".")
+	newExcelPath := path.Join(dir, excelName+"_split.xlsx")
 	err = NewExcelFile.Save(newExcelPath)
 	if err != nil {
 		return excelPath, err

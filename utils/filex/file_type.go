@@ -30,6 +30,7 @@ const (
 	JsonType       = ".json"
 	YmlType        = ".yml"
 	YamlType       = ".yaml"
+	TomlType       = ".toml"
 	XmlType        = ".xml"
 	HtmlType       = ".html"
 	PropertiesType = ".properties"

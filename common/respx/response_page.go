@@ -1,6 +1,6 @@
 package respx
 
-import "github.com/quanxiaoxuan/quanx/common/paramx"
+import "github.com/quanxiaoxuan/quanx/common/modelx"
 
 // 分页结果
 type PageResponse struct {
@@ -12,7 +12,7 @@ type PageResponse struct {
 }
 
 // 封装分页结果
-func BuildPageData(param *paramx.Page, result interface{}, total int64) *PageResponse {
+func BuildPageData(param *modelx.Page, result interface{}, total int64) *PageResponse {
 	var pageData = PageResponse{
 		CurrPage:    param.CurrPage,
 		PageSize:    param.PageSize,

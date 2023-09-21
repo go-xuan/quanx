@@ -114,15 +114,15 @@ func TimeDiff(startTime, endTime time.Time, unit Unit) (diff int64) {
 	case Day:
 		diff = (endTime.Unix() - startTime.Unix()) / 86400
 	case Month:
-		diff = MonthDiff(startTime, endTime)
+		diff = MonthInterval(startTime, endTime)
 	case Year:
-		diff = int64(YearDiff(startTime, endTime))
+		diff = int64(YearInterval(startTime, endTime))
 	}
 	return
 }
 
 // 间隔年数
-func YearDiff(startTime, endTime time.Time) (diff int) {
+func YearInterval(startTime, endTime time.Time) (diff int) {
 	if startTime.After(endTime) {
 		return 0
 	}
@@ -130,7 +130,7 @@ func YearDiff(startTime, endTime time.Time) (diff int) {
 }
 
 // 间隔月份数
-func MonthDiff(startTime, endTime time.Time) (diff int64) {
+func MonthInterval(startTime, endTime time.Time) (diff int64) {
 	startTime = startTime.AddDate(0, 1, 0)
 	for {
 		if startTime.Before(endTime) {
@@ -179,13 +179,13 @@ func MonthSlice(startTimeUnix, endTimeUnix int64) []string {
 }
 
 // 生成日期切片
-func DateSlice(startTimestamp, endTimestamp int64) []string {
+func DateSlice(startTimeUnix, endTimeUnix int64) []string {
 	var dateList []string
 	// 获取开始时间的当天0点0分0秒
-	year, month, day := time.Unix(startTimestamp, 0).Date()
+	year, month, day := time.Unix(startTimeUnix/1000, 0).Date()
 	tempTime := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
 	// 获取相差天数
-	timeDiff, _ := strconv.Atoi(strconv.FormatInt((endTimestamp-tempTime.Unix())/86400, 10))
+	timeDiff, _ := strconv.Atoi(strconv.FormatInt((endTimeUnix-tempTime.Unix())/86400, 10))
 	for i := 0; i <= timeDiff; i++ {
 		dateList = append(dateList, tempTime.Format(FmtDate))
 		tempTime = tempTime.AddDate(0, 0, 1)
