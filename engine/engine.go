@@ -1,6 +1,7 @@
-package starter
+package engine
 
 import (
+	"github.com/quanxiaoxuan/quanx/utils/structx"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +11,6 @@ import (
 	"github.com/quanxiaoxuan/quanx/public/logx"
 	"github.com/quanxiaoxuan/quanx/public/nacosx"
 	"github.com/quanxiaoxuan/quanx/public/redisx"
-	"github.com/quanxiaoxuan/quanx/utils/filex"
 	"github.com/quanxiaoxuan/quanx/utils/ipx"
 )
 
@@ -63,8 +63,11 @@ func (e *Engine) SetConfigPath(path string) {
 
 // 加载配置
 func (e *Engine) LoadConfig() {
+	if e.ConfigPath == "" {
+		e.ConfigPath = "config.yaml"
+	}
 	var config = &Config{}
-	if err := filex.ReadConfigToPointer(e.ConfigPath, config); err != nil {
+	if err := structx.ReadConfigToPointer(e.ConfigPath, config); err != nil {
 		log.Error("加载应用配置失败！")
 		panic(err)
 	}
@@ -77,12 +80,11 @@ func (e *Engine) LoadConfig() {
 // 初始化服务基本
 func (e *Engine) InitServer() {
 	// 初始化日志
-	e.Config.Log.Name = e.Config.Server.Name
-	logx.InitLogger(&e.Config.Log)
+	logx.InitLogger(e.Config.Log, e.Config.Server.Name)
 	// 初始化Nacos
-	if e.Config.Nacos.Address != "" {
+	if e.Config.Nacos != nil {
 		// 初始化Nacos
-		nacosx.Init(&e.Config.Nacos)
+		nacosx.Init(e.Config.Nacos)
 		// 加载Nacos配置
 		nacosx.LoadNacosConfig(e.Config.Nacos.Options, e.Config)
 		// 注册Nacos服务

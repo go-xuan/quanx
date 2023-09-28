@@ -10,9 +10,10 @@ import (
 	"github.com/quanxiaoxuan/quanx/utils/httpx"
 )
 
-var microServerList []*MicroServer
+// 微服务配置
+var servers []*Server
 
-type MicroServer struct {
+type Server struct {
 	Name  string   `json:"name"`  // 服务名称
 	Group string   `json:"group"` // 服务分组
 	Url   string   `json:"url"`   // 微服务Url
@@ -21,10 +22,10 @@ type MicroServer struct {
 }
 
 // 获取微服务url
-func GetMicroServerHttpUrl(group, dataId, uri string) (string, bool, error) {
+func GetServerHttpUrl(group, dataId, uri string) (string, bool, error) {
 	configData, ok := nacosx.GetNacosConfigMonitor().GetConfigData(group, dataId)
 	if ok && configData.Changed {
-		err := json.Unmarshal([]byte(configData.Content), &microServerList)
+		err := json.Unmarshal([]byte(configData.Content), &servers)
 		if err != nil {
 			err = errors.New("微服务网关清单同步失败 ：" + err.Error())
 			return "", false, err
@@ -33,17 +34,17 @@ func GetMicroServerHttpUrl(group, dataId, uri string) (string, bool, error) {
 		configData.Changed = false
 		configData.UpdateTime = time.Now().UnixMilli()
 	}
-	for _, microServer := range microServerList {
-		if MatchUrl(uri, microServer.Url) {
-			var auth = microServer.Auth
-			if microServer.Skip != nil && len(microServer.Skip) > 0 {
-				for _, item := range microServer.Skip {
+	for _, server := range servers {
+		if MatchUrl(uri, server.Url) {
+			var auth = server.Auth
+			if server.Skip != nil && len(server.Skip) > 0 {
+				for _, item := range server.Skip {
 					if item == uri {
 						auth = false
 					}
 				}
 			}
-			url, err := nacosx.SelectOneHealthyInstance(microServer.Name, microServer.Group)
+			url, err := nacosx.SelectOneHealthyInstance(server.Name, server.Group)
 			if err != nil {
 				err = errors.New("微服务实例未注册 ：" + err.Error())
 				return "", false, err

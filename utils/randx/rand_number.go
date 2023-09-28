@@ -1,8 +1,8 @@
 package randx
 
 import (
+	"github.com/quanxiaoxuan/quanx/utils/mathx"
 	"math"
-	"strconv"
 )
 
 // 随机整数
@@ -42,6 +42,5 @@ func Float64Range(min, max float64, prec int) float64 {
 		return min
 	}
 	float := newRand.Float64()*(max-min) + min
-	float, _ = strconv.ParseFloat(strconv.FormatFloat(float, 'f', prec, 64), 64)
-	return float
+	return mathx.Ground(float, prec)
 }

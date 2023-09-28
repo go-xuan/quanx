@@ -1,6 +1,7 @@
 package logx
 
 import (
+	"github.com/quanxiaoxuan/quanx/utils/structx"
 	"os"
 	"path"
 	"strings"
@@ -20,7 +21,14 @@ type Config struct {
 }
 
 // 初始化日志
-func InitLogger(conf *Config) {
+func InitLogger(conf *Config, name ...string) {
+	if conf == nil {
+		conf = &Config{}
+		_ = structx.SetDefaultValue(conf)
+	}
+	if len(name) > 0 {
+		conf.Name = name[0]
+	}
 	_ = os.Mkdir(conf.Dir, os.ModePerm)
 	var logWriter = conf.defaultLogger()
 	if conf.MaxSize != 0 {

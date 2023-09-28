@@ -1,4 +1,4 @@
-package starter
+package engine
 
 import (
 	"github.com/quanxiaoxuan/quanx/public/gormx"
@@ -9,9 +9,9 @@ import (
 
 // 应用配置
 type Config struct {
-	Server   Server         `yaml:"server"`   // 服务配置
-	Log      logx.Config    `yaml:"log"`      // 日志配置
-	Nacos    nacosx.Config  `yaml:"nacos"`    // nacos访问配置
+	Server   *Server        `yaml:"server"`   // 服务配置
+	Log      *logx.Config   `yaml:"log"`      // 日志配置
+	Nacos    *nacosx.Config `yaml:"nacos"`    // nacos访问配置
 	Database gormx.Configs  `yaml:"database"` // 数据源配置
 	Redis    redisx.Configs `yaml:"redis"`    // redis配置
 }

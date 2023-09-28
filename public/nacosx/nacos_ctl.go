@@ -3,8 +3,7 @@ package nacosx
 import (
 	"github.com/nacos-group/nacos-sdk-go/clients/config_client"
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
-
-	"github.com/quanxiaoxuan/quanx/utils/filex"
+	"github.com/quanxiaoxuan/quanx/utils/structx"
 )
 
 var CTL *Controller
@@ -37,7 +36,7 @@ const (
 )
 
 func (ctl *Controller) BuildConfigFromFile(filePath string) (err error) {
-	err = filex.ReadConfigToPointer(filePath, ctl.Config)
+	err = structx.ReadConfigToPointer(filePath, ctl.Config)
 	if err != nil {
 		return
 	}

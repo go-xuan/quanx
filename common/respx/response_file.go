@@ -23,14 +23,14 @@ func BuildExcelExport(ctx *gin.Context, headers []*Header, dataList interface{},
 	if err != nil {
 		return
 	}
-	dataBytes, _ := json.Marshal(dataList)
-	gjsonResults := gjson.ParseBytes(dataBytes).Array()
 	// 写入表头
 	headerRow := sheet.AddRow()
 	for _, header := range headers {
 		headerRow.AddCell().Value = header.Name
 	}
 	// 写入数据
+	dataBytes, _ := json.Marshal(dataList)
+	gjsonResults := gjson.ParseBytes(dataBytes).Array()
 	for _, gjsonResult := range gjsonResults {
 		dataMap := gjsonResult.Map()
 		row := sheet.AddRow()
