@@ -2,6 +2,7 @@ package filex
 
 import (
 	"fmt"
+	"github.com/quanxiaoxuan/quanx/common/constx"
 	"log"
 	"os"
 	"path/filepath"
@@ -9,12 +10,6 @@ import (
 	"strings"
 
 	"github.com/quanxiaoxuan/quanx/utils/stringx"
-)
-
-const (
-	LinuxPathSeparator = "/"
-	WinPathSeparator   = "\\"
-	NextLine           = "\n"
 )
 
 // 显示当前目录
@@ -29,7 +24,7 @@ func SplitPath(path string) (dir string, file string) {
 	if path == "" {
 		return
 	}
-	if stringx.ContainsAny(path, LinuxPathSeparator, WinPathSeparator) {
+	if stringx.ContainsAny(path, constx.ForwardSlash, constx.BackSlash) {
 		dir, file = filepath.Split(path)
 	} else {
 		dir, file = "", path

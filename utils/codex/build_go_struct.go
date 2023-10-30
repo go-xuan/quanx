@@ -1,6 +1,7 @@
 package codex
 
 import (
+	"github.com/quanxiaoxuan/quanx/common/constx"
 	"strings"
 
 	"github.com/quanxiaoxuan/quanx/utils/sqlx"
@@ -13,12 +14,12 @@ func BuildGoStruct(table string, fieldList FieldList) string {
 	table = strings.TrimSuffix(table, `_t`)
 	table = stringx.UpperCamelCase(table)
 	sb := strings.Builder{}
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("type ")
 	sb.WriteString(table)
 	sb.WriteString("List []*")
 	sb.WriteString(table)
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("type ")
 	sb.WriteString(table)
 	sb.WriteString(" struct {")
@@ -26,8 +27,8 @@ func BuildGoStruct(table string, fieldList FieldList) string {
 		gt := sqlx.Pg2GoTypeMap[field.Type]
 		up := stringx.UpperCamelCase(field.Name)
 		low := stringx.LowerCamelCase(field.Name)
-		sb.WriteString(LineSep)
-		sb.WriteString(Tab)
+		sb.WriteString(constx.NextLine)
+		sb.WriteString(constx.Tab)
 		sb.WriteString(up)
 		sb.WriteString(" ")
 		sb.WriteString(gt)
@@ -36,9 +37,9 @@ func BuildGoStruct(table string, fieldList FieldList) string {
 		sb.WriteString("\"` // ")
 		sb.WriteString(field.Comment)
 	}
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("}")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	return sb.String()
 }
 
@@ -48,12 +49,12 @@ func BuildGormStruct(table string, fieldList FieldList) string {
 	table = strings.TrimSuffix(table, `_t`)
 	table = stringx.UpperCamelCase(table)
 	sb := strings.Builder{}
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("type ")
 	sb.WriteString(table)
 	sb.WriteString("List []*")
 	sb.WriteString(table)
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("type ")
 	sb.WriteString(table)
 	sb.WriteString(" struct {")
@@ -62,8 +63,8 @@ func BuildGormStruct(table string, fieldList FieldList) string {
 		gormType := sqlx.Pg2GormTypeMap[field.Type]
 		up := stringx.UpperCamelCase(field.Name)
 		low := stringx.LowerCamelCase(field.Name)
-		sb.WriteString(LineSep)
-		sb.WriteString(Tab)
+		sb.WriteString(constx.NextLine)
+		sb.WriteString(constx.Tab)
 		sb.WriteString(up)
 		sb.WriteString(" ")
 		sb.WriteString(goType)
@@ -76,8 +77,8 @@ func BuildGormStruct(table string, fieldList FieldList) string {
 		sb.WriteString(";")
 		sb.WriteString("\"`")
 	}
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("}")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	return sb.String()
 }

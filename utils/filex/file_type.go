@@ -13,42 +13,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	DirAndFile     = "all"
-	OnlyDir        = "dir"
-	OnlyFile       = "file"
-	GoType         = ".go"
-	ModType        = ".mod"
-	JavaType       = ".java"
-	JarType        = ".jar"
-	ClassType      = ".class"
-	SqlType        = ".sql"
-	LogType        = ".log"
-	ShellType      = ".sh"
-	BatType        = ".bat"
-	TxtType        = ".txt"
-	JsonType       = ".json"
-	YmlType        = ".yml"
-	YamlType       = ".yaml"
-	TomlType       = ".toml"
-	XmlType        = ".xml"
-	HtmlType       = ".html"
-	PropertiesType = ".properties"
-	DocType        = ".doc"
-	DocxType       = ".docx"
-	XlsType        = ".xls"
-	XlsxType       = ".xlsx"
-	PptType        = ".ppt"
-	PptxType       = ".pptx"
-	PdfType        = ".pdf"
-	MdType         = ".md"
-	Mp3Type        = ".mp3"
-	Mp4Type        = ".mp4"
-	JpgType        = ".jpg"
-	HeicType       = ".heic"
-	WavType        = ".wav"
-)
-
 // 通过url获取文件字节
 func GetFileBytesByUrl(fileUrl string) ([]byte, error) {
 	var result []byte

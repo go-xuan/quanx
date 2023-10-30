@@ -3,11 +3,11 @@ package gatewayx
 import (
 	"encoding/json"
 	"errors"
+	"github.com/quanxiaoxuan/quanx/common/constx"
 	"strings"
 	"time"
 
 	"github.com/quanxiaoxuan/quanx/public/nacosx"
-	"github.com/quanxiaoxuan/quanx/utils/httpx"
 )
 
 // 微服务配置
@@ -49,7 +49,7 @@ func GetServerHttpUrl(group, dataId, uri string) (string, bool, error) {
 				err = errors.New("微服务实例未注册 ：" + err.Error())
 				return "", false, err
 			}
-			return httpx.HttpPrefix + url, auth, nil
+			return constx.HttpPrefix + url, auth, nil
 		}
 	}
 	return "", false, errors.New("微服务网关路由未配置")

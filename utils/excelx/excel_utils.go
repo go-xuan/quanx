@@ -1,10 +1,13 @@
-package filex
+package excelx
 
 import (
-	"github.com/quanxiaoxuan/quanx/utils/stringx"
+	"path"
+	"reflect"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/tealeg/xlsx"
-	"path"
+
+	"github.com/quanxiaoxuan/quanx/utils/stringx"
 )
 
 type SheetInfoList []*SheetInfo
@@ -12,6 +15,43 @@ type SheetInfo struct {
 	SheetName string `json:"sheetName"`
 	StartRow  int    `json:"startRow"`
 	EndRow    int    `json:"endRow"`
+}
+
+// 表头映射
+type Header struct {
+	Key  string
+	Name string
+}
+
+func HeaderStyle() *xlsx.Style {
+	return &xlsx.Style{
+		Border:    xlsx.Border{Left: "thin", Right: "thin", Top: "thin", Bottom: "thin"},
+		Fill:      xlsx.Fill{FgColor: "FF92D050", PatternType: "solid"},
+		Font:      xlsx.Font{Size: 14, Name: "微软雅黑", Charset: 134, Bold: true},
+		Alignment: xlsx.Alignment{Horizontal: "center", Vertical: "center"},
+	}
+}
+
+func DefaultStyle() *xlsx.Style {
+	return &xlsx.Style{
+		Border:    xlsx.Border{Left: "thin", Right: "thin", Top: "thin", Bottom: "thin"},
+		Fill:      xlsx.Fill{PatternType: "none"},
+		Font:      xlsx.Font{Size: 12, Name: "微软雅黑", Charset: 134},
+		Alignment: xlsx.Alignment{Horizontal: "left", Vertical: "center"},
+	}
+}
+
+func GetHeadersByStruct(st interface{}) (result []*Header) {
+	typeRef := reflect.TypeOf(st)
+	for i := 0; i < typeRef.NumField(); i++ {
+		if typeRef.Field(i).Tag.Get("export") != "" {
+			result = append(result, &Header{
+				Key:  typeRef.Field(i).Tag.Get("json"),
+				Name: typeRef.Field(i).Tag.Get("export"),
+			})
+		}
+	}
+	return
 }
 
 // 在目标sheet页中，根据【具有合并单元格的行】进行横向拆分
@@ -132,25 +172,18 @@ func ExcelReader(excelPath, sheetName string, headerMap map[string]string) ([]ma
 	return resultMapList, nil
 }
 
-// 表头映射
-type ExcelHeaderList []*ExcelHeader
-type ExcelHeader struct {
-	Key  string
-	Name string
-}
-
 // 将数据写入excel
-func ExcelWriter(excelPath string, headers ExcelHeaderList, dataList []map[string]string) error {
+func ExcelWriter(excelPath string, st interface{}, dataList []map[string]string) (err error) {
 	var xlsxFile = xlsx.NewFile()
-	var err error
 	var sheet *xlsx.Sheet
 	sheet, err = xlsxFile.AddSheet("Sheet1")
 	if err != nil {
 		log.Error("创建excel文件失败：%s", err)
-		return err
+		return
 	}
 	// 写入表头
 	headerRow := sheet.AddRow()
+	headers := GetHeadersByStruct(st)
 	for _, header := range headers {
 		headerRow.AddCell().Value = header.Name
 	}
@@ -164,7 +197,7 @@ func ExcelWriter(excelPath string, headers ExcelHeaderList, dataList []map[strin
 	//这里从新生成
 	err = xlsxFile.Save(excelPath)
 	if err != nil {
-		return err
+		return
 	}
-	return nil
+	return
 }

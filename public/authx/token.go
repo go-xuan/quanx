@@ -2,45 +2,55 @@ package authx
 
 import (
 	"encoding/json"
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	log "github.com/sirupsen/logrus"
+
+	"github.com/quanxiaoxuan/quanx/common/constx"
 )
+
+var SecretKey []byte
 
 // 用户token参数
 type User struct {
-	UserId     string `json:"userId"`      // 用户ID
-	UserName   string `json:"userName"`    // 用户名
+	Id         string `json:"id"`          // 用户ID
+	Account    string `json:"account"`     // 用户名
+	Name       string `json:"name"`        // 用户名
 	Phone      string `json:"phone"`       // 登录手机
 	LoginIp    string `json:"loginIp"`     // 登录IP
 	DomainUrl  string `json:"domainUrl"`   // 域名
 	ExpireTime int64  `json:"sessionTime"` // 过期时间
 }
 
+func InitSecretKey(key string) {
+	SecretKey = []byte(key)
+}
+
 // 生成token
-func BuildAuthToken(user *User, Key string) (string, error) {
+func BuildAuthToken(user *User) (string, error) {
 	bytes, err := json.Marshal(user)
 	var mapClaims jwt.MapClaims
 	err = json.Unmarshal(bytes, &mapClaims)
 	if err != nil {
 		return "", err
 	}
-	return GenerateToken(mapClaims, Key)
+	return GenerateToken(mapClaims)
 }
 
 // 解析token
-func ParseAuthToken(token, key string) (user *User, err error) {
+func ParseAuthToken(token string) (user *User, err error) {
 	var resultMap map[string]interface{}
-	resultMap, err = ParseTokenToJson(token, key)
+	resultMap, err = ParseTokenToJson(token)
 	if err != nil {
-		log.Error("解析token失败", err)
-		return nil, err
+		err = errors.New("解析token失败")
+		return
 	}
 	user = &User{
-		UserId:     resultMap["userId"].(string),
-		UserName:   resultMap["userName"].(string),
+		Id:         resultMap["id"].(string),
+		Account:    resultMap["account"].(string),
+		Name:       resultMap["name"].(string),
 		Phone:      resultMap["phone"].(string),
 		LoginIp:    resultMap["loginIp"].(string),
 		DomainUrl:  resultMap["domainUrl"].(string),
@@ -50,13 +60,12 @@ func ParseAuthToken(token, key string) (user *User, err error) {
 }
 
 // 获取用户ID
-func GetUserId(context *gin.Context, key string) (userId int64) {
-	auth := context.Request.Header.Get("Authorization")
-	tp, err := ParseAuthToken(auth, key)
+func GetUserId(context *gin.Context) (userId int64) {
+	tp, err := ParseAuthToken(context.Request.Header.Get(constx.Authorization))
 	if err != nil {
 		return
 	}
-	userId, err = strconv.ParseInt(tp.UserId, 10, 64)
+	userId, err = strconv.ParseInt(tp.Id, 10, 64)
 	if err != nil {
 		return
 	}
@@ -64,15 +73,15 @@ func GetUserId(context *gin.Context, key string) (userId int64) {
 }
 
 // 生成Token值
-func GenerateToken(mapClaims jwt.MapClaims, secret string) (string, error) {
+func GenerateToken(mapClaims jwt.MapClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, mapClaims)
-	return token.SignedString([]byte(secret))
+	return token.SignedString(SecretKey)
 }
 
 // 解析token
-func ParseTokenToJson(token string, secret string) (map[string]interface{}, error) {
+func ParseTokenToJson(token string) (map[string]interface{}, error) {
 	claim, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		return []byte(secret), nil
+		return SecretKey, nil
 	})
 	if err != nil {
 		return nil, err

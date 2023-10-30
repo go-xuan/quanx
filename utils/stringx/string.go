@@ -5,8 +5,8 @@ import (
 )
 
 // 字符串是否包含
-func ContainsAny(str string, args ...string) bool {
-	for _, sub := range args {
+func ContainsAny(str string, subs ...string) bool {
+	for _, sub := range subs {
 		if strings.Contains(str, sub) {
 			return true
 		}
@@ -15,8 +15,8 @@ func ContainsAny(str string, args ...string) bool {
 }
 
 // 字符串是否包含
-func ContainsBoth(str string, args ...string) bool {
-	for _, sub := range args {
+func ContainsBoth(str string, subs ...string) bool {
+	for _, sub := range subs {
 		if !strings.Contains(str, sub) {
 			return false
 		}
@@ -25,8 +25,8 @@ func ContainsBoth(str string, args ...string) bool {
 }
 
 // 是否有空
-func HasEmpty(args ...string) bool {
-	for _, arg := range args {
+func HasEmpty(strs ...string) bool {
+	for _, arg := range strs {
 		if len(arg) == 0 {
 			return true
 		}

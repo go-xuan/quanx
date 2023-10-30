@@ -21,7 +21,7 @@ type Config struct {
 	Host     string `json:"host" yaml:"host"`         // 数据库Host
 	Port     int    `json:"port" yaml:"port"`         // 数据库端口
 	Database string `json:"database" yaml:"database"` // 数据库名
-	UserName string `json:"userName" yaml:"userName"` // 用户名
+	UserName string `json:"username" yaml:"username"` // 用户名
 	Password string `json:"password" yaml:"password"` // 密码
 	Debug    bool   `json:"debug" yaml:"debug"`       // 开启debug
 	Init     bool   `json:"init" yaml:"init"`         // 是否初始化model

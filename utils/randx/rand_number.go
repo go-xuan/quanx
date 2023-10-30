@@ -7,12 +7,12 @@ import (
 
 // 随机整数
 func Int() int {
-	return IntRange(0, math.MaxInt)
+	return IntRange(1, math.MaxInt)
 }
 
 // 随机整数
 func Int64() int64 {
-	return Int64Range(0, math.MaxInt64)
+	return Int64Range(1, math.MaxInt64)
 }
 
 // 随机浮点数

@@ -3,6 +3,7 @@ package httpx
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/quanxiaoxuan/quanx/common/constx"
 	"io"
 	"net/http"
 	"net/url"
@@ -11,19 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
-)
-
-const (
-	POST            = "POST"
-	GET             = "GET"
-	PUT             = "PUT"
-	DELETE          = "DELETE"
-	HttpPrefix      = "http://"
-	HttpsPrefix     = "https://"
-	ContentType     = "Content-Type"
-	ContentTypeJson = "application/json"
-	ContentTypeForm = "application/x-www-form-urlencoded"
-	ContentTypeGBK  = "application/javascript;charset=GBK"
 )
 
 func RequestHttp(method string, host string, header map[string]string, param interface{}) (result string, err error) {
@@ -39,7 +27,7 @@ func RequestHttp(method string, host string, header map[string]string, param int
 		log.Error(err)
 		return
 	}
-	req.Header.Set(ContentType, ContentTypeJson)
+	req.Header.Set(constx.ContentType, constx.JsonContent)
 	for key, val := range header {
 		req.Header.Set(key, val)
 	}
@@ -58,8 +46,8 @@ func RequestHttp(method string, host string, header map[string]string, param int
 		log.Error(err)
 		return
 	}
-	if len(resp.Header[ContentType]) > 0 {
-		if resp.Header[ContentType][0] == ContentTypeGBK {
+	if len(resp.Header[constx.ContentType]) > 0 {
+		if resp.Header[constx.ContentType][0] == constx.GBKContent {
 			result = DecodeBody(string(body))
 		} else {
 			result = string(body)

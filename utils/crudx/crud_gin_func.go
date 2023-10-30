@@ -23,13 +23,13 @@ func (m *Model[T]) AddHandler(context *gin.Context) {
 	var add T
 	if err = context.BindJSON(&add); err != nil {
 		log.Error("参数错误：", err)
-		respx.BuildExceptionResponse(context, respx.ParamErr, err)
+		respx.BuildException(context, respx.ParamErr, err)
 		return
 	}
 	if err = m.DbAdd(add); err != nil {
-		respx.BuildErrorResponse(context, err.Error())
+		respx.BuildError(context, err)
 	} else {
-		respx.BuildSuccessResponse(context, nil)
+		respx.BuildSuccess(context, nil)
 	}
 }
 
@@ -38,13 +38,13 @@ func (m *Model[T]) UpdateHandler(context *gin.Context) {
 	var update T
 	if err = context.BindJSON(&update); err != nil {
 		log.Error("参数错误：", err)
-		respx.BuildExceptionResponse(context, respx.ParamErr, err)
+		respx.BuildException(context, respx.ParamErr, err)
 		return
 	}
 	if err = m.DbUpdate(update); err != nil {
-		respx.BuildErrorResponse(context, err.Error())
+		respx.BuildError(context, err)
 	} else {
-		respx.BuildSuccessResponse(context, nil)
+		respx.BuildSuccess(context, nil)
 	}
 }
 
@@ -55,13 +55,13 @@ func (m *Model[T]) DeleteHandler(context *gin.Context) {
 	}
 	if err = context.ShouldBindQuery(&form); err != nil {
 		log.Error("参数错误：", err)
-		respx.BuildExceptionResponse(context, respx.ParamErr, err)
+		respx.BuildException(context, respx.ParamErr, err)
 		return
 	}
 	if err = m.DbDelete(form.Id); err != nil {
-		respx.BuildErrorResponse(context, err.Error())
+		respx.BuildError(context, err)
 	} else {
-		respx.BuildSuccessResponse(context, nil)
+		respx.BuildSuccess(context, nil)
 	}
 }
 
@@ -72,13 +72,13 @@ func (m *Model[T]) DetailHandler(context *gin.Context) {
 	}
 	if err = context.ShouldBindQuery(&form); err != nil {
 		log.Error("参数错误：", err)
-		respx.BuildExceptionResponse(context, respx.ParamErr, err)
+		respx.BuildException(context, respx.ParamErr, err)
 		return
 	}
 	var obj T
 	if obj, err = m.DbDetail(form.Id); err != nil {
-		respx.BuildErrorResponse(context, err.Error())
+		respx.BuildError(context, err)
 	} else {
-		respx.BuildSuccessResponse(context, obj)
+		respx.BuildSuccess(context, obj)
 	}
 }

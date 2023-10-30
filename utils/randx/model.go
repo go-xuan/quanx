@@ -1,6 +1,7 @@
 package randx
 
 import (
+	"github.com/quanxiaoxuan/quanx/common/constx"
 	"strconv"
 	"strings"
 	"time"
@@ -63,26 +64,26 @@ func (m *RandModel) GetRandString() (result string) {
 		}
 		kvMap := ParseConstraint(m.Constraint)
 		// 补充前缀
-		if strings.Contains(m.Constraint, Prefix) {
-			result = kvMap[Prefix] + result
+		if strings.Contains(m.Constraint, constx.Prefix) {
+			result = kvMap[constx.Prefix] + result
 		}
 		// 后缀
-		if strings.Contains(m.Constraint, Suffix) {
-			result = result + kvMap[Suffix]
+		if strings.Contains(m.Constraint, constx.Suffix) {
+			result = result + kvMap[constx.Suffix]
 		}
 		// 字符替换
-		if stringx.ContainsAny(m.Constraint, Old, New) {
-			result = strings.ReplaceAll(result, kvMap[Old], kvMap[New])
+		if stringx.ContainsAny(m.Constraint, constx.Old, constx.New) {
+			result = strings.ReplaceAll(result, kvMap[constx.Old], kvMap[constx.New])
 		}
 		// 大小写转换
-		if strings.Contains(m.Constraint, Upper) {
-			if kvMap[Upper] == "true" {
+		if strings.Contains(m.Constraint, constx.Upper) {
+			if kvMap[constx.Upper] == "true" {
 				result = strings.ToUpper(result)
 			}
 		}
 		// 大小写转换
-		if strings.Contains(m.Constraint, Lower) {
-			if kvMap[Lower] == "true" {
+		if strings.Contains(m.Constraint, constx.Lower) {
+			if kvMap[constx.Lower] == "true" {
 				result = strings.ToLower(result)
 			}
 		}
@@ -131,7 +132,7 @@ func (m *RandModel) randString() (result string) {
 		options = append(options, m.Options...)
 		result = Radio(options)
 	case StringType:
-		result = CharString(GetLength(constraint))
+		result = String(GetLength(constraint))
 	default:
 		result = String()
 	}
@@ -140,11 +141,11 @@ func (m *RandModel) randString() (result string) {
 
 // 解析约束参数，转为map集合
 func ParseConstraint(constraint string) map[string]string {
-	if strings.Contains(constraint, Equal) {
+	if strings.Contains(constraint, constx.Equal) {
 		kvMap := make(map[string]string)
-		kvs := strings.Split(constraint, Split)
+		kvs := strings.Split(constraint, constx.Split)
 		for _, kv := range kvs {
-			k, v := stringx.SplitByFirst(kv, Equal)
+			k, v := stringx.SplitByFirst(kv, constx.Equal)
 			kvMap[k] = v
 		}
 		return kvMap
@@ -155,8 +156,8 @@ func ParseConstraint(constraint string) map[string]string {
 // 获取长度约束
 func GetLength(constraint string) (length int) {
 	kvMap := ParseConstraint(constraint)
-	if strings.Contains(constraint, Length) {
-		length, _ = strconv.Atoi(kvMap[Length])
+	if strings.Contains(constraint, constx.Length) {
+		length, _ = strconv.Atoi(kvMap[constx.Length])
 	}
 	return 8
 }
@@ -164,11 +165,11 @@ func GetLength(constraint string) (length int) {
 // 获取前后缀
 func ParsePrefixAndSuffix(constraint string) (prefix, suffix string) {
 	kvMap := ParseConstraint(constraint)
-	if strings.Contains(constraint, Prefix) {
-		prefix = kvMap[Prefix]
+	if strings.Contains(constraint, constx.Prefix) {
+		prefix = kvMap[constx.Prefix]
 	}
-	if strings.Contains(constraint, Suffix) {
-		suffix = kvMap[Suffix]
+	if strings.Contains(constraint, constx.Suffix) {
+		suffix = kvMap[constx.Suffix]
 	}
 	return
 }
@@ -179,11 +180,11 @@ func ParseConstraintOfInt(constraint string) (min, max int) {
 	min = 1
 	max = 9999
 	kvMap := ParseConstraint(constraint)
-	if strings.Contains(constraint, Min) {
-		min, _ = strconv.Atoi(kvMap[Min])
+	if strings.Contains(constraint, constx.Min) {
+		min, _ = strconv.Atoi(kvMap[constx.Min])
 	}
-	if strings.Contains(constraint, Max) {
-		max, _ = strconv.Atoi(kvMap[Max])
+	if strings.Contains(constraint, constx.Max) {
+		max, _ = strconv.Atoi(kvMap[constx.Max])
 	}
 	return
 }
@@ -196,14 +197,14 @@ func ParseConstraintOfFloat(constraint string) (min, max float64, prec int) {
 	max = 9999
 	prec = 6
 	kvMap := ParseConstraint(constraint)
-	if strings.Contains(constraint, Min) {
-		min, _ = strconv.ParseFloat(kvMap[Min], 64)
+	if strings.Contains(constraint, constx.Min) {
+		min, _ = strconv.ParseFloat(kvMap[constx.Min], 64)
 	}
-	if strings.Contains(constraint, Max) {
-		max, _ = strconv.ParseFloat(kvMap[Max], 64)
+	if strings.Contains(constraint, constx.Max) {
+		max, _ = strconv.ParseFloat(kvMap[constx.Max], 64)
 	}
-	if strings.Contains(constraint, Prec) {
-		prec, _ = strconv.Atoi(kvMap[Prec])
+	if strings.Contains(constraint, constx.Prec) {
+		prec, _ = strconv.Atoi(kvMap[constx.Prec])
 	}
 	return
 }
@@ -214,29 +215,29 @@ func ParseConstraintOfTime(constraint string) (min, max time.Time, format string
 	now := time.Now()
 	max = now
 	min = now.Add(time.Hour * -24 * 30)
-	format = timex.FmtDefault
+	format = constx.TimeFmt
 	kvMap := ParseConstraint(constraint)
-	if strings.Contains(constraint, Min) {
-		min = timex.ToTime(kvMap[Min])
+	if strings.Contains(constraint, constx.Min) {
+		min = timex.ToTime(kvMap[constx.Min])
 	}
-	if strings.Contains(constraint, Max) {
-		max = timex.ToTime(kvMap[Max])
+	if strings.Contains(constraint, constx.Max) {
+		max = timex.ToTime(kvMap[constx.Max])
 	}
-	if strings.Contains(constraint, Format) {
-		format = kvMap[Format]
+	if strings.Contains(constraint, constx.Format) {
+		format = kvMap[constx.Format]
 	}
 	return
 }
 
 // 解析密码约束条件
 func ParseConstraintOfPassword(constraint string) (length int, lower, upper, numeric, special bool) {
-	if stringx.ContainsAny(constraint, Length, Lower, Upper, Numeric, Special) {
+	if stringx.ContainsAny(constraint, constx.Length, constx.Lower, constx.Upper, constx.HasNumber, constx.HasSymbol) {
 		kvMap := ParseConstraint(constraint)
-		length, _ = strconv.Atoi(kvMap[Length])
-		lower = kvMap[Lower] == "true"
-		upper = kvMap[Upper] == "true"
-		numeric = kvMap[Numeric] == "true"
-		special = kvMap[Special] == "true"
+		length, _ = strconv.Atoi(kvMap[constx.Length])
+		lower = kvMap[constx.Lower] == "true"
+		upper = kvMap[constx.Upper] == "true"
+		numeric = kvMap[constx.HasNumber] == "true"
+		special = kvMap[constx.HasSymbol] == "true"
 		return
 	}
 	return 8, true, true, true, true
@@ -244,22 +245,22 @@ func ParseConstraintOfPassword(constraint string) (length int, lower, upper, num
 
 // 解析备选项约束条件
 func ParseConstraintOfOptions(constraint string) (options []string) {
-	if stringx.ContainsAny(constraint, Options) {
+	if stringx.ContainsAny(constraint, constx.Options) {
 		kvMap := ParseConstraint(constraint)
-		options = strings.Split(kvMap[Options], ",")
+		options = strings.Split(kvMap[constx.Options], ",")
 	}
 	return
 }
 
 // 获取数据库取值sql
 func ParseConstraintOfSql(constraint string) (sql string) {
-	if stringx.ContainsAny(constraint, Table, Field) {
+	if stringx.ContainsAny(constraint, constx.Table, constx.Field) {
 		sb := strings.Builder{}
 		kvMap := ParseConstraint(constraint)
 		sb.WriteString(`select distinct `)
-		sb.WriteString(kvMap[Field])
+		sb.WriteString(kvMap[constx.Field])
 		sb.WriteString(` from `)
-		sb.WriteString(kvMap[Table])
+		sb.WriteString(kvMap[constx.Table])
 		sql = sb.String()
 		return
 	}

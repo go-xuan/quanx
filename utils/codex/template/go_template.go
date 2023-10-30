@@ -2,8 +2,8 @@ package template
 
 const GoParam = `
 type {modelName}Query struct {
-	SearchKey string 				// 关键字
-	PageParam *request.PageParam 	// 分页查询参数
+	Keyword string 				// 关键字
+	Page *request.Page 	// 分页查询参数
 }
 `
 
@@ -100,7 +100,7 @@ func {modelName}Page(param params.{modelName}Query) (*response.PageResponse, err
 	if err != nil {
 		return nil, err
 	}
-	return response.BuildPageData(param.PageParam, resultList, total), nil
+	return response.BuildPageData(param.Page, resultList, total), nil
 }
 `
 

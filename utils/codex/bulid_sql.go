@@ -1,6 +1,7 @@
 package codex
 
 import (
+	"github.com/quanxiaoxuan/quanx/common/constx"
 	"github.com/quanxiaoxuan/quanx/utils/sqlx"
 	"github.com/quanxiaoxuan/quanx/utils/stringx"
 	"strings"
@@ -13,17 +14,17 @@ func BuildCkCreateSql(table, engine string, fieldList FieldList) string {
 	sb.WriteString(" table ")
 	sb.WriteString(table)
 	sb.WriteString(";")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("create")
 	sb.WriteString(" table ")
 	sb.WriteString(table)
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("(")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	for i, field := range fieldList {
 		if i > 0 {
 			sb.WriteString(",")
-			sb.WriteString(LineSep)
+			sb.WriteString(constx.NextLine)
 		}
 		sb.WriteString("   `")
 		sb.WriteString(field.Name)
@@ -37,9 +38,9 @@ func BuildCkCreateSql(table, engine string, fieldList FieldList) string {
 		sb.WriteString(field.Comment)
 		sb.WriteString("'")
 	}
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString(")")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString(engine)
 	return sb.String()
 }
@@ -51,14 +52,14 @@ func BuildInsertSql(table string, fieldList FieldList) string {
 	sb.WriteString("insert")
 	sb.WriteString(" into ")
 	sb.WriteString(table)
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("  (")
 	for i, field := range fieldList {
 		low := stringx.LowerCamelCase(field.Name)
 		if i > 0 {
-			sb.WriteString(LineSep)
+			sb.WriteString(constx.NextLine)
 			sb.WriteString("   ")
-			iv.WriteString(LineSep)
+			iv.WriteString(constx.NextLine)
 			iv.WriteString("   ")
 		}
 		sb.WriteString(field.Name)
@@ -68,13 +69,13 @@ func BuildInsertSql(table string, fieldList FieldList) string {
 		iv.WriteString("},")
 	}
 	sb.WriteString(",)")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("values")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("  (")
 	sb.WriteString(iv.String())
 	sb.WriteString(",)")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	return strings.ReplaceAll(sb.String(), ",,", "")
 }
 
@@ -83,12 +84,12 @@ func BuildUpdateSql(table string, fieldList FieldList) string {
 	sb := strings.Builder{}
 	sb.WriteString("update ")
 	sb.WriteString(table)
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("   set ")
 	for i, field := range fieldList {
 		low := stringx.LowerCamelCase(field.Name)
 		if i > 0 {
-			sb.WriteString(LineSep)
+			sb.WriteString(constx.NextLine)
 			sb.WriteString("       ")
 		}
 		sb.WriteString(field.Name)
@@ -97,9 +98,9 @@ func BuildUpdateSql(table string, fieldList FieldList) string {
 		sb.WriteString("},")
 	}
 	sb.WriteString(",")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString(" where id = #{item.id} ")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	return strings.ReplaceAll(sb.String(), ",,", "")
 }
 
@@ -109,17 +110,17 @@ func BuildSelectSql(table string, fieldList FieldList) string {
 	sb.WriteString("select ")
 	for i, field := range fieldList {
 		if i > 0 {
-			sb.WriteString(LineSep)
+			sb.WriteString(constx.NextLine)
 			sb.WriteString("       ")
 		}
 		sb.WriteString(field.Name)
 		sb.WriteString(",")
 	}
 	sb.WriteString(",")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("  from ")
 	sb.WriteString(table)
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	return strings.ReplaceAll(sb.String(), ",,", "")
 }
 
@@ -130,7 +131,7 @@ func BuildSelectSqlAlias(table string, columns FieldList) string {
 	for i, field := range columns {
 		alias := stringx.LowerCamelCase(field.Name)
 		if i > 0 {
-			sb.WriteString(LineSep)
+			sb.WriteString(constx.NextLine)
 			sb.WriteString("       ")
 		}
 		sb.WriteString(field.Name)
@@ -139,9 +140,9 @@ func BuildSelectSqlAlias(table string, columns FieldList) string {
 		sb.WriteString(",")
 	}
 	sb.WriteString(",")
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	sb.WriteString("  from ")
 	sb.WriteString(table)
-	sb.WriteString(LineSep)
+	sb.WriteString(constx.NextLine)
 	return strings.ReplaceAll(sb.String(), ",,", "")
 }

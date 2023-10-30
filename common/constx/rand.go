@@ -1,25 +1,23 @@
-package randx
+package constx
 
 // 随机数据生成约束条件关键字
 const (
-	Split   = "&"
-	Equal   = "="
-	Min     = "min"     // 最小值
-	Max     = "max"     // 最大值
-	Prefix  = "prefix"  // 前缀
-	Suffix  = "suffix"  // 后缀
-	Prec    = "prec"    // 小数位
-	Format  = "format"  // 时间格式
-	Length  = "length"  // 长度
-	Lower   = "lower"   // 小写
-	Upper   = "upper"   // 大写
-	Numeric = "numeric" // 数字
-	Special = "special" // 特殊符号
-	Old     = "old"     // 替换旧字符
-	New     = "new"     // 替换新字符
-	Options = "options" // 枚举选项，多个以逗号分割
-	Table   = "table"   // 表名，表字段所属表名
-	Field   = "field"   // 字段名
+	Min       = "min"        // 最小值
+	Max       = "max"        // 最大值
+	Prefix    = "prefix"     // 前缀
+	Suffix    = "suffix"     // 后缀
+	Prec      = "prec"       // 小数位
+	Format    = "format"     // 时间格式
+	Length    = "length"     // 长度
+	Lower     = "lower"      // 小写
+	Upper     = "upper"      // 大写
+	HasNumber = "has_number" // 是否含有数字
+	HasSymbol = "has_symbol" // 是否含有符号
+	Old       = "old"        // 替换旧字符
+	New       = "new"        // 替换新字符
+	Options   = "options"    // 枚举选项，多个以逗号分割
+	Table     = "table"      // 表名，表字段所属表名
+	Field     = "field"      // 字段名
 )
 
 // 字典配置

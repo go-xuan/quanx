@@ -33,6 +33,11 @@ func (conf *Config) Format() string {
 		conf.Source, conf.Mode, conf.Host, conf.Port, conf.Database)
 }
 
+// 配置信息格式化
+func (conf *Config) Address() string {
+	return fmt.Sprintf("%s:%d", conf.Host, conf.Port)
+}
+
 // 初始化redis，默认单机模式
 func (conf *Config) NewRedisCmdable(database ...int) (cmd redis.Cmdable) {
 	var db = conf.Database

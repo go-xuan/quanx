@@ -2,10 +2,9 @@ package hugegraphx
 
 import (
 	"fmt"
+	"github.com/quanxiaoxuan/quanx/common/constx"
 	"strconv"
 	"strings"
-
-	"github.com/quanxiaoxuan/quanx/utils/httpx"
 )
 
 // hugegraph配置
@@ -22,7 +21,7 @@ func (conf *Config) Format() string {
 
 func (conf *Config) GremlinHttpUrl() string {
 	httpUrl := strings.Builder{}
-	httpUrl.WriteString(httpx.HttpPrefix)
+	httpUrl.WriteString(constx.HttpPrefix)
 	httpUrl.WriteString(conf.Host)
 	httpUrl.WriteString(`:`)
 	httpUrl.WriteString(strconv.Itoa(conf.Port))
@@ -32,7 +31,7 @@ func (conf *Config) GremlinHttpUrl() string {
 
 func (conf *Config) SchemaHttpUrl(url string) string {
 	httpUrl := strings.Builder{}
-	httpUrl.WriteString(httpx.HttpPrefix)
+	httpUrl.WriteString(constx.HttpPrefix)
 	httpUrl.WriteString(conf.Host)
 	httpUrl.WriteString(`:`)
 	httpUrl.WriteString(strconv.Itoa(conf.Port))

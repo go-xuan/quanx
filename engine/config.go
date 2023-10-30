@@ -18,9 +18,10 @@ type Config struct {
 
 // 服务配置
 type Server struct {
-	Name   string `yaml:"name"`                     // 服务名
-	Host   string `yaml:"host" default:"127.0.0.1"` // 服务host
-	Port   int    `yaml:"port" default:"8888"`      // 服务端口
-	Env    string `yaml:"env" default:"localhost"`  // server run environment
-	Prefix string `yaml:"prefix" default:"api"`     // prefix of api (RESTFul api prefix)
+	Name        string `yaml:"name"`                     // 服务名
+	Host        string `yaml:"host" default:"127.0.0.1"` // 服务host
+	Port        int    `yaml:"port" default:"8888"`      // 服务端口
+	Env         string `yaml:"env" default:"localhost"`  // server run environment
+	Prefix      string `yaml:"prefix" default:"api"`     // prefix of api (RESTFul api prefix)
+	SessionName string `yaml:"sessionName" default:"my_session"`
 }

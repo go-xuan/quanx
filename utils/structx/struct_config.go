@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/magiconair/properties"
+	"github.com/quanxiaoxuan/quanx/common/constx"
 	"github.com/quanxiaoxuan/quanx/utils/filex"
 	"gopkg.in/yaml.v3"
 	"os"
@@ -75,13 +76,13 @@ func ReadConfigToPointer(filePath string, config interface{}) (err error) {
 		return
 	}
 	switch filex.Suffix(filePath) {
-	case filex.JsonType:
+	case constx.Json:
 		err = ReadJsonToPointer(bytes, config)
-	case filex.YamlType, filex.YmlType:
+	case constx.Yaml, constx.Yml:
 		err = ReadYamlToPointer(bytes, config)
-	case filex.TomlType:
+	case constx.Toml:
 		err = ReadTomlToPointer(bytes, config)
-	case filex.PropertiesType:
+	case constx.Properties:
 		err = ReadPropertiesToPointer(bytes, config)
 	}
 	return

@@ -5,6 +5,8 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"os"
+
+	"github.com/quanxiaoxuan/quanx/common/constx"
 )
 
 type writeMode uint
@@ -63,7 +65,7 @@ func WriteFileLine(path string, contents []string, mode writeMode) error {
 	writer := bufio.NewWriter(file)
 	for _, line := range contents {
 		_, _ = writer.WriteString(line)
-		_, _ = writer.WriteString(NextLine)
+		_, _ = writer.WriteString(constx.NextLine)
 	}
 	if err = writer.Flush(); err != nil {
 		return err

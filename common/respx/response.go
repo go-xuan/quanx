@@ -1,9 +1,8 @@
 package respx
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 // 正常响应
@@ -13,64 +12,56 @@ type Response struct {
 	Data interface{} `json:"data"` // 响应数据
 }
 
-// 结果响应
-func BuildResultResponse(context *gin.Context, data interface{}, err error) {
+// 响应
+func BuildResponse(ctx *gin.Context, data interface{}, err error) {
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, &Response{
-			Code: Error.Code,
-			Msg:  Error.Msg,
-			Data: data,
-		})
+		BuildError(ctx, err)
 	} else {
-		context.JSON(http.StatusOK, &Response{
-			Code: Success.Code,
-			Msg:  Success.Msg,
-			Data: data,
-		})
+		BuildSuccess(ctx, data)
 	}
 }
 
 // 自定义响应
-func BuildResponse(context *gin.Context, code int, message string, data interface{}) {
+func BuildCustom(ctx *gin.Context, code int, message string, data interface{}) {
 	response := Response{
 		Code: code,
 		Msg:  message,
 		Data: data,
 	}
-	context.JSON(http.StatusInternalServerError, &response)
+	ctx.JSON(http.StatusInternalServerError, &response)
 }
 
 // 成功响应
-func BuildSuccessResponse(context *gin.Context, data interface{}) {
+func BuildSuccess(ctx *gin.Context, data interface{}) {
 	response := Response{
 		Code: Success.Code,
 		Msg:  Success.Msg,
 		Data: data,
 	}
-	context.JSON(http.StatusOK, &response)
+	ctx.JSON(http.StatusOK, &response)
 }
 
 // 错误响应
-func BuildErrorResponse(context *gin.Context, data interface{}) {
+func BuildError(ctx *gin.Context, err error) {
 	response := Response{
 		Code: Error.Code,
 		Msg:  Error.Msg,
-		Data: data,
+		Data: err.Error(),
 	}
-	context.JSON(http.StatusInternalServerError, &response)
+	ctx.JSON(http.StatusInternalServerError, &response)
 }
 
 // 异常响应
-func BuildExceptionResponse(context *gin.Context, res ErrEnum, data interface{}) {
+func BuildException(ctx *gin.Context, res ErrEnum, data interface{}) {
 	response := Response{
 		Code: res.Code,
 		Msg:  res.Msg,
 		Data: data,
 	}
-	context.JSON(http.StatusInternalServerError, &response)
+	ctx.JSON(http.StatusInternalServerError, &response)
 }
 
 // 文件响应
-func BuildFileResponse(context *gin.Context, filePath string) {
-	context.File(filePath)
+func BuildFileResponse(ctx *gin.Context, filePath string) {
+	ctx.File(filePath)
 }

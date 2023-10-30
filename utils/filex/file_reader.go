@@ -3,6 +3,7 @@ package filex
 import (
 	"bufio"
 	"fmt"
+	"github.com/quanxiaoxuan/quanx/common/constx"
 	"io"
 	"os"
 	"path/filepath"
@@ -67,13 +68,13 @@ func FileScan(dir string, ft string) (fileInfos []*File, err error) {
 		}
 		file := File{path, info}
 		switch ft {
-		case DirAndFile:
+		case constx.DirAndFile:
 			fileInfos = append(fileInfos, &file)
-		case OnlyDir:
+		case constx.OnlyDir:
 			if info.IsDir() {
 				fileInfos = append(fileInfos, &file)
 			}
-		case OnlyFile:
+		case constx.OnlyFile:
 			if !info.IsDir() {
 				fileInfos = append(fileInfos, &file)
 			}

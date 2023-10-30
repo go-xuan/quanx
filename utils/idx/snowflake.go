@@ -1,7 +1,8 @@
-package snowflakex
+package idx
 
 import (
 	"math"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -22,25 +23,30 @@ const (
 	epoch          = int64(946656000000)              // 起始常量时间戳（毫秒）,此处选取的时间是2000-01-01 00:00:00
 )
 
-var Generator *SnowFlake
+var sf *Snowflake
 
-type SnowFlake struct {
+type Snowflake struct {
 	sync.Mutex
 	WorkerId  int64 // 机器号,0~1023
 	TimeStamp int64 // 时间戳
 	Sequence  int64 // 序列号
 }
 
-func NewGenerator(workerId int64) {
-	if Generator == nil {
-		if workerId < 0 || workerId > workerMax {
-			workerId = int64(math.Abs(float64(workerId % workerMax)))
+func SnowFlake(id ...int64) *Snowflake {
+	if sf == nil {
+		var workerId int64 = 1
+		if len(id) > 0 {
+			workerId = id[0]
+			if workerId < 0 || workerId > workerMax {
+				workerId = int64(math.Abs(float64(workerId % workerMax)))
+			}
 		}
-		Generator = &SnowFlake{WorkerId: workerId, TimeStamp: 0, Sequence: 0}
+		sf = &Snowflake{WorkerId: workerId, TimeStamp: 0, Sequence: 0}
 	}
+	return sf
 }
 
-func (sf *SnowFlake) NewId() int64 {
+func (sf *Snowflake) NewInt64() int64 {
 	sf.Lock()
 	defer sf.Unlock()
 	now := time.Now().UnixNano() / 1e6
@@ -56,4 +62,8 @@ func (sf *SnowFlake) NewId() int64 {
 		sf.TimeStamp = now
 	}
 	return (now-epoch)<<timeStampShift | (sf.WorkerId << workerShift) | (sf.Sequence)
+}
+
+func (sf *Snowflake) NewString() string {
+	return strconv.FormatInt(sf.NewInt64(), 10)
 }
