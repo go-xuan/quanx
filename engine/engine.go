@@ -1,12 +1,8 @@
 package engine
 
 import (
-	"net/http"
 	"strconv"
 
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
-	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
@@ -167,7 +163,6 @@ func (e *Engine) StartGin() {
 	}
 	e.GinEngine = gin.New()
 	e.GinEngine.Use(logx.LoggerToFile(), gin.Recovery())
-	e.OpenSession()
 	if e.GinMiddleware != nil && len(e.GinMiddleware) > 0 {
 		e.GinEngine.Use(e.GinMiddleware...)
 	}
@@ -197,24 +192,6 @@ func (e *Engine) LoadNacosConfig(config interface{}, group string, dataId ...str
 			_ = optMap[item].LoadNacosConfig(config)
 		}
 	}
-}
-
-// 开启session
-func (e *Engine) OpenSession() {
-	if e.Config.Server.SessionName != "" {
-		var store = cookie.NewStore()
-		if len(e.Config.Redis) > 0 {
-			address := redisx.GetConfig("session").Address()
-			var err error
-			store, err = redis.NewStore(10, "tcp", address, "")
-			if err != nil {
-				panic(err)
-			}
-		}
-		store.Options(sessions.Options{Secure: true, SameSite: http.SameSiteNoneMode, Path: "/", MaxAge: 60 * 60})
-		e.GinEngine.Use(sessions.Sessions(e.Config.Server.SessionName, store))
-	}
-	return
 }
 
 // 服务保活
