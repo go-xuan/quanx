@@ -4,14 +4,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-)
 
-const (
-	FmtTimestamp = "20060102150405"
-	FmtDefault   = "2006-01-02 15:04:05"
-	FmtDate      = "2006-01-02"
-	FmtMonth     = "2006-01"
-	Animal       = "鼠,牛,虎,兔,龙,蛇,马,羊,猴,鸡,狗,猪"
+	"github.com/quanxiaoxuan/quanx/common/constx"
 )
 
 type Unit uint
@@ -31,14 +25,14 @@ const (
 
 // 时间转字符
 func ToString(time time.Time) string {
-	return time.Format(FmtDefault)
+	return time.Format(constx.TimeFmt)
 }
 
 // 字符转时间
 func ToTime(timeStr string) time.Time {
-	format := FmtDefault
+	format := constx.TimeFmt
 	if strings.Contains(timeStr, "-") && len(timeStr) == 10 {
-		format = FmtDate
+		format = constx.DateFmt
 	}
 	return TimeFormat(timeStr, format)
 }
@@ -59,12 +53,12 @@ func SecondFormat(second int64, format string) string {
 
 // 当前时间字符串
 func NowString() string {
-	return time.Now().Format(FmtDefault)
+	return time.Now().Format(constx.TimeFmt)
 }
 
 // 今天
 func TodayStr() string {
-	return time.Now().Format(FmtDate)
+	return time.Now().Format(constx.DateFmt)
 }
 
 // 今天开始时间
@@ -74,7 +68,7 @@ func TodayStart() time.Time {
 
 // 昨天
 func YesterdayStr() string {
-	return time.Now().AddDate(0, 0, -1).Format(FmtDate)
+	return time.Now().AddDate(0, 0, -1).Format(constx.DateFmt)
 }
 
 // 获取生肖
@@ -87,7 +81,7 @@ func AnimalIs(year int) string {
 		}
 	}
 	diff := (year - 4) % 12
-	animals := strings.Split(Animal, ",")
+	animals := strings.Split(constx.Animal, ",")
 	return animals[diff]
 }
 
@@ -114,15 +108,15 @@ func TimeDiff(startTime, endTime time.Time, unit Unit) (diff int64) {
 	case Day:
 		diff = (endTime.Unix() - startTime.Unix()) / 86400
 	case Month:
-		diff = MonthDiff(startTime, endTime)
+		diff = MonthInterval(startTime, endTime)
 	case Year:
-		diff = int64(YearDiff(startTime, endTime))
+		diff = int64(YearInterval(startTime, endTime))
 	}
 	return
 }
 
 // 间隔年数
-func YearDiff(startTime, endTime time.Time) (diff int) {
+func YearInterval(startTime, endTime time.Time) (diff int) {
 	if startTime.After(endTime) {
 		return 0
 	}
@@ -130,7 +124,7 @@ func YearDiff(startTime, endTime time.Time) (diff int) {
 }
 
 // 间隔月份数
-func MonthDiff(startTime, endTime time.Time) (diff int64) {
+func MonthInterval(startTime, endTime time.Time) (diff int64) {
 	startTime = startTime.AddDate(0, 1, 0)
 	for {
 		if startTime.Before(endTime) {
@@ -166,10 +160,10 @@ func MonthSlice(startTimeUnix, endTimeUnix int64) []string {
 	tempTime = time.Date(year, month, 1, 0, 0, 0, 0, time.Local)
 	for {
 		if tempTime.Before(endTime) {
-			captureMonths = append(captureMonths, tempTime.Format(FmtMonth))
+			captureMonths = append(captureMonths, tempTime.Format(constx.MonthFmt))
 			tempTime = tempTime.AddDate(0, 1, 0)
 		} else if tempTime.Equal(endTime) {
-			captureMonths = append(captureMonths, tempTime.Format(FmtMonth))
+			captureMonths = append(captureMonths, tempTime.Format(constx.MonthFmt))
 			break
 		} else {
 			break
@@ -179,15 +173,15 @@ func MonthSlice(startTimeUnix, endTimeUnix int64) []string {
 }
 
 // 生成日期切片
-func DateSlice(startTimestamp, endTimestamp int64) []string {
+func DateSlice(startTimeUnix, endTimeUnix int64) []string {
 	var dateList []string
 	// 获取开始时间的当天0点0分0秒
-	year, month, day := time.Unix(startTimestamp, 0).Date()
+	year, month, day := time.Unix(startTimeUnix/1000, 0).Date()
 	tempTime := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
 	// 获取相差天数
-	timeDiff, _ := strconv.Atoi(strconv.FormatInt((endTimestamp-tempTime.Unix())/86400, 10))
+	timeDiff, _ := strconv.Atoi(strconv.FormatInt((endTimeUnix-tempTime.Unix())/86400, 10))
 	for i := 0; i <= timeDiff; i++ {
-		dateList = append(dateList, tempTime.Format(FmtDate))
+		dateList = append(dateList, tempTime.Format(constx.DateFmt))
 		tempTime = tempTime.AddDate(0, 0, 1)
 	}
 	return dateList

@@ -17,11 +17,6 @@ var ProvinceCodes = []string{
 	"71", "81", "91",
 }
 
-const (
-	MALE   = "男"
-	FEMALE = "女"
-)
-
 // 校验身份证
 func CheckIdCard(idCard string) bool {
 	length := len(idCard)
@@ -122,9 +117,9 @@ func GetGender(idNo string) (gender string) {
 	if len(idNo) == 18 {
 		sexSymbol, _ := strconv.Atoi(idNo[16:17])
 		if sexSymbol%2 == 0 {
-			gender = FEMALE
+			gender = "女"
 		} else {
-			gender = MALE
+			gender = "男"
 		}
 	}
 	return

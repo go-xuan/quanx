@@ -2,6 +2,7 @@ package sqlx
 
 import (
 	"fmt"
+	"github.com/quanxiaoxuan/quanx/common/constx"
 	"reflect"
 	"strconv"
 	"strings"
@@ -37,9 +38,9 @@ func SqlPrepared(sql string, obj interface{}) string {
 		case goTypeInt64:
 			switch pType {
 			case tagTypeTime:
-				pValue = `'` + timex.SecondFormat(valueRef.Field(i).Int()/1000, timex.FmtDefault) + `'`
+				pValue = `'` + timex.SecondFormat(valueRef.Field(i).Int()/1000, constx.TimeFmt) + `'`
 			case tagTypeDate:
-				pValue = `'` + timex.SecondFormat(valueRef.Field(i).Int()/1000, timex.FmtDate) + `'`
+				pValue = `'` + timex.SecondFormat(valueRef.Field(i).Int()/1000, constx.DateFmt) + `'`
 			default:
 				pValue = strconv.FormatInt(valueRef.Field(i).Int(), 10)
 			}

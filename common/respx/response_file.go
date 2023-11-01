@@ -3,6 +3,8 @@ package respx
 import (
 	"encoding/json"
 	"net/url"
+	"path/filepath"
+	"reflect"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tealeg/xlsx"
@@ -10,28 +12,41 @@ import (
 )
 
 // 导出表头
-type HeaderList []*Header
 type Header struct {
 	Key  string
 	Name string
 }
 
-// Gin框架返回Excel文件流
-func BuildExcelExport(ctx *gin.Context, headers HeaderList, dataList interface{}, fileName string) (err error) {
+func ExcelHeaders(obj interface{}) (result []*Header) {
+	typeRef := reflect.TypeOf(obj)
+	for i := 0; i < typeRef.NumField(); i++ {
+		if typeRef.Field(i).Tag.Get("export") != "" {
+			result = append(result, &Header{
+				Key:  typeRef.Field(i).Tag.Get("json"),
+				Name: typeRef.Field(i).Tag.Get("export"),
+			})
+		}
+	}
+	return
+}
+
+// 返回Excel二进制文件流
+func BuildExcelByData(ctx *gin.Context, obj interface{}, dataList interface{}, fileName string) {
 	var xlsxFile = xlsx.NewFile()
-	var sheet *xlsx.Sheet
-	sheet, err = xlsxFile.AddSheet("Sheet1")
+	sheet, err := xlsxFile.AddSheet("Sheet1")
 	if err != nil {
+		BuildException(ctx, ExportErr, err)
 		return
 	}
-	dataBytes, _ := json.Marshal(dataList)
-	gjsonResults := gjson.ParseBytes(dataBytes).Array()
 	// 写入表头
 	headerRow := sheet.AddRow()
+	headers := ExcelHeaders(obj)
 	for _, header := range headers {
 		headerRow.AddCell().Value = header.Name
 	}
 	// 写入数据
+	dataBytes, _ := json.Marshal(dataList)
+	gjsonResults := gjson.ParseBytes(dataBytes).Array()
 	for _, gjsonResult := range gjsonResults {
 		dataMap := gjsonResult.Map()
 		row := sheet.AddRow()
@@ -43,5 +58,29 @@ func BuildExcelExport(ctx *gin.Context, headers HeaderList, dataList interface{}
 	ctx.Writer.Header().Add("Content-Type", "application/octet-stream")
 	ctx.Writer.Header().Add("Content-Disposition", "attachment;filename*=utf-8''"+fileName)
 	ctx.Writer.Header().Add("Content-Transfer-Encoding", "binary")
-	return xlsxFile.Write(ctx.Writer)
+	err = xlsxFile.Write(ctx.Writer)
+	if err != nil {
+		BuildException(ctx, ExportErr, err)
+		return
+	}
+	return
+}
+
+// Excel二进制文件流响应
+func BuildExcelByFile(ctx *gin.Context, filePath string) {
+	var xlsxFile, err = xlsx.OpenFile(filePath)
+	if err != nil {
+		BuildException(ctx, ExportErr, err)
+		return
+	}
+	var fileName = url.QueryEscape(filepath.Base(filePath))
+	ctx.Writer.Header().Add("Content-Type", "application/octet-stream")
+	ctx.Writer.Header().Add("Content-Disposition", "attachment;filename*=utf-8''"+fileName)
+	ctx.Writer.Header().Add("Content-Transfer-Encoding", "binary")
+	err = xlsxFile.Write(ctx.Writer)
+	if err != nil {
+		BuildException(ctx, ExportErr, err)
+		return
+	}
+	return
 }
