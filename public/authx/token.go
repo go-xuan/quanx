@@ -24,6 +24,10 @@ type User struct {
 	ExpireTime int64  `json:"sessionTime"` // 过期时间
 }
 
+func (u *User) RedisCacheKey() string {
+	return RedisKeyPrefix + u.Account
+}
+
 func InitSecretKey(key string) {
 	SecretKey = []byte(key)
 }

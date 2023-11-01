@@ -42,20 +42,25 @@ func RSA() *MyRsa {
 }
 
 // 公钥加密
-func (m *MyRsa) Encrypt(plaintext []byte) (ciphertext []byte, err error) {
-	ciphertext, err = rsa.EncryptPKCS1v15(rand.Reader, &m.privateKey.PublicKey, plaintext)
+func (m *MyRsa) Encrypt(plaintext string) (ciphertext string, err error) {
+	var bytes []byte
+	bytes, err = rsa.EncryptPKCS1v15(rand.Reader, &m.privateKey.PublicKey, []byte(plaintext))
 	if err != nil {
 		return
 	}
+	ciphertext = EncodeBase64(bytes, true)
 	return
 }
 
 // 私钥解密
-func (m *MyRsa) Decrypt(ciphertext []byte) (plaintext []byte, err error) {
-	plaintext, err = rsa.DecryptPKCS1v15(rand.Reader, m.privateKey, ciphertext)
+func (m *MyRsa) Decrypt(ciphertext string) (plaintext string, err error) {
+	var base64 = DecodeBase64(ciphertext, true)
+	var bytes []byte
+	bytes, err = rsa.DecryptPKCS1v15(rand.Reader, m.privateKey, base64)
 	if err != nil {
 		return
 	}
+	plaintext = string(bytes)
 	return
 }
 

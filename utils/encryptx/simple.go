@@ -29,20 +29,22 @@ func PasswordSalt(password, salt string) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-func EncodeBase64(str string, safe ...bool) (result string) {
+// base64加密
+func EncodeBase64(text []byte, safe ...bool) (result string) {
 	if len(safe) > 0 && safe[0] {
-		result = base64.URLEncoding.EncodeToString([]byte(str))
+		result = base64.URLEncoding.EncodeToString(text)
 	} else {
-		result = base64.StdEncoding.EncodeToString([]byte(str))
+		result = base64.StdEncoding.EncodeToString(text)
 	}
 	return
 }
 
-func DecodeBase64(str string, safe ...bool) (result []byte) {
+// base64解密
+func DecodeBase64(text string, safe ...bool) (result []byte) {
 	if len(safe) > 0 && safe[0] {
-		result, _ = base64.URLEncoding.DecodeString(str)
+		result, _ = base64.URLEncoding.DecodeString(text)
 	} else {
-		result, _ = base64.StdEncoding.DecodeString(str)
+		result, _ = base64.StdEncoding.DecodeString(text)
 	}
 	return
 }
