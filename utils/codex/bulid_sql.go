@@ -1,10 +1,11 @@
 package codex
 
 import (
-	"github.com/quanxiaoxuan/quanx/common/constx"
-	"github.com/quanxiaoxuan/quanx/utils/sqlx"
-	"github.com/quanxiaoxuan/quanx/utils/stringx"
 	"strings"
+
+	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/utils/sqlx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 // 构建CK远程表建表语句

@@ -7,7 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tealeg/xlsx"
 
-	"github.com/quanxiaoxuan/quanx/utils/stringx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 type SheetInfoList []*SheetInfo

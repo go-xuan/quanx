@@ -31,7 +31,7 @@ func {modelName}QueryHandler(context *gin.Context) {
 	}
 }
 
-func {modelName}AddHandler(context *gin.Context) {
+func {modelName}Create(context *gin.Context) {
 	var err error
 	var param entity.{modelName}
 	if err = context.BindJSON(&param); err != nil {

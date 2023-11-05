@@ -11,8 +11,9 @@ import (
 	"time"
 
 	"github.com/minio/minio-go/v7"
-	"github.com/quanxiaoxuan/quanx/utils/filex"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/utils/filex"
 )
 
 var CTL *Controller

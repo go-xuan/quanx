@@ -2,12 +2,12 @@ package randx
 
 import (
 	"fmt"
-	"github.com/quanxiaoxuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/common/constx"
 	"strings"
 	"time"
 
+	"github.com/go-xuan/quanx/utils/stringx"
 	"github.com/google/uuid"
-	"github.com/quanxiaoxuan/quanx/utils/stringx"
 )
 
 // 随机字符串

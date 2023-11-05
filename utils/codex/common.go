@@ -1,13 +1,13 @@
 package codex
 
 import (
-	"github.com/quanxiaoxuan/quanx/common/constx"
 	"path/filepath"
 	"strings"
 
-	"github.com/quanxiaoxuan/quanx/utils/codex/template"
-	"github.com/quanxiaoxuan/quanx/utils/filex"
-	"github.com/quanxiaoxuan/quanx/utils/stringx"
+	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/utils/codex/template"
+	"github.com/go-xuan/quanx/utils/filex"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 // 字段配置

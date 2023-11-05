@@ -2,11 +2,12 @@ package authx
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/quanxiaoxuan/quanx/common/constx"
-	"github.com/quanxiaoxuan/quanx/common/respx"
-	"github.com/quanxiaoxuan/quanx/public/redisx"
-	"github.com/quanxiaoxuan/quanx/utils/encryptx"
-	"github.com/quanxiaoxuan/quanx/utils/stringx"
+
+	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/common/respx"
+	"github.com/go-xuan/quanx/public/redisx"
+	"github.com/go-xuan/quanx/utils/encryptx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 const (

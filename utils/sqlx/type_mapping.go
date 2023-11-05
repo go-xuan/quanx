@@ -1,6 +1,6 @@
 package sqlx
 
-import "github.com/quanxiaoxuan/quanx/common/constx"
+import "github.com/go-xuan/quanx/common/constx"
 
 var Pg2GoTypeMap = initPg2GoTypeMap()
 var Pg2GormTypeMap = initPg2GormTypeMap()

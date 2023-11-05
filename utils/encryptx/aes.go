@@ -3,7 +3,8 @@ package encryptx
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"github.com/quanxiaoxuan/quanx/utils/randx"
+
+	"github.com/go-xuan/quanx/utils/randx"
 )
 
 var myAes *MyAES

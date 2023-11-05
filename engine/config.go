@@ -1,10 +1,10 @@
 package engine
 
 import (
-	"github.com/quanxiaoxuan/quanx/public/gormx"
-	"github.com/quanxiaoxuan/quanx/public/logx"
-	"github.com/quanxiaoxuan/quanx/public/nacosx"
-	"github.com/quanxiaoxuan/quanx/public/redisx"
+	"github.com/go-xuan/quanx/public/gormx"
+	"github.com/go-xuan/quanx/public/logx"
+	"github.com/go-xuan/quanx/public/nacosx"
+	"github.com/go-xuan/quanx/public/redisx"
 )
 
 // 应用配置

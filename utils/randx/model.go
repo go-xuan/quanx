@@ -1,13 +1,13 @@
 package randx
 
 import (
-	"github.com/quanxiaoxuan/quanx/common/constx"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/quanxiaoxuan/quanx/utils/stringx"
-	"github.com/quanxiaoxuan/quanx/utils/timex"
+	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/utils/stringx"
+	"github.com/go-xuan/quanx/utils/timex"
 )
 
 // 随机数模型

@@ -1,4 +1,4 @@
-module github.com/quanxiaoxuan/quanx
+module github.com/go-xuan/quanx
 
 go 1.18
 

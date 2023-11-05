@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/quanxiaoxuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/common/constx"
 )
 
 type writeMode uint

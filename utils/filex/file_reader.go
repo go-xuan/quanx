@@ -3,11 +3,12 @@ package filex
 import (
 	"bufio"
 	"fmt"
-	"github.com/quanxiaoxuan/quanx/common/constx"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-xuan/quanx/common/constx"
 )
 
 // 读取文件内容

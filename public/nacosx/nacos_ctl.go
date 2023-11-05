@@ -3,7 +3,8 @@ package nacosx
 import (
 	"github.com/nacos-group/nacos-sdk-go/clients/config_client"
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
-	"github.com/quanxiaoxuan/quanx/utils/structx"
+
+	"github.com/go-xuan/quanx/utils/structx"
 )
 
 var CTL *Controller

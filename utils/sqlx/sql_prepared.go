@@ -2,13 +2,13 @@ package sqlx
 
 import (
 	"fmt"
-	"github.com/quanxiaoxuan/quanx/common/constx"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/quanxiaoxuan/quanx/utils/timex"
+	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/utils/timex"
 )
 
 const (

@@ -2,9 +2,10 @@ package hugegraphx
 
 import (
 	"fmt"
-	"github.com/quanxiaoxuan/quanx/common/constx"
 	"strconv"
 	"strings"
+
+	"github.com/go-xuan/quanx/common/constx"
 )
 
 // hugegraph配置

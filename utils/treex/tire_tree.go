@@ -4,19 +4,20 @@ import (
 	"strings"
 )
 
-var Tire *TrieTree
+var tireTree *TrieTree
 
-func Init() {
-	if Tire == nil {
-		Tire = NewTrieTree()
+func Trie() *TrieTree {
+	if tireTree == nil {
+		tireTree = NewTrieTree()
 	}
+	return tireTree
 }
 
 // Trie树
 type TrieTree struct {
-	root      *TrieNode      // 前缀树
-	replace   string         // 替换符
-	shieldMap map[string]int // 铭感词以及屏蔽方式
+	root    *TrieNode      // 前缀树
+	replace string         // 替换符
+	level   map[string]int // 敏感度
 }
 
 // Trie树节点
@@ -29,9 +30,9 @@ type TrieNode struct {
 // 创建前缀树
 func NewTrieTree() *TrieTree {
 	return &TrieTree{
-		root:      NewTrieNode(),
-		shieldMap: make(map[string]int),
-		replace:   "*",
+		root:    NewTrieNode(),
+		level:   make(map[string]int),
+		replace: "*",
 	}
 }
 
@@ -45,17 +46,28 @@ func NewTrieNode() *TrieNode {
 }
 
 // 添加敏感词
-func (t *TrieTree) AddWords(words map[string]int) {
+func (t *TrieTree) AddWordMap(words map[string]int) {
 	if len(words) > 0 {
-		for k, v := range words {
-			t.AddWord(k, v)
+		for word, level := range words {
+			t.AddWord(word, level)
 		}
 	}
 }
 
 // 添加敏感词
-func (t *TrieTree) AddWord(word string, shield int) {
-	t.shieldMap[word] = shield
+func (t *TrieTree) AddWords(words []string) {
+	if len(words) > 0 {
+		for _, word := range words {
+			t.AddWord(word)
+		}
+	}
+}
+
+// 添加敏感词
+func (t *TrieTree) AddWord(word string, level ...int) {
+	if len(level) > 0 {
+		t.level[word] = level[0]
+	}
 	texts := strings.Split(word, "")
 	node := t.root
 	for _, item := range texts {
@@ -68,13 +80,13 @@ func (t *TrieTree) AddWord(word string, shield int) {
 	node.end = true
 }
 
-// 更新屏蔽方式
-func (t *TrieTree) UpdateShieldMethod(word string, shield int) {
-	t.shieldMap[word] = shield
+// 更新敏感度
+func (t *TrieTree) UpdateWordLevel(word string, level int) {
+	t.level[word] = level
 }
 
-// 过滤敏感词
-func (t *TrieTree) Filter(text string) string {
+// 敏感词脱敏
+func (t *TrieTree) Desensitize(text string) string {
 	texts := strings.Split(text, "")
 	var sb strings.Builder
 	var node, start = t.root, 0
@@ -109,7 +121,7 @@ func (t *TrieTree) Filter(text string) string {
 }
 
 // 判断时候含有敏感词
-func (t *TrieTree) HasSensitive(text string) (has bool, shield int) {
+func (t *TrieTree) HasSensitive(text string) (has bool, level int) {
 	texts := strings.Split(text, "")
 	var node, start = t.root, 0
 	var sb strings.Builder
@@ -135,9 +147,8 @@ func (t *TrieTree) HasSensitive(text string) (has bool, shield int) {
 			}
 			has = true
 			sb.WriteString(strings.Join(texts[start:i+1], ""))
-			var max = t.shieldMap[sb.String()]
-			if max > shield {
-				shield = max
+			if max, ok := t.level[sb.String()]; ok && max > level {
+				level = max
 			}
 			start, node = i+1, t.root
 		}

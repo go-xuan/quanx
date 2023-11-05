@@ -1,11 +1,11 @@
 package codex
 
 import (
-	"github.com/quanxiaoxuan/quanx/common/constx"
 	"strings"
 
-	"github.com/quanxiaoxuan/quanx/utils/sqlx"
-	"github.com/quanxiaoxuan/quanx/utils/stringx"
+	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/utils/sqlx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 // 构建go结构体代码
