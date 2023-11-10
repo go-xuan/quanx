@@ -1,13 +1,14 @@
 package logx
 
 import (
-	"github.com/quanxiaoxuan/quanx/utils/structx"
 	"os"
 	"path"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
+
+	"github.com/go-xuan/quanx/utils/structx"
 )
 
 // 日志配置

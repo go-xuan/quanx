@@ -24,9 +24,9 @@ func IpMap() map[string]string {
 		if (netInterface.Flags & net.FlagUp) != 0 {
 			addrs, _ := netInterface.Addrs()
 			for _, address := range addrs {
-				if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-					if ipnet.IP.To4() != nil {
-						ipMap[netInterface.Name] = ipnet.IP.String()
+				if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+					if ipNet.IP.To4() != nil {
+						ipMap[netInterface.Name] = ipNet.IP.String()
 					}
 				}
 			}

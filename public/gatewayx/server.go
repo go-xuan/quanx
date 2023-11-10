@@ -3,11 +3,11 @@ package gatewayx
 import (
 	"encoding/json"
 	"errors"
-	"github.com/quanxiaoxuan/quanx/common/constx"
 	"strings"
 	"time"
 
-	"github.com/quanxiaoxuan/quanx/public/nacosx"
+	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/public/nacosx"
 )
 
 // 微服务配置

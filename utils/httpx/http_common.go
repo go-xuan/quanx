@@ -3,7 +3,6 @@ package httpx
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/quanxiaoxuan/quanx/common/constx"
 	"io"
 	"net/http"
 	"net/url"
@@ -12,6 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
+
+	"github.com/go-xuan/quanx/common/constx"
 )
 
 func RequestHttp(method string, host string, header map[string]string, param interface{}) (result string, err error) {

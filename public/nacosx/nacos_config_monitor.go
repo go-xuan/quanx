@@ -5,13 +5,13 @@ import (
 	"time"
 )
 
-var ConfigMonitor *Monitor
+var monitor *Monitor
 
 // nacos配置监听
 type Monitor struct {
 	mu        sync.RWMutex                       // 互斥锁
-	Datas     map[string]map[string]*MonitorData // 配置数据
-	ConfigNum int                                // 配置数量
+	Data      map[string]map[string]*MonitorData // 监听数据
+	ConfigNum int                                // 监听数量
 }
 
 // 监听配置数据
@@ -25,20 +25,20 @@ type MonitorData struct {
 
 // 初始化nacos配置监听
 func GetNacosConfigMonitor() *Monitor {
-	if ConfigMonitor == nil {
-		ConfigMonitor = &Monitor{
-			Datas:     make(map[string]map[string]*MonitorData),
+	if monitor == nil {
+		monitor = &Monitor{
+			Data:      make(map[string]map[string]*MonitorData),
 			ConfigNum: 0,
 		}
 	}
-	return ConfigMonitor
+	return monitor
 }
 
 // 获取nacos配置
 func (m *Monitor) GetConfigData(group, dataId string) (*MonitorData, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	gm, hasGroup := m.Datas[group]
+	gm, hasGroup := m.Data[group]
 	if hasGroup && gm != nil {
 		data, hasData := gm[dataId]
 		if hasData && data != nil {
@@ -53,14 +53,14 @@ func (m *Monitor) AddConfigData(group, dataId, content string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	var newData = MonitorData{group, dataId, content, false, time.Now().UnixMilli()}
-	gm, hasGroup := m.Datas[group]
-	if hasGroup && gm != nil {
-		gm[dataId] = &newData
-		m.Datas[group] = gm
+	groupData, hasGroup := m.Data[group]
+	if hasGroup && groupData != nil {
+		groupData[dataId] = &newData
+		m.Data[group] = groupData
 	} else {
 		var newGroup = make(map[string]*MonitorData)
 		newGroup[dataId] = &newData
-		m.Datas[group] = newGroup
+		m.Data[group] = newGroup
 	}
 	m.ConfigNum++
 	return
@@ -70,9 +70,9 @@ func (m *Monitor) AddConfigData(group, dataId, content string) {
 func (m *Monitor) UpdateConfigData(group, dataId, content string) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	gm, hasGroup := m.Datas[group]
-	if hasGroup && gm != nil {
-		data, hasData := gm[dataId]
+	groupData, hasGroup := m.Data[group]
+	if hasGroup && groupData != nil {
+		data, hasData := groupData[dataId]
 		if hasData && data != nil {
 			data.Content = content
 			data.Changed = true

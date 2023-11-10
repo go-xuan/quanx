@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/quanxiaoxuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/common/constx"
 )
 
 type Unit uint

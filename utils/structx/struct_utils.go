@@ -4,14 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/magiconair/properties"
-	"github.com/quanxiaoxuan/quanx/common/constx"
-	"github.com/quanxiaoxuan/quanx/utils/filex"
-	"gopkg.in/yaml.v3"
 	"os"
 	"reflect"
 	"strconv"
+
+	"github.com/BurntSushi/toml"
+	"github.com/magiconair/properties"
+	"gopkg.in/yaml.v3"
+
+	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/utils/filex"
 )
 
 // 写入结构体到json文件

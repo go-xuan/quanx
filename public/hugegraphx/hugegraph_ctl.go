@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/quanxiaoxuan/quanx/utils/httpx"
+	"github.com/go-xuan/quanx/utils/httpx"
 )
 
 var CTL *Controller

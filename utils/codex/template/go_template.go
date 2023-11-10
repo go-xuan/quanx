@@ -1,6 +1,6 @@
 package template
 
-const GoParam = `
+const GoModel = `
 type {modelName}Query struct {
 	Keyword string 				// 关键字
 	Page *request.Page 	// 分页查询参数
@@ -13,124 +13,140 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func {modelName}QueryHandler(context *gin.Context) {
+func {modelName}Page(context *gin.Context) {
 	var err error
-	var form struct {
-		Id string
+	var in model.{modelName}Query
+	if err = context.BindJSON(&in); err != nil {
+		log.Error("参数错误：", err)
+		respx.BuildException(context, respx.ParamErr, err)
+		return
 	}
+	var result *respx.PageResponse
+	result, err = service.{modelName}Page(&in)
+	respx.BuildNormal(ctx, result, err)
+}
+
+
+func {modelName}List(context *gin.Context) {
+	var err error
+	var in model.{modelName}Query
+	if err = context.BindJSON(&in); err != nil {
+		log.Error("参数错误：", err)
+		respx.BuildException(context, respx.ParamErr, err)
+		return
+	}
+	var result []*table.{modelName}
+	result, err = service.{modelName}List(&in)
+	respx.BuildNormal(ctx, result, err)
+}
+
+func {modelName}Create(context *gin.Context) {
+	var err error
+	var in table.{modelName}
+	if err = context.BindJSON(&in); err != nil {
+		log.Error("参数错误：", err)
+		respx.BuildException(context, respx.ParamErr, err)
+		return
+	}
+	var result string
+	result, err = service.{modelName}Create(&in)
+	respx.BuildNormal(ctx, result, err)
+}
+
+func {modelName}Detail(context *gin.Context) {
+	var err error
+	var form modelx.IdString
 	if err = context.ShouldBindQuery(&form); err != nil {
 		log.Error("参数错误：", err)
-		response.BuildExceptionResponse(context, response.ParamError, err)
+		respx.BuildException(context, respx.ParamErr, err)
 		return
 	}
-	var result entity.{modelName}
-	if result, err = service.{modelName}Query(form.Id); err != nil {
-		response.BuildExceptionResponse(context, response.ServerError, err)
-	} else {
-		response.BuildSuccessResponse(context, result)
-	}
-}
-
-func {modelName}AddHandler(context *gin.Context) {
-	var err error
-	var param entity.{modelName}
-	if err = context.BindJSON(&param); err != nil {
-		log.Error("参数错误：", err)
-		response.BuildExceptionResponse(context, response.ParamError, err)
-		return
-	}
-	if err = service.{modelName}Add(param); err != nil {
-		response.BuildExceptionResponse(context, response.ServerError, err)
-	} else {
-		response.BuildSuccessResponse(context, nil)
-	}
-}
-
-func {modelName}ListHandler(context *gin.Context) {
-	var err error
-	var param params.{modelName}Query
-	if err = context.BindJSON(&param); err != nil {
-		log.Error("参数错误：", err)
-		response.BuildExceptionResponse(context, response.ParamError, err)
-		return
-	}
-	var result entity.{modelName}List
-	if result, err = service.{modelName}List(param); err != nil {
-		response.BuildExceptionResponse(context, response.ServerError, err)
-	} else {
-		response.BuildSuccessResponse(context, result)
-	}
-}
-
-func {modelName}PageHandler(context *gin.Context) {
-	var err error
-	var param params.{modelName}Query
-	if err = context.BindJSON(&param); err != nil {
-		log.Error("参数错误：", err)
-		response.BuildExceptionResponse(context, response.ParamError, err)
-		return
-	}
-	var result *response.PageResponse
-	if result, err = service.{modelName}Page(param); err != nil {
-		response.BuildExceptionResponse(context, response.ServerError, err)
-	} else {
-		response.BuildSuccessResponse(context, result)
-	}
+	var result *table.{modelName}
+	result, err = service.{modelName}Detail(form.Id)
+	respx.BuildNormal(ctx, result, err)
 }
 `
 
-const GoService = `
-func {modelName}Query(id string) (result entity.{modelName}, err error) {
-	return dao.{modelName}Query(id)
-}
-
-func {modelName}Add(param entity.{modelName}) (err error) {
-	return dao.{modelName}Add(param)
-}
-
-func {modelName}List(param params.{modelName}Query) (result entity.{modelName}List, err error) {
-	return dao.{modelName}List(param)
-}
-
-func {modelName}Page(param params.{modelName}Query) (*response.PageResponse, error) {
-	var resultList entity.{modelName}List
+const GoLogic = `
+func {modelName}Page(in *model.{modelName}Query) (resp *respx.PageResponse, err error) {
+	var rows []*table.{modelName}
 	var total int64
-	var err error
-	resultList, total, err = dao.{modelName}Page(param)
+	rows, total, err = dao.{modelName}Page(in)
 	if err != nil {
-		return nil, err
+		return
 	}
-	return response.BuildPageData(param.Page, resultList, total), nil
+	resp = respx.BuildPageResp(in.Page.Page, rows, total)
+	return
+}
+
+func {modelName}List(in *model.{modelName}Query) (result []*table.{modelName}, err error) {
+	result, err = dao.{modelName}List(param)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func {modelName}Create(in *table.{modelName}) (id string, err error) {
+	in.Id = idx.SnowFlake().NewString()
+	err = dao.{modelName}Create(in)
+	if err != nil {
+		return
+	}
+	id = in.Id
+	return
+}
+
+func {modelName}Detail(id string) (result *table.{modelName}, err error) {
+	result, err = dao.{modelName}Detail(id)
+	if err != nil {
+		return
+	}
+	return
 }
 `
 
 const GoDao = `
-func {modelName}Query(id string) (result entity.{modelName}, err error) {
-	err = database.DB.First(&result, id).Error
-	return
-}
-
-func {modelName}Add(param entity.{modelName}) (err error) {
-	err = database.DB.Create(&param).Error
-	return
-}
-
-func {modelName}List(param params.{modelName}Query) (resultList entity.{modelName}List, err error) {
-	sql := strings.Builder{}
-	err = database.DB.Raw(sql.String()).Scan(&resultList).Error
-	return
-}
-
-func {modelName}Page(query params.{modelName}Query) (resultList entity.{modelName}List, total int64, err error) {
+func {modelName}Page(query model.{modelName}Query) (rows []*table.{modelName}, total int64, err error) {
 	selectSql := strings.Builder{}
 	countSql := strings.Builder{}
-	err = database.DB.Raw(selectSql.String()).Scan(&resultList).Error
+	err = gormx.CTL.DB.Raw(selectSql.String()).Scan(&rows).Error
 	if err != nil {
 		return
 	}
-	err = database.DB.Raw(countSql.String()).Scan(&total).Error
+	err = gormx.CTL.DB.Raw(countSql.String()).Scan(&total).Error
 	if err != nil {
 		return 
+	}
+	return
+}
+
+func {modelName}List(in *model.{modelName}Query) (result []*table.{modelName}, err error) {
+	sql := strings.Builder{}
+	err = gormx.CTL.DB.Raw(sql.String()).Scan(&result).Error
+	if err != nil {
+		return
+	}
+	return
+}
+
+func {modelName}Create(in *table.{modelName}) (err error) {
+	err = gormx.CTL.DB.Create(in).Error
+	if err != nil {
+		return
+	}
+	return
+}
+
+func {modelName}Detail(id string) (result *table.{modelName}, err error) {
+	result = &table.{modelName}{}
+	err = gormx.CTL.DB.First(result, id).Error
+	if err != nil {
+		return
+	}
+	if result.Id == "" {
+		err = errors.New("此记录不存在")
+		return
 	}
 	return
 }

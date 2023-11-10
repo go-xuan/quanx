@@ -1,17 +1,18 @@
 package engine
 
 import (
+	"reflect"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/quanxiaoxuan/quanx/public/gormx"
-	"github.com/quanxiaoxuan/quanx/public/logx"
-	"github.com/quanxiaoxuan/quanx/public/nacosx"
-	"github.com/quanxiaoxuan/quanx/public/redisx"
-	"github.com/quanxiaoxuan/quanx/utils/ipx"
-	"github.com/quanxiaoxuan/quanx/utils/structx"
+	"github.com/go-xuan/quanx/public/gormx"
+	"github.com/go-xuan/quanx/public/logx"
+	"github.com/go-xuan/quanx/public/nacosx"
+	"github.com/go-xuan/quanx/public/redisx"
+	"github.com/go-xuan/quanx/utils/ipx"
+	"github.com/go-xuan/quanx/utils/structx"
 )
 
 var engine *Engine
@@ -128,10 +129,19 @@ func (e *Engine) ExecInitializers() {
 }
 
 // 添加gorm初始化的model模型
-func (e *Engine) AddGormModel(source string, dst ...interface{}) {
-	if source == "" {
-		source = "default"
+func (e *Engine) AddModel(dst ...interface{}) {
+	if len(dst) > 0 {
+		var source = "default"
+		if reflect.TypeOf(dst[0]).Kind() == reflect.String {
+			source = dst[0].(string)
+			dst = append(dst[:1], dst[2:]...)
+		}
+		e.AddSourceModel(source, dst...)
 	}
+}
+
+// 添加gorm初始化的model模型
+func (e *Engine) AddSourceModel(source string, dst ...interface{}) {
 	e.GormModel[source] = append(e.GormModel[source], dst...)
 }
 

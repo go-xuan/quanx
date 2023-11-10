@@ -2,7 +2,6 @@ package miniox
 
 import (
 	"fmt"
-	"github.com/quanxiaoxuan/quanx/common/constx"
 	"path"
 	"path/filepath"
 	"time"
@@ -11,6 +10,8 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/common/constx"
 )
 
 type Config struct {

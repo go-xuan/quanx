@@ -1,8 +1,9 @@
 package randx
 
 import (
-	"github.com/quanxiaoxuan/quanx/utils/mathx"
 	"math"
+
+	"github.com/go-xuan/quanx/utils/mathx"
 )
 
 // 随机整数

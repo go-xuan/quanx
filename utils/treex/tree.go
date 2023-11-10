@@ -10,12 +10,16 @@ type Node[T any] struct {
 }
 
 // 一维数组转树形结构
-func (list NodeList[T]) Convert2Tree(rootId string) NodeList[T] {
+func (list NodeList[T]) Convert2Tree(rootId ...string) NodeList[T] {
+	var pid = "0"
+	if len(rootId) > 0 {
+		pid = rootId[0]
+	}
 	nodeMap := make(map[string]NodeList[T])
 	for _, item := range list {
 		nodeMap[item.Pid] = append(nodeMap[item.Pid], item)
 	}
-	if result, ok := nodeMap[rootId]; ok {
+	if result, ok := nodeMap[pid]; ok {
 		result = result.findChildFrom(nodeMap)
 		return result
 	}

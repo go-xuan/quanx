@@ -3,11 +3,12 @@ package httpx
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/quanxiaoxuan/quanx/common/constx"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/go-xuan/quanx/common/constx"
 )
 
 func HttpGet(url string) (result []byte, err error) {

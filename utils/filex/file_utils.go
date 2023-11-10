@@ -2,14 +2,14 @@ package filex
 
 import (
 	"fmt"
-	"github.com/quanxiaoxuan/quanx/common/constx"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/quanxiaoxuan/quanx/utils/stringx"
+	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 // 显示当前目录

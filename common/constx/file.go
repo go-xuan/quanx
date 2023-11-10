@@ -1,13 +1,6 @@
 package constx
 
 const (
-	Controller = "controller"
-	Service    = "service"
-	Dao        = "dao"
-	Params     = "params"
-)
-
-const (
 	DirAndFile = "all"
 	OnlyDir    = "dir"
 	OnlyFile   = "file"
