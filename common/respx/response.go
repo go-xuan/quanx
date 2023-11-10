@@ -13,7 +13,7 @@ type Response struct {
 }
 
 // 响应
-func BuildResponse(ctx *gin.Context, data interface{}, err error) {
+func BuildNormal(ctx *gin.Context, data interface{}, err error) {
 	if err != nil {
 		BuildError(ctx, err)
 	} else {
@@ -21,47 +21,47 @@ func BuildResponse(ctx *gin.Context, data interface{}, err error) {
 	}
 }
 
-// 自定义响应
-func BuildCustom(ctx *gin.Context, code int, message string, data interface{}) {
-	response := Response{
-		Code: code,
-		Msg:  message,
-		Data: data,
-	}
-	ctx.JSON(http.StatusInternalServerError, &response)
-}
-
 // 成功响应
 func BuildSuccess(ctx *gin.Context, data interface{}) {
-	response := Response{
+	response := &Response{
 		Code: Success.Code,
 		Msg:  Success.Msg,
 		Data: data,
 	}
-	ctx.JSON(http.StatusOK, &response)
+	ctx.JSON(http.StatusOK, response)
 }
 
 // 错误响应
 func BuildError(ctx *gin.Context, err error) {
-	response := Response{
+	response := &Response{
 		Code: Error.Code,
 		Msg:  Error.Msg,
 		Data: err.Error(),
 	}
-	ctx.JSON(http.StatusInternalServerError, &response)
+	ctx.JSON(http.StatusInternalServerError, response)
+}
+
+// 自定义错误响应
+func BuildCustomErr(ctx *gin.Context, code int, msg string, data interface{}) {
+	response := &Response{
+		Code: code,
+		Msg:  msg,
+		Data: data,
+	}
+	ctx.JSON(http.StatusInternalServerError, response)
 }
 
 // 异常响应
-func BuildException(ctx *gin.Context, res ErrEnum, data interface{}) {
-	response := Response{
+func BuildException(ctx *gin.Context, res ErrorEnum, data interface{}) {
+	response := &Response{
 		Code: res.Code,
 		Msg:  res.Msg,
 		Data: data,
 	}
-	ctx.JSON(http.StatusInternalServerError, &response)
+	ctx.JSON(http.StatusInternalServerError, response)
 }
 
 // 文件响应
-func BuildFileResponse(ctx *gin.Context, filePath string) {
+func BuildFile(ctx *gin.Context, filePath string) {
 	ctx.File(filePath)
 }

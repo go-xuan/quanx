@@ -1,6 +1,7 @@
 package codex
 
 import (
+	"github.com/go-xuan/quanx/utils/defaultx"
 	"path/filepath"
 	"strings"
 
@@ -22,9 +23,7 @@ type Field struct {
 
 // 表名检查
 func checkName(name string) string {
-	if name == "" {
-		name = "demo"
-	}
+	name = defaultx.String(name, "demo")
 	name = strings.ToLower(name)
 	return name
 }
@@ -137,21 +136,34 @@ func GenCkCreateByFieldList(saveDir, name, engine string, fieldList FieldList) (
 func GenGoTemplateByName(saveDir, name string) (err error) {
 	name = checkName(name)
 	modelName := stringx.UpperCamelCase(name)
-	paramsFile := filepath.Join(saveDir, constx.Params, name+"_"+constx.Params+constx.Go)
-	controllerFile := filepath.Join(saveDir, constx.Controller, name+"_"+constx.Controller+constx.Go)
-	serviceFile := filepath.Join(saveDir, constx.Service, name+"_"+constx.Service+constx.Go)
-	daoFile := filepath.Join(saveDir, constx.Dao, name+"_"+constx.Dao+constx.Go)
-	if err = filex.WriteFile(paramsFile, strings.ReplaceAll(template.GoParam, `{modelName}`, modelName), filex.Overwrite); err != nil {
+	goFileName := name + constx.Go
+	err = filex.WriteFile(
+		filepath.Join(saveDir, "model", goFileName),
+		strings.ReplaceAll(template.GoModel, `{modelName}`, modelName),
+		filex.Overwrite)
+	if err != nil {
+		return
+	}
+	err = filex.WriteFile(
+		filepath.Join(saveDir, "controller", goFileName),
+		strings.ReplaceAll(template.GoController, `{modelName}`, modelName),
+		filex.Overwrite)
+	if err != nil {
 		return err
 	}
-	if err = filex.WriteFile(controllerFile, strings.ReplaceAll(template.GoController, `{modelName}`, modelName), filex.Overwrite); err != nil {
-		return err
+	err = filex.WriteFile(
+		filepath.Join(saveDir, "logic", goFileName),
+		strings.ReplaceAll(template.GoLogic, `{modelName}`, modelName),
+		filex.Overwrite)
+	if err != nil {
+		return
 	}
-	if err = filex.WriteFile(serviceFile, strings.ReplaceAll(template.GoService, `{modelName}`, modelName), filex.Overwrite); err != nil {
-		return err
-	}
-	if err = filex.WriteFile(daoFile, strings.ReplaceAll(template.GoDao, `{modelName}`, modelName), filex.Overwrite); err != nil {
-		return err
+	err = filex.WriteFile(
+		filepath.Join(saveDir, "dao", goFileName),
+		strings.ReplaceAll(template.GoDao, `{modelName}`, modelName),
+		filex.Overwrite)
+	if err != nil {
+		return
 	}
 	return
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/go-xuan/quanx/utils/randx"
 )
 
-var myAes *MyAES
+var myAES *MyAES
 
 type MyAES struct {
 	encrypter cipher.BlockMode
@@ -17,14 +17,14 @@ type MyAES struct {
 }
 
 func AES() *MyAES {
-	if myAes == nil {
+	if myAES == nil {
 		var err error
-		myAes, err = newAES()
+		myAES, err = newAES()
 		if err != nil {
 			return nil
 		}
 	}
-	return myAes
+	return myAES
 }
 
 func newAES() (myRsa *MyAES, err error) {

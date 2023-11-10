@@ -56,7 +56,6 @@ func BuildInsertSql(table string, fieldList FieldList) string {
 	sb.WriteString(constx.NextLine)
 	sb.WriteString("  (")
 	for i, field := range fieldList {
-		low := stringx.LowerCamelCase(field.Name)
 		if i > 0 {
 			sb.WriteString(constx.NextLine)
 			sb.WriteString("   ")
@@ -66,7 +65,7 @@ func BuildInsertSql(table string, fieldList FieldList) string {
 		sb.WriteString(field.Name)
 		sb.WriteString(",")
 		iv.WriteString("#{item.")
-		iv.WriteString(low)
+		iv.WriteString(stringx.LowerCamelCase(field.Name))
 		iv.WriteString("},")
 	}
 	sb.WriteString(",)")
@@ -88,14 +87,13 @@ func BuildUpdateSql(table string, fieldList FieldList) string {
 	sb.WriteString(constx.NextLine)
 	sb.WriteString("   set ")
 	for i, field := range fieldList {
-		low := stringx.LowerCamelCase(field.Name)
 		if i > 0 {
 			sb.WriteString(constx.NextLine)
 			sb.WriteString("       ")
 		}
 		sb.WriteString(field.Name)
 		sb.WriteString(" = #{item.")
-		sb.WriteString(low)
+		sb.WriteString(stringx.LowerCamelCase(field.Name))
 		sb.WriteString("},")
 	}
 	sb.WriteString(",")
@@ -130,14 +128,13 @@ func BuildSelectSqlAlias(table string, columns FieldList) string {
 	sb := strings.Builder{}
 	sb.WriteString("select ")
 	for i, field := range columns {
-		alias := stringx.LowerCamelCase(field.Name)
 		if i > 0 {
 			sb.WriteString(constx.NextLine)
 			sb.WriteString("       ")
 		}
 		sb.WriteString(field.Name)
 		sb.WriteString(" as ")
-		sb.WriteString(alias)
+		sb.WriteString(stringx.LowerCamelCase(field.Name))
 		sb.WriteString(",")
 	}
 	sb.WriteString(",")

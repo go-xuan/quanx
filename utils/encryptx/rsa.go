@@ -17,7 +17,7 @@ const (
 	publicKeyPem  = "rsa-public.pem"
 )
 
-var myRsa *MyRsa
+var myRSA *MyRsa
 
 type MyRsa struct {
 	privateKey  *rsa.PrivateKey
@@ -31,14 +31,14 @@ type RsaData struct {
 }
 
 func RSA() *MyRsa {
-	if myRsa == nil {
+	if myRSA == nil {
 		var err error
-		myRsa, err = newRSA(defaultDir)
+		myRSA, err = newRSA(defaultDir)
 		if err != nil {
 			return nil
 		}
 	}
-	return myRsa
+	return myRSA
 }
 
 // 公钥加密

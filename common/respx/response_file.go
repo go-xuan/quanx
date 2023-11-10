@@ -17,8 +17,8 @@ type Header struct {
 	Name string
 }
 
-func ExcelHeaders(obj interface{}) (result []*Header) {
-	typeRef := reflect.TypeOf(obj)
+func ExcelHeaders(model interface{}) (result []*Header) {
+	typeRef := reflect.TypeOf(model)
 	for i := 0; i < typeRef.NumField(); i++ {
 		if typeRef.Field(i).Tag.Get("export") != "" {
 			result = append(result, &Header{
@@ -31,7 +31,7 @@ func ExcelHeaders(obj interface{}) (result []*Header) {
 }
 
 // 返回Excel二进制文件流
-func BuildExcelByData(ctx *gin.Context, obj interface{}, dataList interface{}, fileName string) {
+func BuildExcelByData(ctx *gin.Context, model interface{}, data interface{}, fileName string) {
 	var xlsxFile = xlsx.NewFile()
 	sheet, err := xlsxFile.AddSheet("Sheet1")
 	if err != nil {
@@ -40,13 +40,13 @@ func BuildExcelByData(ctx *gin.Context, obj interface{}, dataList interface{}, f
 	}
 	// 写入表头
 	headerRow := sheet.AddRow()
-	headers := ExcelHeaders(obj)
+	headers := ExcelHeaders(model)
 	for _, header := range headers {
 		headerRow.AddCell().Value = header.Name
 	}
 	// 写入数据
-	dataBytes, _ := json.Marshal(dataList)
-	gjsonResults := gjson.ParseBytes(dataBytes).Array()
+	var dataBytes, _ = json.Marshal(data)
+	var gjsonResults = gjson.ParseBytes(dataBytes).Array()
 	for _, gjsonResult := range gjsonResults {
 		dataMap := gjsonResult.Map()
 		row := sheet.AddRow()

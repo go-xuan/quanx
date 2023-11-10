@@ -25,9 +25,9 @@ func ContainsBoth(str string, subs ...string) bool {
 }
 
 // 是否有空
-func HasEmpty(strs ...string) bool {
-	for _, arg := range strs {
-		if len(arg) == 0 {
+func HasEmpty(str ...string) bool {
+	for _, item := range str {
+		if item == "" {
 			return true
 		}
 	}

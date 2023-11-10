@@ -12,10 +12,10 @@ type Page struct {
 }
 
 // 计算分页数量
-func (page *Page) Total(total int64) int64 {
+func (page *Page) PageTotal(total int64) int64 {
 	if total != 0 && page.PageSize != 0 {
 		if total%page.PageSize > 0 {
-			return total/page.PageSize + 1
+			return (total / page.PageSize) + 1
 		} else {
 			return total / page.PageSize
 		}
