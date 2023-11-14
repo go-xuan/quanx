@@ -12,7 +12,7 @@ import (
 type Config struct {
 	Host     string `yaml:"host" json:"host"`         // 主机
 	Port     int    `yaml:"port" json:"port"`         // 端口
-	UserName string `json:"userName" yaml:"userName"` // 用户名
+	Username string `json:"username" yaml:"username"` // 用户名
 	Password string `json:"password" yaml:"password"` // 密码
 	Database string `json:"database" yaml:"database"` // 数据库名
 }
@@ -23,7 +23,7 @@ func (conf *Config) Format() string {
 }
 
 func (conf *Config) Uri() string {
-	return fmt.Sprintf("mongodb://%s:%s@%s", conf.UserName, conf.Password, conf.Host)
+	return fmt.Sprintf("mongodb://%s:%s@%s", conf.Username, conf.Password, conf.Host)
 }
 
 // 配置信息格式化

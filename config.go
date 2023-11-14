@@ -1,4 +1,4 @@
-package engine
+package quanx
 
 import (
 	"github.com/go-xuan/quanx/public/gormx"

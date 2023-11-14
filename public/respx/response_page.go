@@ -1,6 +1,8 @@
 package respx
 
-import "github.com/go-xuan/quanx/common/modelx"
+import (
+	"github.com/go-xuan/quanx/public/modelx"
+)
 
 // 分页结果
 type PageResponse struct {

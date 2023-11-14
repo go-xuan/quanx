@@ -2,11 +2,11 @@ package crudx
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/quanx/public/modelx"
+	respx2 "github.com/go-xuan/quanx/public/respx"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
-	"github.com/go-xuan/quanx/common/modelx"
-	"github.com/go-xuan/quanx/common/respx"
 	"github.com/go-xuan/quanx/public/gormx"
 )
 
@@ -29,16 +29,16 @@ func (m *Model[T]) Create(ctx *gin.Context) {
 	var in T
 	if err = ctx.BindJSON(&in); err != nil {
 		log.Error("参数错误：", err)
-		respx.BuildException(ctx, respx.ParamErr, err)
+		respx2.BuildException(ctx, respx2.ParamErr, err)
 		return
 	}
 	err = m.DB.Create(&in).Error
 	if err != nil {
 		log.Error("对象新增失败 ： ", err)
-		respx.BuildError(ctx, err)
+		respx2.BuildError(ctx, err)
 		return
 	}
-	respx.BuildSuccess(ctx, nil)
+	respx2.BuildSuccess(ctx, nil)
 }
 
 func (m *Model[T]) Update(ctx *gin.Context) {
@@ -46,16 +46,16 @@ func (m *Model[T]) Update(ctx *gin.Context) {
 	var in T
 	if err = ctx.BindJSON(&in); err != nil {
 		log.Error("参数错误：", err)
-		respx.BuildException(ctx, respx.ParamErr, err)
+		respx2.BuildException(ctx, respx2.ParamErr, err)
 		return
 	}
 	err = m.DB.Updates(&in).Error
 	if err != nil {
 		log.Error("对象更新失败 ： ", err)
-		respx.BuildError(ctx, err)
+		respx2.BuildError(ctx, err)
 		return
 	}
-	respx.BuildSuccess(ctx, nil)
+	respx2.BuildSuccess(ctx, nil)
 }
 
 func (m *Model[T]) Delete(ctx *gin.Context) {
@@ -63,16 +63,16 @@ func (m *Model[T]) Delete(ctx *gin.Context) {
 	var form modelx.IdString
 	if err = ctx.ShouldBindQuery(&form); err != nil {
 		log.Error("参数错误：", err)
-		respx.BuildException(ctx, respx.ParamErr, err)
+		respx2.BuildException(ctx, respx2.ParamErr, err)
 		return
 	}
 	err = m.DB.Where("id = '" + form.Id + "'").Delete(&m.Struct).Error
 	if err != nil {
 		log.Error("对象删除失败 ： ", err)
-		respx.BuildError(ctx, err)
+		respx2.BuildError(ctx, err)
 		return
 	}
-	respx.BuildSuccess(ctx, nil)
+	respx2.BuildSuccess(ctx, nil)
 }
 
 func (m *Model[T]) Detail(ctx *gin.Context) {
@@ -80,15 +80,15 @@ func (m *Model[T]) Detail(ctx *gin.Context) {
 	var form modelx.IdString
 	if err = ctx.ShouldBindQuery(&form); err != nil {
 		log.Error("参数错误：", err)
-		respx.BuildException(ctx, respx.ParamErr, err)
+		respx2.BuildException(ctx, respx2.ParamErr, err)
 		return
 	}
 	var result T
 	err = m.DB.Where("id = '" + form.Id + "'").Find(&result).Error
 	if err != nil {
 		log.Error("对象查询失败 ： ", err)
-		respx.BuildError(ctx, err)
+		respx2.BuildError(ctx, err)
 		return
 	}
-	respx.BuildSuccess(ctx, result)
+	respx2.BuildSuccess(ctx, result)
 }

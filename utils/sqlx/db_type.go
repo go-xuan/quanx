@@ -1,4 +1,4 @@
-package constx
+package sqlx
 
 // 共用数据类型
 const (
@@ -24,17 +24,7 @@ const (
 	Bool       = "bool"
 )
 
-// java类常用类型
-const (
-	JavaString     = "String"
-	JavaInteger    = "Integer"
-	JavaLong       = "Long"
-	JavaDate       = "Date"
-	JavaBigDecimal = "BigDecimal"
-	JavaBoolean    = "Boolean"
-)
-
-// java类常用类型
+// ck常用类型
 const (
 	CkString   = "String"
 	CkInt8     = "Int8"
@@ -44,4 +34,14 @@ const (
 	CkDateTime = "DateTime"
 	CkFloat64  = "Float64"
 	CkBool     = "Bool"
+)
+
+// java类常用类型
+const (
+	JavaString     = "String"
+	JavaInteger    = "Integer"
+	JavaLong       = "Long"
+	JavaDate       = "Date"
+	JavaBigDecimal = "BigDecimal"
+	JavaBoolean    = "Boolean"
 )

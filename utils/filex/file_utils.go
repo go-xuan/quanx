@@ -2,13 +2,13 @@ package filex
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/public/constx"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/utils/stringx"
 )
 

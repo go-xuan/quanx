@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/go-xuan/quanx/common/constx"
 )
 
 func HttpGet(url string) (result []byte, err error) {
@@ -23,7 +21,7 @@ func HttpGet(url string) (result []byte, err error) {
 
 func HttpGetWithHeader(url string, header map[string]string) (result []byte, err error) {
 	var req *http.Request
-	req, err = http.NewRequest(constx.GET, url, nil)
+	req, err = http.NewRequest(GET, url, nil)
 	if err != nil {
 		return
 	}
@@ -42,7 +40,7 @@ func HttpGetWithHeader(url string, header map[string]string) (result []byte, err
 func HttpPost(url string, body interface{}) (result []byte, err error) {
 	bodyBytes, _ := json.Marshal(body)
 	var resp *http.Response
-	resp, err = getHttpClient().Post(url, constx.JsonContent, bytes.NewBuffer(bodyBytes))
+	resp, err = getHttpClient().Post(url, JsonContent, bytes.NewBuffer(bodyBytes))
 	defer resp.Body.Close()
 	if err != nil {
 		return
@@ -53,11 +51,11 @@ func HttpPost(url string, body interface{}) (result []byte, err error) {
 func HttpPostWithHeader(url string, body interface{}, header map[string]string) (result []byte, err error) {
 	bodyBytes, _ := json.Marshal(body)
 	var req *http.Request
-	req, err = http.NewRequest(constx.POST, url, bytes.NewBuffer(bodyBytes))
+	req, err = http.NewRequest(POST, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return
 	}
-	req.Header.Set(constx.ContentType, constx.JsonContent)
+	req.Header.Set(ContentType, JsonContent)
 	for k, v := range header {
 		req.Header.Set(k, v)
 	}
@@ -83,11 +81,11 @@ func HttpForm(url string, form url.Values) (result []byte, err error) {
 
 func HttpFormWithHeader(url string, form url.Values, header map[string]string) (result []byte, err error) {
 	var req *http.Request
-	req, err = http.NewRequest(constx.POST, url, strings.NewReader(form.Encode()))
+	req, err = http.NewRequest(POST, url, strings.NewReader(form.Encode()))
 	if err != nil {
 		return
 	}
-	req.Header.Set(constx.ContentType, constx.FormContent)
+	req.Header.Set(ContentType, FormContent)
 	for k, v := range header {
 		req.Header.Set(k, v)
 	}
@@ -108,11 +106,11 @@ func HttpPut(url string, param interface{}) (result []byte, err error) {
 		return
 	}
 	var req *http.Request
-	req, err = http.NewRequest(constx.PUT, url, bytes.NewBuffer(jsons))
+	req, err = http.NewRequest(PUT, url, bytes.NewBuffer(jsons))
 	if err != nil {
 		return
 	}
-	req.Header.Set(constx.ContentType, constx.JsonContent)
+	req.Header.Set(ContentType, JsonContent)
 	var resp *http.Response
 	resp, err = getHttpClient().Do(req)
 	if err != nil {
@@ -126,7 +124,7 @@ func HttpPut(url string, param interface{}) (result []byte, err error) {
 
 func HttpDelete(url string) (res []byte, err error) {
 	var req *http.Request
-	req, err = http.NewRequest(constx.DELETE, url, nil)
+	req, err = http.NewRequest(DELETE, url, nil)
 	if err != nil {
 		return
 	}

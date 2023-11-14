@@ -13,6 +13,43 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	DirAndFile = "all"
+	OnlyDir    = "dir"
+	OnlyFile   = "file"
+	Go         = ".go"
+	Java       = ".java"
+	Sql        = ".sql"
+	Txt        = ".txt"
+	Json       = ".json"
+	Yml        = ".yml"
+	Yaml       = ".yaml"
+	Toml       = ".toml"
+	Properties = ".properties"
+	Jar        = ".jar"
+	Mod        = ".mod"
+	Class      = ".class"
+	Log        = ".log"
+	Shell      = ".sh"
+	Bat        = ".bat"
+	Xml        = ".xml"
+	Html       = ".html"
+	Doc        = ".doc"
+	Docx       = ".docx"
+	Xls        = ".xls"
+	Xlsx       = ".xlsx"
+	Ppt        = ".ppt"
+	Pptx       = ".pptx"
+	Pdf        = ".pdf"
+	Md         = ".md"
+	Mp3        = ".mp3"
+	Mp4        = ".mp4"
+	Jpg        = ".jpg"
+	Png        = ".png"
+	Heic       = ".heic"
+	Wav        = ".wav"
+)
+
 // 通过url获取文件字节
 func GetFileBytesByUrl(fileUrl string) ([]byte, error) {
 	var result []byte
