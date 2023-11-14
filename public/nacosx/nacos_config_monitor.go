@@ -35,17 +35,15 @@ func GetNacosConfigMonitor() *Monitor {
 }
 
 // 获取nacos配置
-func (m *Monitor) GetConfigData(group, dataId string) (*MonitorData, bool) {
+func (m *Monitor) GetConfigData(group, dataId string) (data *MonitorData, exist bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	gm, hasGroup := m.Data[group]
-	if hasGroup && gm != nil {
-		data, hasData := gm[dataId]
-		if hasData && data != nil {
-			return data, true
-		}
+	var gm, ok = m.Data[group]
+	if ok && gm != nil {
+		data, exist = gm[dataId]
+		return
 	}
-	return nil, false
+	return
 }
 
 // 新增nacos配置监听

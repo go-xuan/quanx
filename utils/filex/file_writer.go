@@ -4,9 +4,8 @@ import (
 	"bufio"
 	"encoding/csv"
 	"encoding/json"
+	"github.com/go-xuan/quanx/public/constx"
 	"os"
-
-	"github.com/go-xuan/quanx/common/constx"
 )
 
 type writeMode uint

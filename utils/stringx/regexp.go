@@ -1,4 +1,4 @@
-package constx
+package stringx
 
 import "regexp"
 
@@ -16,46 +16,46 @@ const (
 )
 
 // 正则判断
-func CheckRegexp(target, pattern string) bool {
+func RegMatch(target, pattern string) bool {
 	matched, _ := regexp.MatchString(pattern, target)
 	return matched
 }
 
-func CheckChinese(s string) bool {
-	return CheckRegexp(ChineseRegex, s)
+func IsChinese(s string) bool {
+	return RegMatch(ChineseRegex, s)
 }
 
-func CheckEnglish(s string) bool {
-	return CheckRegexp(EnglishRegex, s)
+func IsEnglish(s string) bool {
+	return RegMatch(EnglishRegex, s)
 }
 
-func CheckInteger(s string) bool {
-	return CheckRegexp(IntegerRegex, s)
+func IsInteger(s string) bool {
+	return RegMatch(IntegerRegex, s)
 }
 
-func CheckFloat(s string) bool {
-	return CheckRegexp(FloatRegex, s)
+func IsFloat(s string) bool {
+	return RegMatch(FloatRegex, s)
 }
 
-func CheckPhone(s string) bool {
-	return CheckRegexp(PhoneRegex, s)
+func IsPhone(s string) bool {
+	return RegMatch(PhoneRegex, s)
 }
 
-func CheckEmail(s string) bool {
-	return CheckRegexp(EmailRegex, s)
+func IsEmail(s string) bool {
+	return RegMatch(EmailRegex, s)
 }
 
-func CheckPassword(s string) bool {
-	return CheckRegexp(PasswordRegex, s)
+func IsPassword(s string) bool {
+	return RegMatch(PasswordRegex, s)
 }
-func CheckDatetime(s string) bool {
-	return CheckRegexp(DatetimeRegex, s)
-}
-
-func CheckDate(s string) bool {
-	return CheckRegexp(DateRegex, s)
+func IsDatetime(s string) bool {
+	return RegMatch(DatetimeRegex, s)
 }
 
-func CheckTime(s string) bool {
-	return CheckRegexp(TimeRegex, s)
+func IsDate(s string) bool {
+	return RegMatch(DateRegex, s)
+}
+
+func IsTime(s string) bool {
+	return RegMatch(TimeRegex, s)
 }

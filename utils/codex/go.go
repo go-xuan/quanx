@@ -1,9 +1,9 @@
 package codex
 
 import (
+	"github.com/go-xuan/quanx/public/constx"
 	"strings"
 
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/utils/sqlx"
 	"github.com/go-xuan/quanx/utils/stringx"
 )

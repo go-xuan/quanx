@@ -17,21 +17,12 @@ type Controller struct {
 
 func Init(conf *Config) {
 	var client = conf.NewClient()
-	if ok, err := Ping(client); ok && err == nil {
+	if err := client.Ping(context.Background(), nil); err == nil {
 		CTL = &Controller{Config: conf, Client: client}
 		log.Error("MongoDB连接成功！", conf.Format())
 	} else {
 		log.Error("MongoDB连接失败！", conf.Format())
 		log.Error("error : ", err)
-	}
-}
-
-func Ping(client *mongo.Client) (bool, error) {
-	err := client.Ping(context.Background(), nil)
-	if err != nil {
-		return false, err
-	} else {
-		return true, nil
 	}
 }
 

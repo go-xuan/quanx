@@ -2,6 +2,7 @@ package miniox
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/utils/timex"
 	"path"
 	"path/filepath"
 	"time"
@@ -10,8 +11,6 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/go-xuan/quanx/common/constx"
 )
 
 type Config struct {
@@ -52,7 +51,7 @@ func (conf *Config) NewClient() (client *minio.Client, err error) {
 func (conf *Config) MinioPath(fileName string) (minioPath string) {
 	fileSuffix := filepath.Ext(filepath.Base(fileName))
 	fileName = uuid.NewString() + fileSuffix
-	minioPath = path.Join(time.Now().Format(constx.TimestampFmt), fileName)
+	minioPath = path.Join(time.Now().Format(timex.TimestampFmt), fileName)
 	if conf.RootDir != "" {
 		minioPath = path.Join(conf.RootDir, minioPath)
 	}

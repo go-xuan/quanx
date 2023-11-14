@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/utils/timex"
 )
 
@@ -38,9 +37,9 @@ func SqlPrepared(sql string, obj interface{}) string {
 		case goTypeInt64:
 			switch pType {
 			case tagTypeTime:
-				pValue = `'` + timex.SecondFormat(valueRef.Field(i).Int()/1000, constx.TimeFmt) + `'`
+				pValue = `'` + timex.SecondFormat(valueRef.Field(i).Int()/1000, timex.TimeFmt) + `'`
 			case tagTypeDate:
-				pValue = `'` + timex.SecondFormat(valueRef.Field(i).Int()/1000, constx.DateFmt) + `'`
+				pValue = `'` + timex.SecondFormat(valueRef.Field(i).Int()/1000, timex.DateFmt) + `'`
 			default:
 				pValue = strconv.FormatInt(valueRef.Field(i).Int(), 10)
 			}

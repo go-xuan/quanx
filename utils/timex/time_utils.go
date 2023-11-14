@@ -4,11 +4,17 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/go-xuan/quanx/common/constx"
 )
 
 type Unit uint
+
+const (
+	TimestampFmt = "20060102150405"
+	TimeFmt      = "2006-01-02 15:04:05"
+	DateFmt      = "2006-01-02"
+	MonthFmt     = "2006-01"
+	AllShengXiao = "鼠,牛,虎,兔,龙,蛇,马,羊,猴,鸡,狗,猪"
+)
 
 const (
 	Nano Unit = iota
@@ -25,14 +31,14 @@ const (
 
 // 时间转字符
 func ToString(time time.Time) string {
-	return time.Format(constx.TimeFmt)
+	return time.Format(TimeFmt)
 }
 
 // 字符转时间
 func ToTime(timeStr string) time.Time {
-	format := constx.TimeFmt
+	format := TimeFmt
 	if strings.Contains(timeStr, "-") && len(timeStr) == 10 {
-		format = constx.DateFmt
+		format = DateFmt
 	}
 	return TimeFormat(timeStr, format)
 }
@@ -53,12 +59,12 @@ func SecondFormat(second int64, format string) string {
 
 // 当前时间字符串
 func NowString() string {
-	return time.Now().Format(constx.TimeFmt)
+	return time.Now().Format(TimeFmt)
 }
 
 // 今天
 func TodayStr() string {
-	return time.Now().Format(constx.DateFmt)
+	return time.Now().Format(DateFmt)
 }
 
 // 今天开始时间
@@ -68,11 +74,11 @@ func TodayStart() time.Time {
 
 // 昨天
 func YesterdayStr() string {
-	return time.Now().AddDate(0, 0, -1).Format(constx.DateFmt)
+	return time.Now().AddDate(0, 0, -1).Format(DateFmt)
 }
 
 // 获取生肖
-func AnimalIs(year int) string {
+func ShengXiao(year int) string {
 	for {
 		if year < 4 {
 			year = year + 12
@@ -81,7 +87,7 @@ func AnimalIs(year int) string {
 		}
 	}
 	diff := (year - 4) % 12
-	animals := strings.Split(constx.Animal, ",")
+	animals := strings.Split(AllShengXiao, ",")
 	return animals[diff]
 }
 
@@ -160,10 +166,10 @@ func MonthSlice(startTimeUnix, endTimeUnix int64) []string {
 	tempTime = time.Date(year, month, 1, 0, 0, 0, 0, time.Local)
 	for {
 		if tempTime.Before(endTime) {
-			captureMonths = append(captureMonths, tempTime.Format(constx.MonthFmt))
+			captureMonths = append(captureMonths, tempTime.Format(MonthFmt))
 			tempTime = tempTime.AddDate(0, 1, 0)
 		} else if tempTime.Equal(endTime) {
-			captureMonths = append(captureMonths, tempTime.Format(constx.MonthFmt))
+			captureMonths = append(captureMonths, tempTime.Format(MonthFmt))
 			break
 		} else {
 			break
@@ -181,7 +187,7 @@ func DateSlice(startTimeUnix, endTimeUnix int64) []string {
 	// 获取相差天数
 	timeDiff, _ := strconv.Atoi(strconv.FormatInt((endTimeUnix-tempTime.Unix())/86400, 10))
 	for i := 0; i <= timeDiff; i++ {
-		dateList = append(dateList, tempTime.Format(constx.DateFmt))
+		dateList = append(dateList, tempTime.Format(DateFmt))
 		tempTime = tempTime.AddDate(0, 0, 1)
 	}
 	return dateList

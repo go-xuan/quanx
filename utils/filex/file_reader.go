@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/go-xuan/quanx/common/constx"
 )
 
 // 读取文件内容
@@ -69,13 +67,13 @@ func FileScan(dir string, ft string) (fileInfos []*File, err error) {
 		}
 		file := File{path, info}
 		switch ft {
-		case constx.DirAndFile:
+		case DirAndFile:
 			fileInfos = append(fileInfos, &file)
-		case constx.OnlyDir:
+		case OnlyDir:
 			if info.IsDir() {
 				fileInfos = append(fileInfos, &file)
 			}
-		case constx.OnlyFile:
+		case OnlyFile:
 			if !info.IsDir() {
 				fileInfos = append(fileInfos, &file)
 			}

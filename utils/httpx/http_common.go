@@ -11,8 +11,19 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
+)
 
-	"github.com/go-xuan/quanx/common/constx"
+const (
+	POST          = "POST"
+	GET           = "GET"
+	PUT           = "PUT"
+	DELETE        = "DELETE"
+	HttpPrefix    = "http://"
+	ContentType   = "Content-Type"
+	Authorization = "Authorization"
+	JsonContent   = "application/json"
+	FormContent   = "application/x-www-form-urlencoded"
+	GBKContent    = "application/javascript;charset=GBK"
 )
 
 func RequestHttp(method string, host string, header map[string]string, param interface{}) (result string, err error) {
@@ -28,7 +39,7 @@ func RequestHttp(method string, host string, header map[string]string, param int
 		log.Error(err)
 		return
 	}
-	req.Header.Set(constx.ContentType, constx.JsonContent)
+	req.Header.Set(ContentType, JsonContent)
 	for key, val := range header {
 		req.Header.Set(key, val)
 	}
@@ -47,8 +58,8 @@ func RequestHttp(method string, host string, header map[string]string, param int
 		log.Error(err)
 		return
 	}
-	if len(resp.Header[constx.ContentType]) > 0 {
-		if resp.Header[constx.ContentType][0] == constx.GBKContent {
+	if len(resp.Header[ContentType]) > 0 {
+		if resp.Header[ContentType][0] == GBKContent {
 			result = DecodeBody(string(body))
 		} else {
 			result = string(body)

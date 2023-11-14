@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/public/constx"
 	"github.com/go-xuan/quanx/utils/stringx"
 	"github.com/go-xuan/quanx/utils/timex"
 )
@@ -64,26 +64,26 @@ func (m *RandModel) GetRandString() (result string) {
 		}
 		kvMap := ParseConstraint(m.Constraint)
 		// 补充前缀
-		if strings.Contains(m.Constraint, constx.Prefix) {
-			result = kvMap[constx.Prefix] + result
+		if strings.Contains(m.Constraint, Prefix) {
+			result = kvMap[Prefix] + result
 		}
 		// 后缀
-		if strings.Contains(m.Constraint, constx.Suffix) {
-			result = result + kvMap[constx.Suffix]
+		if strings.Contains(m.Constraint, Suffix) {
+			result = result + kvMap[Suffix]
 		}
 		// 字符替换
-		if stringx.ContainsAny(m.Constraint, constx.Old, constx.New) {
-			result = strings.ReplaceAll(result, kvMap[constx.Old], kvMap[constx.New])
+		if stringx.ContainsAny(m.Constraint, Old, New) {
+			result = strings.ReplaceAll(result, kvMap[Old], kvMap[New])
 		}
 		// 大小写转换
-		if strings.Contains(m.Constraint, constx.Upper) {
-			if kvMap[constx.Upper] == "true" {
+		if strings.Contains(m.Constraint, Upper) {
+			if kvMap[Upper] == "true" {
 				result = strings.ToUpper(result)
 			}
 		}
 		// 大小写转换
-		if strings.Contains(m.Constraint, constx.Lower) {
-			if kvMap[constx.Lower] == "true" {
+		if strings.Contains(m.Constraint, Lower) {
+			if kvMap[Lower] == "true" {
 				result = strings.ToLower(result)
 			}
 		}
@@ -156,8 +156,8 @@ func ParseConstraint(constraint string) map[string]string {
 // 获取长度约束
 func GetLength(constraint string) (length int) {
 	kvMap := ParseConstraint(constraint)
-	if strings.Contains(constraint, constx.Length) {
-		length, _ = strconv.Atoi(kvMap[constx.Length])
+	if strings.Contains(constraint, Length) {
+		length, _ = strconv.Atoi(kvMap[Length])
 	}
 	return 8
 }
@@ -165,11 +165,11 @@ func GetLength(constraint string) (length int) {
 // 获取前后缀
 func ParsePrefixAndSuffix(constraint string) (prefix, suffix string) {
 	kvMap := ParseConstraint(constraint)
-	if strings.Contains(constraint, constx.Prefix) {
-		prefix = kvMap[constx.Prefix]
+	if strings.Contains(constraint, Prefix) {
+		prefix = kvMap[Prefix]
 	}
-	if strings.Contains(constraint, constx.Suffix) {
-		suffix = kvMap[constx.Suffix]
+	if strings.Contains(constraint, Suffix) {
+		suffix = kvMap[Suffix]
 	}
 	return
 }
@@ -180,11 +180,11 @@ func ParseConstraintOfInt(constraint string) (min, max int) {
 	min = 1
 	max = 9999
 	kvMap := ParseConstraint(constraint)
-	if strings.Contains(constraint, constx.Min) {
-		min, _ = strconv.Atoi(kvMap[constx.Min])
+	if strings.Contains(constraint, Min) {
+		min, _ = strconv.Atoi(kvMap[Min])
 	}
-	if strings.Contains(constraint, constx.Max) {
-		max, _ = strconv.Atoi(kvMap[constx.Max])
+	if strings.Contains(constraint, Max) {
+		max, _ = strconv.Atoi(kvMap[Max])
 	}
 	return
 }
@@ -197,14 +197,14 @@ func ParseConstraintOfFloat(constraint string) (min, max float64, prec int) {
 	max = 9999
 	prec = 6
 	kvMap := ParseConstraint(constraint)
-	if strings.Contains(constraint, constx.Min) {
-		min, _ = strconv.ParseFloat(kvMap[constx.Min], 64)
+	if strings.Contains(constraint, Min) {
+		min, _ = strconv.ParseFloat(kvMap[Min], 64)
 	}
-	if strings.Contains(constraint, constx.Max) {
-		max, _ = strconv.ParseFloat(kvMap[constx.Max], 64)
+	if strings.Contains(constraint, Max) {
+		max, _ = strconv.ParseFloat(kvMap[Max], 64)
 	}
-	if strings.Contains(constraint, constx.Prec) {
-		prec, _ = strconv.Atoi(kvMap[constx.Prec])
+	if strings.Contains(constraint, Prec) {
+		prec, _ = strconv.Atoi(kvMap[Prec])
 	}
 	return
 }
@@ -215,29 +215,29 @@ func ParseConstraintOfTime(constraint string) (min, max time.Time, format string
 	now := time.Now()
 	max = now
 	min = now.Add(time.Hour * -24 * 30)
-	format = constx.TimeFmt
+	format = timex.TimeFmt
 	kvMap := ParseConstraint(constraint)
-	if strings.Contains(constraint, constx.Min) {
-		min = timex.ToTime(kvMap[constx.Min])
+	if strings.Contains(constraint, Min) {
+		min = timex.ToTime(kvMap[Min])
 	}
-	if strings.Contains(constraint, constx.Max) {
-		max = timex.ToTime(kvMap[constx.Max])
+	if strings.Contains(constraint, Max) {
+		max = timex.ToTime(kvMap[Max])
 	}
-	if strings.Contains(constraint, constx.Format) {
-		format = kvMap[constx.Format]
+	if strings.Contains(constraint, Format) {
+		format = kvMap[Format]
 	}
 	return
 }
 
 // 解析密码约束条件
 func ParseConstraintOfPassword(constraint string) (length int, lower, upper, numeric, special bool) {
-	if stringx.ContainsAny(constraint, constx.Length, constx.Lower, constx.Upper, constx.HasNumber, constx.HasSymbol) {
+	if stringx.ContainsAny(constraint, Length, Lower, Upper, HasNumber, HasSymbol) {
 		kvMap := ParseConstraint(constraint)
-		length, _ = strconv.Atoi(kvMap[constx.Length])
-		lower = kvMap[constx.Lower] == "true"
-		upper = kvMap[constx.Upper] == "true"
-		numeric = kvMap[constx.HasNumber] == "true"
-		special = kvMap[constx.HasSymbol] == "true"
+		length, _ = strconv.Atoi(kvMap[Length])
+		lower = kvMap[Lower] == "true"
+		upper = kvMap[Upper] == "true"
+		numeric = kvMap[HasNumber] == "true"
+		special = kvMap[HasSymbol] == "true"
 		return
 	}
 	return 8, true, true, true, true
@@ -245,22 +245,22 @@ func ParseConstraintOfPassword(constraint string) (length int, lower, upper, num
 
 // 解析备选项约束条件
 func ParseConstraintOfOptions(constraint string) (options []string) {
-	if stringx.ContainsAny(constraint, constx.Options) {
+	if stringx.ContainsAny(constraint, Options) {
 		kvMap := ParseConstraint(constraint)
-		options = strings.Split(kvMap[constx.Options], ",")
+		options = strings.Split(kvMap[Options], ",")
 	}
 	return
 }
 
 // 获取数据库取值sql
 func ParseConstraintOfSql(constraint string) (sql string) {
-	if stringx.ContainsAny(constraint, constx.Table, constx.Field) {
+	if stringx.ContainsAny(constraint, Table, Field) {
 		sb := strings.Builder{}
 		kvMap := ParseConstraint(constraint)
 		sb.WriteString(`select distinct `)
-		sb.WriteString(kvMap[constx.Field])
+		sb.WriteString(kvMap[Field])
 		sb.WriteString(` from `)
-		sb.WriteString(kvMap[constx.Table])
+		sb.WriteString(kvMap[Table])
 		sql = sb.String()
 		return
 	}

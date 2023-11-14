@@ -6,53 +6,53 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/public/nacosx"
 )
 
-// 微服务配置
-var servers []*Server
+var Apps []*App
 
-type Server struct {
-	Name  string   `json:"name"`  // 服务名称
-	Group string   `json:"group"` // 服务分组
-	Url   string   `json:"url"`   // 微服务Url
-	Auth  bool     `json:"auth"`  // 是否鉴权
-	Skip  []string `json:"skip"`  // 跳过鉴权
+type App struct {
+	Name   string   `json:"name"`   // 服务名称
+	Group  string   `json:"group"`  // 服务分组
+	Prefix string   `json:"prefix"` // Api根路由
+	Url    string   `json:"url"`    // Api-Url
+	Auth   bool     `json:"auth"`   // Api是否鉴权
+	Exempt []string `json:"exempt"` // Api免鉴权
 }
 
-// 获取微服务url
-func GetServerHttpUrl(group, dataId, uri string) (string, bool, error) {
-	configData, ok := nacosx.GetNacosConfigMonitor().GetConfigData(group, dataId)
-	if ok && configData.Changed {
-		err := json.Unmarshal([]byte(configData.Content), &servers)
+// 获取微服务addr
+func GetServerHttpURL(group, dataId, uri string) (url string, exempt bool, err error) {
+	if data, ok := nacosx.GetNacosConfigMonitor().GetConfigData(group, dataId); ok && data.Changed {
+		// 将当前最新的content数据同步到servers
+		err = json.Unmarshal([]byte(data.Content), &Apps)
 		if err != nil {
-			err = errors.New("微服务网关清单同步失败 ：" + err.Error())
-			return "", false, err
+			err = errors.New("微服务网关列表同步失败 ：" + err.Error())
+			return
 		}
 		// 更新nacos监控中配置值
-		configData.Changed = false
-		configData.UpdateTime = time.Now().UnixMilli()
+		data.Changed = false
+		data.UpdateTime = time.Now().UnixMilli()
 	}
-	for _, server := range servers {
+	for _, server := range Apps {
 		if MatchUrl(uri, server.Url) {
-			var auth = server.Auth
-			if server.Skip != nil && len(server.Skip) > 0 {
-				for _, item := range server.Skip {
+			if len(server.Exempt) > 0 {
+				for _, item := range server.Exempt {
 					if item == uri {
-						auth = false
+						exempt = true
 					}
 				}
 			}
-			url, err := nacosx.SelectOneHealthyInstance(server.Name, server.Group)
+			url, err = nacosx.SelectOneHealthyInstance(server.Name, server.Group)
 			if err != nil {
 				err = errors.New("微服务实例未注册 ：" + err.Error())
-				return "", false, err
+				return
 			}
-			return constx.HttpPrefix + url, auth, nil
+			url += server.Prefix
+			return
 		}
 	}
-	return "", false, errors.New("微服务网关路由未配置")
+	err = errors.New("微服务网关路由未配置")
+	return
 }
 
 // URL匹配
@@ -60,11 +60,13 @@ func MatchUrl(uri, rule string) bool {
 	if strings.HasSuffix(rule, `/**`) {
 		return strings.HasPrefix(uri, strings.TrimSuffix(rule, `/**`))
 	} else if strings.HasSuffix(rule, `/*`) {
-		prefix := strings.TrimSuffix(rule, `/*`)
+		var prefix = strings.TrimSuffix(rule, `/*`)
 		if strings.HasPrefix(uri, prefix) {
 			uri = uri[len(prefix):]
 			return !strings.Contains(uri, `/`)
 		}
+	} else {
+		return strings.Contains(uri, rule)
 	}
 	return false
 }

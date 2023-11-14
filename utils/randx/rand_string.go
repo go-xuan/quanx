@@ -2,7 +2,6 @@ package randx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/common/constx"
 	"strings"
 	"time"
 
@@ -18,8 +17,8 @@ func String(size ...int) string {
 	}
 	bytes := make([]byte, length)
 	for i := 0; i < length; i++ {
-		y := IntRange(0, len(constx.CharAll)-1)
-		bytes[i] = constx.CharAll[y]
+		y := IntRange(0, len(CharAll)-1)
+		bytes[i] = CharAll[y]
 	}
 	return string(bytes)
 }
@@ -39,8 +38,8 @@ func Radio(options []string) string {
 func NumberString(length int) string {
 	bytes := make([]byte, length)
 	for i := 0; i < length; i++ {
-		y := IntRange(0, len(constx.NUMBER)-1)
-		bytes[i] = constx.NUMBER[y]
+		y := IntRange(0, len(NUMBER)-1)
+		bytes[i] = NUMBER[y]
 	}
 	return string(bytes)
 }
@@ -53,9 +52,9 @@ func UUID() string {
 // 随机姓名
 func Name() string {
 	sb := strings.Builder{}
-	familyNames := strings.Split(constx.FamilyNameCn, ",")
-	numbers := strings.Split(constx.NumberCn, ",")
-	animals := strings.Split(constx.Animal, ",")
+	familyNames := strings.Split(FamilyNameCn, ",")
+	numbers := strings.Split(NumberCn, ",")
+	animals := strings.Split(ShengXiao, ",")
 	x := IntRange(0, len(familyNames)-1)
 	y := IntRange(0, len(numbers)-1)
 	z := IntRange(0, len(animals)-1)
@@ -69,11 +68,11 @@ func Name() string {
 func Phone() string {
 	bytes := make([]byte, 11)
 	bytes[0] = '1'
-	x := IntRange(0, len(constx.PhonePrefix)-1)
-	bytes[1] = constx.PhonePrefix[x]
+	x := IntRange(0, len(PhonePrefix)-1)
+	bytes[1] = PhonePrefix[x]
 	for i := 2; i < 11; i++ {
-		y := IntRange(0, len(constx.NUMBER)-1)
-		bytes[i] = constx.NUMBER[y]
+		y := IntRange(0, len(NUMBER)-1)
+		bytes[i] = NUMBER[y]
 	}
 	return string(bytes)
 }
@@ -84,7 +83,7 @@ func IdCard() string {
 	now := time.Now().Unix()
 	diff := Int64Range(1, now)
 	birthday := time.Unix(diff, 0).Format("20060102")
-	postCodes := strings.Split(constx.HubeiPostcode, ",")
+	postCodes := strings.Split(HubeiPostcode, ",")
 	x := IntRange(0, len(postCodes)-1)
 	sb.WriteString(postCodes[x])
 	sb.WriteString(birthday)
@@ -97,18 +96,18 @@ func IdCard() string {
 // 随机车牌号
 func PlateNo() string {
 	sb := strings.Builder{}
-	provinces := strings.Split(constx.ProvinceSimple, ",")
+	provinces := strings.Split(ProvinceSimple, ",")
 	x := IntRange(0, len(provinces)-1)
-	y := IntRange(0, len(constx.LetterUpper)-20)
+	y := IntRange(0, len(LetterUpper)-20)
 	sb.WriteString(provinces[x])
-	sb.WriteString(string(constx.LetterUpper[y]))
+	sb.WriteString(string(LetterUpper[y]))
 	for i := 0; i < 5; i++ {
 		if Bool() {
-			z := IntRange(0, len(constx.LetterUpper)-1)
-			sb.WriteString(string(constx.LetterUpper[z]))
+			z := IntRange(0, len(LetterUpper)-1)
+			sb.WriteString(string(LetterUpper[z]))
 		} else {
-			z := IntRange(0, len(constx.NUMBER)-1)
-			sb.WriteString(string(constx.NUMBER[z]))
+			z := IntRange(0, len(NUMBER)-1)
+			sb.WriteString(string(NUMBER[z]))
 		}
 	}
 	return sb.String()
@@ -119,14 +118,14 @@ func Email() string {
 	sb := strings.Builder{}
 	len1 := IntRange(5, 10)
 	for i := 0; i < len1; i++ {
-		x := IntRange(0, len(constx.CharLower)-1)
-		sb.WriteString(string(constx.CharLower[x]))
+		x := IntRange(0, len(CharLower)-1)
+		sb.WriteString(string(CharLower[x]))
 	}
 	sb.WriteString(`@`)
 	len2 := IntRange(2, 5)
 	for i := 0; i < len2; i++ {
-		x := IntRange(0, len(constx.LetterLower)-1)
-		sb.WriteString(string(constx.LetterLower[x]))
+		x := IntRange(0, len(LetterLower)-1)
+		sb.WriteString(string(LetterLower[x]))
 	}
 	sb.WriteString(`.com`)
 	return sb.String()
@@ -142,12 +141,12 @@ func IP() string {
 }
 
 func Province() string {
-	list := strings.Split(constx.ProvinceName, ",")
+	list := strings.Split(ProvinceName, ",")
 	return list[IntRange(0, len(list)-1)]
 }
 
 func City() string {
-	list := strings.Split(constx.HubeiCityName, ",")
+	list := strings.Split(HubeiCityName, ",")
 	return list[IntRange(0, len(list)-1)]
 }
 
@@ -159,19 +158,19 @@ func Password(length int, lower bool, upper bool, numeric bool, special bool) st
 	bytes := make([]byte, length)
 	var temp string
 	if lower {
-		temp += constx.LetterLower
+		temp += LetterLower
 	}
 	if upper {
-		temp += constx.LetterUpper
+		temp += LetterUpper
 	}
 	if numeric {
-		temp += constx.NUMBER
+		temp += NUMBER
 	}
 	if special {
-		temp += constx.SPECIAL
+		temp += SPECIAL
 	}
 	if temp == "" {
-		temp = constx.CharLower
+		temp = CharLower
 	}
 	for i := 0; i < length; i++ {
 		x := IntRange(0, len(temp)-1)

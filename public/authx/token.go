@@ -3,12 +3,11 @@ package authx
 import (
 	"encoding/json"
 	"errors"
+	"github.com/go-xuan/quanx/utils/httpx"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-
-	"github.com/go-xuan/quanx/common/constx"
 )
 
 var SecretKey []byte
@@ -65,7 +64,7 @@ func ParseAuthToken(token string) (user *User, err error) {
 
 // 获取用户ID
 func GetUserId(context *gin.Context) (userId int64) {
-	tp, err := ParseAuthToken(context.Request.Header.Get(constx.Authorization))
+	tp, err := ParseAuthToken(context.Request.Header.Get(httpx.Authorization))
 	if err != nil {
 		return
 	}

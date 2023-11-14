@@ -12,7 +12,6 @@ import (
 	"github.com/magiconair/properties"
 	"gopkg.in/yaml.v3"
 
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/utils/filex"
 )
 
@@ -78,13 +77,13 @@ func ReadConfigToPointer(filePath string, config interface{}) (err error) {
 		return
 	}
 	switch filex.Suffix(filePath) {
-	case constx.Json:
+	case filex.Json:
 		err = ReadJsonToPointer(bytes, config)
-	case constx.Yaml, constx.Yml:
+	case filex.Yaml, filex.Yml:
 		err = ReadYamlToPointer(bytes, config)
-	case constx.Toml:
+	case filex.Toml:
 		err = ReadTomlToPointer(bytes, config)
-	case constx.Properties:
+	case filex.Properties:
 		err = ReadPropertiesToPointer(bytes, config)
 	}
 	return
