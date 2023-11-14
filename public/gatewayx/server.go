@@ -1,30 +1,31 @@
 package gatewayx
 
 import (
-	"encoding/json"
 	"errors"
+	"github.com/go-xuan/quanx/utils/filex"
 	"strings"
 	"time"
 
 	"github.com/go-xuan/quanx/public/nacosx"
+	"github.com/go-xuan/quanx/utils/structx"
 )
 
-var Apps []*App
-
 type App struct {
-	Name   string   `json:"name"`   // 服务名称
-	Group  string   `json:"group"`  // 服务分组
-	Prefix string   `json:"prefix"` // Api根路由
-	Url    string   `json:"url"`    // Api-Url
-	Auth   bool     `json:"auth"`   // Api是否鉴权
-	Exempt []string `json:"exempt"` // Api免鉴权
+	Name   string `json:"name"`   // 服务名称
+	Group  string `json:"group"`  // 服务分组
+	Prefix string `json:"prefix"` // Api根路由
+	Url    string `json:"url"`    // Api-Url
+	Auth   bool   `json:"auth"`   // Api是否鉴权
+	Exempt string `json:"exempt"` // Api免鉴权
 }
+
+var Apps []*App
 
 // 获取微服务addr
 func GetServerHttpURL(group, dataId, uri string) (url string, exempt bool, err error) {
 	if data, ok := nacosx.GetNacosConfigMonitor().GetConfigData(group, dataId); ok && data.Changed {
 		// 将当前最新的content数据同步到servers
-		err = json.Unmarshal([]byte(data.Content), &Apps)
+		err = structx.ParseBytesToPointer(filex.Suffix(dataId), []byte(data.Content), &Apps)
 		if err != nil {
 			err = errors.New("微服务网关列表同步失败 ：" + err.Error())
 			return
@@ -35,9 +36,10 @@ func GetServerHttpURL(group, dataId, uri string) (url string, exempt bool, err e
 	}
 	for _, server := range Apps {
 		if MatchUrl(uri, server.Url) {
-			if len(server.Exempt) > 0 {
-				for _, item := range server.Exempt {
-					if item == uri {
+			if server.Exempt != "" {
+				var Exempts = strings.Split(server.Exempt, ",")
+				for _, exemptUrl := range Exempts {
+					if strings.TrimSpace(exemptUrl) == uri {
 						exempt = true
 					}
 				}

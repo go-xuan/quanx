@@ -19,25 +19,24 @@ func Init(conf *Config) {
 	CTL = &Controller{Config: conf}
 	switch conf.Mode {
 	case OnlyConfig:
-		CTL.ConfigClient = conf.GetConfigClient()
+		CTL.ConfigClient = conf.ConfigClient()
 	case OnlyNaming:
-		CTL.NamingClient = conf.GetNamingClient()
-	case ConfigAndNaming:
-		CTL.ConfigClient = conf.GetConfigClient()
-		CTL.NamingClient = conf.GetNamingClient()
+		CTL.NamingClient = conf.NamingClient()
 	default:
-		return
+		CTL.ConfigClient = conf.ConfigClient()
+		CTL.NamingClient = conf.NamingClient()
 	}
+	return
 }
 
 const (
-	ConfigAndNaming = iota // 配置中心和服务发现都使用
+	ConfigAndNaming = iota // 配置中心和服务发现都使用，默认项
 	OnlyConfig             // 仅用配置中心
 	OnlyNaming             // 仅用服务发现
 )
 
 func (ctl *Controller) BuildConfigFromFile(filePath string) (err error) {
-	err = structx.ReadConfigToPointer(filePath, ctl.Config)
+	err = structx.ReadFileToPointer(filePath, ctl.Config)
 	if err != nil {
 		return
 	}
@@ -45,8 +44,8 @@ func (ctl *Controller) BuildConfigFromFile(filePath string) (err error) {
 }
 
 func (ctl *Controller) BuildConfigFromNacos(group, dataId string) (err error) {
-	module := &Option{Group: group, DataId: dataId}
-	err = module.LoadNacosConfig(ctl.Config)
+	module := &Item{Group: group, DataId: dataId}
+	err = module.LoadConfig(ctl.Config)
 	if err != nil {
 		return
 	}

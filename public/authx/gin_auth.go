@@ -22,7 +22,7 @@ func WhiteList(list ...string) gin.HandlerFunc {
 		if username == ExemptAuth && ok {
 			ctx.Set(ExemptAuth, true)
 		} else {
-			ctx.Set(ExemptAuth, stringx.ContainsAny(ctx.FullPath(), list...))
+			ctx.Set(ExemptAuth, stringx.ContainsAny(ctx.Request.RequestURI, list...))
 		}
 		ctx.Next()
 	}

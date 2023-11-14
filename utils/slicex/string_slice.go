@@ -44,7 +44,7 @@ func ContainsAll(slice []string, args []string) (string, bool) {
 	return "", true
 }
 
-// 合并
+// 合并并去重
 func Distinct(slices ...[]string) (result []string) {
 	set := make(map[string]struct{})
 	for _, slice := range slices {

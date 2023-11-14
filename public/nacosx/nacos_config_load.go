@@ -15,56 +15,66 @@ import (
 )
 
 // 配置项
-type Options []Option
-type Option struct {
+type Items []Item
+type Item struct {
 	Type   vo.ConfigType `yaml:"type"`   // 配置类型
 	Group  string        `yaml:"group"`  // 配置分组
 	DataId string        `yaml:"dataId"` // 配置文件ID
-	IsSelf bool          `yaml:"isSelf"` // 私有配置
 	Listen bool          `yaml:"listen"` // 是否启用监听
 }
 
 // 加载nacos配置
-func LoadNacosConfig(options Options, config interface{}) {
-	if len(options) == 0 {
-		return
-	}
+func LoadNacosConfig(group string, load *LoadConfig, config interface{}) {
 	if CTL.NamingClient == nil {
 		log.Error("未初始化nacos配置中心客户端!")
 		return
 	}
-	if options != nil && len(options) > 0 {
-		var server Option  // 应用服务配置
-		var others Options // 其他配置
-		for _, option := range options {
-			if option.IsServer() {
-				server = option
-			} else if !option.IsSelf {
-				others = append(others, option)
-			}
-		}
-		// 加载其他配置
-		err := others.LoadNacosConfig(config)
-		if err != nil {
-			log.Error("加载nacos其他配置失败！", err)
-		}
-		// 加载主要配置
-		defer func() {
-			err = server.LoadNacosConfig(config)
-			if err != nil {
-				log.Error("加载nacos应用配置失败!", err)
-			}
-		}()
+	if load == nil || load.Init == "" {
+		log.Error("当前应用未配置nacos未配置!")
+		return
 	}
+	var listenMap = make(map[string]bool)
+	if load.Listen != "" {
+		listenIds := strings.Split(load.Listen, ",")
+		for _, dataId := range listenIds {
+			listenMap[strings.TrimSpace(dataId)] = true
+		}
+	}
+	initIds := strings.Split(load.Init, ",")
+	var final Item
+	var pres Items
+	// 初始化默认配置项
+	for _, dataId := range initIds {
+		dataId = strings.TrimSpace(dataId)
+		var opt = Item{Group: group, DataId: dataId, Listen: listenMap[dataId]}
+		if strings.Contains(dataId, "server") {
+			final = opt
+		} else {
+			pres = append(pres, opt)
+		}
+	}
+	// 预加载配置项
+	var err = pres.LoadConfig(config)
+	if err != nil {
+		log.Error("加载nacos预加载配置项失败！", err)
+	}
+	// 最终加载配置
+	defer func() {
+		err = final.LoadConfig(config)
+		if err != nil {
+			log.Error("加载nacos最终加载配置失败!", err)
+		}
+	}()
+
 }
 
 // 配置信息格式化
-func (opt Option) Format() string {
-	return fmt.Sprintf("group=%s dataId=%s type=%s", opt.Group, opt.DataId, opt.ConfigType())
+func (item Item) Format() string {
+	return fmt.Sprintf("group=%s dataId=%s type=%s", item.Group, item.DataId, item.ConfigType())
 }
 
-func (opt Option) IsServer() bool {
-	var dataId = opt.DataId
+func (item Item) IsServer() bool {
+	var dataId = item.DataId
 	if strings.Contains(dataId, ".") {
 		i := strings.LastIndex(dataId, ".")
 		dataId = dataId[:i]
@@ -73,27 +83,27 @@ func (opt Option) IsServer() bool {
 }
 
 // 转化配置项
-func (opt Option) TransToConfigParam() vo.ConfigParam {
-	return vo.ConfigParam{DataId: opt.DataId, Group: opt.Group, Type: opt.ConfigType()}
+func (item Item) TransToConfigParam() vo.ConfigParam {
+	return vo.ConfigParam{DataId: item.DataId, Group: item.Group, Type: item.ConfigType()}
 }
 
 // 获取配置文件类型
-func (opt Option) ConfigType() (confType vo.ConfigType) {
-	if opt.Type == "" {
-		for i := len(opt.DataId) - 1; i >= 0; i-- {
-			if opt.DataId[i] == '.' {
-				confType = vo.ConfigType(opt.DataId[i+1:])
+func (item Item) ConfigType() (confType vo.ConfigType) {
+	if item.Type == "" {
+		for i := len(item.DataId) - 1; i >= 0; i-- {
+			if item.DataId[i] == '.' {
+				confType = vo.ConfigType(item.DataId[i+1:])
 				return
 			}
 		}
 	} else {
-		confType = opt.Type
+		confType = item.Type
 	}
 	return
 }
 
 // 加载nacos配置
-func (opt Option) LoadNacosConfig(config interface{}) (err error) {
+func (item Item) LoadConfig(config interface{}) (err error) {
 	valueRef := reflect.ValueOf(config)
 	// 修改值必须是指针类型否则不可行
 	if valueRef.Type().Kind() != reflect.Ptr {
@@ -102,7 +112,7 @@ func (opt Option) LoadNacosConfig(config interface{}) (err error) {
 	}
 	// 读取Nacos配置
 	var content string
-	var param = opt.TransToConfigParam()
+	var param = item.TransToConfigParam()
 	content, err = CTL.ConfigClient.GetConfig(param)
 	if err != nil {
 		log.Error("获取nacos配置内容失败 ", err)
@@ -111,10 +121,8 @@ func (opt Option) LoadNacosConfig(config interface{}) (err error) {
 	switch param.Type {
 	case vo.YAML:
 		err = yaml.Unmarshal([]byte(content), config)
-		break
 	case vo.JSON:
 		err = json.Unmarshal([]byte(content), &config)
-		break
 	case vo.PROPERTIES:
 		var p *properties.Properties
 		p, err = properties.LoadString(content)
@@ -125,16 +133,16 @@ func (opt Option) LoadNacosConfig(config interface{}) (err error) {
 	default:
 		err = errors.New("配置项option.type不符合规范")
 	}
-	msg := opt.Format()
+	msg := item.Format()
 	if err != nil {
 		log.Error("加载nacos配置-失败! ", msg, " error : ", err)
 		return
 	}
 	log.Info("加载nacos配置-成功! ", msg)
 	// 设置Nacos配置监听
-	if opt.Listen {
+	if item.Listen {
 		// 初始化nacos配置监控
-		GetNacosConfigMonitor().AddConfigData(opt.Group, opt.DataId, content)
+		GetNacosConfigMonitor().AddConfigData(item.Group, item.DataId, content)
 		err = ListenConfigChange(param)
 		if err != nil {
 			log.Error("监听nacos配置-失败! ", msg, " error : ", err)
@@ -145,10 +153,10 @@ func (opt Option) LoadNacosConfig(config interface{}) (err error) {
 	return
 }
 
-func (opt Option) GetNacosConfig() (conf map[string]interface{}, err error) {
+func (item Item) GetNacosConfig() (conf map[string]interface{}, err error) {
 	// 读取Nacos配置
 	var content string
-	var param = opt.TransToConfigParam()
+	var param = item.TransToConfigParam()
 	content, err = CTL.ConfigClient.GetConfig(param)
 	if err != nil {
 		log.Error("获取nacos配置内容失败 ", err)
@@ -163,9 +171,9 @@ func (opt Option) GetNacosConfig() (conf map[string]interface{}, err error) {
 }
 
 // 批量加载nacos配置
-func (list Options) LoadNacosConfig(config interface{}) (err error) {
-	for _, item := range list {
-		err = item.LoadNacosConfig(config)
+func (items Items) LoadConfig(config interface{}) (err error) {
+	for _, item := range items {
+		err = item.LoadConfig(config)
 		if err != nil {
 			return
 		}
@@ -174,8 +182,8 @@ func (list Options) LoadNacosConfig(config interface{}) (err error) {
 }
 
 // 根据配置名获取配置
-func (list Options) Get(dataId string) (target Option) {
-	for _, item := range list {
+func (items Items) Get(dataId string) (target Item) {
+	for _, item := range items {
 		if item.DataId == dataId {
 			target = item
 			return
@@ -184,24 +192,10 @@ func (list Options) Get(dataId string) (target Option) {
 	return
 }
 
-// 将配置项进行单项分离
-func (list Options) Separate() (Options, Options) {
-	var needs Options
-	var notNeeds Options
-	for _, item := range list {
-		if item.IsSelf {
-			needs = append(needs, item)
-		} else {
-			notNeeds = append(notNeeds, item)
-		}
-	}
-	return needs, notNeeds
-}
-
 // 监听nacos配置改动
 func ListenConfigChange(param vo.ConfigParam) error {
 	param.OnChange = func(namespace, group, dataId, data string) {
-		log.Errorf("nacos配置已改动 \nnamespace :%s\nGroup     :%s\nData Id   :%s\n%s", namespace, group, dataId, data)
+		log.Errorf("监听到nacos配置已改动!!! \n dataId=%s group=%s namespace=%s\n改动后内容如下:\n%s", dataId, group, namespace, data)
 		GetNacosConfigMonitor().UpdateConfigData(group, dataId, data)
 	}
 	return CTL.ConfigClient.ListenConfig(param)

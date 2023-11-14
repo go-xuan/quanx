@@ -31,13 +31,13 @@ func Init(configs Configs) {
 			if newDB, err := conf.NewGormDB(); err == nil {
 				CTL.DBMap[conf.Source] = newDB
 				CTL.ConfigMap[conf.Source] = conf
-				log.Info("gorm连接成功! ", conf.Format())
+				log.Info("数据库连接成功! ", conf.Format())
 				if i == 0 || conf.Source == "default" {
 					CTL.DB = newDB
 					CTL.Config = conf
 				}
 			} else {
-				log.Error("gorm连接失败! ", conf.Format())
+				log.Error("数据库连接失败! ", conf.Format())
 				log.Error("error : ", err)
 			}
 		}

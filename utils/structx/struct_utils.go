@@ -43,6 +43,7 @@ func ReadJsonToStruct(filePath string, obj interface{}) (err error) {
 	return
 }
 
+// 设置默认值
 func SetDefaultValue(config interface{}) error {
 	valueRef := reflect.ValueOf(config)
 	if valueRef.Type().Kind() != reflect.Ptr {
@@ -70,13 +71,22 @@ func SetDefaultValue(config interface{}) error {
 }
 
 // 读取配置文件到指针
-func ReadConfigToPointer(filePath string, config interface{}) (err error) {
+func ReadFileToPointer(filePath string, config interface{}) (err error) {
 	var bytes []byte
 	bytes, err = os.ReadFile(filePath)
 	if err != nil {
 		return
 	}
-	switch filex.Suffix(filePath) {
+	err = ParseBytesToPointer(filex.Suffix(filePath), bytes, config)
+	if err != nil {
+		return
+	}
+	return
+}
+
+// 解析bytes到指针
+func ParseBytesToPointer(fileSuf string, bytes []byte, config interface{}) (err error) {
+	switch fileSuf {
 	case filex.Json:
 		err = ReadJsonToPointer(bytes, config)
 	case filex.Yaml, filex.Yml:
@@ -86,10 +96,13 @@ func ReadConfigToPointer(filePath string, config interface{}) (err error) {
 	case filex.Properties:
 		err = ReadPropertiesToPointer(bytes, config)
 	}
+	if err != nil {
+		return
+	}
 	return
 }
 
-// 读取json文件到指针
+// 读取bytes到指针
 func ReadJsonToPointer(bytes []byte, config interface{}) (err error) {
 	err = json.Unmarshal(bytes, config)
 	if err != nil {
