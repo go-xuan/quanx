@@ -1,7 +1,7 @@
 package codex
 
 import (
-	"github.com/go-xuan/quanx/public/constx"
+	"github.com/go-xuan/quanx/common/constx"
 	"strings"
 
 	"github.com/go-xuan/quanx/utils/sqlx"
@@ -9,12 +9,12 @@ import (
 )
 
 // 构建java实体类
-func BuildJavaClass(table string, fieldList FieldList) string {
+func BuildJavaClass(table string, fieldList []*Field) string {
 	table = strings.TrimPrefix(table, `t_`)
 	table = strings.TrimSuffix(table, `_t`)
 	sb := strings.Builder{}
 	sb.WriteString(constx.NextLine)
-	sb.WriteString("@Rows")
+	sb.WriteString("@Data")
 	sb.WriteString(constx.NextLine)
 	sb.WriteString("public class ")
 	sb.WriteString(stringx.UpperCamelCase(table))

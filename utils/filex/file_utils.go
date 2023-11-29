@@ -2,7 +2,7 @@ package filex
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/public/constx"
+	"github.com/go-xuan/quanx/common/constx"
 	"log"
 	"os"
 	"path/filepath"

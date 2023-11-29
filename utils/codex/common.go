@@ -1,18 +1,16 @@
 package codex
 
 import (
-	constx2 "github.com/go-xuan/quanx/public/constx"
+	constx2 "github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/utils/defaultx"
 	"path/filepath"
 	"strings"
 
-	"github.com/go-xuan/quanx/utils/codex/template"
 	"github.com/go-xuan/quanx/utils/filex"
 	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 // 字段配置
-type FieldList []*Field
 type Field struct {
 	Name    string `json:"name"`    // 字段名
 	Origin  string `json:"origin"`  // 原始字段名
@@ -29,7 +27,7 @@ func checkName(name string) string {
 }
 
 // 生成通用代码（保留java类，go结构体，gorm结构体，以及增删改查sql）
-func GenCodeByFieldList(saveDir, name string, fieldList FieldList) (outPath string, err error) {
+func GenCodeByFieldList(saveDir, name string, fieldList []*Field) (outPath string, err error) {
 	name = checkName(name)
 	// 合并所有
 	all := strings.Builder{}
@@ -57,7 +55,7 @@ func GenCodeByFieldList(saveDir, name string, fieldList FieldList) (outPath stri
 }
 
 // 生成Java-Class
-func GenJavaClassByFieldList(saveDir, name string, fieldList FieldList) (outPath string, err error) {
+func GenJavaClassByFieldList(saveDir, name string, fieldList []*Field) (outPath string, err error) {
 	name = checkName(name)
 	// 合并所有
 	content := strings.Builder{}
@@ -74,7 +72,7 @@ func GenJavaClassByFieldList(saveDir, name string, fieldList FieldList) (outPath
 }
 
 // 生成SQL样例
-func GenSqlByFieldList(saveDir, name string, fieldList FieldList) (outPath string, err error) {
+func GenSqlByFieldList(saveDir, name string, fieldList []*Field) (outPath string, err error) {
 	name = checkName(name)
 	// 合并所有
 	content := strings.Builder{}
@@ -96,7 +94,7 @@ func GenSqlByFieldList(saveDir, name string, fieldList FieldList) (outPath strin
 }
 
 // 生成go结构体
-func GenGoStructByFieldList(saveDir, name string, fieldList FieldList) (outPath string, err error) {
+func GenGoStructByFieldList(saveDir, name string, fieldList []*Field) (outPath string, err error) {
 	name = checkName(name)
 	// 合并所有
 	content := strings.Builder{}
@@ -116,7 +114,7 @@ func GenGoStructByFieldList(saveDir, name string, fieldList FieldList) (outPath 
 }
 
 // 生成CK建表结构体
-func GenCkCreateByFieldList(saveDir, name, engine string, fieldList FieldList) (outPath string, err error) {
+func GenCkCreateByFieldList(saveDir, name, engine string, fieldList []*Field) (outPath string, err error) {
 	name = checkName(name)
 	// 合并所有
 	content := strings.Builder{}
@@ -139,28 +137,28 @@ func GenGoTemplateByName(saveDir, name string) (err error) {
 	goFileName := name + filex.Go
 	err = filex.WriteFile(
 		filepath.Join(saveDir, "model", goFileName),
-		strings.ReplaceAll(template.GoModel, `{modelName}`, modelName),
+		strings.ReplaceAll(StructTemplate, `{modelName}`, modelName),
 		filex.Overwrite)
 	if err != nil {
 		return
 	}
 	err = filex.WriteFile(
 		filepath.Join(saveDir, "controller", goFileName),
-		strings.ReplaceAll(template.GoController, `{modelName}`, modelName),
+		strings.ReplaceAll(ControllerTemplate, `{modelName}`, modelName),
 		filex.Overwrite)
 	if err != nil {
 		return err
 	}
 	err = filex.WriteFile(
 		filepath.Join(saveDir, "logic", goFileName),
-		strings.ReplaceAll(template.GoLogic, `{modelName}`, modelName),
+		strings.ReplaceAll(LogicTemplate, `{modelName}`, modelName),
 		filex.Overwrite)
 	if err != nil {
 		return
 	}
 	err = filex.WriteFile(
 		filepath.Join(saveDir, "dao", goFileName),
-		strings.ReplaceAll(template.GoDao, `{modelName}`, modelName),
+		strings.ReplaceAll(DaoTemplate, `{modelName}`, modelName),
 		filex.Overwrite)
 	if err != nil {
 		return

@@ -13,7 +13,7 @@ type Response struct {
 }
 
 // 响应
-func BuildNormal(ctx *gin.Context, data interface{}, err error) {
+func BuildResponse(ctx *gin.Context, data interface{}, err error) {
 	if err != nil {
 		BuildError(ctx, err)
 	} else {

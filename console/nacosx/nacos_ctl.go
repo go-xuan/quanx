@@ -36,7 +36,7 @@ const (
 )
 
 func (ctl *Controller) BuildConfigFromFile(filePath string) (err error) {
-	err = structx.ReadFileToPointer(filePath, ctl.Config)
+	err = structx.ReadFileToPointer(ctl.Config, filePath)
 	if err != nil {
 		return
 	}

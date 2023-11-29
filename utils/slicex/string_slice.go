@@ -1,6 +1,18 @@
 package slicex
 
-import "sort"
+import (
+	"sort"
+	"strings"
+)
+
+// 字符串是否包含
+func Split(str string, sep string) []string {
+	slice := strings.Split(str, sep)
+	for i, s := range slice {
+		slice[i] = strings.TrimSpace(s)
+	}
+	return slice
+}
 
 // 字符串是否包含
 func Contains(slice []string, str string) bool {

@@ -35,7 +35,7 @@ func Radio(options []string) string {
 }
 
 // 随机长度数字码
-func NumberString(length int) string {
+func NumberCode(length int) string {
 	bytes := make([]byte, length)
 	for i := 0; i < length; i++ {
 		y := IntRange(0, len(NUMBER)-1)
@@ -49,18 +49,18 @@ func UUID() string {
 	return uuid.NewString()
 }
 
+// 随机长度数字码
+func RandFrom(in string) string {
+	split := strings.Split(in, ",")
+	return split[IntRange(0, len(split)-1)]
+}
+
 // 随机姓名
 func Name() string {
 	sb := strings.Builder{}
-	familyNames := strings.Split(FamilyNameCn, ",")
-	numbers := strings.Split(NumberCn, ",")
-	animals := strings.Split(ShengXiao, ",")
-	x := IntRange(0, len(familyNames)-1)
-	y := IntRange(0, len(numbers)-1)
-	z := IntRange(0, len(animals)-1)
-	sb.WriteString(familyNames[x])
-	sb.WriteString(numbers[y])
-	sb.WriteString(animals[z])
+	sb.WriteString(RandFrom(XingShi))
+	sb.WriteString(RandFrom(NumberCn))
+	sb.WriteString(RandFrom(ShengXiao))
 	return sb.String()
 }
 
@@ -87,7 +87,7 @@ func IdCard() string {
 	x := IntRange(0, len(postCodes)-1)
 	sb.WriteString(postCodes[x])
 	sb.WriteString(birthday)
-	sb.WriteString(NumberString(3))
+	sb.WriteString(NumberCode(3))
 	last := stringx.GetIdCard18th(sb.String())
 	sb.WriteByte(last)
 	return sb.String()

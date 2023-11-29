@@ -21,7 +21,7 @@ type Config struct {
 	Host     string `json:"host" yaml:"host"`         // 数据库Host
 	Port     int    `json:"port" yaml:"port"`         // 数据库端口
 	Database string `json:"database" yaml:"database"` // 数据库名
-	UserName string `json:"username" yaml:"username"` // 用户名
+	Username string `json:"username" yaml:"username"` // 用户名
 	Password string `json:"password" yaml:"password"` // 密码
 	Debug    bool   `json:"debug" yaml:"debug"`       // 开启debug
 	Init     bool   `json:"init" yaml:"init"`         // 是否初始化model
@@ -85,11 +85,11 @@ func (conf *Config) GetDSN() (dsn string) {
 	switch strings.ToLower(conf.Type) {
 	case Mysql:
 		dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-			conf.UserName, conf.Password, conf.Host, conf.Port, conf.Database) +
+			conf.Username, conf.Password, conf.Host, conf.Port, conf.Database) +
 			"?clientFoundRows=false&parseTime=true&timeout=1800s&charset=utf8&collation=utf8_general_ci&loc=Local"
 	case Postgres:
 		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			conf.Host, conf.Port, conf.UserName, conf.Password, conf.Database)
+			conf.Host, conf.Port, conf.Username, conf.Password, conf.Database)
 	}
 	return
 }

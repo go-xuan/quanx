@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"encoding/json"
-	"github.com/go-xuan/quanx/public/constx"
+	"github.com/go-xuan/quanx/common/constx"
 	"os"
 )
 

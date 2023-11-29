@@ -1,7 +1,7 @@
 package codex
 
 import (
-	"github.com/go-xuan/quanx/public/constx"
+	"github.com/go-xuan/quanx/common/constx"
 	"strings"
 
 	"github.com/go-xuan/quanx/utils/sqlx"
@@ -9,7 +9,7 @@ import (
 )
 
 // 构建CK远程表建表语句
-func BuildCkCreateSql(table, engine string, fieldList FieldList) string {
+func BuildCkCreateSql(table, engine string, fieldList []*Field) string {
 	sb := strings.Builder{}
 	sb.WriteString("drop")
 	sb.WriteString(" table ")
@@ -47,7 +47,7 @@ func BuildCkCreateSql(table, engine string, fieldList FieldList) string {
 }
 
 // 构建新增sql语句
-func BuildInsertSql(table string, fieldList FieldList) string {
+func BuildInsertSql(table string, fieldList []*Field) string {
 	sb := strings.Builder{}
 	iv := strings.Builder{}
 	sb.WriteString("insert")
@@ -80,7 +80,7 @@ func BuildInsertSql(table string, fieldList FieldList) string {
 }
 
 // 构建更新sql语句
-func BuildUpdateSql(table string, fieldList FieldList) string {
+func BuildUpdateSql(table string, fieldList []*Field) string {
 	sb := strings.Builder{}
 	sb.WriteString("update ")
 	sb.WriteString(table)
@@ -104,7 +104,7 @@ func BuildUpdateSql(table string, fieldList FieldList) string {
 }
 
 // 原始select
-func BuildSelectSql(table string, fieldList FieldList) string {
+func BuildSelectSql(table string, fieldList []*Field) string {
 	sb := strings.Builder{}
 	sb.WriteString("select ")
 	for i, field := range fieldList {
@@ -124,7 +124,7 @@ func BuildSelectSql(table string, fieldList FieldList) string {
 }
 
 // 带字段别名的select
-func BuildSelectSqlAlias(table string, columns FieldList) string {
+func BuildSelectSqlAlias(table string, columns []*Field) string {
 	sb := strings.Builder{}
 	sb.WriteString("select ")
 	for i, field := range columns {

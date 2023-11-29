@@ -1,15 +1,15 @@
 package codex
 
 import (
-	"github.com/go-xuan/quanx/public/constx"
 	"strings"
 
+	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/utils/sqlx"
 	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 // 构建go结构体代码
-func BuildGoStruct(table string, fieldList FieldList) string {
+func BuildGoStruct(table string, fieldList []*Field) string {
 	table = strings.TrimPrefix(table, `t_`)
 	table = strings.TrimSuffix(table, `_t`)
 	table = stringx.UpperCamelCase(table)
@@ -36,7 +36,7 @@ func BuildGoStruct(table string, fieldList FieldList) string {
 }
 
 // 构建go结构体代码
-func BuildGormStruct(table string, fieldList FieldList) string {
+func BuildGormStruct(table string, fieldList []*Field) string {
 	table = strings.TrimPrefix(table, `t_`)
 	table = strings.TrimSuffix(table, `_t`)
 	table = stringx.UpperCamelCase(table)

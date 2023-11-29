@@ -71,13 +71,13 @@ func SetDefaultValue(config interface{}) error {
 }
 
 // 读取配置文件到指针
-func ReadFileToPointer(filePath string, config interface{}) (err error) {
+func ReadFileToPointer(config interface{}, filePath string) (err error) {
 	var bytes []byte
 	bytes, err = os.ReadFile(filePath)
 	if err != nil {
 		return
 	}
-	err = ParseBytesToPointer(filex.Suffix(filePath), bytes, config)
+	err = ParseBytesToPointer(config, bytes, filex.Suffix(filePath))
 	if err != nil {
 		return
 	}
@@ -85,16 +85,16 @@ func ReadFileToPointer(filePath string, config interface{}) (err error) {
 }
 
 // 解析bytes到指针
-func ParseBytesToPointer(fileSuf string, bytes []byte, config interface{}) (err error) {
-	switch fileSuf {
+func ParseBytesToPointer(config interface{}, bytes []byte, filePath string) (err error) {
+	switch filex.Suffix(filePath) {
 	case filex.Json:
-		err = ReadJsonToPointer(bytes, config)
+		err = ReadJsonToPointer(config, bytes)
 	case filex.Yaml, filex.Yml:
-		err = ReadYamlToPointer(bytes, config)
+		err = ReadYamlToPointer(config, bytes)
 	case filex.Toml:
-		err = ReadTomlToPointer(bytes, config)
+		err = ReadTomlToPointer(config, bytes)
 	case filex.Properties:
-		err = ReadPropertiesToPointer(bytes, config)
+		err = ReadPropertiesToPointer(config, bytes)
 	}
 	if err != nil {
 		return
@@ -103,7 +103,7 @@ func ParseBytesToPointer(fileSuf string, bytes []byte, config interface{}) (err 
 }
 
 // 读取bytes到指针
-func ReadJsonToPointer(bytes []byte, config interface{}) (err error) {
+func ReadJsonToPointer(config interface{}, bytes []byte) (err error) {
 	err = json.Unmarshal(bytes, config)
 	if err != nil {
 		return
@@ -112,7 +112,7 @@ func ReadJsonToPointer(bytes []byte, config interface{}) (err error) {
 }
 
 // 读取yaml文件到指针
-func ReadYamlToPointer(bytes []byte, config interface{}) (err error) {
+func ReadYamlToPointer(config interface{}, bytes []byte) (err error) {
 	err = yaml.Unmarshal(bytes, config)
 	if err != nil {
 		return
@@ -121,7 +121,7 @@ func ReadYamlToPointer(bytes []byte, config interface{}) (err error) {
 }
 
 // 读取toml文件到指针
-func ReadTomlToPointer(bytes []byte, config interface{}) (err error) {
+func ReadTomlToPointer(config interface{}, bytes []byte) (err error) {
 	err = toml.Unmarshal(bytes, config)
 	if err != nil {
 		return
@@ -130,7 +130,7 @@ func ReadTomlToPointer(bytes []byte, config interface{}) (err error) {
 }
 
 // 读取toml文件到指针
-func ReadPropertiesToPointer(bytes []byte, config interface{}) (err error) {
+func ReadPropertiesToPointer(config interface{}, bytes []byte) (err error) {
 	valueRef := reflect.ValueOf(config)
 	if valueRef.Type().Kind() != reflect.Ptr {
 		// 修改值必须是指针类型否则不可行

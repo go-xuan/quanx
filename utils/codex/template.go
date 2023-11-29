@@ -1,13 +1,13 @@
-package template
+package codex
 
-const GoModel = `
+const StructTemplate = `
 type {modelName}Query struct {
 	Keyword string 				// 关键字
 	Page *request.Page 	// 分页查询参数
 }
 `
 
-const GoController = `
+const ControllerTemplate = `
 import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -67,7 +67,7 @@ func {modelName}Detail(context *gin.Context) {
 }
 `
 
-const GoLogic = `
+const LogicTemplate = `
 func {modelName}Page(in *model.{modelName}Query) (resp *respx.PageResponse, err error) {
 	var rows []*table.{modelName}
 	var total int64
@@ -106,7 +106,7 @@ func {modelName}Detail(id string) (result *table.{modelName}, err error) {
 }
 `
 
-const GoDao = `
+const DaoTemplate = `
 func {modelName}Page(query model.{modelName}Query) (rows []*table.{modelName}, total int64, err error) {
 	selectSql := strings.Builder{}
 	countSql := strings.Builder{}
