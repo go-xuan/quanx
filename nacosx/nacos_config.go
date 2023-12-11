@@ -21,15 +21,15 @@ const (
 
 // nacos访问配置
 type Config struct {
-	Address    string      `yaml:"address" json:"address"`                          // nacos服务地址,多个以英文逗号分割
-	Path       string      `yaml:"path" json:"path" default:"/nacos"`               // web访问路径
-	Username   string      `yaml:"username" json:"username" default:"nacos"`        // 用户名
-	Password   string      `yaml:"password" json:"password" default:"nacos"`        // 密码
-	NameSpace  string      `yaml:"nameSpace" json:"nameSpace" default:"public"`     // 命名空间
-	Mode       int         `yaml:"mode" json:"mode" default:"0"`                    // 模式（0-配置中心和服务发现都用；1-仅用配置中心；2-仅用服务发现）
-	LogDir     string      `yaml:"logDir" json:"logDir" default:".nacos/log"`       // 日志文件夹
-	CacheDir   string      `yaml:"cacheDir" json:"cacheDir" default:".nacos/cache"` // 缓存文件夹
-	LoadConfig *LoadConfig `yaml:"loadConfig" json:"loadConfig"`                    // 加载配置项
+	Address   string      `yaml:"address" json:"address"`                          // nacos服务地址,多个以英文逗号分割
+	Path      string      `yaml:"path" json:"path" default:"/nacos"`               // web访问路径
+	Username  string      `yaml:"username" json:"username" default:"nacos"`        // 用户名
+	Password  string      `yaml:"password" json:"password" default:"nacos"`        // 密码
+	NameSpace string      `yaml:"nameSpace" json:"nameSpace" default:"public"`     // 命名空间
+	Mode      int         `yaml:"mode" json:"mode" default:"0"`                    // 模式（0-配置中心和服务发现都用；1-仅用配置中心；2-仅用服务发现）
+	LogDir    string      `yaml:"logDir" json:"logDir" default:".nacos/log"`       // 日志文件夹
+	CacheDir  string      `yaml:"cacheDir" json:"cacheDir" default:".nacos/cache"` // 缓存文件夹
+	Config    *LoadConfig `yaml:"config" json:"config"`                            // 加载配置项
 }
 
 // nacos加载配置项

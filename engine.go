@@ -96,7 +96,7 @@ func (e *Engine) RUN() {
 	defer keepAlive()
 	// 加载配置
 	e.loadConfig()
-	// 初始化日志/nacos/gorm/redis
+	// 初始化：日志/nacos/gorm/redis
 	e.init()
 	// 执行初始化方法
 	e.execInitializers()
@@ -121,15 +121,15 @@ func (e *Engine) loadConfig() {
 func (e *Engine) init() {
 	var appName = e.config.Server.Name
 	// 初始化日志
-	LogX = anyx.IfZero(e.config.Log, &logx.Config{AppName: appName})
-	LogX.Init()
+	var logX X[any] = anyx.IfZero(e.config.Log, &logx.Config{AppName: appName})
+	logX.Init()
 
 	// 初始化Nacos
 	if e.config.Nacos != nil {
-		NacosX = e.config.Nacos
-		NacosX.Init()
+		var nacosX X[any] = e.config.Nacos
+		nacosX.Init()
 		// 加载Nacos配置
-		nacosx.LoadNacosConfig(appName, e.config.Nacos.LoadConfig, e.config)
+		nacosx.LoadNacosConfig(appName, e.config.Nacos.Config, e.config)
 		// 注册Nacos服务
 		nacosx.RegisterInstance(
 			nacosx.ServerInstance{
@@ -142,10 +142,9 @@ func (e *Engine) init() {
 	}
 
 	// 初始化Gorm
-	GormX = anyx.IfZero(e.config.Database, gormx.Configs{})
 	if e.config.Database != nil {
-		GormX = e.config.Database
-		GormX.Init()
+		var gormX X[any] = e.config.Database
+		gormX.Init()
 		for _, item := range e.config.Database {
 			if models, ok := e.gormTable[item.Source]; ok {
 				if err := gormx.This().InitGormTable(item.Source, models...); err != nil {
@@ -156,8 +155,9 @@ func (e *Engine) init() {
 	}
 
 	// 初始化Redis
-	if RedisX = e.config.Redis; NacosX != nil {
-		RedisX = e.config.Redis
+	if e.config.Redis != nil {
+		var redisX X[any] = e.config.Redis
+		redisX.Init()
 	}
 }
 
@@ -267,7 +267,7 @@ func (e *Engine) loadNacosConfig(config interface{}, dataId string) error {
 	if nacosx.This().ConfigClient == nil {
 		return errors.New("未初始化nacos配置中心客户端")
 	}
-	var load = e.config.Nacos.LoadConfig
+	var load = e.config.Nacos.Config
 	if load == nil || load.Custom == "" {
 		return errors.New("nacos自定义配置项为空，请检查nacos配置信息")
 	}

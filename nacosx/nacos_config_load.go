@@ -24,23 +24,23 @@ type Item struct {
 }
 
 // 加载nacos配置
-func LoadNacosConfig(group string, load *LoadConfig, config interface{}) {
+func LoadNacosConfig(group string, config *LoadConfig, target interface{}) {
 	if instance.NamingClient == nil {
 		log.Error("未初始化nacos配置中心客户端!")
 		return
 	}
-	if load == nil || load.Basic == "" {
+	if config == nil || config.Basic == "" {
 		log.Error("当前应用未配置nacos!")
 		return
 	}
 	var listenMap = make(map[string]bool)
-	if load.Listen != "" {
-		listenIds := strings.Split(load.Listen, ",")
+	if config.Listen != "" {
+		listenIds := strings.Split(config.Listen, ",")
 		for _, dataId := range listenIds {
 			listenMap[strings.TrimSpace(dataId)] = true
 		}
 	}
-	initIds := strings.Split(load.Basic, ",")
+	initIds := strings.Split(config.Basic, ",")
 	var final Item
 	var pres Items
 	// 初始化默认配置项
@@ -54,18 +54,17 @@ func LoadNacosConfig(group string, load *LoadConfig, config interface{}) {
 		}
 	}
 	// 预加载配置项
-	var err = pres.LoadConfig(config)
+	var err = pres.LoadConfig(target)
 	if err != nil {
 		log.Error("加载nacos预加载配置项失败！", err)
 	}
 	// 最终加载配置
 	defer func() {
-		err = final.LoadConfig(config)
+		err = final.LoadConfig(target)
 		if err != nil {
 			log.Error("加载nacos最终加载配置失败!", err)
 		}
 	}()
-
 }
 
 // 配置信息格式化
