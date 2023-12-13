@@ -3,12 +3,14 @@ package mongox
 import (
 	"context"
 	"fmt"
+
+	"github.com/go-xuan/quanx/nacosx"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Config struct {
+type Mongo struct {
 	Host     string `yaml:"host" json:"host"`         // 主机
 	Port     int    `yaml:"port" json:"port"`         // 端口
 	Username string `json:"username" yaml:"username"` // 用户名
@@ -17,34 +19,50 @@ type Config struct {
 }
 
 // 配置信息格式化
-func (config *Config) Format() string {
-	return fmt.Sprintf("host=%s port=%d database=%s", config.Host, config.Port, config.Database)
+func (m *Mongo) ToString() string {
+	return fmt.Sprintf("host=%s port=%d database=%s", m.Host, m.Port, m.Database)
 }
 
-// 初始化Gorm控制器
-func (config *Config) Init() {
-	InitMongoX(config)
+// 运行器名称
+func (m *Mongo) Name() string {
+	return "连接Mongo"
 }
 
-func InitMongoX(conf *Config) {
-	var client = conf.NewClient()
-	if err := client.Ping(context.Background(), nil); err == nil {
-		instance = &Handler{Config: conf, Client: client}
-		log.Error("MongoDB连接成功！", conf.Format())
-	} else {
-		log.Error("MongoDB连接失败！", conf.Format())
-		log.Error("error : ", err)
+// nacos配置文件
+func (*Mongo) NacosConfig() *nacosx.Config {
+	return &nacosx.Config{
+		DataId: "mongo.yaml",
+		Listen: false,
 	}
 }
 
-func (config *Config) Uri() string {
-	return fmt.Sprintf("mongodb://%s:%s@%s", config.Username, config.Password, config.Host)
+// 本地配置文件
+func (*Mongo) LocalConfig() string {
+	return "conf/mongo.yaml"
+}
+
+// 运行器运行
+func (m *Mongo) Run() error {
+	var client = m.NewClient()
+	err := client.Ping(context.Background(), nil)
+	if err != nil {
+		log.Error("MongoDB连接失败！", m.ToString())
+		log.Error("error : ", err)
+		return err
+	}
+	handler = &Handler{Config: m, Client: client}
+	log.Error("MongoDB连接成功！", m.ToString())
+	return nil
+}
+
+func (m *Mongo) Uri() string {
+	return fmt.Sprintf("mongodb://%s:%s@%s", m.Username, m.Password, m.Host)
 }
 
 // 配置信息格式化
-func (config *Config) NewClient() *mongo.Client {
+func (m *Mongo) NewClient() *mongo.Client {
 	// 设置连接选项
-	clientOptions := options.Client().ApplyURI(config.Uri())
+	clientOptions := options.Client().ApplyURI(m.Uri())
 	// 建立连接
 	client, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil {

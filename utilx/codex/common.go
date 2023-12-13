@@ -46,7 +46,7 @@ func GenCodeByFieldList(saveDir, name string, fieldList []*Field) (outPath strin
 	all.WriteString(constx.NextLine)
 	all.WriteString(BuildUpdateSql(name, fieldList))
 	// 写入文件
-	outPath = filepath.Join(saveDir, name+filex.Txt)
+	outPath = filepath.Join(saveDir, name+".txt")
 	err = filex.WriteFile(outPath, all.String(), filex.Overwrite)
 	if err != nil {
 		return
@@ -63,7 +63,7 @@ func GenJavaClassByFieldList(saveDir, name string, fieldList []*Field) (outPath 
 	content.WriteString(BuildJavaClass(name, fieldList))
 	content.WriteString(constx.NextLine)
 	// 写入文件
-	outPath = filepath.Join(saveDir, stringx.UpperCamelCase(name)+filex.Java)
+	outPath = filepath.Join(saveDir, stringx.UpperCamelCase(name)+".java")
 	err = filex.WriteFile(outPath, content.String(), filex.Overwrite)
 	if err != nil {
 		return
@@ -85,7 +85,7 @@ func GenSqlByFieldList(saveDir, name string, fieldList []*Field) (outPath string
 	content.WriteString(constx.NextLine)
 	content.WriteString(BuildUpdateSql(name, fieldList))
 	// 写入文件
-	outPath = filepath.Join(saveDir, name+filex.Sql)
+	outPath = filepath.Join(saveDir, name+".sql")
 	err = filex.WriteFile(outPath, content.String(), filex.Overwrite)
 	if err != nil {
 		return
@@ -105,7 +105,7 @@ func GenGoStructByFieldList(saveDir, name string, fieldList []*Field) (outPath s
 	content.WriteString(BuildGormStruct(name, fieldList))
 	content.WriteString(constx.NextLine)
 	// 写入文件
-	outPath = filepath.Join(saveDir, name+filex.Go)
+	outPath = filepath.Join(saveDir, name+".go")
 	err = filex.WriteFile(outPath, content.String(), filex.Overwrite)
 	if err != nil {
 		return
@@ -122,7 +122,7 @@ func GenCkCreateByFieldList(saveDir, name, engine string, fieldList []*Field) (o
 	content.WriteString(BuildCkCreateSql(name, engine, fieldList))
 	content.WriteString(constx.NextLine)
 	// 写入文件
-	outPath = filepath.Join(saveDir, name+filex.Sql)
+	outPath = filepath.Join(saveDir, name+".sql")
 	err = filex.WriteFile(outPath, content.String(), filex.Overwrite)
 	if err != nil {
 		return
@@ -134,30 +134,30 @@ func GenCkCreateByFieldList(saveDir, name, engine string, fieldList []*Field) (o
 func GenGoTemplateByName(saveDir, name string) (err error) {
 	name = checkName(name)
 	modelName := stringx.UpperCamelCase(name)
-	goFileName := name + filex.Go
+	fileName := name + ".go"
 	err = filex.WriteFile(
-		filepath.Join(saveDir, "model", goFileName),
+		filepath.Join(saveDir, "model", fileName),
 		strings.ReplaceAll(StructTemplate, `{modelName}`, modelName),
 		filex.Overwrite)
 	if err != nil {
 		return
 	}
 	err = filex.WriteFile(
-		filepath.Join(saveDir, "controller", goFileName),
+		filepath.Join(saveDir, "controller", fileName),
 		strings.ReplaceAll(ControllerTemplate, `{modelName}`, modelName),
 		filex.Overwrite)
 	if err != nil {
 		return err
 	}
 	err = filex.WriteFile(
-		filepath.Join(saveDir, "logic", goFileName),
+		filepath.Join(saveDir, "logic", fileName),
 		strings.ReplaceAll(LogicTemplate, `{modelName}`, modelName),
 		filex.Overwrite)
 	if err != nil {
 		return
 	}
 	err = filex.WriteFile(
-		filepath.Join(saveDir, "dao", goFileName),
+		filepath.Join(saveDir, "dao", fileName),
 		strings.ReplaceAll(DaoTemplate, `{modelName}`, modelName),
 		filex.Overwrite)
 	if err != nil {

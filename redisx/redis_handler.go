@@ -6,21 +6,25 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var instance *Handler
+var handler *Handler
 
 // redis控制器
 type Handler struct {
 	Cmd       redis.Cmdable
-	Config    *Config
+	Config    *Redis
 	CmdMap    map[string]redis.Cmdable
-	ConfigMap map[string]*Config
+	ConfigMap map[string]*Redis
 }
 
 func This() *Handler {
-	if instance == nil {
-		panic("The redis instance has not been initialized, please check the relevant config")
+	if !Initialized() {
+		panic("The redis handler has not been initialized, please check the relevant config")
 	}
-	return instance
+	return handler
+}
+
+func Initialized() bool {
+	return handler != nil
 }
 
 func Ping(cmd redis.Cmdable) (bool, error) {
@@ -34,18 +38,18 @@ func Ping(cmd redis.Cmdable) (bool, error) {
 
 func GetCmd(source ...string) redis.Cmdable {
 	if len(source) > 0 {
-		if cmd, ok := instance.CmdMap[source[0]]; ok {
+		if cmd, ok := handler.CmdMap[source[0]]; ok {
 			return cmd
 		}
 	}
-	return instance.Cmd
+	return handler.Cmd
 }
 
-func GetConfig(source ...string) *Config {
+func GetConfig(source ...string) *Redis {
 	if len(source) > 0 {
-		if conf, ok := instance.ConfigMap[source[0]]; ok {
+		if conf, ok := handler.ConfigMap[source[0]]; ok {
 			return conf
 		}
 	}
-	return instance.Config
+	return handler.Config
 }

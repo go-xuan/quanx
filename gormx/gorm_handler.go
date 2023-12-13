@@ -6,25 +6,47 @@ import (
 	"reflect"
 )
 
-var instance *Handler
+var handler *Handler
 
 // Gorm处理器
 type Handler struct {
 	Multi     bool // 是否多连接
 	DB        *gorm.DB
-	Config    *Config
+	Config    *Database
 	DBMap     map[string]*gorm.DB
-	ConfigMap map[string]*Config
+	ConfigMap map[string]*Database
 }
 
 func This() *Handler {
-	if instance == nil {
-		panic("The gorm instance has not been initialized, please check the relevant config")
+	if !Initialized() {
+		panic("The gorm handler has not been initialized, please check the relevant config")
 	}
-	return instance
+	return handler
 }
 
-// 初始化表结构
+func Initialized() bool {
+	return handler != nil
+}
+
+func (h *Handler) GetDB(source ...string) *gorm.DB {
+	if len(source) > 0 {
+		if db, ok := h.DBMap[source[0]]; ok {
+			return db
+		}
+	}
+	return h.DB
+}
+
+func (h *Handler) GetConfig(source ...string) *Database {
+	if len(source) > 0 {
+		if conf, ok := h.ConfigMap[source[0]]; ok {
+			return conf
+		}
+	}
+	return h.Config
+}
+
+// 初始化表结构（基于反射）
 func (h *Handler) InitTable(source string, dst ...interface{}) (err error) {
 	var db, conf = h.DBMap[source], h.ConfigMap[source]
 	if db != nil && conf != nil && len(dst) > 0 {
@@ -63,22 +85,4 @@ func (h *Handler) InitTable(source string, dst ...interface{}) (err error) {
 		}
 	}
 	return
-}
-
-func (h *Handler) GetDB(source ...string) *gorm.DB {
-	if len(source) > 0 {
-		if db, ok := h.DBMap[source[0]]; ok {
-			return db
-		}
-	}
-	return h.DB
-}
-
-func (h *Handler) GetConfig(source ...string) *Config {
-	if len(source) > 0 {
-		if conf, ok := h.ConfigMap[source[0]]; ok {
-			return conf
-		}
-	}
-	return h.Config
 }

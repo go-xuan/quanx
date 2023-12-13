@@ -47,8 +47,8 @@ func ReadJsonToStruct(filePath string, obj interface{}) (err error) {
 func SetDefaultValue(config interface{}) error {
 	valueRef := reflect.ValueOf(config)
 	if valueRef.Type().Kind() != reflect.Ptr {
-		// 修改值必须是指针类型否则不可行
-		return errors.New("config must be pointer type")
+		// 对象必须是指针类型
+		return errors.New("the config must be pointer type")
 	}
 	for i := 0; i < valueRef.Elem().NumField(); i++ {
 		field := valueRef.Elem().Field(i)
@@ -88,7 +88,8 @@ func ReadFileToPointer(config interface{}, filePath string) (err error) {
 
 // 解析bytes到指针
 func ParseBytesToPointer(config interface{}, bytes []byte, filePath string) (err error) {
-	switch filex.Suffix(filePath) {
+	var fileType = filex.Suffix(filePath)
+	switch fileType {
 	case filex.Json:
 		err = ReadJsonToPointer(config, bytes)
 	case filex.Yaml, filex.Yml:
@@ -97,6 +98,8 @@ func ParseBytesToPointer(config interface{}, bytes []byte, filePath string) (err
 		err = ReadTomlToPointer(config, bytes)
 	case filex.Properties:
 		err = ReadPropertiesToPointer(config, bytes)
+	default:
+		err = errors.New("当前文件类型暂不支持:" + fileType)
 	}
 	if err != nil {
 		return
@@ -131,12 +134,12 @@ func ReadTomlToPointer(config interface{}, bytes []byte) (err error) {
 	return
 }
 
-// 读取toml文件到指针
+// 读取properties文件到指针
 func ReadPropertiesToPointer(config interface{}, bytes []byte) (err error) {
 	valueRef := reflect.ValueOf(config)
 	if valueRef.Type().Kind() != reflect.Ptr {
-		// 修改值必须是指针类型否则不可行
-		return errors.New("config must be pointer type")
+		// 对象必须是指针类型
+		return errors.New("the config must be pointer type")
 	}
 	var pp *properties.Properties
 	pp, err = properties.Load(bytes, properties.UTF8)

@@ -6,19 +6,23 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
 )
 
-var instance *Handler
+var handler *Handler
 
 type Handler struct {
-	Config       *Config                     // nacos配置
+	Config       *Nacos                      // nacos配置
 	ConfigClient config_client.IConfigClient // nacos配置中心客户端
 	NamingClient naming_client.INamingClient // nacos服务发现客户端
 }
 
 func This() *Handler {
-	if instance == nil {
-		panic("The nacos instance has not been initialized, please check the relevant config")
+	if handler == nil {
+		panic("The nacos handler has not been initialized, please check the relevant config")
 	}
-	return instance
+	return handler
+}
+
+func Initialized() bool {
+	return handler != nil
 }
 
 func (h *Handler) BuildConfigFromFile(filePath string) (err error) {
@@ -30,7 +34,7 @@ func (h *Handler) BuildConfigFromFile(filePath string) (err error) {
 }
 
 func (h *Handler) BuildConfigFromNacos(group, dataId string) (err error) {
-	module := &Item{Group: group, DataId: dataId}
+	module := &Config{Group: group, DataId: dataId}
 	err = module.LoadConfig(h.Config)
 	if err != nil {
 		return

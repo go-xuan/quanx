@@ -22,11 +22,11 @@ func (s ServerInstance) Format() string {
 
 // 注册Nacos服务实例
 func RegisterInstance(server ServerInstance) {
-	if instance.NamingClient == nil {
+	if handler.NamingClient == nil {
 		log.Error("未初始化nacos服务发现客户端!")
 		return
 	}
-	if _, err := instance.NamingClient.RegisterInstance(vo.RegisterInstanceParam{
+	if _, err := handler.NamingClient.RegisterInstance(vo.RegisterInstanceParam{
 		Ip:          server.Host,
 		Port:        uint64(server.Port),
 		GroupName:   server.Group,
@@ -37,10 +37,9 @@ func RegisterInstance(server ServerInstance) {
 		Ephemeral:   true,
 		Metadata:    nil,
 	}); err != nil {
-		log.Error("注册nacos服务-失败! ", server.Format())
-		log.Error("error : ", err)
+		log.Error("nacos服务注册失败! ", server.Format(), " error : ", err)
 	} else {
-		log.Info("注册nacos服务-成功! ", server.Format())
+		log.Info("nacos服务注册成功! ", server.Format())
 	}
 }
 
@@ -59,7 +58,7 @@ func SelectOneHealthyInstance(serviceName, groupName string) (addr string, err e
 // 获取所有健康服务实例
 func SelectInstances(serviceName, groupName string) (addrs []string, err error) {
 	var servers []model.Instance
-	if servers, err = instance.NamingClient.SelectInstances(vo.SelectInstancesParam{
+	if servers, err = handler.NamingClient.SelectInstances(vo.SelectInstancesParam{
 		ServiceName: serviceName,
 		GroupName:   groupName,
 		HealthyOnly: true,

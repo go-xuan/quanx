@@ -60,13 +60,13 @@ type File struct {
 }
 
 // 获取目录下所有文件路径
-func FileScan(dir string, ft string) (fileInfos []*File, err error) {
+func FileScan(dir string, fileType string) (fileInfos []*File, err error) {
 	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		file := File{path, info}
-		switch ft {
+		switch fileType {
 		case DirAndFile:
 			fileInfos = append(fileInfos, &file)
 		case OnlyDir:
@@ -78,7 +78,7 @@ func FileScan(dir string, ft string) (fileInfos []*File, err error) {
 				fileInfos = append(fileInfos, &file)
 			}
 		default:
-			if info.Name() == ft {
+			if info.Name() == fileType {
 				fileInfos = append(fileInfos, &file)
 			}
 		}

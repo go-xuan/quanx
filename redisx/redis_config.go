@@ -1,11 +1,11 @@
 package redisx
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/go-xuan/quanx/nacosx"
 	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,45 +16,55 @@ const (
 )
 
 // redis连接配置
-type Configs []*Config
+type MultiRedis []*Redis
 
-func (configs Configs) Format() (f string) {
-	bytes, _ := json.Marshal(configs)
-	return string(bytes)
+// 配置信息格式化
+func (r MultiRedis) Name() string {
+	return "连接Redis"
 }
 
-func (configs Configs) Init() {
-	InitRedisX(configs)
-}
-
-// 初始化redisX
-func InitRedisX(configs Configs) {
-	if len(configs) == 0 {
-		log.Error("redis配置为空!")
-		return
+// nacos配置文件
+func (MultiRedis) NacosConfig() *nacosx.Config {
+	return &nacosx.Config{
+		DataId: "multi_redis.yaml",
+		Listen: false,
 	}
-	instance = &Handler{
+}
+
+// 本地配置文件
+func (MultiRedis) LocalConfig() string {
+	return "conf/multi_redis.yaml"
+}
+
+func (r MultiRedis) Run() error {
+	if len(r) == 0 {
+		log.Info("未配置多Redis数据库! ")
+		return nil
+	}
+	handler = &Handler{
 		CmdMap:    make(map[string]redis.Cmdable),
-		ConfigMap: make(map[string]*Config),
+		ConfigMap: make(map[string]*Redis),
 	}
-	for i, conf := range configs {
+	for i, conf := range r {
 		var cmd = conf.NewRedisCmdable()
-		if ok, err := Ping(cmd); ok && err == nil {
-			log.Info("redis连接成功! ", conf.Format())
-			if i == 0 || conf.Source == "default" {
-				instance.Cmd = cmd
-				instance.Config = conf
-			}
-			instance.CmdMap[conf.Source] = cmd
-			instance.ConfigMap[conf.Source] = conf
-		} else {
-			log.Error("redis连接失败! ", conf.Format())
+		ok, err := Ping(cmd)
+		if !ok && err != nil {
+			log.Error("redis连接失败! ", conf.ToString())
 			log.Error("error : ", err)
+			return err
 		}
+		handler.CmdMap[conf.Source] = cmd
+		handler.ConfigMap[conf.Source] = conf
+		if i == 0 || conf.Source == "default" {
+			handler.Cmd = cmd
+			handler.Config = conf
+		}
+		log.Info("redis连接成功! ", conf.ToString())
 	}
+	return nil
 }
 
-type Config struct {
+type Redis struct {
 	Source   string `json:"source" yaml:"source"`     // 数据源名称
 	Mode     int    `json:"mode" yaml:"mode"`         // 模式（0-单机；1-集群），默认单机模式
 	Host     string `json:"host" yaml:"host"`         // 主机
@@ -65,52 +75,76 @@ type Config struct {
 }
 
 // 配置信息格式化
-func (config *Config) Format() string {
+func (r *Redis) ToString() string {
 	return fmt.Sprintf("source=%s mode=%d host=%s port=%d database=%d",
-		config.Source, config.Mode, config.Host, config.Port, config.Database)
+		r.Source, r.Mode, r.Host, r.Port, r.Database)
 }
 
-func (config *Config) Init() {
-	var cmd = config.NewRedisCmdable()
-	if ok, err := Ping(cmd); ok && err == nil {
-		log.Info("redis连接成功! ", config.Format())
-		instance.Cmd = cmd
-		instance.Config = config
-		instance.CmdMap[config.Source] = cmd
-		instance.ConfigMap[config.Source] = config
-	} else {
-		log.Error("redis连接失败! ", config.Format())
-		log.Error("error : ", err)
+// 运行器名称
+func (r *Redis) Name() string {
+	return "连接Redis"
+}
+
+// nacos配置文件
+func (*Redis) NacosConfig() *nacosx.Config {
+	return &nacosx.Config{
+		DataId: "redis.yaml",
+		Listen: false,
 	}
+}
+
+// 本地配置文件
+func (*Redis) LocalConfig() string {
+	return "conf/redis.yaml"
+}
+
+// 运行器运行
+func (r *Redis) Run() error {
+	var cmd = r.NewRedisCmdable()
+	if ok, err := Ping(cmd); !ok && err != nil {
+		log.Error("redis连接失败! ", r.ToString())
+		log.Error("error : ", err)
+		return err
+	}
+	handler = &Handler{
+		Cmd:       cmd,
+		Config:    r,
+		CmdMap:    make(map[string]redis.Cmdable),
+		ConfigMap: make(map[string]*Redis),
+	}
+	handler.CmdMap[r.Source] = cmd
+	handler.ConfigMap[r.Source] = r
+	log.Info("redis连接成功! ", r.ToString())
+	return nil
 }
 
 // 配置信息格式化
-func (config *Config) Address() string {
-	return fmt.Sprintf("%s:%d", config.Host, config.Port)
+func (r *Redis) Address() string {
+	return fmt.Sprintf("%s:%d", r.Host, r.Port)
 }
 
 // 初始化redis，默认单机模式
-func (config *Config) NewRedisCmdable(database ...int) (cmd redis.Cmdable) {
-	var db = config.Database
+func (r *Redis) NewRedisCmdable(database ...int) (cmd redis.Cmdable) {
+	var db = r.Database
 	if len(database) > 0 {
 		db = database[0]
 	}
-	switch config.Mode {
+	switch r.Mode {
 	case StandAlone:
 		cmd = redis.NewClient(&redis.Options{
-			Addr:     config.Host + ":" + strconv.Itoa(config.Port),
-			Password: config.Password,
-			PoolSize: config.PoolSize,
+			Addr:     r.Host + ":" + strconv.Itoa(r.Port),
+			Password: r.Password,
+			PoolSize: r.PoolSize,
 			DB:       db,
 		})
 	case Cluster:
 		cmd = redis.NewClusterClient(&redis.ClusterOptions{
-			Addrs:    strings.Split(config.Host, ","),
-			Password: config.Password,
-			PoolSize: config.PoolSize,
+			Addrs:    strings.Split(r.Host, ","),
+			Password: r.Password,
+			PoolSize: r.PoolSize,
 		})
 	default:
-		log.Warn("redis模式配置错误！", config)
+		log.Warn("redis模式配置错误！", r)
 		return
 	}
 	return

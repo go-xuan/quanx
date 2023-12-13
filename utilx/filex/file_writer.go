@@ -94,12 +94,12 @@ func WriteCSV(path string, data [][]string) error {
 	defer func(file *os.File) {
 		err = file.Close()
 	}(file)
-	csvWriter := csv.NewWriter(file)
-	csvWriter.Comma = ','
-	csvWriter.UseCRLF = true
-	if err = csvWriter.WriteAll(data); err != nil {
+	writer := csv.NewWriter(file)
+	writer.Comma = ','
+	writer.UseCRLF = true
+	if err = writer.WriteAll(data); err != nil {
 		return err
 	}
-	csvWriter.Flush()
+	writer.Flush()
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/go-xuan/quanx/nacosx"
 	"github.com/go-xuan/quanx/utilx/timex"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
@@ -13,49 +14,65 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Config struct {
-	Host       string `yaml:"host" json:"host"`             // 主机
-	Port       int    `yaml:"port" json:"port"`             // 端口
-	UserName   string `yaml:"userName" json:"userName"`     // 用户名
-	Password   string `yaml:"password" json:"password"`     // 密码
-	Token      string `yaml:"token" json:"token"`           // token
-	Secure     bool   `yaml:"secure" json:"secure"`         // 是否使用https
-	BucketName string `yaml:"bucketName" json:"bucketName"` // 桶名
-	RootDir    string `yaml:"rootDir" json:"rootDir"`       // 对象存储根路径
-	ExpireHour int    `yaml:"expireHour" json:"expireHour"` // 下载链接有效时长
+type Minio struct {
+	Host         string `yaml:"host" json:"host"`                 // 主机
+	Port         int    `yaml:"port" json:"port"`                 // 端口
+	AccessId     string `yaml:"accessId" json:"accessId"`         // 访问id
+	AccessSecret string `yaml:"accessSecret" json:"accessSecret"` // 访问秘钥
+	SessionToken string `yaml:"sessionToken" json:"sessionToken"` // sessionToken
+	Secure       bool   `yaml:"secure" json:"secure"`             // 是否使用https
+	BucketName   string `yaml:"bucketName" json:"bucketName"`     // 桶名
+	PrefixPath   string `yaml:"prefixPath" json:"prefixPath"`     // 前缀路径
+	Expire       int64  `yaml:"expire" json:"expire"`             // 下载链接有效时长(分钟)
 }
 
 // 配置信息格式化
-func (config *Config) Format() string {
-	return fmt.Sprintf("host=%s port=%d userName=%s bucketName=%s", config.Host, config.Port, config.UserName, config.BucketName)
+func (m *Minio) ToString() string {
+	return fmt.Sprintf("host=%s port=%d accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
 }
 
-func (config *Config) Init() {
-	InitMinioX(config)
+// 运行器名称
+func (m *Minio) Name() string {
+	return "连接Minio"
 }
 
-// 初始化minioX
-func InitMinioX(conf *Config) {
-	client, err := conf.NewClient()
-	if err == nil {
-		instance = &Handler{Config: conf, Client: client}
-		log.Info("Minio连接成功!", conf.Format())
-	} else {
-		log.Error("Minio连接失败!", conf.Format())
-		log.Error("error : ", err)
+// nacos配置文件
+func (*Minio) NacosConfig() *nacosx.Config {
+	return &nacosx.Config{
+		DataId: "minio.yaml",
+		Listen: false,
 	}
 }
 
+// 本地配置文件
+func (*Minio) LocalConfig() string {
+	return "conf/minio.yaml"
+}
+
+// 运行器运行
+func (m *Minio) Run() error {
+	client, err := m.NewClient()
+	if err != nil {
+		log.Error("Minio连接失败!", m.ToString())
+		log.Error("error : ", err)
+		return err
+	}
+	handler = &Handler{Config: m, Client: client}
+	log.Info("Minio连接成功!", m.ToString())
+	return nil
+}
+
 // 配置信息格式化
-func (config *Config) Endpoint() string {
-	return fmt.Sprintf("%s:%d", config.Host, config.Port)
+func (m *Minio) Endpoint() string {
+	return fmt.Sprintf("%s:%d", m.Host, m.Port)
 }
 
 // 初始化minio客户端
-func (config *Config) NewClient() (client *minio.Client, err error) {
-	client, err = minio.New(config.Endpoint(), &minio.Options{
-		Creds:  credentials.NewStaticV4(config.UserName, config.UserName, config.Token),
-		Secure: config.Secure,
+func (m *Minio) NewClient() (client *minio.Client, err error) {
+	client, err = minio.New(m.Endpoint(), &minio.Options{
+		Creds:  credentials.NewStaticV4(m.AccessId, m.AccessSecret, m.SessionToken),
+		Secure: m.Secure,
+		Region: "us-east-1",
 	})
 	if err != nil {
 		log.Warn("初始化Mino客户端失败 : ", err)
@@ -64,12 +81,11 @@ func (config *Config) NewClient() (client *minio.Client, err error) {
 	return
 }
 
-func (config *Config) MinioPath(fileName string) (minioPath string) {
+func (m *Minio) MinioPath(fileName string) (minioPath string) {
 	fileSuffix := filepath.Ext(filepath.Base(fileName))
-	fileName = uuid.NewString() + fileSuffix
-	minioPath = path.Join(time.Now().Format(timex.TimestampFmt), fileName)
-	if config.RootDir != "" {
-		minioPath = path.Join(config.RootDir, minioPath)
+	minioPath = path.Join(time.Now().Format(timex.TimestampFmt), uuid.NewString()+fileSuffix)
+	if m.PrefixPath != "" {
+		minioPath = path.Join(m.PrefixPath, minioPath)
 	}
 	return
 }

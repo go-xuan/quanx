@@ -7,20 +7,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var instance *Handler
+var handler *Handler
 
 // elastic处理器
 type Handler struct {
-	Config *Config
+	Config *Elastic
 	Url    string
 	Client *elastic.Client
 }
 
 func One() *Handler {
-	if instance == nil {
-		panic("The elastic instance has not been initialized, please check the relevant config")
+	if handler == nil {
+		panic("The elastic handler has not been initialized, please check the relevant config")
 	}
-	return instance
+	return handler
 }
 
 func (h *Handler) Create(ctx context.Context, index, id string, body interface{}) {

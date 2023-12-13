@@ -16,19 +16,19 @@ import (
 	"github.com/go-xuan/quanx/utilx/filex"
 )
 
-var instance *Handler
+var handler *Handler
 
 // minio控制器
 type Handler struct {
-	Config *Config       // minio配置
+	Config *Minio        // minio配置
 	Client *minio.Client // minio客户端
 }
 
 func This() *Handler {
-	if instance == nil {
-		panic("The minio instance has not been initialized, please check the relevant config")
+	if handler == nil {
+		panic("The minio handler has not been initialized, please check the relevant config")
 	}
-	return instance
+	return handler
 }
 
 // 创建桶
@@ -87,7 +87,7 @@ func (h *Handler) RemoveObject(ctx context.Context, bucketName, minioPath string
 // 下载链接
 func (h *Handler) PresignedGetObject(ctx context.Context, minioPath string) (minioUrl string, err error) {
 	var URL *url.URL
-	expires := time.Duration(h.Config.ExpireHour) * time.Hour
+	expires := time.Duration(h.Config.Expire) * time.Minute
 	URL, err = h.Client.PresignedGetObject(ctx, h.Config.BucketName, minioPath, expires, nil)
 	if err != nil {
 		return

@@ -5,20 +5,20 @@ import (
 	"github.com/go-xuan/quanx/httpx"
 )
 
-var instance *Handler
+var handler *Handler
 
 // hugegraph处理器
 type Handler struct {
-	Config     *Config // hugegraph配置
-	GremlinUrl string  // Gremlin查询接口URL
-	SchemaUrl  string  // schema操作接口URL
+	Config     *Hugegraph // hugegraph配置
+	GremlinUrl string     // Gremlin查询接口URL
+	SchemaUrl  string     // schema操作接口URL
 }
 
 func This() *Handler {
-	if instance == nil {
-		panic("The gorm instance has not been initialized, please check the relevant config")
+	if handler == nil {
+		panic("The gorm handler has not been initialized, please check the relevant config")
 	}
-	return instance
+	return handler
 }
 
 func (h *Handler) PropertykeysUrl() string {

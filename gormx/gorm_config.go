@@ -2,11 +2,11 @@ package gormx
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/go-xuan/quanx/nacosx"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -15,49 +15,59 @@ import (
 )
 
 // 数据源配置
-type Configs []*Config
+type MultiDatabase []*Database
 
-func (configs Configs) Format() (f string) {
-	bytes, _ := json.Marshal(configs)
-	return string(bytes)
+// 运行器名称
+func (d MultiDatabase) Name() string {
+	return "连接多数据源"
 }
 
-// 初始化Gorm控制器
-func (configs Configs) Init() {
-	InitGormX(configs)
-}
-
-// 初始化GormX
-func InitGormX(configs Configs) {
-	if len(configs) == 0 {
-		log.Error("数据库配置为空!")
-		return
+// nacos配置文件
+func (MultiDatabase) NacosConfig() *nacosx.Config {
+	return &nacosx.Config{
+		DataId: "multi_database.yaml",
+		Listen: false,
 	}
-	instance = &Handler{
+}
+
+// 本地配置文件
+func (MultiDatabase) LocalConfig() string {
+	return "conf/multi_database.yaml"
+}
+
+// 运行器运行
+func (d MultiDatabase) Run() error {
+	if len(d) == 0 {
+		log.Info("未配置多数据库源! ")
+		return nil
+	}
+	handler = &Handler{
+		Multi:     true,
 		DBMap:     make(map[string]*gorm.DB),
-		ConfigMap: make(map[string]*Config),
+		ConfigMap: make(map[string]*Database),
 	}
-	for i, conf := range configs {
+	for i, conf := range d {
 		if conf.Enable {
-			if newDB, err := conf.NewGormDB(); err == nil {
-				instance.DBMap[conf.Source] = newDB
-				instance.ConfigMap[conf.Source] = conf
-				log.Info("数据库连接成功! ", conf.Format())
-				if i == 0 || conf.Source == "default" {
-					instance.DB = newDB
-					instance.Config = conf
-				}
-			} else {
-				log.Error("数据库连接失败! ", conf.Format())
-				log.Error("error : ", err)
+			db, err := conf.NewGormDB()
+			if err != nil {
+				log.Error("数据库连接失败! ", conf.ToString())
+				return err
 			}
+			handler.DBMap[conf.Source] = db
+			handler.ConfigMap[conf.Source] = conf
+			if i == 0 || conf.Source == "default" {
+				handler.DB = db
+				handler.Config = conf
+			}
+			log.Info("数据库连接成功! ", conf.ToString())
 		}
 	}
+	return nil
 }
 
 // 根据数据源名称获取配置
-func (configs Configs) GetConfig(source string) *Config {
-	for _, config := range configs {
+func (d MultiDatabase) GetConfig(source string) *Database {
+	for _, config := range d {
 		if config.Source == source {
 			return config
 		}
@@ -66,18 +76,18 @@ func (configs Configs) GetConfig(source string) *Config {
 }
 
 // 获取默认配置
-func (configs Configs) GetDefault() *Config {
-	if len(configs) > 0 {
-		var conf = configs.GetConfig("default")
+func (d MultiDatabase) GetDefault() *Database {
+	if len(d) > 0 {
+		var conf = d.GetConfig("default")
 		if conf == nil {
-			conf = configs[0]
+			conf = d[0]
 		}
 		return conf
 	}
 	return nil
 }
 
-type Config struct {
+type Database struct {
 	Source   string `json:"source" yaml:"source"`     // 数据源名称
 	Enable   bool   `json:"enable" yaml:"enable"`     // 数据源启用
 	Type     string `json:"type" yaml:"type"`         // 数据库类型
@@ -90,30 +100,55 @@ type Config struct {
 }
 
 // 配置信息格式化
-func (conf *Config) Format() string {
+func (d *Database) ToString() string {
 	return fmt.Sprintf("source=%s type=%s host=%s port=%d database=%s debug=%v",
-		conf.Source, conf.Type, conf.Host, conf.Port, conf.Database, conf.Debug)
+		d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
 }
 
-// 配置信息格式化
-func (conf *Config) Init() {
-	if conf.Enable {
-		if newDB, err := conf.NewGormDB(); err == nil {
-			log.Info("数据库连接成功! ", conf.Format())
-			instance.DB = newDB
-			instance.Config = conf
-			instance.DBMap[conf.Source] = newDB
-			instance.ConfigMap[conf.Source] = conf
-		} else {
-			log.Error("数据库连接失败! ", conf.Format())
-			log.Error("error : ", err)
-		}
+// 名称
+func (d *Database) Name() string {
+	return "连接数据库"
+}
+
+// nacos配置文件
+func (*Database) NacosConfig() *nacosx.Config {
+	return &nacosx.Config{
+		DataId: "database.yaml",
+		Listen: false,
 	}
 }
 
+// 本地配置文件
+func (*Database) LocalConfig() string {
+	return "conf/database.yaml"
+}
+
+// 运行器运行
+func (d *Database) Run() error {
+	if d.Enable {
+		db, err := d.NewGormDB()
+		if err != nil {
+			log.Error("数据库连接失败! ", d.ToString())
+			log.Error("error : ", err)
+			return err
+		}
+		handler = &Handler{
+			Multi:     false,
+			DB:        db,
+			Config:    d,
+			DBMap:     make(map[string]*gorm.DB),
+			ConfigMap: make(map[string]*Database),
+		}
+		handler.DBMap[d.Source] = db
+		handler.ConfigMap[d.Source] = d
+		log.Info("数据库连接成功! ", d.ToString())
+	}
+	return nil
+}
+
 // 创建数据库连接
-func (conf *Config) NewGormDB() (gormDB *gorm.DB, err error) {
-	gormDB, err = GetGormDB(conf.GetDSN(), conf.Type)
+func (d *Database) NewGormDB() (gormDB *gorm.DB, err error) {
+	gormDB, err = GetGormDB(d.GetDSN(), d.Type)
 	if err != nil {
 		return
 	}
@@ -126,7 +161,7 @@ func (conf *Config) NewGormDB() (gormDB *gorm.DB, err error) {
 	sqlDB.SetMaxOpenConns(60)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	// 是否打印SQL
-	if conf.Debug {
+	if d.Debug {
 		gormDB = gormDB.Debug()
 	}
 	return
@@ -139,15 +174,15 @@ const (
 )
 
 // 获取数据库连接DSN
-func (conf *Config) GetDSN() (dsn string) {
-	switch strings.ToLower(conf.Type) {
+func (d *Database) GetDSN() (dsn string) {
+	switch strings.ToLower(d.Type) {
 	case Mysql:
 		dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-			conf.Username, conf.Password, conf.Host, conf.Port, conf.Database) +
+			d.Username, d.Password, d.Host, d.Port, d.Database) +
 			"?clientFoundRows=false&parseTime=true&timeout=1800s&charset=utf8&collation=utf8_general_ci&loc=Local"
 	case Postgres:
 		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			conf.Host, conf.Port, conf.Username, conf.Password, conf.Database)
+			d.Host, d.Port, d.Username, d.Password, d.Database)
 	}
 	return
 }

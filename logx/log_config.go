@@ -2,8 +2,9 @@ package logx
 
 import (
 	"fmt"
-	"os"
-	"path"
+	"github.com/go-xuan/quanx/nacosx"
+	"github.com/go-xuan/quanx/utilx/filex"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-xuan/quanx/utilx/structx"
@@ -12,40 +13,53 @@ import (
 )
 
 // 日志配置
-type Config struct {
-	AppName string `json:"appName" yaml:"appName" default:"app"`  // 服务名
-	Dir     string `json:"dir" yaml:"dir" default:"resource/log"` // 日志保存文件夹
-	Level   string `json:"level" yaml:"level" default:"debug"`    // 日志级别
-	MaxSize int    `json:"maxSize" yaml:"maxSize" default:"100"`  // 日志大小(单位：mb)
-	MaxAge  int    `json:"maxAge" yaml:"maxAge" default:"1"`      // 日志保留天数(单位：天)
-	Backups int    `json:"backups" yaml:"backups" default:"10"`   // 日志备份数
+type Log struct {
+	FileName string `json:"fileName" yaml:"fileName" default:"app"` // 日志文件名
+	Dir      string `json:"dir" yaml:"dir" default:"resource/log"`  // 日志保存文件夹
+	Level    string `json:"level" yaml:"level" default:"debug"`     // 日志级别
+	MaxSize  int    `json:"maxSize" yaml:"maxSize" default:"100"`   // 日志大小(单位：mb)
+	MaxAge   int    `json:"maxAge" yaml:"maxAge" default:"1"`       // 日志保留天数(单位：天)
+	Backups  int    `json:"backups" yaml:"backups" default:"10"`    // 日志备份数
 }
 
-func (config *Config) Format() string {
-	return fmt.Sprintf("appName=%s dir=%s level=%s maxSize=%d maxAge=%d backups=%d",
-		config.AppName, config.Dir, config.Level, config.MaxSize, config.MaxAge, config.Backups)
+// 配置信息格式化
+func (l *Log) Name() string {
+	return fmt.Sprintf("日志输出格式化 logPath=%s level=%s maxSize=%d maxAge=%d backups=%d",
+		l.LogPath(), l.Level, l.MaxSize, l.MaxAge, l.Backups)
 }
 
-func (config *Config) Init() {
-	InitLogX(config)
+func (l *Log) LogPath() string {
+	return filepath.Join(l.Dir, l.FileName)
 }
 
-// 初始化日志
-func InitLogX(conf *Config) {
-	_ = structx.SetDefaultValue(conf)
-	_ = os.Mkdir(conf.Dir, os.ModePerm)
-	var logWriter = conf.defaultLogger()
-	if conf.MaxSize != 0 {
-		logWriter.MaxSize = conf.MaxSize
+func (l *Log) NacosConfig() *nacosx.Config {
+	return nil
+}
+
+// nacos配置ID
+func (*Log) LocalConfig() string {
+	return ""
+}
+
+// 运行器运行
+func (l *Log) Run() error {
+	err := structx.SetDefaultValue(l)
+	if err != nil {
+		return err
 	}
-	if conf.MaxAge != 0 {
-		logWriter.MaxAge = conf.MaxAge
+	filex.CreateDir(l.Dir)
+	var logWriter = l.defaultLogger()
+	if l.MaxSize != 0 {
+		logWriter.MaxSize = l.MaxSize
 	}
-	if conf.Backups != 0 {
-		logWriter.MaxBackups = conf.Backups
+	if l.MaxAge != 0 {
+		logWriter.MaxAge = l.MaxAge
 	}
-	format := &LogFormatter{}
-	hook := NewHook(WriterMap{
+	if l.Backups != 0 {
+		logWriter.MaxBackups = l.Backups
+	}
+	var format = &LogFormatter{}
+	var hook = NewHook(WriterMap{
 		logrus.TraceLevel: &logWriter,
 		logrus.DebugLevel: &logWriter,
 		logrus.InfoLevel:  &logWriter,
@@ -56,17 +70,17 @@ func InitLogX(conf *Config) {
 	}, format)
 	var logger = logrus.StandardLogger()
 	logger.AddHook(hook)
-	// Flag for whether to log caller info (off by default)
+	// Flag for whether to l caller info (off by default)
 	logger.SetReportCaller(true)
 	logger.SetFormatter(format)
-	logger.SetLevel(getLogrusLevel(conf.Level))
-	return
+	logger.SetLevel(getLogrusLevel(l.Level))
+	return nil
 }
 
 // 默认日志配置
-func (config *Config) defaultLogger() lumberjack.Logger {
+func (l *Log) defaultLogger() lumberjack.Logger {
 	return lumberjack.Logger{
-		Filename:   path.Join(config.Dir, config.AppName+".log"),
+		Filename:   l.LogPath(),
 		MaxSize:    100,
 		MaxAge:     1,
 		MaxBackups: 10,

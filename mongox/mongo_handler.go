@@ -7,18 +7,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var instance *Handler
+var handler *Handler
 
 type Handler struct {
-	Config *Config
+	Config *Mongo
 	Client *mongo.Client
 }
 
 func This() *Handler {
-	if instance == nil {
-		panic("The mongo instance has not been initialized, please check the relevant config")
+	if handler == nil {
+		panic("The mongo handler has not been initialized, please check the relevant config")
 	}
-	return instance
+	return handler
 }
 
 func (h *Handler) GetDatabaseNames(ctx context.Context) (dbs []string, err error) {
