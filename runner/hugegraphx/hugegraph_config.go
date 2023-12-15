@@ -3,8 +3,9 @@ package hugegraphx
 import (
 	"fmt"
 
-	"github.com/go-xuan/quanx/nacosx"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/runner/nacosx"
 )
 
 // hugegraph配置

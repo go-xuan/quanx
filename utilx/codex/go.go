@@ -3,7 +3,6 @@ package codex
 import (
 	"strings"
 
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/utilx/sqlx"
 	"github.com/go-xuan/quanx/utilx/stringx"
 )
@@ -14,13 +13,11 @@ func BuildGoStruct(table string, fieldList []*Field) string {
 	table = strings.TrimSuffix(table, `_t`)
 	table = stringx.UpperCamelCase(table)
 	sb := strings.Builder{}
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("type ")
+	sb.WriteString("\ntype ")
 	sb.WriteString(table)
 	sb.WriteString(" struct {")
 	for _, field := range fieldList {
-		sb.WriteString(constx.NextLine)
-		sb.WriteString(constx.Tab)
+		sb.WriteString("\n\t")
 		sb.WriteString(stringx.UpperCamelCase(field.Name))
 		sb.WriteString(" ")
 		sb.WriteString(sqlx.Pg2GoTypeMap[field.Type])
@@ -29,9 +26,7 @@ func BuildGoStruct(table string, fieldList []*Field) string {
 		sb.WriteString("\"` // ")
 		sb.WriteString(field.Comment)
 	}
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("}")
-	sb.WriteString(constx.NextLine)
+	sb.WriteString("\n}\n\n")
 	return sb.String()
 }
 
@@ -41,13 +36,11 @@ func BuildGormStruct(table string, fieldList []*Field) string {
 	table = strings.TrimSuffix(table, `_t`)
 	table = stringx.UpperCamelCase(table)
 	sb := strings.Builder{}
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("type ")
+	sb.WriteString("\ntype ")
 	sb.WriteString(table)
 	sb.WriteString(" struct {")
 	for _, field := range fieldList {
-		sb.WriteString(constx.NextLine)
-		sb.WriteString(constx.Tab)
+		sb.WriteString("\n\t")
 		sb.WriteString(stringx.UpperCamelCase(field.Name))
 		sb.WriteString(" ")
 		sb.WriteString(sqlx.Pg2GoTypeMap[field.Type])
@@ -57,11 +50,8 @@ func BuildGormStruct(table string, fieldList []*Field) string {
 		sb.WriteString(sqlx.Pg2GormTypeMap[field.Type])
 		sb.WriteString("; comment:")
 		sb.WriteString(field.Comment)
-		sb.WriteString(";")
-		sb.WriteString("\"`")
+		sb.WriteString(";\"`")
 	}
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("}")
-	sb.WriteString(constx.NextLine)
+	sb.WriteString("\n}\n\n")
 	return sb.String()
 }

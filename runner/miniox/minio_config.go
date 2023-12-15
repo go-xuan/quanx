@@ -2,11 +2,11 @@ package miniox
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/runner/nacosx"
 	"path"
 	"path/filepath"
 	"time"
 
-	"github.com/go-xuan/quanx/nacosx"
 	"github.com/go-xuan/quanx/utilx/timex"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"

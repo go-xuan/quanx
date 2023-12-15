@@ -3,8 +3,8 @@ package authx
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/go-xuan/quanx/encryptx"
-	"github.com/go-xuan/quanx/respx"
+	"github.com/go-xuan/quanx/common/respx"
+	"github.com/go-xuan/quanx/utilx/encryptx"
 	"github.com/go-xuan/quanx/utilx/stringx"
 )
 

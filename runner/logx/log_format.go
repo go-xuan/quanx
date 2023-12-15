@@ -42,7 +42,6 @@ func LoggerToFile() gin.HandlerFunc {
 		startTime := time.Now()
 		// 处理请求
 		context.Next()
-
 		ip := context.ClientIP()
 		if ip == "::1" {
 			ip = "localhost"

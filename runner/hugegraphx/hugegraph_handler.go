@@ -2,7 +2,7 @@ package hugegraphx
 
 import (
 	"encoding/json"
-	"github.com/go-xuan/quanx/httpx"
+	"github.com/go-xuan/quanx/runner/httpx"
 )
 
 var handler *Handler

@@ -8,14 +8,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-xuan/quanx/redisx"
 	"github.com/golang-jwt/jwt/v4"
+
+	"github.com/go-xuan/quanx/runner/redisx"
 )
 
 var SecretKey []byte
 
-func InitSecretKey(key string) {
-	SecretKey = []byte(key)
+func SetSecretKey(key []byte) {
+	SecretKey = key
 }
 
 // 用户token参数

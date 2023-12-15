@@ -24,7 +24,7 @@ func (h *Handler) InitGormTable(source string, dst ...Table[any]) (err error) {
 					}
 					// 添加表备注
 					if tableName, comment := table.TableName(), table.Comment(); tableName != "" && comment != "" {
-						err = db.Exec("COMMENT ON TABLE " + tableName + " IS '" + comment + "'").Error
+						err = db.Exec(conf.CommentTableSql(tableName, comment)).Error
 						if err != nil {
 							return
 						}

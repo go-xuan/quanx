@@ -2,7 +2,7 @@ package logx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/nacosx"
+	"github.com/go-xuan/quanx/runner/nacosx"
 	"github.com/go-xuan/quanx/utilx/filex"
 	"path/filepath"
 	"strings"
@@ -14,22 +14,23 @@ import (
 
 // 日志配置
 type Log struct {
-	FileName string `json:"fileName" yaml:"fileName" default:"app"` // 日志文件名
-	Dir      string `json:"dir" yaml:"dir" default:"resource/log"`  // 日志保存文件夹
-	Level    string `json:"level" yaml:"level" default:"debug"`     // 日志级别
-	MaxSize  int    `json:"maxSize" yaml:"maxSize" default:"100"`   // 日志大小(单位：mb)
-	MaxAge   int    `json:"maxAge" yaml:"maxAge" default:"1"`       // 日志保留天数(单位：天)
-	Backups  int    `json:"backups" yaml:"backups" default:"10"`    // 日志备份数
+	FileName string `json:"fileName" yaml:"fileName" default:"app.log"` // 日志文件名
+	Dir      string `json:"dir" yaml:"dir" default:"resource/log"`      // 日志保存文件夹
+	Level    string `json:"level" yaml:"level" default:"debug"`         // 日志级别
+	MaxSize  int    `json:"maxSize" yaml:"maxSize" default:"100"`       // 日志大小(单位：mb)
+	MaxAge   int    `json:"maxAge" yaml:"maxAge" default:"1"`           // 日志保留天数(单位：天)
+	Backups  int    `json:"backups" yaml:"backups" default:"10"`        // 日志备份数
 }
 
 // 配置信息格式化
-func (l *Log) Name() string {
-	return fmt.Sprintf("日志输出格式化 logPath=%s level=%s maxSize=%d maxAge=%d backups=%d",
+func (l *Log) ToString() string {
+	return fmt.Sprintf("logPath=%s level=%s maxSize=%d maxAge=%d backups=%d",
 		l.LogPath(), l.Level, l.MaxSize, l.MaxAge, l.Backups)
 }
 
-func (l *Log) LogPath() string {
-	return filepath.Join(l.Dir, l.FileName)
+// 运行器名称
+func (l *Log) Name() string {
+	return "日志输出格式化"
 }
 
 func (l *Log) NacosConfig() *nacosx.Config {
@@ -38,7 +39,7 @@ func (l *Log) NacosConfig() *nacosx.Config {
 
 // nacos配置ID
 func (*Log) LocalConfig() string {
-	return ""
+	return "conf/log.yaml"
 }
 
 // 运行器运行
@@ -75,6 +76,10 @@ func (l *Log) Run() error {
 	logger.SetFormatter(format)
 	logger.SetLevel(getLogrusLevel(l.Level))
 	return nil
+}
+
+func (l *Log) LogPath() string {
+	return filepath.Join(l.Dir, l.FileName)
 }
 
 // 默认日志配置

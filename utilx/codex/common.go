@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/utilx/defaultx"
 	"github.com/go-xuan/quanx/utilx/filex"
 	"github.com/go-xuan/quanx/utilx/stringx"
@@ -31,19 +30,12 @@ func GenCodeByFieldList(saveDir, name string, fieldList []*Field) (outPath strin
 	name = checkName(name)
 	// 合并所有
 	all := strings.Builder{}
-	all.WriteString(constx.NextLine)
 	all.WriteString(BuildJavaClass(name, fieldList))
-	all.WriteString(constx.NextLine)
 	all.WriteString(BuildGoStruct(name, fieldList))
-	all.WriteString(constx.NextLine)
 	all.WriteString(BuildGormStruct(name, fieldList))
-	all.WriteString(constx.NextLine)
 	all.WriteString(BuildSelectSql(name, fieldList))
-	all.WriteString(constx.NextLine)
 	all.WriteString(BuildSelectSqlAlias(name, fieldList))
-	all.WriteString(constx.NextLine)
 	all.WriteString(BuildInsertSql(name, fieldList))
-	all.WriteString(constx.NextLine)
 	all.WriteString(BuildUpdateSql(name, fieldList))
 	// 写入文件
 	outPath = filepath.Join(saveDir, name+".txt")
@@ -57,14 +49,9 @@ func GenCodeByFieldList(saveDir, name string, fieldList []*Field) (outPath strin
 // 生成Java-Class
 func GenJavaClassByFieldList(saveDir, name string, fieldList []*Field) (outPath string, err error) {
 	name = checkName(name)
-	// 合并所有
-	content := strings.Builder{}
-	content.WriteString(constx.NextLine)
-	content.WriteString(BuildJavaClass(name, fieldList))
-	content.WriteString(constx.NextLine)
 	// 写入文件
 	outPath = filepath.Join(saveDir, stringx.UpperCamelCase(name)+".java")
-	err = filex.WriteFile(outPath, content.String(), filex.Overwrite)
+	err = filex.WriteFile(outPath, BuildJavaClass(name, fieldList), filex.Overwrite)
 	if err != nil {
 		return
 	}
@@ -76,13 +63,9 @@ func GenSqlByFieldList(saveDir, name string, fieldList []*Field) (outPath string
 	name = checkName(name)
 	// 合并所有
 	content := strings.Builder{}
-	content.WriteString(constx.NextLine)
 	content.WriteString(BuildSelectSql(name, fieldList))
-	content.WriteString(constx.NextLine)
 	content.WriteString(BuildSelectSqlAlias(name, fieldList))
-	content.WriteString(constx.NextLine)
 	content.WriteString(BuildInsertSql(name, fieldList))
-	content.WriteString(constx.NextLine)
 	content.WriteString(BuildUpdateSql(name, fieldList))
 	// 写入文件
 	outPath = filepath.Join(saveDir, name+".sql")
@@ -98,12 +81,8 @@ func GenGoStructByFieldList(saveDir, name string, fieldList []*Field) (outPath s
 	name = checkName(name)
 	// 合并所有
 	content := strings.Builder{}
-	content.WriteString(constx.NextLine)
 	content.WriteString(BuildGoStruct(name, fieldList))
-	content.WriteString(constx.NextLine)
-	content.WriteString(constx.NextLine)
 	content.WriteString(BuildGormStruct(name, fieldList))
-	content.WriteString(constx.NextLine)
 	// 写入文件
 	outPath = filepath.Join(saveDir, name+".go")
 	err = filex.WriteFile(outPath, content.String(), filex.Overwrite)
@@ -116,14 +95,9 @@ func GenGoStructByFieldList(saveDir, name string, fieldList []*Field) (outPath s
 // 生成CK建表结构体
 func GenCkCreateByFieldList(saveDir, name, engine string, fieldList []*Field) (outPath string, err error) {
 	name = checkName(name)
-	// 合并所有
-	content := strings.Builder{}
-	content.WriteString(constx.NextLine)
-	content.WriteString(BuildCkCreateSql(name, engine, fieldList))
-	content.WriteString(constx.NextLine)
 	// 写入文件
 	outPath = filepath.Join(saveDir, name+".sql")
-	err = filex.WriteFile(outPath, content.String(), filex.Overwrite)
+	err = filex.WriteFile(outPath, BuildCkCreateSql(name, engine, fieldList), filex.Overwrite)
 	if err != nil {
 		return
 	}

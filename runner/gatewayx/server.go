@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-xuan/quanx/authx"
-	"github.com/go-xuan/quanx/nacosx"
+	"github.com/go-xuan/quanx/runner/nacosx"
 	"github.com/go-xuan/quanx/utilx/structx"
 )
 

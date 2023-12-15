@@ -5,10 +5,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-xuan/quanx/gormx"
-	"github.com/go-xuan/quanx/modelx"
-	"github.com/go-xuan/quanx/respx"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/common/modelx"
+	"github.com/go-xuan/quanx/common/respx"
+	"github.com/go-xuan/quanx/runner/gormx"
 )
 
 func NewEChartApi[T any](router *gin.RouterGroup, relativePath string, source ...string) {

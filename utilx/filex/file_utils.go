@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/utilx/stringx"
 )
 
@@ -42,7 +41,7 @@ func SplitPath(path string) (dir string, file string) {
 	if path == "" {
 		return
 	}
-	if stringx.ContainsAny(path, constx.ForwardSlash, constx.BackSlash) {
+	if stringx.ContainsAny(path, "/", "\\") {
 		dir, file = filepath.Split(path)
 	} else {
 		dir, file = "", path

@@ -1,12 +1,14 @@
 package anyx
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/go-xuan/quanx/gormx"
-	"github.com/go-xuan/quanx/modelx"
-	"github.com/go-xuan/quanx/respx"
-	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+
+	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/common/modelx"
+	"github.com/go-xuan/quanx/common/respx"
+	"github.com/go-xuan/quanx/runner/gormx"
 )
 
 type Model[T any] struct {

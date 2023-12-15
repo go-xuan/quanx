@@ -3,8 +3,8 @@ package elasticx
 import (
 	"context"
 	"fmt"
+	"github.com/go-xuan/quanx/runner/nacosx"
 
-	"github.com/go-xuan/quanx/nacosx"
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
 )

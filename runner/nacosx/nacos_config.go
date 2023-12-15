@@ -73,6 +73,7 @@ func (n *Nacos) Run() (err error) {
 			}
 		}
 	}
+	log.Info("nacos连接成功! ", n.ToString())
 	return
 }
 

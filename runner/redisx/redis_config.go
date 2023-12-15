@@ -2,10 +2,10 @@ package redisx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/runner/nacosx"
 	"strconv"
 	"strings"
 
-	"github.com/go-xuan/quanx/nacosx"
 	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 )

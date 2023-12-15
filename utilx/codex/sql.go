@@ -1,9 +1,9 @@
 package codex
 
 import (
+	"fmt"
 	"strings"
 
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/utilx/sqlx"
 	"github.com/go-xuan/quanx/utilx/stringx"
 )
@@ -11,21 +11,15 @@ import (
 // 构建CK远程表建表语句
 func BuildCkCreateSql(table, engine string, fieldList []*Field) string {
 	sb := strings.Builder{}
-	sb.WriteString("drop")
-	sb.WriteString(" table ")
+	sb.WriteString("drop table ")
 	sb.WriteString(table)
-	sb.WriteString(";")
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("create")
-	sb.WriteString(" table ")
+	sb.WriteString(";\ncreate table ")
 	sb.WriteString(table)
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("(")
-	sb.WriteString(constx.NextLine)
+	sb.WriteString("\n(\n")
 	for i, field := range fieldList {
 		if i > 0 {
 			sb.WriteString(",")
-			sb.WriteString(constx.NextLine)
+			sb.WriteString("\n")
 		}
 		sb.WriteString("   `")
 		sb.WriteString(field.Name)
@@ -39,9 +33,7 @@ func BuildCkCreateSql(table, engine string, fieldList []*Field) string {
 		sb.WriteString(field.Comment)
 		sb.WriteString("'")
 	}
-	sb.WriteString(constx.NextLine)
-	sb.WriteString(")")
-	sb.WriteString(constx.NextLine)
+	sb.WriteString("\n)\n")
 	sb.WriteString(engine)
 	return sb.String()
 }
@@ -50,32 +42,26 @@ func BuildCkCreateSql(table, engine string, fieldList []*Field) string {
 func BuildInsertSql(table string, fieldList []*Field) string {
 	sb := strings.Builder{}
 	iv := strings.Builder{}
-	sb.WriteString("insert")
-	sb.WriteString(" into ")
+	sb.WriteString("insert into ")
 	sb.WriteString(table)
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("  (")
+	sb.WriteString("\n(")
 	for i, field := range fieldList {
+		if field.Default != "" || field.Name == "id" {
+			continue
+		}
 		if i > 0 {
-			sb.WriteString(constx.NextLine)
-			sb.WriteString("   ")
-			iv.WriteString(constx.NextLine)
-			iv.WriteString("   ")
+			sb.WriteString("\n")
+			iv.WriteString("\n")
 		}
 		sb.WriteString(field.Name)
 		sb.WriteString(",")
-		iv.WriteString("#{item.")
+		iv.WriteString("#{param.")
 		iv.WriteString(stringx.LowerCamelCase(field.Name))
 		iv.WriteString("},")
 	}
-	sb.WriteString(",)")
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("values")
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("  (")
+	sb.WriteString(",)\nvalues (")
 	sb.WriteString(iv.String())
-	sb.WriteString(",)")
-	sb.WriteString(constx.NextLine)
+	sb.WriteString(",)\n\n")
 	return strings.ReplaceAll(sb.String(), ",,", "")
 }
 
@@ -84,22 +70,19 @@ func BuildUpdateSql(table string, fieldList []*Field) string {
 	sb := strings.Builder{}
 	sb.WriteString("update ")
 	sb.WriteString(table)
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("   set ")
-	for i, field := range fieldList {
-		if i > 0 {
-			sb.WriteString(constx.NextLine)
-			sb.WriteString("       ")
+	sb.WriteString("\n<set>")
+	for _, field := range fieldList {
+		if field.Default != "" || field.Name == "id" {
+			continue
 		}
-		sb.WriteString(field.Name)
-		sb.WriteString(" = #{item.")
-		sb.WriteString(stringx.LowerCamelCase(field.Name))
-		sb.WriteString("},")
+		paramName := "param." + stringx.LowerCamelCase(field.Name)
+		sb.WriteString("\n\t")
+		sb.WriteString(fmt.Sprintf(`<if test="%s != null and %s != ''"> %s = %s, </if>`, paramName, paramName, field.Name, paramName))
 	}
-	sb.WriteString(",")
-	sb.WriteString(constx.NextLine)
-	sb.WriteString(" where id = #{item.id} ")
-	sb.WriteString(constx.NextLine)
+	sb.WriteString("\n\tupdate_user_name = #{param.updateUserName},")
+	sb.WriteString("\n\tupdate_time = #{param.updateTime},")
+	sb.WriteString("\n</set>")
+	sb.WriteString("\nwhere id = #{item.id} \n\n")
 	return strings.ReplaceAll(sb.String(), ",,", "")
 }
 
@@ -109,17 +92,15 @@ func BuildSelectSql(table string, fieldList []*Field) string {
 	sb.WriteString("select ")
 	for i, field := range fieldList {
 		if i > 0 {
-			sb.WriteString(constx.NextLine)
+			sb.WriteString("\n")
 			sb.WriteString("       ")
 		}
 		sb.WriteString(field.Name)
 		sb.WriteString(",")
 	}
-	sb.WriteString(",")
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("  from ")
+	sb.WriteString(",\n  from ")
 	sb.WriteString(table)
-	sb.WriteString(constx.NextLine)
+	sb.WriteString("\n\n")
 	return strings.ReplaceAll(sb.String(), ",,", "")
 }
 
@@ -129,7 +110,7 @@ func BuildSelectSqlAlias(table string, columns []*Field) string {
 	sb.WriteString("select ")
 	for i, field := range columns {
 		if i > 0 {
-			sb.WriteString(constx.NextLine)
+			sb.WriteString("\n")
 			sb.WriteString("       ")
 		}
 		sb.WriteString(field.Name)
@@ -137,10 +118,8 @@ func BuildSelectSqlAlias(table string, columns []*Field) string {
 		sb.WriteString(stringx.LowerCamelCase(field.Name))
 		sb.WriteString(",")
 	}
-	sb.WriteString(",")
-	sb.WriteString(constx.NextLine)
-	sb.WriteString("  from ")
+	sb.WriteString(",\n  from ")
 	sb.WriteString(table)
-	sb.WriteString(constx.NextLine)
+	sb.WriteString("\n\n")
 	return strings.ReplaceAll(sb.String(), ",,", "")
 }

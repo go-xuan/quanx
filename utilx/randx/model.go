@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/utilx/stringx"
 	"github.com/go-xuan/quanx/utilx/timex"
 )
@@ -141,11 +140,11 @@ func (m *RandModel) randString() (result string) {
 
 // 解析约束参数，转为map集合
 func ParseConstraint(constraint string) map[string]string {
-	if strings.Contains(constraint, constx.Equal) {
+	if strings.Contains(constraint, "=") {
 		kvMap := make(map[string]string)
-		kvs := strings.Split(constraint, constx.Split)
+		kvs := strings.Split(constraint, "&")
 		for _, kv := range kvs {
-			k, v := stringx.SplitByFirst(kv, constx.Equal)
+			k, v := stringx.SplitByFirst(kv, "=")
 			kvMap[k] = v
 		}
 		return kvMap

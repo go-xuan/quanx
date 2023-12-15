@@ -3,8 +3,8 @@ package mongox
 import (
 	"context"
 	"fmt"
+	"github.com/go-xuan/quanx/runner/nacosx"
 
-	"github.com/go-xuan/quanx/nacosx"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

@@ -6,12 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/nacosx"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+
+	"github.com/go-xuan/quanx/runner/nacosx"
 )
 
 // 数据源配置
@@ -105,7 +106,7 @@ func (d *Database) ToString() string {
 		d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
 }
 
-// 名称
+// 运行器名称
 func (d *Database) Name() string {
 	return "连接数据库"
 }
@@ -126,6 +127,7 @@ func (*Database) LocalConfig() string {
 // 运行器运行
 func (d *Database) Run() error {
 	if d.Enable {
+		d.Source = "default"
 		db, err := d.NewGormDB()
 		if err != nil {
 			log.Error("数据库连接失败! ", d.ToString())
@@ -185,6 +187,17 @@ func (d *Database) GetDSN() (dsn string) {
 			d.Host, d.Port, d.Username, d.Password, d.Database)
 	}
 	return
+}
+
+// 名称
+func (d *Database) CommentTableSql(table, comment string) string {
+	switch strings.ToLower(d.Type) {
+	case Mysql:
+		return fmt.Sprintf(`ALTER TABLE %s COMMENT = '%s'`, table, comment)
+	case Postgres:
+		return fmt.Sprintf(`COMMENT ON TABLE %s IS '%s'`, table, comment)
+	}
+	return ""
 }
 
 // 根据dsn生成gormDB

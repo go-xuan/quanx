@@ -2,18 +2,19 @@ package quanx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/utilx/filex"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-xuan/quanx/gormx"
-	"github.com/go-xuan/quanx/logx"
-	"github.com/go-xuan/quanx/nacosx"
-	"github.com/go-xuan/quanx/redisx"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/runner/gormx"
+	"github.com/go-xuan/quanx/runner/logx"
+	"github.com/go-xuan/quanx/runner/nacosx"
+	"github.com/go-xuan/quanx/runner/redisx"
+	"github.com/go-xuan/quanx/utilx/filex"
 	"github.com/go-xuan/quanx/utilx/ipx"
 	"github.com/go-xuan/quanx/utilx/structx"
-	log "github.com/sirupsen/logrus"
 )
 
 // 服务运行器
@@ -94,17 +95,16 @@ func (e *Engine) RUN() {
 // 初始化运行器
 func GetEngine(load ...RouterLoader) *Engine {
 	engine = &Engine{
-		config:     &Config{},
-		configPath: "conf/config.yaml",
-		funcs:      make([]Func, 0),
-		iRunners:   make([]IRunner[any], 0),
-		ginEngine:  gin.New(),
-		gormTable:  make(map[string][]gormx.Table[any]),
+		config:        &Config{},
+		configPath:    "conf/config.yaml",
+		funcs:         make([]Func, 0),
+		iRunners:      make([]IRunner[any], 0),
+		ginEngine:     gin.New(),
+		ginMiddleware: make([]gin.HandlerFunc, 0),
+		gormTable:     make(map[string][]gormx.Table[any]),
 	}
 	gin.SetMode(gin.ReleaseMode)
-	if len(load) > 0 {
-		engine.AddGinRouter(load...)
-	}
+	engine.AddGinRouter(load...)
 	return engine
 }
 
@@ -159,7 +159,7 @@ func (e *Engine) initBasic() {
 	}
 
 	// 连接数据库
-	if e.config.MultiDatabase != nil {
+	if e.config.MultiDatabase != nil && e.multiDatabase {
 		e.runIRunner(e.config.MultiDatabase)
 		if gormx.Initialized() && gormx.This().Multi {
 			for _, item := range *e.config.MultiDatabase {
@@ -182,7 +182,7 @@ func (e *Engine) initBasic() {
 		}
 	}
 	// 运行redis运行器
-	if e.config.MultiRedis != nil {
+	if e.config.MultiRedis != nil && e.multiRedis {
 		e.runIRunner(e.config.MultiRedis)
 	}
 	if e.config.Redis != nil && !redisx.Initialized() {
@@ -229,9 +229,10 @@ func (e *Engine) runIRunner(runner IRunner[any]) {
 		}
 	}
 	if err := runner.Run(); err != nil {
-		log.Error(runner.Name(), ": 运行失败！")
+		log.Error(runner.Name(), " -> 运行失败！")
 		panic(err)
 	}
+	log.Info(runner.Name(), " -> 运行完毕！")
 }
 
 // 启动gin
@@ -242,10 +243,8 @@ func (e *Engine) startGin() {
 	if e.ginEngine == nil {
 		e.ginEngine = gin.New()
 	}
-	e.ginEngine.Use(logx.LoggerToFile(), gin.Recovery())
-	if e.ginMiddleware != nil && len(e.ginMiddleware) > 0 {
-		e.ginEngine.Use(e.ginMiddleware...)
-	}
+	e.ginEngine.Use(gin.Recovery(), logx.LoggerToFile())
+	e.ginEngine.Use(e.ginMiddleware...)
 	_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
 	// 注册根路由，并执行路由注册函数
 	var group = e.ginEngine.Group(e.config.Server.Prefix)
@@ -267,13 +266,17 @@ func (e *Engine) MultiRedis() {
 }
 
 // 添加函数运行器
-func (e *Engine) AddFStarter(init ...Func) {
-	e.funcs = append(e.funcs, init...)
+func (e *Engine) AddFStarter(starter ...Func) {
+	if len(starter) > 0 {
+		e.funcs = append(e.funcs, starter...)
+	}
 }
 
 // 添加接口运行器
-func (e *Engine) AddIRunner(x ...IRunner[any]) {
-	e.iRunners = append(e.iRunners, x...)
+func (e *Engine) AddIRunner(runner ...IRunner[any]) {
+	if len(runner) > 0 {
+		e.iRunners = append(e.iRunners, runner...)
+	}
 }
 
 // 设置配置文件
@@ -288,17 +291,23 @@ func (e *Engine) AddTable(dst ...gormx.Table[any]) {
 
 // 添加需要某个数据源的gormx.Table模型
 func (e *Engine) AddTableWithSource(source string, dst ...gormx.Table[any]) {
-	e.gormTable[source] = append(e.gormTable[source], dst...)
+	if len(dst) > 0 {
+		e.gormTable[source] = append(e.gormTable[source], dst...)
+	}
 }
 
 // 添加gin中间件
 func (e *Engine) AddGinMiddleware(middleware ...gin.HandlerFunc) {
-	e.ginMiddleware = append(e.ginMiddleware, middleware...)
+	if len(middleware) > 0 {
+		e.ginMiddleware = append(e.ginMiddleware, middleware...)
+	}
 }
 
 // 添加gin的路由加载函数
 func (e *Engine) AddGinRouter(load ...RouterLoader) {
-	e.ginLoader = append(e.ginLoader, load...)
+	if len(load) > 0 {
+		e.ginLoader = append(e.ginLoader, load...)
+	}
 }
 
 // 执行gin的路由加载函数
