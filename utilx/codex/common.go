@@ -92,18 +92,6 @@ func GenGoStructByFieldList(saveDir, name string, fieldList []*Field) (outPath s
 	return
 }
 
-// 生成CK建表结构体
-func GenCkCreateByFieldList(saveDir, name, engine string, fieldList []*Field) (outPath string, err error) {
-	name = checkName(name)
-	// 写入文件
-	outPath = filepath.Join(saveDir, name+".sql")
-	err = filex.WriteFile(outPath, BuildCkCreateSql(name, engine, fieldList), filex.Overwrite)
-	if err != nil {
-		return
-	}
-	return
-}
-
 // 生成go模板
 func GenGoTemplateByName(saveDir, name string) (err error) {
 	name = checkName(name)

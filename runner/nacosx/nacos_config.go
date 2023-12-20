@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	ConfigAndNaming = iota // 配置中心和服务发现都使用，默认项
-	OnlyConfig             // 仅用配置中心
+	OnlyConfig      = iota // 仅用配置中心
 	OnlyNaming             // 仅用服务发现
+	ConfigAndNaming        // 配置中心和服务发现都使用，默认项
 )
 
 // nacos访问配置
@@ -25,14 +25,14 @@ type Nacos struct {
 	Username  string `yaml:"username" json:"username" default:"nacos"`        // 用户名
 	Password  string `yaml:"password" json:"password" default:"nacos"`        // 密码
 	NameSpace string `yaml:"nameSpace" json:"nameSpace" default:"public"`     // 命名空间
-	Mode      int    `yaml:"mode" json:"mode" default:"0"`                    // 模式（0-配置中心和服务发现都用；1-仅用配置中心；2-仅用服务发现）
+	Mode      int    `yaml:"mode" json:"mode" default:"0"`                    // 模式
 	LogDir    string `yaml:"logDir" json:"logDir" default:".nacos/log"`       // 日志文件夹
 	CacheDir  string `yaml:"cacheDir" json:"cacheDir" default:".nacos/cache"` // 缓存文件夹
 }
 
 // 配置信息格式化
 func (n *Nacos) ToString() string {
-	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%d",
+	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%s",
 		n.AddressUrl(), n.Username, n.Password, n.NameSpace, n.Mode)
 }
 
@@ -64,7 +64,7 @@ func (n *Nacos) Run() (err error) {
 			if handler.NamingClient, err = n.NamingClient(); err != nil {
 				return
 			}
-		default:
+		case ConfigAndNaming:
 			if handler.ConfigClient, err = n.ConfigClient(); err != nil {
 				return
 			}
@@ -73,13 +73,18 @@ func (n *Nacos) Run() (err error) {
 			}
 		}
 	}
-	log.Info("nacos连接成功! ", n.ToString())
+	log.Info("nacos初始化成功! ", n.ToString())
 	return
 }
 
 // web路径
 func (n *Nacos) AddressUrl() string {
 	return n.Address + "/nacos"
+}
+
+// 开启服务注册
+func (n *Nacos) OpenNaming() bool {
+	return n.Mode == OnlyNaming || n.Mode == ConfigAndNaming
 }
 
 // nacos客户端配置

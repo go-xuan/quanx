@@ -46,26 +46,29 @@ func (r MultiRedis) Run() error {
 		ConfigMap: make(map[string]*Redis),
 	}
 	for i, conf := range r {
-		var cmd = conf.NewRedisCmdable()
-		ok, err := Ping(cmd)
-		if !ok && err != nil {
-			log.Error("redis连接失败! ", conf.ToString())
-			log.Error("error : ", err)
-			return err
+		if conf.Enable {
+			var cmd = conf.NewRedisCmdable()
+			ok, err := Ping(cmd)
+			if !ok && err != nil {
+				log.Error("redis连接失败! ", conf.ToString())
+				log.Error("error : ", err)
+				return err
+			}
+			handler.CmdMap[conf.Source] = cmd
+			handler.ConfigMap[conf.Source] = conf
+			if i == 0 || conf.Source == "default" {
+				handler.Cmd = cmd
+				handler.Config = conf
+			}
+			log.Info("redis连接成功! ", conf.ToString())
 		}
-		handler.CmdMap[conf.Source] = cmd
-		handler.ConfigMap[conf.Source] = conf
-		if i == 0 || conf.Source == "default" {
-			handler.Cmd = cmd
-			handler.Config = conf
-		}
-		log.Info("redis连接成功! ", conf.ToString())
 	}
 	return nil
 }
 
 type Redis struct {
 	Source   string `json:"source" yaml:"source"`     // 数据源名称
+	Enable   bool   `json:"enable" yaml:"enable"`     // 数据源启用
 	Mode     int    `json:"mode" yaml:"mode"`         // 模式（0-单机；1-集群），默认单机模式
 	Host     string `json:"host" yaml:"host"`         // 主机
 	Port     int    `json:"port" yaml:"port"`         // 端口
@@ -100,21 +103,23 @@ func (*Redis) LocalConfig() string {
 
 // 运行器运行
 func (r *Redis) Run() error {
-	var cmd = r.NewRedisCmdable()
-	if ok, err := Ping(cmd); !ok && err != nil {
-		log.Error("redis连接失败! ", r.ToString())
-		log.Error("error : ", err)
-		return err
+	if r.Enable {
+		var cmd = r.NewRedisCmdable()
+		if ok, err := Ping(cmd); !ok && err != nil {
+			log.Error("redis连接失败! ", r.ToString())
+			log.Error("error : ", err)
+			return err
+		}
+		handler = &Handler{
+			Cmd:       cmd,
+			Config:    r,
+			CmdMap:    make(map[string]redis.Cmdable),
+			ConfigMap: make(map[string]*Redis),
+		}
+		handler.CmdMap[r.Source] = cmd
+		handler.ConfigMap[r.Source] = r
+		log.Info("redis连接成功! ", r.ToString())
 	}
-	handler = &Handler{
-		Cmd:       cmd,
-		Config:    r,
-		CmdMap:    make(map[string]redis.Cmdable),
-		ConfigMap: make(map[string]*Redis),
-	}
-	handler.CmdMap[r.Source] = cmd
-	handler.ConfigMap[r.Source] = r
-	log.Info("redis连接成功! ", r.ToString())
 	return nil
 }
 

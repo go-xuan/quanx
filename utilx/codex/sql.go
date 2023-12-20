@@ -4,39 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-xuan/quanx/utilx/sqlx"
 	"github.com/go-xuan/quanx/utilx/stringx"
 )
-
-// 构建CK远程表建表语句
-func BuildCkCreateSql(table, engine string, fieldList []*Field) string {
-	sb := strings.Builder{}
-	sb.WriteString("drop table ")
-	sb.WriteString(table)
-	sb.WriteString(";\ncreate table ")
-	sb.WriteString(table)
-	sb.WriteString("\n(\n")
-	for i, field := range fieldList {
-		if i > 0 {
-			sb.WriteString(",")
-			sb.WriteString("\n")
-		}
-		sb.WriteString("   `")
-		sb.WriteString(field.Name)
-		sb.WriteString("` ")
-		sb.WriteString(sqlx.Pg2CkTypeMap[field.Type])
-		if field.Default != "" {
-			sb.WriteString(" default ")
-			sb.WriteString(field.Default)
-		}
-		sb.WriteString(" comment '")
-		sb.WriteString(field.Comment)
-		sb.WriteString("'")
-	}
-	sb.WriteString("\n)\n")
-	sb.WriteString(engine)
-	return sb.String()
-}
 
 // 构建新增sql语句
 func BuildInsertSql(table string, fieldList []*Field) string {
@@ -77,8 +46,9 @@ func BuildUpdateSql(table string, fieldList []*Field) string {
 		}
 		paramName := "param." + stringx.LowerCamelCase(field.Name)
 		sb.WriteString("\n\t")
-		sb.WriteString(fmt.Sprintf(`<if test="%s != null and %s != ''"> %s = %s, </if>`, paramName, paramName, field.Name, paramName))
+		sb.WriteString(fmt.Sprintf(`<if test="%s != null and %s != ''"> %s = #{%s}, </if>`, paramName, paramName, field.Name, paramName))
 	}
+	sb.WriteString("\n\tupdate_by = #{param.updateBy},")
 	sb.WriteString("\n\tupdate_user_name = #{param.updateUserName},")
 	sb.WriteString("\n\tupdate_time = #{param.updateTime},")
 	sb.WriteString("\n</set>")

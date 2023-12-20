@@ -4,11 +4,13 @@ package sqlx
 const (
 	String     = "string"
 	Varchar    = "varchar"
+	Char       = "char"
 	Varchar255 = "varchar(255)"
 	Text       = "text"
-	Int        = "int"
-	Smallint   = "smallint"
 	Tinyint    = "tinyint"
+	Smallint   = "smallint"
+	Mediumint  = "mediumint"
+	Int        = "int"
 	Bigint     = "bigint"
 	Int2       = "int2"
 	Int4       = "int4"
@@ -21,25 +23,15 @@ const (
 	Time       = "time.Time"
 	Timestamp  = "timestamp"
 	Date       = "date"
+	Datetime   = "datetime"
 	Bool       = "bool"
-)
-
-// ck常用类型
-const (
-	CkString   = "String"
-	CkInt8     = "Int8"
-	CkInt16    = "Int16"
-	CkInt32    = "Int32"
-	CkDate     = "Date"
-	CkDateTime = "DateTime"
-	CkFloat64  = "Float64"
-	CkBool     = "Bool"
 )
 
 // java类常用类型
 const (
 	JavaString     = "String"
 	JavaInteger    = "Integer"
+	JavaInt        = "int"
 	JavaLong       = "Long"
 	JavaDate       = "Date"
 	JavaBigDecimal = "BigDecimal"

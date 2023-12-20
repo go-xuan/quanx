@@ -1,86 +1,82 @@
 package sqlx
 
-var Pg2GoTypeMap = initPg2GoTypeMap()
-var Pg2GormTypeMap = initPg2GormTypeMap()
-var Pg2JavaTypeMap = initPg2JavaTypeMap()
-var Pg2CkTypeMap = initPg2CkTypeMap()
+var (
+	db2Go   map[string]string
+	db2Gorm map[string]string
+	db2Java map[string]string
+)
 
-// PG-Go类型映射
-func initPg2GoTypeMap() map[string]string {
-	var typeMap = make(map[string]string)
-	typeMap[Varchar] = String
-	typeMap[Text] = String
-	typeMap[Int2] = Int
-	typeMap[Int4] = Int
-	typeMap[Int8] = Int64
-	typeMap[Timestamp] = Time
-	typeMap[Date] = Time
-	typeMap[Float4] = Float4
-	typeMap[Numeric] = Float4
-	typeMap[Bool] = Bool
-	return typeMap
+// DB-Go类型映射
+func DB2Go() map[string]string {
+	if db2Go == nil {
+		db2Go = make(map[string]string)
+		db2Go[Char] = String
+		db2Go[Varchar] = String
+		db2Go[Text] = String
+		db2Go[Int2] = Int
+		db2Go[Int4] = Int
+		db2Go[Int8] = Int64
+		db2Go[Tinyint] = Int
+		db2Go[Smallint] = Int
+		db2Go[Mediumint] = Int
+		db2Go[Int] = Int
+		db2Go[Bigint] = Int64
+		db2Go[Float4] = Float4
+		db2Go[Numeric] = Float4
+		db2Go[Timestamp] = Time
+		db2Go[Datetime] = Time
+		db2Go[Date] = Time
+		db2Go[Bool] = Bool
+	}
+	return db2Go
 }
 
-// mysql-Go类型映射
-func initMysql2GoTypeMap() map[string]string {
-	var typeMap = make(map[string]string)
-	typeMap[Varchar] = String
-	typeMap[Text] = String
-	typeMap[Tinyint] = Int
-	typeMap[Int4] = Int
-	typeMap[Int8] = Int64
-	typeMap[Timestamp] = Time
-	typeMap[Date] = Time
-	typeMap[Float4] = Float4
-	typeMap[Numeric] = Float4
-	typeMap[Bool] = Bool
-	return typeMap
+// DB-Gorm类型映射
+func DB2Gorm() map[string]string {
+	if db2Gorm == nil {
+		db2Gorm = make(map[string]string)
+		db2Gorm[Char] = Char
+		db2Gorm[Varchar] = Varchar255
+		db2Gorm[Text] = Text
+		db2Gorm[Int2] = Smallint
+		db2Gorm[Int4] = Int
+		db2Gorm[Int8] = Int64
+		db2Gorm[Tinyint] = Tinyint
+		db2Gorm[Smallint] = Smallint
+		db2Gorm[Mediumint] = Mediumint
+		db2Gorm[Int] = Int
+		db2Gorm[Bigint] = Bigint
+		db2Gorm[Float4] = Numeric6
+		db2Gorm[Numeric] = Numeric2
+		db2Gorm[Timestamp] = Timestamp
+		db2Gorm[Datetime] = Timestamp
+		db2Gorm[Date] = Date
+		db2Gorm[Bool] = Bool
+	}
+	return db2Gorm
 }
 
-// PG-Gorm类型映射
-func initPg2GormTypeMap() map[string]string {
-	var typeMap = make(map[string]string)
-	typeMap[Varchar] = Varchar255
-	typeMap[Text] = Text
-	typeMap[Int2] = Smallint
-	typeMap[Int4] = Int
-	typeMap[Int8] = Bigint
-	typeMap[Timestamp] = Timestamp
-	typeMap[Date] = Date
-	typeMap[Float4] = Numeric6
-	typeMap[Numeric] = Numeric2
-	typeMap[Bool] = Bool
-	return typeMap
-}
-
-// PG-java类型映射
-func initPg2JavaTypeMap() map[string]string {
-	var typeMap = make(map[string]string)
-	typeMap[Varchar] = JavaString
-	typeMap[Text] = JavaString
-	typeMap[Int2] = JavaInteger
-	typeMap[Int4] = JavaLong
-	typeMap[Int8] = JavaLong
-	typeMap[Timestamp] = JavaDate
-	typeMap[Date] = JavaDate
-	typeMap[Float4] = JavaBigDecimal
-	typeMap[Numeric] = JavaBigDecimal
-	typeMap[Bool] = JavaBoolean
-	return typeMap
-}
-
-// PG-ClickHouse类型映射
-func initPg2CkTypeMap() map[string]string {
-	var typeMap = make(map[string]string)
-	typeMap[Varchar] = CkString
-	typeMap[Text] = CkString
-	typeMap[Int2] = CkInt8
-	typeMap[Int4] = CkInt16
-	typeMap[Int8] = CkInt32
-	typeMap[Timestamp] = CkDateTime
-	typeMap[Date] = CkDate
-	typeMap[Float4] = CkFloat64
-	typeMap[Numeric] = CkFloat64
-	typeMap[Bool] = CkBool
-	return typeMap
+// DB-java类型映射
+func DB2Java() map[string]string {
+	if db2Java == nil {
+		db2Java = make(map[string]string)
+		db2Java[Char] = JavaString
+		db2Java[Varchar] = JavaString
+		db2Java[Text] = JavaString
+		db2Java[Int2] = JavaInteger
+		db2Java[Int4] = JavaLong
+		db2Java[Int8] = JavaLong
+		db2Java[Tinyint] = JavaInt
+		db2Java[Smallint] = JavaInteger
+		db2Java[Mediumint] = JavaInteger
+		db2Java[Int] = JavaLong
+		db2Java[Bigint] = JavaLong
+		db2Java[Float4] = JavaBigDecimal
+		db2Java[Numeric] = JavaBigDecimal
+		db2Java[Timestamp] = JavaDate
+		db2Java[Datetime] = JavaDate
+		db2Java[Date] = JavaDate
+		db2Java[Bool] = JavaBoolean
+	}
+	return db2Java
 }

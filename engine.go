@@ -27,8 +27,9 @@ type Engine struct {
 	ginMiddleware []gin.HandlerFunc             // gin中间件
 	gormTable     map[string][]gormx.Table[any] // gorm初始化model
 	configPath    string                        // 配置文件路径
-	multiDatabase bool                          // 多数据源
-	multiRedis    bool                          // 多redis数据库
+	notWeb        bool                          // 非web项目
+	multiDatabase bool                          // 开启多数据源
+	multiRedis    bool                          // 开启多redis数据库
 }
 
 // 服务配置
@@ -79,7 +80,6 @@ var engine *Engine
 
 // 服务启动
 func (e *Engine) RUN() {
-	defer recoverError()
 	// 加载配置
 	e.loadConfig()
 	// 初始化基础配置(日志/nacos/gorm/redis)
@@ -89,7 +89,10 @@ func (e *Engine) RUN() {
 	// 运行接口运行器
 	e.runIRunners()
 	// 启动gin
-	e.startGin()
+	if !e.notWeb {
+		defer PanicRecover()
+		e.startGin()
+	}
 }
 
 // 初始化运行器
@@ -124,26 +127,30 @@ func (e *Engine) loadConfig() {
 	} else {
 		config.Redis = &redisx.Redis{}
 	}
-	if err := structx.ReadFileToPointer(config, e.configPath); err != nil {
-		log.Error("加载服务配置失败！")
-		panic(err)
+	// 读取本地配置
+	if filex.Exists(e.configPath) {
+		if err := structx.ReadFileToPointer(config, e.configPath); err != nil {
+			log.Error("加载服务配置失败！")
+			panic(err)
+		}
 	}
 	if ipx.GetWLANIP() != "" {
 		config.Server.Host = ipx.GetWLANIP()
 	}
-
 	// 初始化nacos
 	if config.Nacos != nil {
 		e.runIRunner(config.Nacos)
-		// 注册nacos服务Nacos
-		nacosx.RegisterInstance(
-			nacosx.ServerInstance{
-				Name:  config.Server.Name,
-				Host:  config.Server.Host,
-				Port:  config.Server.Port,
-				Group: config.Nacos.NameSpace,
-			},
-		)
+		if !e.notWeb && config.Nacos.OpenNaming() {
+			// 注册nacos服务Nacos
+			nacosx.RegisterInstance(
+				nacosx.ServerInstance{
+					Name:  config.Server.Name,
+					Host:  config.Server.Host,
+					Port:  config.Server.Port,
+					Group: config.Nacos.NameSpace,
+				},
+			)
+		}
 	}
 	e.config = config
 }
@@ -159,7 +166,7 @@ func (e *Engine) initBasic() {
 	}
 
 	// 连接数据库
-	if e.config.MultiDatabase != nil && e.multiDatabase {
+	if e.multiDatabase && e.config.MultiDatabase != nil {
 		e.runIRunner(e.config.MultiDatabase)
 		if gormx.Initialized() && gormx.This().Multi {
 			for _, item := range *e.config.MultiDatabase {
@@ -172,7 +179,7 @@ func (e *Engine) initBasic() {
 			}
 		}
 	}
-	if e.config.Database != nil && !gormx.Initialized() {
+	if !gormx.Initialized() && e.config.Database != nil {
 		e.runIRunner(e.config.Database)
 		if models, ok := e.gormTable["default"]; ok {
 			if err := gormx.This().InitGormTable("default", models...); err != nil {
@@ -182,10 +189,10 @@ func (e *Engine) initBasic() {
 		}
 	}
 	// 运行redis运行器
-	if e.config.MultiRedis != nil && e.multiRedis {
+	if e.multiRedis && e.config.MultiRedis != nil {
 		e.runIRunner(e.config.MultiRedis)
 	}
-	if e.config.Redis != nil && !redisx.Initialized() {
+	if !redisx.Initialized() && e.config.Redis != nil {
 		e.runIRunner(e.config.Redis)
 	}
 	return
@@ -235,6 +242,27 @@ func (e *Engine) runIRunner(runner IRunner[any]) {
 	log.Info(runner.Name(), " -> 运行完毕！")
 }
 
+// 初始化接口运行器
+func InitIRunner(runner IRunner[any], nacosGroup string) {
+	if local := runner.LocalConfig(); local != "" {
+		if filex.Exists(local) {
+			if err := structx.ReadFileToPointer(runner, local); err != nil {
+				log.Info("本地配置文件加载失败! path=", local)
+				panic(err)
+			}
+			log.Info("本地配置文件加载成功! path=", local)
+		}
+	}
+	if config := runner.NacosConfig(); config != nil {
+		config.Group = nacosGroup
+		if config.Exist() {
+			if err := config.LoadConfig(runner); err != nil {
+				panic(err)
+			}
+		}
+	}
+}
+
 // 启动gin
 func (e *Engine) startGin() {
 	if e.config.Server.Debug {
@@ -255,6 +283,10 @@ func (e *Engine) startGin() {
 		log.Error("gin-Engine 运行失败！！！")
 		panic(err)
 	}
+}
+
+func (e *Engine) NotWeb() {
+	e.notWeb = true
 }
 
 func (e *Engine) MultiDatabase() {
@@ -346,7 +378,7 @@ func (e *Engine) LoadLocalConfig(config interface{}, file string) {
 }
 
 // 服务保活
-func recoverError() {
+func PanicRecover() {
 	if err := recover(); err != nil {
 		log.Errorf("服务运行失败！错误为 : %s", err)
 		return

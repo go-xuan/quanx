@@ -23,7 +23,7 @@ func BuildJavaClass(table string, fieldList []*Field) string {
 		sb.WriteString("\", name = \"")
 		sb.WriteString(low)
 		sb.WriteString("\")\n\tprivate ")
-		sb.WriteString(sqlx.Pg2JavaTypeMap[field.Type])
+		sb.WriteString(sqlx.DB2Java()[field.Type])
 		sb.WriteString(" ")
 		sb.WriteString(low)
 		sb.WriteString(";")
