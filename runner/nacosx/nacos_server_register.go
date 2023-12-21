@@ -37,9 +37,9 @@ func RegisterInstance(server ServerInstance) {
 		Ephemeral:   true,
 		Metadata:    nil,
 	}); err != nil {
-		log.Error("nacos服务注册失败! ", server.Format(), " error : ", err)
+		log.Error("nacos服务注册失败！", server.Format(), " error : ", err)
 	} else {
-		log.Info("nacos服务注册成功! ", server.Format())
+		log.Info("nacos服务注册成功！", server.Format())
 	}
 }
 

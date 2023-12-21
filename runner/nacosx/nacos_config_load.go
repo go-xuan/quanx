@@ -90,19 +90,19 @@ func (c *Config) LoadConfig(config interface{}) (err error) {
 	}
 	var msg = c.ToString()
 	if err = structx.ParseBytesToPointer(config, []byte(content), param.DataId); err != nil {
-		log.Error("nacos配置加载失败! ", msg, " error : ", err)
+		log.Error("nacos配置加载失败！", msg, " error : ", err)
 		return
 	}
-	log.Info("nacos配置加载成功! ", msg)
+	log.Info("nacos配置加载成功！", msg)
 	// 设置Nacos配置监听
 	if c.Listen {
 		// 初始化nacos配置监控
 		GetNacosConfigMonitor().AddConfigData(c.Group, c.DataId, content)
 		if err = ListenConfigChange(param); err != nil {
-			log.Error("监听nacos配置-失败! ", msg, " error : ", err)
+			log.Error("监听nacos配置-失败！", msg, " error : ", err)
 			return
 		}
-		log.Info("监听nacos配置-成功! ", msg)
+		log.Info("监听nacos配置-成功！", msg)
 	}
 	return
 }
@@ -149,7 +149,7 @@ func (list Configs) Get(dataId string) (target *Config) {
 // 监听nacos配置改动
 func ListenConfigChange(param vo.ConfigParam) error {
 	param.OnChange = func(namespace, group, dataId, data string) {
-		log.Errorf("监听到nacos配置已改动!!! \n dataId=%s group=%s namespace=%s\n改动后内容如下:\n%s", dataId, group, namespace, data)
+		log.Errorf("监听到nacos配置已改动!!！\n dataId=%s group=%s namespace=%s\n改动后内容如下:\n%s", dataId, group, namespace, data)
 		GetNacosConfigMonitor().UpdateConfigData(group, dataId, data)
 	}
 	return handler.ConfigClient.ListenConfig(param)

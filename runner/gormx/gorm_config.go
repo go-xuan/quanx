@@ -26,20 +26,20 @@ func (d MultiDatabase) Name() string {
 // nacos配置文件
 func (MultiDatabase) NacosConfig() *nacosx.Config {
 	return &nacosx.Config{
-		DataId: "database.yaml",
+		DataId: "multi_database.yaml",
 		Listen: false,
 	}
 }
 
 // 本地配置文件
 func (MultiDatabase) LocalConfig() string {
-	return "conf/database.yaml"
+	return "conf/multi_database.yaml"
 }
 
 // 运行器运行
 func (d MultiDatabase) Run() error {
 	if len(d) == 0 {
-		log.Info("未配置多数据库源! ")
+		log.Info("未配置多数据库源！")
 		return nil
 	}
 	handler = &Handler{
@@ -51,7 +51,7 @@ func (d MultiDatabase) Run() error {
 		if conf.Enable {
 			db, err := conf.NewGormDB()
 			if err != nil {
-				log.Error("数据库连接失败! ", conf.ToString())
+				log.Error("数据库连接失败！", conf.ToString())
 				return err
 			}
 			handler.DBMap[conf.Source] = db
@@ -60,7 +60,7 @@ func (d MultiDatabase) Run() error {
 				handler.DB = db
 				handler.Config = conf
 			}
-			log.Info("数据库连接成功! ", conf.ToString())
+			log.Info("数据库连接成功!", conf.ToString())
 		}
 	}
 	return nil
@@ -130,7 +130,7 @@ func (d *Database) Run() error {
 		d.Source = "default"
 		db, err := d.NewGormDB()
 		if err != nil {
-			log.Error("数据库连接失败! ", d.ToString())
+			log.Error("数据库连接失败！", d.ToString())
 			log.Error("error : ", err)
 			return err
 		}
@@ -143,8 +143,9 @@ func (d *Database) Run() error {
 		}
 		handler.DBMap[d.Source] = db
 		handler.ConfigMap[d.Source] = d
-		log.Info("数据库连接成功! ", d.ToString())
+		log.Info("数据库连接成功！", d.ToString())
 	}
+	log.Info("数据库未连接！database配置文件为空或者database.enable=false")
 	return nil
 }
 

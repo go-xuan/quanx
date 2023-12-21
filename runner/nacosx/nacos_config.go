@@ -16,7 +16,7 @@ import (
 const (
 	OnlyConfig      = iota // 仅用配置中心
 	OnlyNaming             // 仅用服务发现
-	ConfigAndNaming        // 配置中心和服务发现都使用，默认项
+	ConfigAndNaming        // 配置中心和服务发现都使用
 )
 
 // nacos访问配置
@@ -25,7 +25,7 @@ type Nacos struct {
 	Username  string `yaml:"username" json:"username" default:"nacos"`        // 用户名
 	Password  string `yaml:"password" json:"password" default:"nacos"`        // 密码
 	NameSpace string `yaml:"nameSpace" json:"nameSpace" default:"public"`     // 命名空间
-	Mode      int    `yaml:"mode" json:"mode" default:"0"`                    // 模式
+	Mode      int    `yaml:"mode" json:"mode" default:"2"`                    // 模式
 	LogDir    string `yaml:"logDir" json:"logDir" default:".nacos/log"`       // 日志文件夹
 	CacheDir  string `yaml:"cacheDir" json:"cacheDir" default:".nacos/cache"` // 缓存文件夹
 }
@@ -73,7 +73,7 @@ func (n *Nacos) Run() (err error) {
 			}
 		}
 	}
-	log.Info("nacos初始化成功! ", n.ToString())
+	log.Info("nacos初始化成功！", n.ToString())
 	return
 }
 
@@ -127,7 +127,7 @@ func (n *Nacos) ConfigClient() (client config_client.IConfigClient, err error) {
 		ServerConfigs: n.ServerConfigs(),
 	})
 	if err != nil {
-		log.Error("初始化Nacos配置中心客户端失败! ", n.ToString())
+		log.Error("初始化Nacos配置中心客户端失败！", n.ToString())
 		log.Error("error : ", err)
 		return
 	}
@@ -141,7 +141,7 @@ func (n *Nacos) NamingClient() (client naming_client.INamingClient, err error) {
 		ServerConfigs: n.ServerConfigs(),
 	})
 	if err != nil {
-		log.Error("初始化Nacos服务发现客户端失败! ", n.ToString())
+		log.Error("初始化Nacos服务发现客户端失败！", n.ToString())
 		log.Error("error : ", err)
 		return
 	}

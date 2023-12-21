@@ -38,7 +38,7 @@ func (MultiRedis) LocalConfig() string {
 
 func (r MultiRedis) Run() error {
 	if len(r) == 0 {
-		log.Info("未配置多Redis数据库! ")
+		log.Info("未配置多Redis数据库！")
 		return nil
 	}
 	handler = &Handler{
@@ -50,7 +50,7 @@ func (r MultiRedis) Run() error {
 			var cmd = conf.NewRedisCmdable()
 			ok, err := Ping(cmd)
 			if !ok && err != nil {
-				log.Error("redis连接失败! ", conf.ToString())
+				log.Error("redis连接失败！", conf.ToString())
 				log.Error("error : ", err)
 				return err
 			}
@@ -60,7 +60,7 @@ func (r MultiRedis) Run() error {
 				handler.Cmd = cmd
 				handler.Config = conf
 			}
-			log.Info("redis连接成功! ", conf.ToString())
+			log.Info("redis连接成功！", conf.ToString())
 		}
 	}
 	return nil
@@ -106,7 +106,7 @@ func (r *Redis) Run() error {
 	if r.Enable {
 		var cmd = r.NewRedisCmdable()
 		if ok, err := Ping(cmd); !ok && err != nil {
-			log.Error("redis连接失败! ", r.ToString())
+			log.Error("redis连接失败！", r.ToString())
 			log.Error("error : ", err)
 			return err
 		}
@@ -118,8 +118,9 @@ func (r *Redis) Run() error {
 		}
 		handler.CmdMap[r.Source] = cmd
 		handler.ConfigMap[r.Source] = r
-		log.Info("redis连接成功! ", r.ToString())
+		log.Info("redis连接成功！", r.ToString())
 	}
+	log.Info("redis未连接！ redis配置文件为空或者redis.enable=false")
 	return nil
 }
 
