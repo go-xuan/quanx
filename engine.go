@@ -28,19 +28,19 @@ type Engine struct {
 	gormTable     map[string][]gormx.Table[any] // gorm初始化model
 	configPath    string                        // 配置文件路径
 	notWeb        bool                          // 非web项目
-	multiDatabase bool                          // 开启多数据源
+	multiDB       bool                          // 开启多数据源
 	multiRedis    bool                          // 开启多redis数据库
 }
 
 // 服务配置
 type Config struct {
-	Server        *Server              `yaml:"server"`        // 服务配置
-	Log           *logx.Log            `yaml:"log"`           // 日志配置
-	Nacos         *nacosx.Nacos        `yaml:"nacos"`         // nacos访问配置
-	Database      *gormx.Database      `yaml:"database"`      // 数据源配置
-	Redis         *redisx.Redis        `yaml:"redis"`         // redis配置
-	MultiDatabase *gormx.MultiDatabase `yaml:"multiDatabase"` // 多数据源配置
-	MultiRedis    *redisx.MultiRedis   `yaml:"multiRedis"`    // 多redis配置
+	Server     *Server              `yaml:"server"`     // 服务配置
+	Log        *logx.Log            `yaml:"log"`        // 日志配置
+	Nacos      *nacosx.Nacos        `yaml:"nacos"`      // nacos访问配置
+	Database   *gormx.Database      `yaml:"database"`   // 数据源配置
+	Redis      *redisx.Redis        `yaml:"redis"`      // redis配置
+	MultiDB    *gormx.MultiDatabase `yaml:"multiDB"`    // 多数据源配置
+	MultiRedis *redisx.MultiRedis   `yaml:"multiRedis"` // 多redis配置
 }
 
 // 函数运行器
@@ -117,8 +117,8 @@ func (e *Engine) loadConfig() {
 		Server: &Server{},
 		Log:    &logx.Log{},
 	}
-	if e.multiDatabase {
-		config.MultiDatabase = &gormx.MultiDatabase{}
+	if e.multiDB {
+		config.MultiDB = &gormx.MultiDatabase{}
 	} else {
 		config.Database = &gormx.Database{}
 	}
@@ -166,10 +166,10 @@ func (e *Engine) initBasic() {
 	}
 
 	// 连接数据库
-	if e.multiDatabase && e.config.MultiDatabase != nil {
-		e.runIRunner(e.config.MultiDatabase)
+	if e.multiDB && e.config.MultiDB != nil {
+		e.runIRunner(e.config.MultiDB)
 		if gormx.Initialized() && gormx.This().Multi {
-			for _, item := range *e.config.MultiDatabase {
+			for _, item := range *e.config.MultiDB {
 				if models, ok := e.gormTable[item.Source]; ok {
 					if err := gormx.This().InitGormTable(item.Source, models...); err != nil {
 						log.Error("初始化数据库表失败！")
@@ -188,7 +188,8 @@ func (e *Engine) initBasic() {
 			}
 		}
 	}
-	// 运行redis运行器
+
+	// 连接redis
 	if e.multiRedis && e.config.MultiRedis != nil {
 		e.runIRunner(e.config.MultiRedis)
 	}
@@ -218,8 +219,10 @@ func (e *Engine) runIRunners() {
 
 // 运行接口运行器
 func (e *Engine) runIRunner(runner IRunner[any]) {
+	var hasConfig bool
 	if local := runner.LocalConfig(); local != "" {
 		if filex.Exists(local) {
+			hasConfig = true
 			if err := structx.ReadFileToPointer(runner, local); err != nil {
 				log.Info("本地配置文件加载失败! path=", local)
 				panic(err)
@@ -230,16 +233,19 @@ func (e *Engine) runIRunner(runner IRunner[any]) {
 	if config := runner.NacosConfig(); config != nil {
 		config.Group = e.config.Server.Name
 		if config.Exist() {
+			hasConfig = true
 			if err := config.LoadConfig(runner); err != nil {
 				panic(err)
 			}
 		}
 	}
-	if err := runner.Run(); err != nil {
-		log.Error(runner.Name(), " -> 运行失败！")
-		panic(err)
+	if hasConfig {
+		if err := runner.Run(); err != nil {
+			log.Error(runner.Name(), " -> 运行失败！")
+			panic(err)
+		}
+		log.Info(runner.Name(), " -> 运行完毕！")
 	}
-	log.Info(runner.Name(), " -> 运行完毕！")
 }
 
 // 初始化接口运行器
@@ -285,14 +291,17 @@ func (e *Engine) startGin() {
 	}
 }
 
+// 非web项目
 func (e *Engine) NotWeb() {
 	e.notWeb = true
 }
 
-func (e *Engine) MultiDatabase() {
-	e.multiDatabase = true
+// 开启多数据源
+func (e *Engine) MultiDB() {
+	e.multiDB = true
 }
 
+// 开启多redis
 func (e *Engine) MultiRedis() {
 	e.multiRedis = true
 }

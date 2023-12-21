@@ -26,14 +26,14 @@ func (d MultiDatabase) Name() string {
 // nacos配置文件
 func (MultiDatabase) NacosConfig() *nacosx.Config {
 	return &nacosx.Config{
-		DataId: "multi_database.yaml",
+		DataId: "database.yaml",
 		Listen: false,
 	}
 }
 
 // 本地配置文件
 func (MultiDatabase) LocalConfig() string {
-	return "conf/multi_database.yaml"
+	return "conf/database.yaml"
 }
 
 // 运行器运行
