@@ -31,14 +31,14 @@ type Nacos struct {
 }
 
 // 配置信息格式化
-func (n *Nacos) ToString() string {
-	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%s",
-		n.AddressUrl(), n.Username, n.Password, n.NameSpace, n.Mode)
+func (n *Nacos) ToString(title string) string {
+	return fmt.Sprintf("%s => address=%s username=%s password=%s nameSpace=%s mode=%d",
+		title, n.AddressUrl(), n.Username, n.Password, n.NameSpace, n.Mode)
 }
 
 // 运行器名称
 func (n *Nacos) Name() string {
-	return "连接Nacos"
+	return "Init nacos"
 }
 
 // nacos配置文件
@@ -73,17 +73,17 @@ func (n *Nacos) Run() (err error) {
 			}
 		}
 	}
-	log.Info("nacos初始化成功！", n.ToString())
+	log.Info(n.ToString("connect nacos successful!"))
 	return
 }
 
-// web路径
+// nacos访问地址
 func (n *Nacos) AddressUrl() string {
 	return n.Address + "/nacos"
 }
 
 // 开启服务注册
-func (n *Nacos) OpenNaming() bool {
+func (n *Nacos) EnableNaming() bool {
 	return n.Mode == OnlyNaming || n.Mode == ConfigAndNaming
 }
 
@@ -105,7 +105,7 @@ func (n *Nacos) ClientConfig() *constant.ClientConfig {
 func (n *Nacos) ServerConfigs() (serverConfigs []constant.ServerConfig) {
 	var adds = strings.Split(n.Address, ",")
 	if len(adds) == 0 {
-		log.Error("Nacos服务地址不能为空!")
+		log.Error("nacos.address cannot be empty!")
 		return
 	}
 	for _, addStr := range adds {
@@ -127,7 +127,7 @@ func (n *Nacos) ConfigClient() (client config_client.IConfigClient, err error) {
 		ServerConfigs: n.ServerConfigs(),
 	})
 	if err != nil {
-		log.Error("初始化Nacos配置中心客户端失败！", n.ToString())
+		log.Error(n.ToString("init nacos config client failed!"))
 		log.Error("error : ", err)
 		return
 	}
@@ -141,7 +141,7 @@ func (n *Nacos) NamingClient() (client naming_client.INamingClient, err error) {
 		ServerConfigs: n.ServerConfigs(),
 	})
 	if err != nil {
-		log.Error("初始化Nacos服务发现客户端失败！", n.ToString())
+		log.Error(n.ToString("init nacos naming client failed!"))
 		log.Error("error : ", err)
 		return
 	}

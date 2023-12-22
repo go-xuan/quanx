@@ -1,7 +1,9 @@
 package hugegraphx
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/go-xuan/quanx/runner/httpx"
 
 	log "github.com/sirupsen/logrus"
 
@@ -16,13 +18,13 @@ type Hugegraph struct {
 }
 
 // 配置信息格式化
-func (h *Hugegraph) ToString() string {
-	return fmt.Sprintf("host=%s port=%d graph=%s", h.Host, h.Port, h.Graph)
+func (h *Hugegraph) ToString(title string) string {
+	return fmt.Sprintf("%s => host=%s port=%d graph=%s", title, h.Host, h.Port, h.Graph)
 }
 
 // 运行器名称
 func (h *Hugegraph) Name() string {
-	return "连接Hugegraph"
+	return "init hugegraph"
 }
 
 // nacos配置文件
@@ -44,17 +46,36 @@ func (h *Hugegraph) Run() error {
 		return nil
 	}
 	if handler == nil {
-		handler = &Handler{Config: h, GremlinUrl: h.GremlinUrl(), SchemaUrl: h.SchemaUrl()}
-		log.Info("hugegraph连接成功！", h.ToString())
+		if h.Ping() {
+			handler = &Handler{Config: h, GremlinUrl: h.GremlinUrl(), SchemaUrl: h.SchemaUrl()}
+			log.Info(h.ToString("hugegraph connect successful！"))
+		} else {
+			log.Error(h.ToString("hugegraph connect failed！"))
+		}
 	}
 	return nil
 }
 
 func (h *Hugegraph) GremlinUrl() string {
 	return fmt.Sprintf("http://%s:%d/gremlin", h.Host, h.Port)
-
 }
 
 func (h *Hugegraph) SchemaUrl() string {
 	return fmt.Sprintf("http://%s:%d/graphs/%s/schema/", h.Host, h.Port, h.Graph)
+}
+
+// gremlin查询API-get请求
+func (h *Hugegraph) Ping() bool {
+	if bytes, err := httpx.Get().Url(fmt.Sprintf("http://%s:%d/versions", h.Host, h.Port)).Do(); err != nil {
+		return false
+	} else {
+		var resp = &PingResp{}
+		if err = json.Unmarshal(bytes, &resp); err != nil {
+			return false
+		}
+		if resp.Versions != nil && resp.Versions.Version != "" {
+			return true
+		}
+		return false
+	}
 }

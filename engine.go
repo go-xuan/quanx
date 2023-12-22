@@ -69,14 +69,15 @@ type Config struct {
 // 函数运行器
 type Func func()
 
+// 启用模式
 type Mode int
 
 const (
-	OpenWeb    Mode = iota // 关闭gin
-	CloseWeb               //
-	UseNacos               // 启用nacos
-	MultiDB                // 多数据源
-	MultiRedis             // 多Redis
+	EnableGin   Mode = iota // 启用gin，默认
+	DisableGin              // 关闭gin
+	EnableNacos             // 启用nacos
+	MultiDB                 // 启用多数据源
+	MultiRedis              // 启用多Redis
 )
 
 // 运行器
@@ -122,7 +123,7 @@ func (e *Engine) RUN() {
 	// 运行接口运行器
 	e.runIRunners()
 	// 启动gin服务
-	if e.mode[OpenWeb] {
+	if e.mode[EnableGin] {
 		defer PanicRecover()
 		e.startGin()
 	}
@@ -141,7 +142,7 @@ func GetEngine(modes ...Mode) *Engine {
 			mode:          make(map[Mode]bool),
 		}
 		gin.SetMode(gin.ReleaseMode)
-		engine.mode[OpenWeb] = true
+		engine.mode[EnableGin] = true
 		engine.SetMode(modes...)
 	}
 	return engine
@@ -165,7 +166,7 @@ func (e *Engine) loadConfig() {
 	// 读取本地配置
 	if filex.Exists(e.configPath) {
 		if err := structx.ReadFileToPointer(config, e.configPath); err != nil {
-			log.Error("加载服务配置失败！")
+			log.Error("加载服务配置失败!")
 			panic(err)
 		}
 	}
@@ -173,10 +174,9 @@ func (e *Engine) loadConfig() {
 		config.Server.Host = ipx.GetWLANIP()
 	}
 	// 初始化nacos
-	if e.mode[UseNacos] && config.Nacos != nil {
+	if e.mode[EnableNacos] && config.Nacos != nil {
 		e.runIRunner(config.Nacos, true)
-		log.Info("nacos连接成功！")
-		if e.mode[OpenWeb] && config.Nacos.OpenNaming() {
+		if config.Nacos.EnableNaming() {
 			// 注册nacos服务Nacos
 			nacosx.RegisterInstance(
 				nacosx.ServerInstance{
@@ -208,7 +208,7 @@ func (e *Engine) initBasic() {
 			for _, item := range *e.config.MultiDB {
 				if models, ok := e.gormTable[item.Source]; ok {
 					if err := gormx.This().InitGormTable(item.Source, models...); err != nil {
-						log.Error("初始化数据库表失败！")
+						log.Error("初始化数据库表失败!")
 						panic(err)
 					}
 				}
@@ -218,7 +218,7 @@ func (e *Engine) initBasic() {
 		e.runIRunner(e.config.Database)
 		if models, ok := e.gormTable["default"]; ok {
 			if err := gormx.This().InitGormTable("default", models...); err != nil {
-				log.Error("初始化数据库表失败！")
+				log.Error("初始化数据库表失败!")
 				panic(err)
 			}
 		}
@@ -257,7 +257,7 @@ func (e *Engine) runIRunner(runner IRunner[any], mustRun ...bool) {
 	if len(mustRun) > 0 {
 		shouldRun = mustRun[0]
 	}
-	if e.mode[UseNacos] {
+	if e.mode[EnableNacos] {
 		if config := runner.NacosConfig(); config != nil {
 			config.Group = e.config.Server.Name
 			if config.Exist() {
@@ -272,19 +272,19 @@ func (e *Engine) runIRunner(runner IRunner[any], mustRun ...bool) {
 			if filex.Exists(path) {
 				shouldRun = true
 				if err := structx.ReadFileToPointer(runner, path); err != nil {
-					log.Info("本地配置文件加载失败！path=", path)
+					log.Info("load local config failed! path=", path)
 					panic(err)
 				}
-				log.Info("本地配置文件加载成功！path=", path)
+				log.Info("load local config successful! path=", path)
 			}
 		}
 	}
 	if shouldRun {
 		if err := runner.Run(); err != nil {
-			log.Error(runner.Name(), " -> 运行失败！")
+			log.Error(runner.Name() + " error!")
 			panic(err)
 		}
-		log.Info(runner.Name(), " -> 运行完毕！")
+		log.Info(runner.Name() + " completed!")
 	}
 }
 
@@ -305,7 +305,7 @@ func (e *Engine) startGin() {
 	var port = ":" + strconv.Itoa(e.config.Server.Port)
 	log.Info("API接口请求地址: http://" + e.config.Server.Host + port)
 	if err := e.ginEngine.Run(port); err != nil {
-		log.Error("gin-Engine 运行失败！！！")
+		log.Error("gin-Engine 运行失败!!!")
 		panic(err)
 	}
 }
@@ -315,8 +315,8 @@ func (e *Engine) SetMode(modes ...Mode) {
 	if len(modes) > 0 {
 		for _, m := range modes {
 			e.mode[m] = true
-			if m == CloseWeb {
-				e.mode[OpenWeb] = false
+			if m == DisableGin {
+				e.mode[EnableGin] = false
 				e.ginEngine = nil
 			}
 		}
@@ -406,7 +406,7 @@ func (e *Engine) LoadLocalConfig(config interface{}, file string) {
 // 服务保活
 func PanicRecover() {
 	if err := recover(); err != nil {
-		log.Errorf("服务运行失败！错误为 : %s", err)
+		log.Errorf("服务运行失败!错误为 : %s", err)
 		return
 	}
 	select {}

@@ -27,13 +27,13 @@ type Minio struct {
 }
 
 // 配置信息格式化
-func (m *Minio) ToString() string {
-	return fmt.Sprintf("host=%s port=%d accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
+func (m *Minio) ToString(title string) string {
+	return fmt.Sprintf("%s => host=%s port=%d accessId=%s bucketName=%s", title, m.Host, m.Port, m.AccessId, m.BucketName)
 }
 
 // 运行器名称
 func (m *Minio) Name() string {
-	return "连接Minio"
+	return "init minio"
 }
 
 // nacos配置文件
@@ -53,12 +53,12 @@ func (*Minio) LocalConfig() string {
 func (m *Minio) Run() error {
 	client, err := m.NewClient()
 	if err != nil {
-		log.Error("Minio连接失败!", m.ToString())
+		log.Error(m.ToString("minio connect failed!"))
 		log.Error("error : ", err)
 		return err
 	}
 	handler = &Handler{Config: m, Client: client}
-	log.Info("Minio连接成功!", m.ToString())
+	log.Info(m.ToString("minio connect successful!"))
 	return nil
 }
 
@@ -75,7 +75,6 @@ func (m *Minio) NewClient() (client *minio.Client, err error) {
 		Region: "us-east-1",
 	})
 	if err != nil {
-		log.Warn("初始化Mino客户端失败 : ", err)
 		return
 	}
 	return

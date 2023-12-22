@@ -16,14 +16,14 @@ type ServerInstance struct {
 	Group string `yaml:"group"` // 实例分组
 }
 
-func (s ServerInstance) Format() string {
-	return fmt.Sprintf("group=%s name=%s", s.Group, s.Name)
+func (s ServerInstance) ToString(title string) string {
+	return fmt.Sprintf("%s => group=%s name=%s", title, s.Group, s.Name)
 }
 
 // 注册Nacos服务实例
 func RegisterInstance(server ServerInstance) {
 	if handler.NamingClient == nil {
-		log.Error("未初始化nacos服务发现客户端!")
+		log.Error("nacos naming client not initialized yet!")
 		return
 	}
 	if _, err := handler.NamingClient.RegisterInstance(vo.RegisterInstanceParam{
@@ -37,9 +37,10 @@ func RegisterInstance(server ServerInstance) {
 		Ephemeral:   true,
 		Metadata:    nil,
 	}); err != nil {
-		log.Error("nacos服务注册失败！", server.Format(), " error : ", err)
+		log.Error(server.ToString("register nacos server failed！"))
+		log.Error(" error : ", err)
 	} else {
-		log.Info("nacos服务注册成功！", server.Format())
+		log.Info(server.ToString("register nacos server successful！"))
 	}
 }
 

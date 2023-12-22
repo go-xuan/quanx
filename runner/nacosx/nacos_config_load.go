@@ -28,8 +28,8 @@ func NewConfig(group string, dataId string, listen bool) *Config {
 }
 
 // 配置信息格式化
-func (c *Config) ToString() string {
-	return fmt.Sprintf("group=%s dataId=%s", c.Group, c.DataId)
+func (c *Config) ToString(title string) string {
+	return fmt.Sprintf("%s => group=%s dataId=%s", title, c.Group, c.DataId)
 }
 
 func (c *Config) IsServer() bool {
@@ -77,32 +77,33 @@ func (c *Config) LoadConfig(config interface{}) (err error) {
 	valueRef := reflect.ValueOf(config)
 	// 修改值必须是指针类型否则不可行
 	if valueRef.Type().Kind() != reflect.Ptr {
-		log.Error("加载nacos配置异常，入参conf不是指针类型")
-		return errors.New("入参conf不是指针类型")
+		log.Error("load nacos config failed!")
+		return errors.New("the input parameter is not of pointer type")
 	}
 	// 读取Nacos配置
 	var content string
 	var param = c.ToConfigParam()
 	content, err = handler.ConfigClient.GetConfig(param)
 	if err != nil {
-		log.Error("获取nacos配置内容失败 ", err)
+		log.Error("get config from nacos failed", err)
 		return
 	}
-	var msg = c.ToString()
 	if err = structx.ParseBytesToPointer(config, []byte(content), param.DataId); err != nil {
-		log.Error("nacos配置加载失败！", msg, " error : ", err)
+		log.Error(c.ToString("load nacos config failed!"))
+		log.Error(" error : ", err)
 		return
 	}
-	log.Info("nacos配置加载成功！", msg)
+	log.Info(c.ToString("load nacos config successful!"))
 	// 设置Nacos配置监听
 	if c.Listen {
 		// 初始化nacos配置监控
 		GetNacosConfigMonitor().AddConfigData(c.Group, c.DataId, content)
 		if err = ListenConfigChange(param); err != nil {
-			log.Error("监听nacos配置-失败！", msg, " error : ", err)
+			log.Error(c.ToString("listen nacos config failed!"))
+			log.Error(" error : ", err)
 			return
 		}
-		log.Info("监听nacos配置-成功！", msg)
+		log.Info(c.ToString("listen nacos config successful!"))
 	}
 	return
 }
@@ -113,7 +114,7 @@ func (c *Config) GetKeyValueMap() (kvm map[string]interface{}, err error) {
 	var content string
 	content, err = handler.ConfigClient.GetConfig(c.ToConfigParam())
 	if err != nil {
-		log.Error("获取nacos配置内容失败 ", err)
+		log.Error("get nacos config failed!", err)
 		return
 	}
 	kvm = make(map[string]interface{})
@@ -149,7 +150,7 @@ func (list Configs) Get(dataId string) (target *Config) {
 // 监听nacos配置改动
 func ListenConfigChange(param vo.ConfigParam) error {
 	param.OnChange = func(namespace, group, dataId, data string) {
-		log.Errorf("监听到nacos配置已改动!!！\n dataId=%s group=%s namespace=%s\n改动后内容如下:\n%s", dataId, group, namespace, data)
+		log.Errorf("Listen nacos config changed!!!\n dataId=%s group=%s namespace=%s\n改动后内容如下:\n%s", dataId, group, namespace, data)
 		GetNacosConfigMonitor().UpdateConfigData(group, dataId, data)
 	}
 	return handler.ConfigClient.ListenConfig(param)

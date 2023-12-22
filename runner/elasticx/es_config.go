@@ -16,13 +16,13 @@ type Elastic struct {
 }
 
 // 配置信息格式化
-func (e *Elastic) ToString() string {
-	return fmt.Sprintf("host=%s port=%d", e.Host, e.Port)
+func (e *Elastic) ToString(title string) string {
+	return fmt.Sprintf("%s => host=%s port=%d", title, e.Host, e.Port)
 }
 
 // 运行器名称
 func (e *Elastic) Name() string {
-	return "连接ElasticSearch"
+	return "init elastic search"
 }
 
 // nacos配置文件
@@ -48,12 +48,12 @@ func (e *Elastic) Run() error {
 	var url = e.Url()
 	client, err := e.NewClient(url)
 	if err != nil {
-		log.Error("ElasticSearch连接失败！", e.ToString())
+		log.Error(e.ToString("elastic search connect failed!"))
 		log.Error("error : ", err)
 		return err
 	}
 	handler = &Handler{Config: e, Url: url, Client: client}
-	log.Error("ElasticSearch连接成功！", e.ToString())
+	log.Error(e.ToString("elastic search connect successful!"))
 	return nil
 }
 
@@ -71,6 +71,6 @@ func (e *Elastic) NewClient(url string) (client *elastic.Client, err error) {
 	if result, code, err = client.Ping(url).Do(context.Background()); err != nil && code != 200 {
 		return
 	}
-	log.Info("ElasticSearch 版本 : ", result.Version.Number)
+	log.Info("elastic search version : ", result.Version.Number)
 	return
 }

@@ -20,7 +20,7 @@ type MultiDatabase []*Database
 
 // 运行器名称
 func (d MultiDatabase) Name() string {
-	return "连接多数据源"
+	return "init multi-database"
 }
 
 // nacos配置文件
@@ -39,7 +39,7 @@ func (MultiDatabase) LocalConfig() string {
 // 运行器运行
 func (d MultiDatabase) Run() error {
 	if len(d) == 0 {
-		log.Info("未配置多数据库源！")
+		log.Info("The config of database not found!")
 		return nil
 	}
 	handler = &Handler{
@@ -51,7 +51,7 @@ func (d MultiDatabase) Run() error {
 		if conf.Enable {
 			db, err := conf.NewGormDB()
 			if err != nil {
-				log.Error("数据库连接失败！", conf.ToString())
+				log.Error(conf.ToString("database connect failed!"))
 				return err
 			}
 			handler.DBMap[conf.Source] = db
@@ -60,7 +60,7 @@ func (d MultiDatabase) Run() error {
 				handler.DB = db
 				handler.Config = conf
 			}
-			log.Info("数据库连接成功!", conf.ToString())
+			log.Info(conf.ToString("database connect successful!"))
 		}
 	}
 	return nil
@@ -101,14 +101,14 @@ type Database struct {
 }
 
 // 配置信息格式化
-func (d *Database) ToString() string {
-	return fmt.Sprintf("source=%s type=%s host=%s port=%d database=%s debug=%v",
-		d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
+func (d *Database) ToString(title string) string {
+	return fmt.Sprintf("%s => source=%s type=%s host=%s port=%d database=%s debug=%v",
+		title, d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
 }
 
 // 运行器名称
 func (d *Database) Name() string {
-	return "连接数据库"
+	return "inti database"
 }
 
 // nacos配置文件
@@ -130,7 +130,7 @@ func (d *Database) Run() error {
 		d.Source = "default"
 		db, err := d.NewGormDB()
 		if err != nil {
-			log.Error("数据库连接失败！", d.ToString())
+			log.Error(d.ToString("database connect failed!"))
 			log.Error("error : ", err)
 			return err
 		}
@@ -143,9 +143,9 @@ func (d *Database) Run() error {
 		}
 		handler.DBMap[d.Source] = db
 		handler.ConfigMap[d.Source] = d
-		log.Info("数据库连接成功！", d.ToString())
+		log.Info(d.ToString("database connect successful!"))
 	}
-	log.Info("数据库未连接！database配置文件为空或者database.enable=false")
+	log.Info("database not connected! cuz: database.yaml is empty or {database.enable} is false")
 	return nil
 }
 

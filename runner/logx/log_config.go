@@ -30,7 +30,7 @@ func (l *Log) ToString() string {
 
 // 运行器名称
 func (l *Log) Name() string {
-	return "日志输出格式化"
+	return "Log output format"
 }
 
 func (l *Log) NacosConfig() *nacosx.Config {

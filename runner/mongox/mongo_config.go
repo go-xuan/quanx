@@ -19,13 +19,13 @@ type Mongo struct {
 }
 
 // 配置信息格式化
-func (m *Mongo) ToString() string {
-	return fmt.Sprintf("host=%s port=%d database=%s", m.Host, m.Port, m.Database)
+func (m *Mongo) ToString(title string) string {
+	return fmt.Sprintf("%s => host=%s port=%d database=%s", title, m.Host, m.Port, m.Database)
 }
 
 // 运行器名称
 func (m *Mongo) Name() string {
-	return "连接Mongo"
+	return "init mongo"
 }
 
 // nacos配置文件
@@ -42,17 +42,18 @@ func (*Mongo) LocalConfig() string {
 }
 
 // 运行器运行
-func (m *Mongo) Run() error {
-	var client = m.NewClient()
-	err := client.Ping(context.Background(), nil)
+func (m *Mongo) Run() (err error) {
+	var client *mongo.Client
+	client, err = m.NewClient()
 	if err != nil {
-		log.Error("MongoDB连接失败！", m.ToString())
+		log.Error(m.ToString("mongo connect failed！"))
 		log.Error("error : ", err)
-		return err
+		return
 	}
 	handler = &Handler{Config: m, Client: client}
-	log.Error("MongoDB连接成功！", m.ToString())
-	return nil
+	log.Error(m.ToString("mongo connect successful！"))
+	return
+
 }
 
 func (m *Mongo) Uri() string {
@@ -60,13 +61,16 @@ func (m *Mongo) Uri() string {
 }
 
 // 配置信息格式化
-func (m *Mongo) NewClient() *mongo.Client {
+func (m *Mongo) NewClient() (client *mongo.Client, err error) {
 	// 设置连接选项
 	clientOptions := options.Client().ApplyURI(m.Uri())
 	// 建立连接
-	client, err := mongo.Connect(context.Background(), clientOptions)
+	client, err = mongo.Connect(context.Background(), clientOptions)
 	if err != nil {
-		log.Errorf("Mongo Connect Failed!")
+		return
 	}
-	return client
+	if err = client.Ping(context.Background(), nil); err != nil {
+		return
+	}
+	return
 }

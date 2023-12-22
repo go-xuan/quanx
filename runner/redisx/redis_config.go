@@ -20,7 +20,7 @@ type MultiRedis []*Redis
 
 // 配置信息格式化
 func (r MultiRedis) Name() string {
-	return "连接Redis"
+	return "Init multi-redis"
 }
 
 // nacos配置文件
@@ -50,7 +50,7 @@ func (r MultiRedis) Run() error {
 			var cmd = conf.NewRedisCmdable()
 			ok, err := Ping(cmd)
 			if !ok && err != nil {
-				log.Error("redis连接失败！", conf.ToString())
+				log.Error(conf.ToString("redis连接失败！"))
 				log.Error("error : ", err)
 				return err
 			}
@@ -60,7 +60,7 @@ func (r MultiRedis) Run() error {
 				handler.Cmd = cmd
 				handler.Config = conf
 			}
-			log.Info("redis连接成功！", conf.ToString())
+			log.Info(conf.ToString("redis连接成功！"))
 		}
 	}
 	return nil
@@ -78,14 +78,14 @@ type Redis struct {
 }
 
 // 配置信息格式化
-func (r *Redis) ToString() string {
-	return fmt.Sprintf("source=%s mode=%d host=%s port=%d database=%d",
-		r.Source, r.Mode, r.Host, r.Port, r.Database)
+func (r *Redis) ToString(title string) string {
+	return fmt.Sprintf("%s => source=%s mode=%d host=%s port=%d database=%d",
+		title, r.Source, r.Mode, r.Host, r.Port, r.Database)
 }
 
 // 运行器名称
 func (r *Redis) Name() string {
-	return "连接Redis"
+	return "connect redis"
 }
 
 // nacos配置文件
@@ -106,7 +106,7 @@ func (r *Redis) Run() error {
 	if r.Enable {
 		var cmd = r.NewRedisCmdable()
 		if ok, err := Ping(cmd); !ok && err != nil {
-			log.Error("redis连接失败！", r.ToString())
+			log.Error(r.ToString("redis connect failed"))
 			log.Error("error : ", err)
 			return err
 		}
@@ -118,9 +118,9 @@ func (r *Redis) Run() error {
 		}
 		handler.CmdMap[r.Source] = cmd
 		handler.ConfigMap[r.Source] = r
-		log.Info("redis连接成功！", r.ToString())
+		log.Info(r.ToString("redis connect successful"))
 	}
-	log.Info("redis未连接！ redis配置文件为空或者redis.enable=false")
+	log.Info("redis not connected ! cuz: redis.yaml is empty or {redis.enable} is false")
 	return nil
 }
 

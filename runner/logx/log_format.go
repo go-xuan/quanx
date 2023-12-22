@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -18,7 +18,7 @@ type LogFormatter struct {
 }
 
 // 日志格式化
-func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+func (f *LogFormatter) Format(entry *log.Entry) ([]byte, error) {
 	timeFormat := f.TimeFormat
 	if timeFormat == "" {
 		timeFormat = TimeFormat
@@ -47,7 +47,7 @@ func LoggerToFile() gin.HandlerFunc {
 			ip = "localhost"
 		}
 		// 日志格式
-		logrus.Infof("[%3d][%10v][%15s][%4s][%s]",
+		log.Infof("[%3d][%10v][%15s][%4s][%s]",
 			context.Writer.Status(),
 			time.Now().Sub(startTime),
 			ip,
