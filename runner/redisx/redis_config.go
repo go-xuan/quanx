@@ -38,7 +38,7 @@ func (MultiRedis) LocalConfig() string {
 
 func (r MultiRedis) Run() error {
 	if len(r) == 0 {
-		log.Info("未配置多Redis数据库！")
+		log.Info("未配置多Redis数据库!")
 		return nil
 	}
 	handler = &Handler{
@@ -50,7 +50,7 @@ func (r MultiRedis) Run() error {
 			var cmd = conf.NewRedisCmdable()
 			ok, err := Ping(cmd)
 			if !ok && err != nil {
-				log.Error(conf.ToString("redis连接失败！"))
+				log.Error(conf.ToString("redis连接失败!"))
 				log.Error("error : ", err)
 				return err
 			}
@@ -60,7 +60,7 @@ func (r MultiRedis) Run() error {
 				handler.Cmd = cmd
 				handler.Config = conf
 			}
-			log.Info(conf.ToString("redis连接成功！"))
+			log.Info(conf.ToString("redis连接成功!"))
 		}
 	}
 	return nil
@@ -150,7 +150,7 @@ func (r *Redis) NewRedisCmdable(database ...int) (cmd redis.Cmdable) {
 			PoolSize: r.PoolSize,
 		})
 	default:
-		log.Warn("redis模式配置错误！", r)
+		log.Warn("redis模式配置错误!", r)
 		return
 	}
 	return

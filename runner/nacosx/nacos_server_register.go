@@ -37,10 +37,10 @@ func RegisterInstance(server ServerInstance) {
 		Ephemeral:   true,
 		Metadata:    nil,
 	}); err != nil {
-		log.Error(server.ToString("register nacos server failed！"))
+		log.Error(server.ToString("register nacos server failed!"))
 		log.Error(" error : ", err)
 	} else {
-		log.Info(server.ToString("register nacos server successful！"))
+		log.Info(server.ToString("register nacos server successful!"))
 	}
 }
 

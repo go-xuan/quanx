@@ -48,9 +48,9 @@ func (h *Hugegraph) Run() error {
 	if handler == nil {
 		if h.Ping() {
 			handler = &Handler{Config: h, GremlinUrl: h.GremlinUrl(), SchemaUrl: h.SchemaUrl()}
-			log.Info(h.ToString("hugegraph connect successful！"))
+			log.Info(h.ToString("hugegraph connect successful!"))
 		} else {
-			log.Error(h.ToString("hugegraph connect failed！"))
+			log.Error(h.ToString("hugegraph connect failed!"))
 		}
 	}
 	return nil

@@ -46,12 +46,12 @@ func (m *Mongo) Run() (err error) {
 	var client *mongo.Client
 	client, err = m.NewClient()
 	if err != nil {
-		log.Error(m.ToString("mongo connect failed！"))
+		log.Error(m.ToString("mongo connect failed!"))
 		log.Error("error : ", err)
 		return
 	}
 	handler = &Handler{Config: m, Client: client}
-	log.Error(m.ToString("mongo connect successful！"))
+	log.Error(m.ToString("mongo connect successful!"))
 	return
 
 }
