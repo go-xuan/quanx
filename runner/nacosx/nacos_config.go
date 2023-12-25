@@ -38,7 +38,7 @@ func (n *Nacos) ToString(title string) string {
 
 // 运行器名称
 func (n *Nacos) Name() string {
-	return "Init nacos"
+	return "init nacos"
 }
 
 // nacos配置文件

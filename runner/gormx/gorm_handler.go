@@ -10,7 +10,7 @@ var handler *Handler
 
 // Gorm处理器
 type Handler struct {
-	Multi     bool // 是否多连接
+	Multi     bool // 是否多数据源连接
 	DB        *gorm.DB
 	Config    *Database
 	DBMap     map[string]*gorm.DB

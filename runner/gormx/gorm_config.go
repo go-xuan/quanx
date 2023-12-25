@@ -39,7 +39,7 @@ func (MultiDatabase) LocalConfig() string {
 // 运行器运行
 func (d MultiDatabase) Run() error {
 	if len(d) == 0 {
-		log.Info("The config of database not found!")
+		log.Info("database not connected! reason: multi-database.yaml not found!")
 		return nil
 	}
 	handler = &Handler{
@@ -62,6 +62,9 @@ func (d MultiDatabase) Run() error {
 			}
 			log.Info(conf.ToString("database connect successful!"))
 		}
+	}
+	if len(handler.ConfigMap) == 0 {
+		log.Info("database not connected! reason: multi-database.yaml is empty or {database.enable} is false")
 	}
 	return nil
 }
@@ -145,7 +148,7 @@ func (d *Database) Run() error {
 		handler.ConfigMap[d.Source] = d
 		log.Info(d.ToString("database connect successful!"))
 	}
-	log.Info("database not connected! cuz: database.yaml is empty or {database.enable} is false")
+	log.Info("database not connected! reason: database.yaml is empty or {database.enable} is false")
 	return nil
 }
 

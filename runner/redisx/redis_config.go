@@ -38,7 +38,7 @@ func (MultiRedis) LocalConfig() string {
 
 func (r MultiRedis) Run() error {
 	if len(r) == 0 {
-		log.Info("未配置多Redis数据库!")
+		log.Info("redis not connected! reason: multi-redis.yaml not found!")
 		return nil
 	}
 	handler = &Handler{
@@ -62,6 +62,9 @@ func (r MultiRedis) Run() error {
 			}
 			log.Info(conf.ToString("redis连接成功!"))
 		}
+	}
+	if len(handler.ConfigMap) == 0 {
+		log.Info("redis not connected! reason: multi-redis.yaml is empty or {redis.enable} is false")
 	}
 	return nil
 }
@@ -120,7 +123,7 @@ func (r *Redis) Run() error {
 		handler.ConfigMap[r.Source] = r
 		log.Info(r.ToString("redis connect successful"))
 	}
-	log.Info("redis not connected ! cuz: redis.yaml is empty or {redis.enable} is false")
+	log.Info("redis not connected ! reason: redis.yaml is empty or {redis.enable} is false")
 	return nil
 }
 
