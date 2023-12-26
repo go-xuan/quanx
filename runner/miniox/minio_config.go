@@ -46,7 +46,7 @@ func (*Minio) NacosConfig() *nacosx.Config {
 
 // 本地配置文件
 func (*Minio) LocalConfig() string {
-	return "conf/minio.yaml"
+	return "`minio.yaml"
 }
 
 // 运行器运行

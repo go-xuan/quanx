@@ -56,8 +56,8 @@ func (m *RandModel) GetRandFloat() (result float64) {
 func (m *RandModel) GetRandString() (result string) {
 	if m.Default == "" {
 		if m.Type == NoType {
-			min, _ := ParseConstraintOfInt(m.Constraint)
-			result = strconv.Itoa(min + m.Index)
+			minv, _ := ParseConstraintOfInt(m.Constraint)
+			result = strconv.Itoa(minv + m.Index)
 		} else {
 			result = m.randString()
 		}
@@ -115,15 +115,16 @@ func (m *RandModel) randString() (result string) {
 	case CityType:
 		result = City()
 	case PasswordType:
-		result = Password(ParseConstraintOfPassword(constraint))
+		length, contains := ParseConstraintOfPassword(constraint)
+		result = Password(length, contains...)
 	case IntStringType:
 		result = strconv.Itoa(IntRange(ParseConstraintOfInt(constraint)))
 	case DateType:
-		min, max, _ := ParseConstraintOfTime(constraint)
-		result = DateRange(min, max)
+		minTime, maxTime, _ := ParseConstraintOfTime(constraint)
+		result = DateRange(minTime, maxTime)
 	case TimeType:
-		min, max, format := ParseConstraintOfTime(constraint)
-		result = TimeRange(min, max).Format(format)
+		minTime, maxTime, format := ParseConstraintOfTime(constraint)
+		result = TimeRange(minTime, maxTime).Format(format)
 	case OptionType:
 		result = Radio(ParseConstraintOfOptions(constraint))
 	case DatabaseType:
@@ -229,17 +230,14 @@ func ParseConstraintOfTime(constraint string) (min, max time.Time, format string
 }
 
 // 解析密码约束条件
-func ParseConstraintOfPassword(constraint string) (length int, lower, upper, numeric, special bool) {
-	if stringx.ContainsAny(constraint, Length, Lower, Upper, HasNumber, HasSymbol) {
+func ParseConstraintOfPassword(constraint string) (length int, contains []string) {
+	if stringx.ContainsAny(constraint, Length, Contains, Lower, Upper, Number, Symbol) {
 		kvMap := ParseConstraint(constraint)
 		length, _ = strconv.Atoi(kvMap[Length])
-		lower = kvMap[Lower] == "true"
-		upper = kvMap[Upper] == "true"
-		numeric = kvMap[HasNumber] == "true"
-		special = kvMap[HasSymbol] == "true"
+		contains = strings.Split(kvMap[Contains], ",")
 		return
 	}
-	return 8, true, true, true, true
+	return
 }
 
 // 解析备选项约束条件

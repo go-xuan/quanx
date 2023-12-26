@@ -38,7 +38,7 @@ func (*Mongo) NacosConfig() *nacosx.Config {
 
 // 本地配置文件
 func (*Mongo) LocalConfig() string {
-	return "conf/mongo.yaml"
+	return "mongo.yaml"
 }
 
 // 运行器运行

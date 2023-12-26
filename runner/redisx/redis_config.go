@@ -33,7 +33,7 @@ func (MultiRedis) NacosConfig() *nacosx.Config {
 
 // 本地配置文件
 func (MultiRedis) LocalConfig() string {
-	return "conf/multi_redis.yaml"
+	return "multi_redis.yaml"
 }
 
 func (r MultiRedis) Run() error {
@@ -101,7 +101,7 @@ func (*Redis) NacosConfig() *nacosx.Config {
 
 // 本地配置文件
 func (*Redis) LocalConfig() string {
-	return "conf/redis.yaml"
+	return "redis.yaml"
 }
 
 // 运行器运行

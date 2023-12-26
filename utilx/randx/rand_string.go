@@ -17,8 +17,8 @@ func String(size ...int) string {
 	}
 	bytes := make([]byte, length)
 	for i := 0; i < length; i++ {
-		y := IntRange(0, len(CharAll)-1)
-		bytes[i] = CharAll[y]
+		y := IntRange(0, len(AllChar)-1)
+		bytes[i] = AllChar[y]
 	}
 	return string(bytes)
 }
@@ -38,8 +38,8 @@ func Radio(options []string) string {
 func NumberCode(length int) string {
 	bytes := make([]byte, length)
 	for i := 0; i < length; i++ {
-		y := IntRange(0, len(NUMBER)-1)
-		bytes[i] = NUMBER[y]
+		y := IntRange(0, len(Numbers)-1)
+		bytes[i] = Numbers[y]
 	}
 	return string(bytes)
 }
@@ -50,17 +50,18 @@ func UUID() string {
 }
 
 // 随机长度数字码
-func RandFrom(in string) string {
-	split := strings.Split(in, ",")
+func RandFrom(in string, sep string) string {
+	split := strings.Split(in, sep)
 	return split[IntRange(0, len(split)-1)]
 }
 
 // 随机姓名
 func Name() string {
+	sep := ","
 	sb := strings.Builder{}
-	sb.WriteString(RandFrom(XingShi))
-	sb.WriteString(RandFrom(NumberCn))
-	sb.WriteString(RandFrom(ShengXiao))
+	sb.WriteString(RandFrom(XingShi, sep))
+	sb.WriteString(RandFrom(NumberCn, sep))
+	sb.WriteString(RandFrom(ShengXiao, sep))
 	return sb.String()
 }
 
@@ -71,8 +72,8 @@ func Phone() string {
 	x := IntRange(0, len(PhonePrefix)-1)
 	bytes[1] = PhonePrefix[x]
 	for i := 2; i < 11; i++ {
-		y := IntRange(0, len(NUMBER)-1)
-		bytes[i] = NUMBER[y]
+		y := IntRange(0, len(Numbers)-1)
+		bytes[i] = Numbers[y]
 	}
 	return string(bytes)
 }
@@ -98,16 +99,16 @@ func PlateNo() string {
 	sb := strings.Builder{}
 	provinces := strings.Split(ProvinceSimple, ",")
 	x := IntRange(0, len(provinces)-1)
-	y := IntRange(0, len(LetterUpper)-20)
+	y := IntRange(0, len(Uppers)-20)
 	sb.WriteString(provinces[x])
-	sb.WriteString(string(LetterUpper[y]))
+	sb.WriteString(string(Uppers[y]))
 	for i := 0; i < 5; i++ {
 		if Bool() {
-			z := IntRange(0, len(LetterUpper)-1)
-			sb.WriteString(string(LetterUpper[z]))
+			z := IntRange(0, len(Uppers)-1)
+			sb.WriteString(string(Uppers[z]))
 		} else {
-			z := IntRange(0, len(NUMBER)-1)
-			sb.WriteString(string(NUMBER[z]))
+			z := IntRange(0, len(Numbers)-1)
+			sb.WriteString(string(Numbers[z]))
 		}
 	}
 	return sb.String()
@@ -118,14 +119,14 @@ func Email() string {
 	sb := strings.Builder{}
 	len1 := IntRange(5, 10)
 	for i := 0; i < len1; i++ {
-		x := IntRange(0, len(CharLower)-1)
-		sb.WriteString(string(CharLower[x]))
+		x := IntRange(0, len(LowerChar)-1)
+		sb.WriteString(string(LowerChar[x]))
 	}
 	sb.WriteString(`@`)
 	len2 := IntRange(2, 5)
 	for i := 0; i < len2; i++ {
-		x := IntRange(0, len(LetterLower)-1)
-		sb.WriteString(string(LetterLower[x]))
+		x := IntRange(0, len(Lowers)-1)
+		sb.WriteString(string(Lowers[x]))
 	}
 	sb.WriteString(`.com`)
 	return sb.String()
@@ -151,27 +152,30 @@ func City() string {
 }
 
 // 生成随机密码
-func Password(length int, lower bool, upper bool, numeric bool, special bool) string {
+func Password(length int, contains ...string) string {
 	if length < 8 {
 		length = 8
 	}
 	bytes := make([]byte, length)
 	var temp string
-	if lower {
-		temp += LetterLower
+	if len(contains) > 0 {
+		for _, contain := range contains {
+			switch contain {
+			case Upper:
+				temp += Uppers
+			case Lower:
+				temp += Lowers
+			case Symbol:
+				temp += SPECIAL
+			case Number:
+				temp += Numbers
+			default:
+			}
+		}
+	} else {
+		temp = AllChar
 	}
-	if upper {
-		temp += LetterUpper
-	}
-	if numeric {
-		temp += NUMBER
-	}
-	if special {
-		temp += SPECIAL
-	}
-	if temp == "" {
-		temp = CharLower
-	}
+
 	for i := 0; i < length; i++ {
 		x := IntRange(0, len(temp)-1)
 		bytes[i] = temp[x]

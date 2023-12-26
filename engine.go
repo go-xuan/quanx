@@ -2,6 +2,7 @@ package quanx
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -23,29 +24,30 @@ type Engine struct {
 	mode map[Mode]bool
 
 	// 服务启动依赖配置
-	// loadConfig() 从 configPath 加载服务配置
+	// loadConfig() 将服务配置文件加载到此结构体中
 	config *Config
 
-	// 服务配置文件路径，默认"conf/config.yaml"
-	// SetConfig() 设置自定义配置文件
-	configPath string
+	// 服务配置文件文件夹，默认"/"
+	// SetConfigDir() 设置配置文件路径
+	configDir string
 
 	// 自定义初始化函数
-	// AddFunc() 添加函数
-	funcs []Func
+	// AddFunc() 自定义函数
+	funcs []CustomFunc
 
 	// 自定义运行器，需要实现 IRunner 接口
-	// AddIRunner() 添加运行器，即IRunner接口实现对象且对象必须为指针类型
+	// AddIRunner() 添加运行器对象，即IRunner接口实现对象且必须为指针类型
+	// runIRunners() 执行运行器
 	iRunners []IRunner[any]
 
 	// 一个gin框架实例
 	ginEngine *gin.Engine
 
-	// gin路由预加载方法，加载当前服务自行实现的路由注册方法
+	// gin路由的预加载方法，用于加载当前服务自行实现的路由注册方法
 	// AddGinRouter() 添加路由注册
 	ginLoader []RouterLoader
 
-	// gin中间件预加载方法
+	// gin中间件的预加载方法
 	// AddGinMiddleware() 添加gin中间件
 	ginMiddleware []gin.HandlerFunc
 
@@ -66,8 +68,8 @@ type Config struct {
 	MultiRedis *redisx.MultiRedis   `yaml:"multiRedis"` // 多redis配置
 }
 
-// 函数运行器
-type Func func()
+// 自定义函数
+type CustomFunc func()
 
 // 启用模式
 type Mode int
@@ -118,9 +120,9 @@ func (e *Engine) RUN() {
 	e.loadConfig()
 	// 初始化基础配置(日志/nacos/gorm/redis)
 	e.initBasic()
-	// 运行函数运行器
+	// 执行自定义函数
 	e.runFuncs()
-	// 运行接口运行器
+	// 执行接口运行器
 	e.runIRunners()
 	// 启动gin服务
 	if e.mode[EnableGin] {
@@ -134,8 +136,8 @@ func GetEngine(modes ...Mode) *Engine {
 	if engine == nil {
 		engine = &Engine{
 			config:        &Config{},
-			configPath:    "conf/config.yaml", // 默认配置文件
-			funcs:         make([]Func, 0),
+			configDir:     "/",
+			funcs:         make([]CustomFunc, 0),
 			iRunners:      make([]IRunner[any], 0),
 			ginMiddleware: make([]gin.HandlerFunc, 0),
 			gormTable:     make(map[string][]gormx.Table[any]),
@@ -164,8 +166,9 @@ func (e *Engine) loadConfig() {
 		config.Redis = &redisx.Redis{}
 	}
 	// 读取本地配置
-	if filex.Exists(e.configPath) {
-		if err := structx.ReadFileToPointer(config, e.configPath); err != nil {
+	path := filepath.Join(e.configDir, "config.yaml")
+	if filex.Exists(path) {
+		if err := structx.ReadFileToPointer(config, path); err != nil {
 			log.Error("加载服务配置失败!")
 			panic(err)
 		}
@@ -233,12 +236,26 @@ func (e *Engine) initBasic() {
 	return
 }
 
-// 运行函数运行器
+// 添加自定义函数
+func (e *Engine) AddFunc(starter ...CustomFunc) {
+	if len(starter) > 0 {
+		e.funcs = append(e.funcs, starter...)
+	}
+}
+
+// 执行自定义函数
 func (e *Engine) runFuncs() {
 	if e.funcs != nil && len(e.funcs) > 0 {
 		for _, f := range e.funcs {
 			f()
 		}
+	}
+}
+
+// 添加接口运行器
+func (e *Engine) AddIRunner(runner ...IRunner[any]) {
+	if len(runner) > 0 {
+		e.iRunners = append(e.iRunners, runner...)
 	}
 }
 
@@ -268,14 +285,15 @@ func (e *Engine) runIRunner(runner IRunner[any], mustRun ...bool) {
 			}
 		}
 	} else {
-		if path := runner.LocalConfig(); path != "" {
-			if filex.Exists(path) {
+		if configFile := runner.LocalConfig(); configFile != "" {
+			configFile = filepath.Join(e.configDir, configFile)
+			if filex.Exists(configFile) {
 				shouldRun = true
-				if err := structx.ReadFileToPointer(runner, path); err != nil {
-					log.Info("load local config failed! path=", path)
+				if err := structx.ReadFileToPointer(runner, configFile); err != nil {
+					log.Info("load local config failed! configFile=", configFile)
 					panic(err)
 				}
-				log.Info("load local config successful! path=", path)
+				log.Info("load local config successful! configFile=", configFile)
 			}
 		}
 	}
@@ -323,23 +341,9 @@ func (e *Engine) SetMode(modes ...Mode) {
 	}
 }
 
-// 添加函数运行器
-func (e *Engine) AddFunc(starter ...Func) {
-	if len(starter) > 0 {
-		e.funcs = append(e.funcs, starter...)
-	}
-}
-
-// 添加接口运行器
-func (e *Engine) AddIRunner(runner ...IRunner[any]) {
-	if len(runner) > 0 {
-		e.iRunners = append(e.iRunners, runner...)
-	}
-}
-
 // 设置配置文件
-func (e *Engine) SetConfig(path string) {
-	e.configPath = path
+func (e *Engine) SetConfigDir(dir string) {
+	e.configDir = dir
 }
 
 // 添加需要初始化的gormx.Table模型

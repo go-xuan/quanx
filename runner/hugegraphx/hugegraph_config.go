@@ -37,7 +37,7 @@ func (*Hugegraph) NacosConfig() *nacosx.Config {
 
 // 本地配置文件
 func (*Hugegraph) LocalConfig() string {
-	return "conf/hugegraph.yaml"
+	return "hugegraph.yaml"
 }
 
 // 运行器运行

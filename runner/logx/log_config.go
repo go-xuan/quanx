@@ -39,7 +39,7 @@ func (l *Log) NacosConfig() *nacosx.Config {
 
 // nacos配置ID
 func (*Log) LocalConfig() string {
-	return "conf/log.yaml"
+	return "log.yaml"
 }
 
 // 运行器运行

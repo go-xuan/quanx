@@ -33,7 +33,7 @@ func (MultiDatabase) NacosConfig() *nacosx.Config {
 
 // 本地配置文件
 func (MultiDatabase) LocalConfig() string {
-	return "conf/multi_database.yaml"
+	return "multi_database.yaml"
 }
 
 // 运行器运行
@@ -124,7 +124,7 @@ func (*Database) NacosConfig() *nacosx.Config {
 
 // 本地配置文件
 func (*Database) LocalConfig() string {
-	return "conf/database.yaml"
+	return "database.yaml"
 }
 
 // 运行器运行

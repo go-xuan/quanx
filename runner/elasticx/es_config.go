@@ -35,7 +35,7 @@ func (*Elastic) NacosConfig() *nacosx.Config {
 
 // 本地配置文件
 func (*Elastic) LocalConfig() string {
-	return "conf/elastic.yaml"
+	return "elastic.yaml"
 }
 
 // 运行器名称
