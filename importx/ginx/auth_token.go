@@ -1,4 +1,4 @@
-package authx
+package ginx
 
 import (
 	"context"
@@ -22,7 +22,7 @@ func SetSecretKey(key []byte) {
 // 用户token参数
 type User struct {
 	Id         string `json:"id"`          // 用户ID
-	Account    string `json:"account"`     // 用户名
+	Username   string `json:"username"`    // 用户名
 	Name       string `json:"name"`        // 用户名
 	Phone      string `json:"phone"`       // 登录手机
 	LoginIp    string `json:"loginIp"`     // 登录IP
@@ -31,7 +31,7 @@ type User struct {
 }
 
 func (u *User) RedisKey() string {
-	return "login@token@" + u.Account
+	return "login@token@" + u.Username
 }
 
 // 设置token缓存
@@ -78,12 +78,12 @@ func GetUserByToken(token string) (user *User, err error) {
 	var kvmap map[string]interface{}
 	kvmap, err = parseToken(token)
 	if err != nil {
-		err = errors.New("解析token失败")
+		err = errors.New("token parse failed")
 		return
 	}
 	user = &User{
 		Id:         kvmap["id"].(string),
-		Account:    kvmap["account"].(string),
+		Username:   kvmap["account"].(string),
 		Name:       kvmap["name"].(string),
 		Phone:      kvmap["phone"].(string),
 		LoginIp:    kvmap["loginIp"].(string),

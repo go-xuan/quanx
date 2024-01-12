@@ -53,7 +53,7 @@ func Custom(ctx *gin.Context, code int, msg string, data interface{}) {
 }
 
 // 异常响应
-func Exception(ctx *gin.Context, res ErrorEnum, data interface{}) {
+func Exception(ctx *gin.Context, res Enum, data interface{}) {
 	response := &Response{
 		Code: res.Code,
 		Msg:  res.Msg,
@@ -62,23 +62,7 @@ func Exception(ctx *gin.Context, res ErrorEnum, data interface{}) {
 	ctx.JSON(http.StatusInternalServerError, response)
 }
 
-// 参数错误
-func ParamError(ctx *gin.Context, msg string, data interface{}) {
-	response := &Response{
-		Code: ParamErr.Code,
-		Msg:  msg,
-		Data: data,
-	}
-
-	ctx.JSON(http.StatusInternalServerError, response)
-}
-
 // 参数必填
 func Required(ctx *gin.Context, msg string) {
-	ParamError(ctx, msg, nil)
-}
-
-// 文件响应
-func File(ctx *gin.Context, filePath string) {
-	ctx.File(filePath)
+	Exception(ctx, RequiredErr, msg)
 }

@@ -7,32 +7,26 @@ import (
 	"strings"
 )
 
-// 获取本地WLANIP
-func GetWLANIP() string {
-	return machineIP()["WLAN"]
-}
-
 // 获取当前机器IP
-func machineIP() map[string]string {
+func GetWLANIP() string {
 	netInterfaces, err := net.Interfaces()
 	if err != nil {
 		fmt.Println("net.Interfaces error:", err.Error())
-		return nil
+		return ""
 	}
-	var ipm = make(map[string]string)
 	for _, netInterface := range netInterfaces {
-		if (netInterface.Flags & net.FlagUp) != 0 {
+		if (netInterface.Flags&net.FlagUp) != 0 && netInterface.Name == "WLAN" {
 			addrs, _ := netInterface.Addrs()
 			for _, address := range addrs {
 				if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
 					if ipNet.IP.To4() != nil {
-						ipm[netInterface.Name] = ipNet.IP.String()
+						return ipNet.IP.String()
 					}
 				}
 			}
 		}
 	}
-	return ipm
+	return ""
 }
 
 // 检测IP是否存在

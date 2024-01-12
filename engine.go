@@ -45,7 +45,7 @@ func GetServer() *Server {
 // 服务配置器
 type Engine struct {
 	flag           map[Flag]bool                 // 服务运行标识
-	config         *Config                       // 服务配置 使用 initAppConfig()将配置文件加载到此
+	config         *Config                       // 服务配置 使用 initConfig()将配置文件加载到此
 	configDir      string                        // 服务配置文件文件夹, 使用 SetConfigDir()设置配置文件路径
 	configurators  []configx.Configurator[any]   // 配置器，使用 AddConfig()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
 	customFuncs    []CustomFunc                  // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
@@ -110,7 +110,7 @@ func (e *Engine) RUN() {
 func (e *Engine) PREPARE() {
 	// 加载配置
 	if !e.flag[InitConfigAlready] {
-		e.initAppConfig()
+		e.initConfig()
 	}
 	// 初始化基础配置(日志/nacos/gorm/redis)
 	if !e.flag[InitCommonAlready] {
@@ -135,7 +135,7 @@ func (e *Engine) STARTGIN() {
 }
 
 // 加载服务配置
-func (e *Engine) initAppConfig() {
+func (e *Engine) initConfig() {
 	var config = &Config{server: &Server{}}
 	// 读取本地配置
 	var path = e.GetConfigPath("config.yaml")
@@ -143,7 +143,7 @@ func (e *Engine) initAppConfig() {
 		log.Error("加载服务配置失败!")
 		panic(err)
 	}
-	if ipx.GetWLANIP() != "" {
+	if config.server.Host == "" {
 		config.server.Host = ipx.GetWLANIP()
 	}
 	// 初始化nacos

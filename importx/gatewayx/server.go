@@ -3,10 +3,10 @@ package gatewayx
 import (
 	"errors"
 	"fmt"
+	"github.com/go-xuan/quanx/importx/ginx"
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/authx"
 	"github.com/go-xuan/quanx/importx/nacosx"
 	"github.com/go-xuan/quanx/utilx/filex"
 	"github.com/go-xuan/quanx/utilx/marshalx"
@@ -34,10 +34,10 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, auth string, er
 	for _, server := range Apps {
 		if MatchUrl(url, server.Router) {
 			auth = server.Auth
-			if auth != authx.NoAuth && len(server.Skip) > 0 {
+			if auth != ginx.NoAuth && len(server.Skip) > 0 {
 				for _, item := range server.Skip {
 					if strings.Contains(url, strings.TrimSpace(item)) {
-						auth = authx.NoAuth
+						auth = ginx.NoAuth
 					}
 				}
 			}

@@ -62,14 +62,14 @@ func (m *Model[T]) Update(ctx *gin.Context) {
 
 func (m *Model[T]) Delete(ctx *gin.Context) {
 	var err error
-	var form modelx.IdString
+	var form modelx.Id[string]
 	if err = ctx.ShouldBindQuery(&form); err != nil {
 		log.Error("参数错误：", err)
 		respx.Exception(ctx, respx.ParamErr, err)
 		return
 	}
 	var t T
-	err = m.DB.Where("id = '" + form.Id + "'").Delete(&t).Error
+	err = m.DB.Where("id = ? ", form.Id).Delete(&t).Error
 	if err != nil {
 		log.Error("对象删除失败 ： ", err)
 		respx.BuildError(ctx, err)
@@ -80,14 +80,14 @@ func (m *Model[T]) Delete(ctx *gin.Context) {
 
 func (m *Model[T]) Detail(ctx *gin.Context) {
 	var err error
-	var form modelx.IdString
+	var form modelx.Id[string]
 	if err = ctx.ShouldBindQuery(&form); err != nil {
 		log.Error("参数错误：", err)
 		respx.Exception(ctx, respx.ParamErr, err)
 		return
 	}
 	var result T
-	err = m.DB.Where("id = '" + form.Id + "'").Find(&result).Error
+	err = m.DB.Where("id = ? ", form.Id).Find(&result).Error
 	if err != nil {
 		log.Error("对象查询失败 ： ", err)
 		respx.BuildError(ctx, err)

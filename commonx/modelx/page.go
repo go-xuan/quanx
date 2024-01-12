@@ -7,8 +7,8 @@ import (
 
 // 分页参数
 type Page struct {
-	PageNo   int64 `json:"pageNo" comment:"分页页码"`
-	PageSize int64 `json:"pageSize" comment:"分页大小"`
+	PageNo   int64 `json:"pageNo"`   // 分页页码
+	PageSize int64 `json:"pageSize"` // 分页大小
 }
 
 // 计算分页数量
