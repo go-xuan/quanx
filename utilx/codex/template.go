@@ -1,7 +1,7 @@
 package codex
 
 const StructTemplate = `
-type {modelName}Query struct {
+type {UpperCamel}Query struct {
 	Keyword string 				// 关键字
 	Page *request.Page 	// 分页查询参数
 }
@@ -149,5 +149,107 @@ func {modelName}Detail(id string) (result *table.{modelName}, err error) {
 		return
 	}
 	return
+}
+`
+
+const JavaClass = `
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class Equipment extends Base {
+
+	{{JavaProperty}}
+
+}
+`
+
+const JavaController = `
+@Api(tags = "{{TableComment}}")
+@RestController
+@RequestMapping("/{{LowerCamel}}")
+public class {{UpperCamel}}Controller {
+    @Resource private {{UpperCamel}}Service {{LowerCamel}}Service;
+
+    @ApiOperation("分页查询")
+    @PostMapping("/page")
+    public PageResp<{{UpperCamel}}> page(@RequestBody Query query) {
+        return {{LowerCamel}}Service.page(query);
+    }
+
+    @ApiOperation(value = "新增或更新", notes = "请求参数不传id则新增，传了id则更新")
+    @PostMapping("/save")
+    public Response save(@RequestBody {{UpperCamel}} save) {
+        if (save.getId() != null) {
+            {{LowerCamel}}Service.update(save);
+        } else {
+            {{LowerCamel}}Service.create(save);
+        }
+        return Response.success();
+    }
+
+    @ApiOperation("批量删除")
+    @PostMapping("/delete")
+    public Response delete(@RequestBody DeleteBody body) {
+        return Response.success({{LowerCamel}}Service.deleteByIds(body.getIds()));
+    }
+}`
+
+const JavaService = `
+public interface {{UpperCamel}}Service {
+	PageResp<{{UpperCamel}}> page(Query query);
+	
+	int update({{UpperCamel}} post);
+	
+	int create({{UpperCamel}} post);
+	
+	int deleteByIds(Long[] ids);
+}
+`
+
+const JavaServiceImpl = `
+@Service
+public class {{UpperCamel}}ServiceImpl implements {{UpperCamel}}Service {
+
+    @Resource private {{UpperCamel}}Mapper {{LowerCamel}}Mapper;
+
+    @Override
+    public PageResp<{{UpperCamel}}> page(Query query) {
+        List<{{UpperCamel}}> rows = {{LowerCamel}}Mapper.page(query);
+        long total = {{LowerCamel}}Mapper.count(query);
+        return new PageResp<>(rows, total);
+    }
+
+    @Override
+    @Transactional
+    public int update({{UpperCamel}} post) {
+        return {{LowerCamel}}Mapper.update(post);
+    }
+
+    @Override
+    @Transactional
+    public int create({{UpperCamel}} post) {
+        return {{LowerCamel}}Mapper.create(post);
+    }
+
+    @Override
+    @Transactional
+    public int deleteByIds(Long[] ids) {
+        return {{LowerCamel}}Mapper.deleteByIds(ids);
+    }
+}
+`
+
+const JavaMapper = `
+@Mapper
+public interface {{UpperCamel}}Mapper {
+
+    List<{{UpperCamel}}> page(@Param("query") Query query);
+
+    long count(@Param("query") Query query);
+    
+    int create(@Param("create") {{UpperCamel}} create);
+    
+    int update(@Param("update") {{UpperCamel}} update);
+    
+    int deleteByIds(@Param("ids") Long[] ids);
 }
 `

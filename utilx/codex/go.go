@@ -8,21 +8,21 @@ import (
 )
 
 // 构建go结构体代码
-func BuildGoStruct(table string, fieldList []*Field) string {
+func BuildGoStruct(table string, fields []*Field) string {
 	table = strings.TrimPrefix(table, `t_`)
 	table = strings.TrimSuffix(table, `_t`)
-	table = stringx.UpperCamelCase(table)
+	table = stringx.ToUpperCamel(table)
 	sb := strings.Builder{}
 	sb.WriteString("\ntype ")
 	sb.WriteString(table)
 	sb.WriteString(" struct {")
-	for _, field := range fieldList {
+	for _, field := range fields {
 		sb.WriteString("\n\t")
-		sb.WriteString(stringx.UpperCamelCase(field.Name))
+		sb.WriteString(stringx.ToUpperCamel(field.Name))
 		sb.WriteString(" ")
 		sb.WriteString(sqlx.DB2Go()[field.Type])
 		sb.WriteString(" `json:\"")
-		sb.WriteString(stringx.LowerCamelCase(field.Name))
+		sb.WriteString(stringx.ToLowerCamel(field.Name))
 		sb.WriteString("\"` // ")
 		sb.WriteString(field.Comment)
 	}
@@ -31,21 +31,21 @@ func BuildGoStruct(table string, fieldList []*Field) string {
 }
 
 // 构建go结构体代码
-func BuildGormStruct(table string, fieldList []*Field) string {
+func BuildGormStruct(table string, fields []*Field) string {
 	table = strings.TrimPrefix(table, `t_`)
 	table = strings.TrimSuffix(table, `_t`)
-	table = stringx.UpperCamelCase(table)
+	table = stringx.ToUpperCamel(table)
 	sb := strings.Builder{}
 	sb.WriteString("\ntype ")
 	sb.WriteString(table)
 	sb.WriteString(" struct {")
-	for _, field := range fieldList {
+	for _, field := range fields {
 		sb.WriteString("\n\t")
-		sb.WriteString(stringx.UpperCamelCase(field.Name))
+		sb.WriteString(stringx.ToUpperCamel(field.Name))
 		sb.WriteString(" ")
 		sb.WriteString(sqlx.DB2Go()[field.Type])
 		sb.WriteString(" `json:\"")
-		sb.WriteString(stringx.LowerCamelCase(field.Name))
+		sb.WriteString(stringx.ToLowerCamel(field.Name))
 		sb.WriteString("\" gorm:\"type:")
 		sb.WriteString(sqlx.DB2Gorm()[field.Type])
 		sb.WriteString("; comment:")

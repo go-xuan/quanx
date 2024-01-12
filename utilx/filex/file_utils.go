@@ -1,8 +1,11 @@
 package filex
 
 import (
+	"bufio"
 	"crypto/tls"
+	"encoding/csv"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -19,15 +22,179 @@ import (
 )
 
 const (
+	WriteOnly = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	Overwrite = os.O_RDWR | os.O_CREATE | os.O_TRUNC
+	Append    = os.O_RDWR | os.O_CREATE | os.O_APPEND
+)
+
+const (
 	DirAndFile = "all"
 	OnlyDir    = "dir"
 	OnlyFile   = "file"
-	Json       = ".json"
-	Yml        = ".yml"
-	Yaml       = ".yaml"
-	Toml       = ".toml"
-	Properties = ".properties"
+	Json       = "json"
+	Yml        = "yml"
+	Yaml       = "yaml"
+	Toml       = "toml"
+	Properties = "properties"
 )
+
+// 读取文件内容
+func ReadFile(filePath string) (bytes []byte, err error) {
+	bytes, err = os.ReadFile(filePath)
+	if nil != err {
+		err = fmt.Errorf(" %s read file error: %v", filePath, err)
+		return
+	}
+	return
+}
+
+// 按行读取
+func ReadFileLine(filePath string) (lines []string, err error) {
+	var file *os.File
+	file, err = os.OpenFile(filePath, os.O_RDONLY, 0666)
+	if err != nil {
+		return
+	}
+	defer func(file *os.File) {
+		err = file.Close()
+	}(file)
+	// 按行处理txt
+	reader := bufio.NewReader(file)
+	for {
+		var line []byte
+		line, _, err = reader.ReadLine()
+		if err == io.EOF {
+			break
+		}
+		lines = append(lines, string(line))
+	}
+	return
+}
+
+// 更新文件
+func ContentReplace(filePath string, replaces map[string]string) error {
+	bytes, err := os.ReadFile(filePath)
+	if nil != err {
+		return fmt.Errorf(" %s read file error: %v", filePath, err)
+	}
+	content := string(bytes)
+	for k, v := range replaces {
+		content = strings.ReplaceAll(content, k, v)
+	}
+	return WriteFile(filePath, content)
+}
+
+// 写入文件
+func WriteFile(filePath, content string, mode ...int) error {
+	var flag = Overwrite
+	if len(mode) > 0 {
+		flag = mode[0]
+	}
+	file, err := os.OpenFile(filePath, flag, 0644)
+	if err != nil {
+		return err
+	}
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+	writer := bufio.NewWriter(file)
+	_, _ = writer.WriteString(content)
+	if err = writer.Flush(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// 数组按行写入文件
+func WriteFileLine(filePath string, content []string, mode ...int) error {
+	var flag = Overwrite
+	if len(mode) > 0 {
+		flag = mode[0]
+	}
+	file, err := os.OpenFile(filePath, flag, 0644)
+	if err != nil {
+		return err
+	}
+	defer func(file *os.File) {
+		err = file.Close()
+	}(file)
+	writer := bufio.NewWriter(file)
+	for _, line := range content {
+		_, _ = writer.WriteString(line)
+		_, _ = writer.WriteString("\n")
+	}
+	if err = writer.Flush(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// 写入json文件
+func WriteJson(path string, obj interface{}) error {
+	jsonByte, err := json.MarshalIndent(obj, "", "	")
+	if err != nil {
+		return err
+	}
+	if err = os.WriteFile(path, jsonByte, 0644); err != nil {
+		return err
+	}
+	return nil
+}
+
+// 写入csv文件
+func WriteCSV(path string, data [][]string) error {
+	file, err := os.OpenFile(path, Overwrite, 0644)
+	if err != nil {
+		return err
+	}
+	defer func(file *os.File) {
+		err = file.Close()
+	}(file)
+	writer := csv.NewWriter(file)
+	writer.Comma = ','
+	writer.UseCRLF = true
+	if err = writer.WriteAll(data); err != nil {
+		return err
+	}
+	writer.Flush()
+	return nil
+}
+
+type File struct {
+	Path string
+	Info os.FileInfo
+}
+
+// 获取目录下所有文件路径
+func FileScan(dir string, suffix string) (files []*File, err error) {
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		file := File{path, info}
+		switch suffix {
+		case DirAndFile:
+			files = append(files, &file)
+		case OnlyDir:
+			if info.IsDir() {
+				files = append(files, &file)
+			}
+		case OnlyFile:
+			if !info.IsDir() {
+				files = append(files, &file)
+			}
+		default:
+			if info.Name() == suffix {
+				files = append(files, &file)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		os.Exit(1)
+	}
+	return
+}
 
 // 显示当前目录
 func Pwd() string {
@@ -89,7 +256,14 @@ func CreateDir(path string) {
 
 // 获取后缀
 func Suffix(path string) string {
-	return filepath.Ext(filepath.Base(path))
+	if path != "" {
+		for i := len(path) - 1; i >= 0; i-- {
+			if path[i] == '.' {
+				return path[i+1:]
+			}
+		}
+	}
+	return ""
 }
 
 // 获取文件名(不带后缀)

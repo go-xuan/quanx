@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 
-	"github.com/go-xuan/quanx/runner/redisx"
+	"github.com/go-xuan/quanx/importx/redisx"
 )
 
 var SecretKey []byte

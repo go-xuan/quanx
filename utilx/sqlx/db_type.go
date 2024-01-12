@@ -20,7 +20,9 @@ const (
 	Numeric    = "numeric" // 数字
 	Numeric6   = "numeric(10,6)"
 	Numeric2   = "numeric(10,2)"
-	Time       = "time.Time"
+	Decimal    = "decimal"
+	Time       = "time"
+	GoTime     = "time.Time"
 	Timestamp  = "timestamp"
 	Date       = "date"
 	Datetime   = "datetime"
@@ -35,5 +37,6 @@ const (
 	JavaLong       = "Long"
 	JavaDate       = "Date"
 	JavaBigDecimal = "BigDecimal"
+	JavaFloat      = "Float"
 	JavaBoolean    = "Boolean"
 )

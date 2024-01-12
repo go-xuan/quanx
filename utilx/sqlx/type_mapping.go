@@ -23,9 +23,9 @@ func DB2Go() map[string]string {
 		db2Go[Bigint] = Int64
 		db2Go[Float4] = Float4
 		db2Go[Numeric] = Float4
-		db2Go[Timestamp] = Time
-		db2Go[Datetime] = Time
-		db2Go[Date] = Time
+		db2Go[Timestamp] = GoTime
+		db2Go[Datetime] = GoTime
+		db2Go[Date] = GoTime
 		db2Go[Bool] = Bool
 	}
 	return db2Go
@@ -71,8 +71,9 @@ func DB2Java() map[string]string {
 		db2Java[Mediumint] = JavaInteger
 		db2Java[Int] = JavaLong
 		db2Java[Bigint] = JavaLong
-		db2Java[Float4] = JavaBigDecimal
-		db2Java[Numeric] = JavaBigDecimal
+		db2Java[Float4] = JavaFloat
+		db2Java[Numeric] = JavaFloat
+		db2Java[Decimal] = JavaBigDecimal
 		db2Java[Timestamp] = JavaDate
 		db2Java[Datetime] = JavaDate
 		db2Java[Date] = JavaDate

@@ -34,16 +34,22 @@ type Snowflake struct {
 
 func New(id ...int64) *Snowflake {
 	if snow == nil {
-		var workerId int64 = 1
 		if len(id) > 0 {
-			workerId = id[0]
-			if workerId < 0 || workerId > workerMax {
-				workerId = int64(math.Abs(float64(workerId % workerMax)))
-			}
+			snow = newSnowflake(id[0])
+		} else {
+			snow = newSnowflake(1)
 		}
-		snow = &Snowflake{WorkerId: workerId, TimeStamp: 0, Sequence: 0}
+	} else if len(id) > 0 {
+		return newSnowflake(id[0])
 	}
 	return snow
+}
+
+func newSnowflake(workerId int64) *Snowflake {
+	if workerId < 0 || workerId > workerMax {
+		workerId = int64(math.Abs(float64(workerId % workerMax)))
+	}
+	return &Snowflake{WorkerId: workerId, TimeStamp: 0, Sequence: 0}
 }
 
 func (s *Snowflake) Int64() int64 {

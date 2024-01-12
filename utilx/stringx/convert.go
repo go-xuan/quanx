@@ -4,36 +4,36 @@ import (
 	"strconv"
 )
 
-func ToInt(str string) int {
-	if value, err := strconv.Atoi(str); err != nil {
+func ToInt(s string) int {
+	if value, err := strconv.Atoi(s); err != nil {
 		return value
 	} else {
 		return 0
 	}
 }
 
-func ToInt64(str string) int64 {
-	if value, err := strconv.ParseInt(str, 10, 64); err != nil {
+func ToInt64(s string) int64 {
+	if value, err := strconv.ParseInt(s, 10, 64); err != nil {
 		return value
 	} else {
 		return 0
 	}
 }
 
-func ToFloat64(str string) float64 {
-	if value, err := strconv.ParseFloat(str, 64); err != nil {
+func ToFloat64(s string) float64 {
+	if value, err := strconv.ParseFloat(s, 64); err != nil {
 		return value
 	} else {
 		return 0
 	}
 }
 
-func ParseInt(intValue int) string {
-	return strconv.Itoa(intValue)
+func ParseInt(i int) string {
+	return strconv.Itoa(i)
 }
 
-func ParseInt64(int64Value int64) string {
-	return strconv.FormatInt(int64Value, 10)
+func ParseInt64(i int64) string {
+	return strconv.FormatInt(i, 10)
 }
 
 func ParseFloat64(f float64) string {

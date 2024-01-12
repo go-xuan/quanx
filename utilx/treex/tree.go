@@ -9,7 +9,7 @@ type Node[T any] struct {
 	Child NodeList[T] `json:"child"`
 }
 
-// 一维数组转树形结构
+// 数组转树形结构
 func (list NodeList[T]) Convert2Tree(rootId ...string) NodeList[T] {
 	var pid = "0"
 	if len(rootId) > 0 {

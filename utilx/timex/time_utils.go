@@ -37,7 +37,7 @@ func ToString(time time.Time) string {
 
 // 字符转时间
 func ToTime(timeStr string) time.Time {
-	format := anyx.IfValue(strings.Contains(timeStr, "-") && len(timeStr) == 10, DateFmt, TimeFmt)
+	format := anyx.IfElse(strings.Contains(timeStr, "-") && len(timeStr) == 10, DateFmt, TimeFmt)
 	return TimeFormat(timeStr, format)
 }
 

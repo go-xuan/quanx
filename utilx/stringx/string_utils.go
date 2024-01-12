@@ -1,0 +1,238 @@
+package stringx
+
+import (
+	"strings"
+
+	"github.com/go-xuan/quanx/utilx/mathx"
+)
+
+// 去除前缀
+func TrimPrefix(s, prefix string) string {
+	if strings.HasPrefix(s, prefix) {
+		return s[len(prefix):]
+	}
+	return s
+}
+
+// 添加前缀
+func AddPrefix(s, prefix string) string {
+	if strings.HasPrefix(s, prefix) {
+		return s
+	}
+	return prefix + s
+}
+
+// 字符串是否包含
+func ContainsAny(s string, substrs ...string) bool {
+	for _, sub := range substrs {
+		if strings.Contains(s, sub) {
+			return true
+		}
+	}
+	return false
+}
+
+// 字符串是否包含
+func ContainsBoth(s string, substrs ...string) bool {
+	for _, sub := range substrs {
+		if !strings.Contains(s, sub) {
+			return false
+		}
+	}
+	return true
+}
+
+// 是否有空
+func HasEmpty(s ...string) bool {
+	for _, item := range s {
+		if item == "" {
+			return true
+		}
+	}
+	return false
+}
+
+// 反转
+func Reverse(s string) string {
+	runes := []rune(s)
+	for from, to := 0, len(runes)-1; from < to; from, to = from+1, to-1 {
+		runes[from], runes[to] = runes[to], runes[from]
+	}
+	return string(runes)
+}
+
+// 字符串截取
+func SubString(s string, start, end int) string {
+	var r = []rune(s)
+	length := len(r)
+	if start < 0 || end > length || start > end {
+		return ""
+	}
+	if start == 0 && end == length {
+		return s
+	}
+	return string(r[start:end])
+}
+
+// 将字符串以左数数第一个分隔符分割
+func CutFromLeft(s, sep string) (left string, right string) {
+	if strings.Contains(s, sep) {
+		i := strings.Index(s, sep)
+		left, right = s[:i], s[i+len(sep):]
+	} else {
+		left = s
+	}
+	return
+}
+
+// 将字符串以右数第一个分隔符分割
+func CutFromRight(s, sep string) (left string, right string) {
+	if strings.Contains(s, sep) {
+		i := strings.LastIndex(s, sep)
+		left, right = s[:i], s[i+len(sep):]
+	} else {
+		right = s
+	}
+	return
+}
+
+// 字符填充(将字符以固定长度填充,默认前缀填充)
+func Fill(s, add string, length int, suffix ...bool) string {
+	strLen, addLen := len(s), len(add)
+	fillLen := length - strLen
+	if fillLen <= 0 && addLen == 0 {
+		return s
+	}
+	fillStr := strings.Builder{}
+	for i := 0; i < fillLen; i++ {
+		fillStr.WriteString(string(add[i%addLen]))
+	}
+	if len(suffix) > 0 && suffix[0] {
+		return s + fillStr.String()
+	} else {
+		return fillStr.String() + s
+	}
+}
+
+// 转下划线
+func ToSnake(s string) string {
+	data := make([]byte, 0, len(s)*2)
+	j := false
+	num := len(s)
+	for i := 0; i < num; i++ {
+		d := s[i]
+		if i > 0 && d >= 'A' && d <= 'Z' && j {
+			data = append(data, '_')
+		}
+		if d != '_' {
+			j = true
+		}
+		data = append(data, d)
+	}
+	return strings.ToLower(string(data[:]))
+}
+
+// 转小驼峰
+func ToLowerCamel(s string) string {
+	ucc := ToUpperCamel(s)
+	return strings.ToLower(string(ucc[0])) + ucc[1:]
+}
+
+// 转大驼峰
+func ToUpperCamel(s string) string {
+	s = strings.ToLower(s)
+	data := make([]byte, 0, len(s))
+	j := false
+	k := false
+	num := len(s) - 1
+	for i := 0; i <= num; i++ {
+		d := s[i]
+		if k == false && d >= 'A' && d <= 'Z' {
+			k = true
+		}
+		if d >= 'a' && d <= 'z' && (j || k == false) {
+			d = d - 32
+			j = false
+			k = true
+		}
+		if k && d == '_' && num > i && s[i+1] >= 'a' && s[i+1] <= 'z' {
+			j = true
+			continue
+		}
+		if k && d == '_' && num > i && s[i+1] >= '0' && s[i+1] <= '9' {
+			j = true
+			continue
+		}
+		data = append(data, d)
+	}
+	return string(data[:])
+}
+
+// 文本相似度计算
+func TextSimilarity(source, target string) float64 {
+	sLen, tLen := len(source), len(target)
+	if (sLen == 0 && tLen == 0) || source == target {
+		return 1.0
+	}
+	matrix := make([][]int, sLen+1)
+	for i := range matrix {
+		matrix[i] = make([]int, tLen+1)
+		matrix[i][0] = i
+	}
+
+	for j := 0; j <= tLen; j++ {
+		matrix[0][j] = j
+	}
+
+	for i := 1; i <= sLen; i++ {
+		for j := 1; j <= tLen; j++ {
+			cost := 0
+			if source[i-1] != target[j-1] {
+				cost = 1
+			}
+			matrix[i][j] = mathx.MinInt(matrix[i-1][j]+1, matrix[i][j-1]+1, matrix[i-1][j-1]+cost)
+		}
+	}
+
+	distance := matrix[sLen][tLen]
+	maxLen := float64(sLen)
+	if tLen > sLen {
+		maxLen = float64(tLen)
+	}
+	return 1.0 - float64(distance)/maxLen
+}
+
+type Mode int
+
+const (
+	Upper Mode = iota
+	Lower
+	UpperCamel
+	LowerCamel
+	Snake
+)
+
+func Transforms(str string, mode ...Mode) map[Mode]string {
+	var result = make(map[Mode]string)
+	for _, m := range mode {
+		result[m] = Transform(str, m)
+	}
+	return result
+}
+
+func Transform(str string, mode Mode) string {
+	switch mode {
+	case Upper:
+		return strings.ToUpper(str)
+	case Lower:
+		return strings.ToLower(str)
+	case UpperCamel:
+		return ToUpperCamel(str)
+	case LowerCamel:
+		return ToLowerCamel(str)
+	case Snake:
+		return ToSnake(str)
+	default:
+		return str
+	}
+}

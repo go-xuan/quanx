@@ -3,7 +3,7 @@ package authx
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/go-xuan/quanx/common/respx"
+	"github.com/go-xuan/quanx/commonx/respx"
 	"github.com/go-xuan/quanx/utilx/encryptx"
 	"github.com/go-xuan/quanx/utilx/stringx"
 )
@@ -74,26 +74,26 @@ func CookeAuth() gin.HandlerFunc {
 			cookie, err := ctx.Cookie(CookieKey)
 			if err != nil {
 				ctx.Abort()
-				respx.BuildException(ctx, respx.AuthErr, "cookie is required")
+				respx.Exception(ctx, respx.AuthErr, "cookie is required")
 				return
 			}
 			var account string
 			account, err = encryptx.RSA().Decrypt(cookie)
 			if err != nil {
 				ctx.Abort()
-				respx.BuildException(ctx, respx.AuthErr, "cookie decrypt failed")
+				respx.Exception(ctx, respx.AuthErr, "cookie decrypt failed")
 				return
 			}
 			var user = &User{Account: account}
 			if token := user.GetTokenCache(); token == "" {
 				ctx.Abort()
-				respx.BuildException(ctx, respx.AuthErr, "cookie is expired")
+				respx.Exception(ctx, respx.AuthErr, "cookie is expired")
 				return
 			} else {
 				user, err = GetUserByToken(token)
 				if err != nil {
 					ctx.Abort()
-					respx.BuildException(ctx, respx.AuthErr, "token parse failed")
+					respx.Exception(ctx, respx.AuthErr, "token parse failed")
 					return
 				}
 			}
@@ -110,18 +110,18 @@ func TokenAuth() gin.HandlerFunc {
 			var token = ctx.Request.Header.Get(TokenKey)
 			if token == "" {
 				ctx.Abort()
-				respx.BuildException(ctx, respx.AuthErr, "token is required")
+				respx.Exception(ctx, respx.AuthErr, "token is required")
 				return
 			}
 			var user, err = GetUserByToken(token)
 			if err != nil || user == nil {
 				ctx.Abort()
-				respx.BuildException(ctx, respx.AuthErr, "token parse failed")
+				respx.Exception(ctx, respx.AuthErr, "token parse failed")
 				return
 			}
 			if user.GetTokenCache() == "" {
 				ctx.Abort()
-				respx.BuildException(ctx, respx.AuthErr, "token is expired")
+				respx.Exception(ctx, respx.AuthErr, "token is expired")
 				return
 			}
 			ctx.Set("user", user)

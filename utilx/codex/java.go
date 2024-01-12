@@ -13,10 +13,10 @@ func BuildJavaClass(table string, fieldList []*Field) string {
 	table = strings.TrimSuffix(table, `_t`)
 	sb := strings.Builder{}
 	sb.WriteString("\n@Data\npublic class ")
-	sb.WriteString(stringx.UpperCamelCase(table))
+	sb.WriteString(stringx.ToUpperCamel(table))
 	sb.WriteString(" implements Serializable {")
 	for _, field := range fieldList {
-		low := stringx.LowerCamelCase(field.Name)
+		low := stringx.ToLowerCamel(field.Name)
 		sb.WriteString("\n\t")
 		sb.WriteString("@ApiModelProperty(value = \"")
 		sb.WriteString(field.Comment)

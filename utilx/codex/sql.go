@@ -7,15 +7,25 @@ import (
 	"github.com/go-xuan/quanx/utilx/stringx"
 )
 
+var BaseField = []string{
+	"create_time",
+	"update_time",
+	"create_user_id",
+	"update_user_id",
+	"create_by",
+	"update_by",
+}
+
 // 构建新增sql语句
-func BuildInsertSql(table string, fieldList []*Field) string {
+func BuildInsertSql(table string, fields []*Field) string {
 	sb := strings.Builder{}
 	iv := strings.Builder{}
 	sb.WriteString("insert into ")
 	sb.WriteString(table)
 	sb.WriteString("\n(")
-	for i, field := range fieldList {
-		if field.Default != "" || field.Name == "id" {
+	var i int
+	for _, field := range fields {
+		if (field.Name == "id" || IsBaseField(field.Name)) && field.Default != "" {
 			continue
 		}
 		if i > 0 {
@@ -24,11 +34,12 @@ func BuildInsertSql(table string, fieldList []*Field) string {
 		}
 		sb.WriteString(field.Name)
 		sb.WriteString(",")
-		iv.WriteString("#{param.")
-		iv.WriteString(stringx.LowerCamelCase(field.Name))
+		iv.WriteString("#{create.")
+		iv.WriteString(stringx.ToLowerCamel(field.Name))
 		iv.WriteString("},")
+		i++
 	}
-	sb.WriteString(",)\nvalues (")
+	sb.WriteString(",)\nvalues \n(")
 	sb.WriteString(iv.String())
 	sb.WriteString(",)\n\n")
 	return strings.ReplaceAll(sb.String(), ",,", "")
@@ -41,16 +52,13 @@ func BuildUpdateSql(table string, fieldList []*Field) string {
 	sb.WriteString(table)
 	sb.WriteString("\n<set>")
 	for _, field := range fieldList {
-		if field.Default != "" || field.Name == "id" {
+		if field.Name == "id" || IsBaseField(field.Name) {
 			continue
 		}
-		paramName := "param." + stringx.LowerCamelCase(field.Name)
+		name := "update." + stringx.ToLowerCamel(field.Name)
 		sb.WriteString("\n\t")
-		sb.WriteString(fmt.Sprintf(`<if test="%s != null and %s != ''"> %s = #{%s}, </if>`, paramName, paramName, field.Name, paramName))
+		sb.WriteString(fmt.Sprintf(`<if test="%s != null and %s != ''"> %s = #{%s}, </if>`, name, name, field.Name, name))
 	}
-	sb.WriteString("\n\tupdate_by = #{param.updateBy},")
-	sb.WriteString("\n\tupdate_user_name = #{param.updateUserName},")
-	sb.WriteString("\n\tupdate_time = #{param.updateTime},")
 	sb.WriteString("\n</set>")
 	sb.WriteString("\nwhere id = #{item.id} \n\n")
 	return strings.ReplaceAll(sb.String(), ",,", "")
@@ -74,8 +82,8 @@ func BuildSelectSql(table string, fieldList []*Field) string {
 	return strings.ReplaceAll(sb.String(), ",,", "")
 }
 
-// 带字段别名的select
-func BuildSelectSqlAlias(table string, columns []*Field) string {
+// 别名查询select
+func BuildSelectAliasSql(table string, columns []*Field) string {
 	sb := strings.Builder{}
 	sb.WriteString("select ")
 	for i, field := range columns {
@@ -85,11 +93,20 @@ func BuildSelectSqlAlias(table string, columns []*Field) string {
 		}
 		sb.WriteString(field.Name)
 		sb.WriteString(" as ")
-		sb.WriteString(stringx.LowerCamelCase(field.Name))
+		sb.WriteString(stringx.ToLowerCamel(field.Name))
 		sb.WriteString(",")
 	}
 	sb.WriteString(",\n  from ")
 	sb.WriteString(table)
 	sb.WriteString("\n\n")
 	return strings.ReplaceAll(sb.String(), ",,", "")
+}
+
+func IsBaseField(name string) bool {
+	for _, s := range BaseField {
+		if s == name {
+			return true
+		}
+	}
+	return false
 }

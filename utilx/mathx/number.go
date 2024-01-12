@@ -107,3 +107,12 @@ func ConvertArabToChinese(input int) (result string) {
 	result = strings.TrimSuffix(result, "零个")
 	return
 }
+
+func MinInt(a, b, c int) int {
+	if a <= b && a <= c {
+		return a
+	} else if b <= a && b <= c {
+		return b
+	}
+	return c
+}
