@@ -19,12 +19,12 @@ import (
 // 数据源配置
 type MultiDatabase []*Database
 
-// 运行器名称
+// 配置器名称
 func (MultiDatabase) Title() string {
 	return "init multi-database"
 }
 
-func (MultiDatabase) ConfigReader() *configx.Reader {
+func (MultiDatabase) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "multi_database.yaml",
 		NacosDataId: "multi_database.yaml",
@@ -32,7 +32,7 @@ func (MultiDatabase) ConfigReader() *configx.Reader {
 	}
 }
 
-// 运行器运行
+// 配置器运行
 func (md MultiDatabase) Run() (err error) {
 	if len(md) == 0 {
 		log.Info("database not connected! reason: multi-database.yaml not found!")
@@ -113,12 +113,12 @@ func (d *Database) ToString(title string) string {
 		title, d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
 }
 
-// 运行器名称
+// 配置器名称
 func (d *Database) Title() string {
 	return "inti database"
 }
 
-func (d *Database) ConfigReader() *configx.Reader {
+func (d *Database) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "database.yaml",
 		NacosDataId: "database.yaml",
@@ -126,7 +126,7 @@ func (d *Database) ConfigReader() *configx.Reader {
 	}
 }
 
-// 运行器运行
+// 配置器运行
 func (d *Database) Run() (err error) {
 	if d.Enable {
 		err = anyx.SetDefaultValue(d)

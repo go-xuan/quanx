@@ -21,12 +21,12 @@ func (e *Elastic) ToString(title string) string {
 	return fmt.Sprintf("%s => host=%s port=%d", title, e.Host, e.Port)
 }
 
-// 运行器名称
+// 配置器名称
 func (*Elastic) Title() string {
 	return "init elastic-search"
 }
 
-func (*Elastic) ConfigReader() *configx.Reader {
+func (*Elastic) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "elastic.yaml",
 		NacosDataId: "elastic.yaml",
@@ -34,7 +34,7 @@ func (*Elastic) ConfigReader() *configx.Reader {
 	}
 }
 
-// 运行器运行
+// 配置器运行
 func (e *Elastic) Run() error {
 	if e.Host == "" {
 		return nil

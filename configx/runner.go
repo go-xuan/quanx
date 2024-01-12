@@ -1,10 +1,10 @@
 package configx
 
-// 运行器
-type IRunner[T any] interface {
-	Run() error            // 运行器运行
-	Title() string         // 运行器标题
-	ConfigReader() *Reader // 配置文件读取
+// 配置器
+type Configurator[T any] interface {
+	Run() error      // 配置器运行
+	Title() string   // 配置器标题
+	Reader() *Reader // 配置文件读取
 }
 
 // 配置文件读取

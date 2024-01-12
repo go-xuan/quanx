@@ -24,12 +24,12 @@ func (m *Mongo) ToString(title string) string {
 	return fmt.Sprintf("%s => host=%s port=%d database=%s", title, m.Host, m.Port, m.Database)
 }
 
-// 运行器名称
+// 配置器名称
 func (m *Mongo) Title() string {
 	return "init mongo"
 }
 
-func (*Mongo) ConfigReader() *configx.Reader {
+func (*Mongo) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "mongo.yaml",
 		NacosDataId: "mongo.yaml",
@@ -37,7 +37,7 @@ func (*Mongo) ConfigReader() *configx.Reader {
 	}
 }
 
-// 运行器运行
+// 配置器运行
 func (m *Mongo) Run() (err error) {
 	var client *mongo.Client
 	client, err = m.NewClient()

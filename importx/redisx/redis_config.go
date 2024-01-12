@@ -25,7 +25,7 @@ func (mr MultiRedis) Title() string {
 	return "Init multi-redis"
 }
 
-func (MultiRedis) ConfigReader() *configx.Reader {
+func (MultiRedis) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "multi_redis.yaml",
 		NacosDataId: "multi_redis.yaml",
@@ -83,12 +83,12 @@ func (r *Redis) ToString(title string) string {
 		title, r.Source, r.Mode, r.Host, r.Port, r.Database)
 }
 
-// 运行器名称
+// 配置器名称
 func (r *Redis) Title() string {
 	return "connect redis"
 }
 
-func (*Redis) ConfigReader() *configx.Reader {
+func (*Redis) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "redis.yaml",
 		NacosDataId: "redis.yaml",
@@ -96,7 +96,7 @@ func (*Redis) ConfigReader() *configx.Reader {
 	}
 }
 
-// 运行器运行
+// 配置器运行
 func (r *Redis) Run() (err error) {
 	if r.Enable {
 		err = anyx.SetDefaultValue(r)

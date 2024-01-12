@@ -33,18 +33,18 @@ func (l *Log) ToString() string {
 		l.LogPath(), l.Level, l.MaxSize, l.MaxAge, l.Backups)
 }
 
-// 运行器名称
+// 配置器名称
 func (*Log) Title() string {
 	return "log format"
 }
 
-func (*Log) ConfigReader() *configx.Reader {
+func (*Log) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath: "log.yaml",
 	}
 }
 
-// 运行器运行
+// 配置器运行
 func (l *Log) Run() error {
 	err := anyx.SetDefaultValue(l)
 	if err != nil {

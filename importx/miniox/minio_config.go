@@ -32,12 +32,12 @@ func (m *Minio) ToString(title string) string {
 	return fmt.Sprintf("%s => host=%s port=%d accessId=%s bucketName=%s", title, m.Host, m.Port, m.AccessId, m.BucketName)
 }
 
-// 运行器名称
+// 配置器名称
 func (*Minio) Title() string {
 	return "init minio"
 }
 
-func (*Minio) ConfigReader() *configx.Reader {
+func (*Minio) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "minio.yaml",
 		NacosDataId: "minio.yaml",
@@ -45,7 +45,7 @@ func (*Minio) ConfigReader() *configx.Reader {
 	}
 }
 
-// 运行器运行
+// 配置器运行
 func (m *Minio) Run() error {
 	client, err := m.NewClient()
 	if err != nil {

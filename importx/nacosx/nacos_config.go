@@ -38,16 +38,16 @@ func (n *Nacos) ToString(title string) string {
 		title, n.AddressUrl(), n.Username, n.Password, n.NameSpace, n.Mode)
 }
 
-// 运行器名称
+// 配置器名称
 func (n *Nacos) Title() string {
 	return "init nacos"
 }
 
-func (*Nacos) ConfigReader() *configx.Reader {
+func (*Nacos) Reader() *configx.Reader {
 	return nil
 }
 
-// 运行器运行
+// 配置器运行
 func (n *Nacos) Run() (err error) {
 	if handler == nil {
 		handler = &Handler{Config: n}

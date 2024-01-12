@@ -22,12 +22,12 @@ func (h *Hugegraph) ToString(title string) string {
 	return fmt.Sprintf("%s => host=%s port=%d graph=%s", title, h.Host, h.Port, h.Graph)
 }
 
-// 运行器名称
+// 配置器名称
 func (*Hugegraph) Title() string {
 	return "init hugegraph"
 }
 
-func (*Hugegraph) ConfigReader() *configx.Reader {
+func (*Hugegraph) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "hugegraph.yaml",
 		NacosDataId: "hugegraph.yaml",
@@ -35,7 +35,7 @@ func (*Hugegraph) ConfigReader() *configx.Reader {
 	}
 }
 
-// 运行器运行
+// 配置器运行
 func (h *Hugegraph) Run() error {
 	if h.Host == "" {
 		return nil
