@@ -16,6 +16,10 @@ type Handler struct {
 	ConfigMap map[string]*Database
 }
 
+func DB(source ...string) *gorm.DB {
+	return This().GetDB(source...)
+}
+
 func This() *Handler {
 	if !Initialized() {
 		panic("The gorm handler has not been initialized, please check the relevant config")

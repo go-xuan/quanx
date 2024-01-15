@@ -2,11 +2,11 @@ package quanx
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/go-xuan/quanx/utilx/stringx"
-	log "github.com/sirupsen/logrus"
 	"path/filepath"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
 	"github.com/go-xuan/quanx/importx/gormx"
@@ -16,6 +16,7 @@ import (
 	"github.com/go-xuan/quanx/utilx/anyx"
 	"github.com/go-xuan/quanx/utilx/ipx"
 	"github.com/go-xuan/quanx/utilx/marshalx"
+	"github.com/go-xuan/quanx/utilx/stringx"
 )
 
 var engine *Engine
@@ -39,7 +40,7 @@ func GetEngine(modes ...Flag) *Engine {
 
 // 获取服务配置
 func GetServer() *Server {
-	return GetEngine().config.server
+	return GetEngine().config.Server
 }
 
 // 服务配置器
@@ -57,13 +58,13 @@ type Engine struct {
 
 // 服务配置
 type Config struct {
-	server        *Server              `yaml:"server"`        // 服务配置
-	log           *logx.Log            `yaml:"log"`           // 日志配置
-	nacos         *nacosx.Nacos        `yaml:"nacos"`         // nacos访问配置
-	database      *gormx.Database      `yaml:"database"`      // 数据源配置
-	redis         *redisx.Redis        `yaml:"redis"`         // redis配置
-	multiDatabase *gormx.MultiDatabase `yaml:"multiDatabase"` // 多数据源配置
-	multiRedis    *redisx.MultiRedis   `yaml:"multiRedis"`    // 多redis配置
+	Server        *Server              `yaml:"server"`        // 服务配置
+	Log           *logx.Log            `yaml:"log"`           // 日志配置
+	Nacos         *nacosx.Nacos        `yaml:"nacos"`         // nacos访问配置
+	Database      *gormx.Database      `yaml:"database"`      // 数据源配置
+	Redis         *redisx.Redis        `yaml:"redis"`         // redis配置
+	MultiDatabase *gormx.MultiDatabase `yaml:"multiDatabase"` // 多数据源配置
+	MultiRedis    *redisx.MultiRedis   `yaml:"multiRedis"`    // 多redis配置
 }
 
 // gin路由加载器
@@ -84,6 +85,7 @@ const (
 	InitCommonAlready                   // 已初始化基础配置
 	RunCustomFuncAlready                // 已执行自定义函数
 	RunConfiguratorsAlready             // 已执行配置器
+	EnableTableCrud                     // 自动注册表模型的增删改查接口
 )
 
 // 服务配置
@@ -112,7 +114,7 @@ func (e *Engine) PREPARE() {
 	if !e.flag[InitConfigAlready] {
 		e.initConfig()
 	}
-	// 初始化基础配置(日志/nacos/gorm/redis)
+	// 初始化基础配置(日志/Nacos/gorm/Redis)
 	if !e.flag[InitCommonAlready] {
 		e.initCommon()
 	}
@@ -136,27 +138,27 @@ func (e *Engine) STARTGIN() {
 
 // 加载服务配置
 func (e *Engine) initConfig() {
-	var config = &Config{server: &Server{}}
+	var config = &Config{Server: &Server{}}
 	// 读取本地配置
 	var path = e.GetConfigPath("config.yaml")
 	if err := marshalx.LoadFromFile(config, path); err != nil {
 		log.Error("加载服务配置失败!")
 		panic(err)
 	}
-	if config.server.Host == "" {
-		config.server.Host = ipx.GetWLANIP()
+	if config.Server.Host == "" {
+		config.Server.Host = ipx.GetWLANIP()
 	}
 	// 初始化nacos
-	if e.flag[EnableNacos] && config.nacos != nil {
-		e.runConfigurator(config.nacos, true)
-		if config.nacos.EnableNaming() {
+	if e.flag[EnableNacos] && config.Nacos != nil {
+		e.runConfigurator(config.Nacos, true)
+		if config.Nacos.EnableNaming() {
 			// 注册nacos服务Nacos
 			nacosx.RegisterInstance(
 				nacosx.ServerInstance{
-					Name:  config.server.Name,
-					Host:  config.server.Host,
-					Port:  config.server.Port,
-					Group: config.nacos.NameSpace,
+					Name:  config.Server.Name,
+					Host:  config.Server.Host,
+					Port:  config.Server.Port,
+					Group: config.Nacos.NameSpace,
 				},
 			)
 		}
@@ -165,19 +167,19 @@ func (e *Engine) initConfig() {
 	e.flag[InitConfigAlready] = true
 }
 
-// 初始化日志/nacos/gorm/redis
+// 初始化日志/Nacos/gorm/Redis
 func (e *Engine) initCommon() {
-	var serverName = e.config.server.Name
+	var serverName = e.config.Server.Name
 	// 初始化日志
-	e.runConfigurator(anyx.IfZero(e.config.log, logx.New(serverName)), true)
+	e.runConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
 	// 连接数据库
 	if e.flag[MultiDB] {
-		e.config.multiDatabase = anyx.IfZero(e.config.multiDatabase, &gormx.MultiDatabase{})
-		e.runConfigurator(e.config.multiDatabase)
+		e.config.MultiDatabase = anyx.IfZero(e.config.MultiDatabase, &gormx.MultiDatabase{})
+		e.runConfigurator(e.config.MultiDatabase)
 		if gormx.Initialized() && gormx.This().Multi {
-			for _, db := range *e.config.multiDatabase {
-				if dst, ok := e.gormTables[db.Source]; ok {
-					if err := gormx.This().InitGormTable(db.Source, dst...); err != nil {
+			for source := range gormx.This().DBMap {
+				if dst, ok := e.gormTables[source]; ok {
+					if err := gormx.This().InitGormTable(source, dst...); err != nil {
 						log.Error("初始化数据库表失败!")
 						panic(err)
 					}
@@ -185,8 +187,8 @@ func (e *Engine) initCommon() {
 			}
 		}
 	} else if !gormx.Initialized() {
-		e.config.database = anyx.IfZero(e.config.database, &gormx.Database{})
-		e.runConfigurator(e.config.database)
+		e.config.Database = anyx.IfZero(e.config.Database, &gormx.Database{})
+		e.runConfigurator(e.config.Database)
 		if dst, ok := e.gormTables["default"]; ok {
 			if err := gormx.This().InitGormTable("default", dst...); err != nil {
 				log.Error("初始化数据库表失败!")
@@ -196,11 +198,11 @@ func (e *Engine) initCommon() {
 	}
 	// 连接redis
 	if e.flag[MultiRedis] {
-		e.config.multiRedis = anyx.IfZero(e.config.multiRedis, &redisx.MultiRedis{})
-		e.runConfigurator(e.config.multiRedis)
+		e.config.MultiRedis = anyx.IfZero(e.config.MultiRedis, &redisx.MultiRedis{})
+		e.runConfigurator(e.config.MultiRedis)
 	} else if !redisx.Initialized() {
-		e.config.redis = anyx.IfZero(e.config.redis, &redisx.Redis{})
-		e.runConfigurator(e.config.redis)
+		e.config.Redis = anyx.IfZero(e.config.Redis, &redisx.Redis{})
+		e.runConfigurator(e.config.Redis)
 	}
 	e.flag[InitCommonAlready] = true
 }
@@ -247,7 +249,7 @@ func (e *Engine) runConfigurator(conf configx.Configurator[any], must ...bool) {
 	}
 	if reader := conf.Reader(); reader != nil {
 		if e.flag[EnableNacos] {
-			reader.NacosGroup = e.config.server.Name
+			reader.NacosGroup = e.config.Server.Name
 			if err := nacosx.NewConfig(reader.NacosGroup, reader.NacosDataId).LoadConfig(conf); err == nil {
 				ok = true
 			}
@@ -279,7 +281,7 @@ func (e *Engine) InitNacosConfig(config interface{}, dataId string, listen ...bo
 		if nacosx.This().ConfigClient == nil {
 			panic("未初始化nacos配置中心客户端")
 		}
-		var item = nacosx.NewConfig(e.config.server.Name, dataId)
+		var item = nacosx.NewConfig(e.config.Server.Name, dataId)
 		if len(listen) > 0 {
 			item.Listen = listen[0]
 		}
@@ -292,7 +294,7 @@ func (e *Engine) InitNacosConfig(config interface{}, dataId string, listen ...bo
 
 // 启动gin
 func (e *Engine) startGin() {
-	if e.config.server.Debug {
+	if e.config.Server.Debug {
 		gin.SetMode(gin.DebugMode)
 	}
 	if e.ginEngine == nil {
@@ -300,12 +302,12 @@ func (e *Engine) startGin() {
 	}
 	e.ginEngine.Use(gin.Recovery(), logx.LoggerToFile())
 	e.ginEngine.Use(e.ginMiddlewares...)
-	_ = e.ginEngine.SetTrustedProxies([]string{e.config.server.Host})
+	_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
 	// 注册服务根路由，并执行路由注册函数
-	var group = e.ginEngine.Group(e.config.server.Prefix)
+	var group = e.ginEngine.Group(e.config.Server.Prefix)
 	e.InitGinLoader(group)
-	var port = ":" + strconv.Itoa(e.config.server.Port)
-	log.Info("API接口请求地址: http://" + e.config.server.Host + port)
+	var port = ":" + strconv.Itoa(e.config.Server.Port)
+	log.Info("API接口请求地址: http://" + e.config.Server.Host + port)
 	if err := e.ginEngine.Run(port); err != nil {
 		log.Error("gin-Engine 运行失败!!!")
 		panic(err)

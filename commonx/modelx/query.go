@@ -17,6 +17,13 @@ type Query struct {
 	Page
 }
 
+// 时间范围
+type TimeRange struct {
+	StartTime string `json:"startTime"` // 开始时间
+	EndTime   string `json:"endTime"`   // 结束时间
+}
+
+// 排序
 type Orders []*Order
 type Order struct {
 	Column string `json:"column"` // 排序字段
@@ -24,25 +31,19 @@ type Order struct {
 }
 
 // 计算分页数量
-func (params Orders) GetOrderBySql() (orderBy string) {
-	if params != nil && len(params) > 0 {
+func (orders Orders) GetOrderBySql() (orderBy string) {
+	if orders != nil && len(orders) > 0 {
 		s := strings.Builder{}
 		s.WriteString(` order by `)
-		for i, param := range params {
+		for i, order := range orders {
 			if i > 1 {
 				s.WriteString(",")
 			}
-			s.WriteString(param.Column)
+			s.WriteString(order.Column)
 			s.WriteString(" ")
-			s.WriteString(param.Type)
+			s.WriteString(order.Type)
 		}
 		orderBy = s.String()
 	}
 	return
-}
-
-// 时间范围
-type TimeRange struct {
-	StartTime string `json:"startTime"` // 开始时间
-	EndTime   string `json:"endTime"`   // 结束时间
 }

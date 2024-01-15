@@ -1,6 +1,7 @@
 package respx
 
 import (
+	log "github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -39,6 +40,7 @@ func BuildError(ctx *gin.Context, err error) {
 		Msg:  Error.Msg,
 		Data: err.Error(),
 	}
+	log.Error("server error ： ", err)
 	ctx.JSON(http.StatusInternalServerError, response)
 }
 
@@ -49,16 +51,18 @@ func Custom(ctx *gin.Context, code int, msg string, data interface{}) {
 		Msg:  msg,
 		Data: data,
 	}
+	log.Error(msg, data)
 	ctx.JSON(http.StatusInternalServerError, response)
 }
 
 // 异常响应
-func Exception(ctx *gin.Context, res Enum, data interface{}) {
+func Exception(ctx *gin.Context, enum Enum, data interface{}) {
 	response := &Response{
-		Code: res.Code,
-		Msg:  res.Msg,
+		Code: enum.Code,
+		Msg:  enum.Msg,
 		Data: data,
 	}
+	log.Error(enum.Msg, data)
 	ctx.JSON(http.StatusInternalServerError, response)
 }
 
