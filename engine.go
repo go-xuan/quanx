@@ -48,7 +48,7 @@ type Engine struct {
 	flag           map[Flag]bool                 // 服务运行标识
 	config         *Config                       // 服务配置 使用 initConfig()将配置文件加载到此
 	configDir      string                        // 服务配置文件文件夹, 使用 SetConfigDir()设置配置文件路径
-	configurators  []configx.Configurator[any]   // 配置器，使用 AddConfig()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
+	configurators  []configx.Configurator[any]   // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
 	customFuncs    []CustomFunc                  // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
 	ginEngine      *gin.Engine                   // gin框架实例
 	ginLoaders     []RouterLoader                // gin路由的预加载方法，使用 AddGinRouter()添加自行实现的路由注册方法
@@ -150,7 +150,7 @@ func (e *Engine) initConfig() {
 	}
 	// 初始化nacos
 	if e.flag[EnableNacos] && config.Nacos != nil {
-		e.runConfigurator(config.Nacos, true)
+		e.RunConfigurator(config.Nacos, true)
 		if config.Nacos.EnableNaming() {
 			// 注册nacos服务Nacos
 			nacosx.RegisterInstance(
@@ -171,11 +171,11 @@ func (e *Engine) initConfig() {
 func (e *Engine) initCommon() {
 	var serverName = e.config.Server.Name
 	// 初始化日志
-	e.runConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
+	e.RunConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
 	// 连接数据库
 	if e.flag[MultiDB] {
 		e.config.MultiDatabase = anyx.IfZero(e.config.MultiDatabase, &gormx.MultiDatabase{})
-		e.runConfigurator(e.config.MultiDatabase)
+		e.RunConfigurator(e.config.MultiDatabase)
 		if gormx.Initialized() && gormx.This().Multi {
 			for source := range gormx.This().DBMap {
 				if dst, ok := e.gormTables[source]; ok {
@@ -188,7 +188,7 @@ func (e *Engine) initCommon() {
 		}
 	} else if !gormx.Initialized() {
 		e.config.Database = anyx.IfZero(e.config.Database, &gormx.Database{})
-		e.runConfigurator(e.config.Database)
+		e.RunConfigurator(e.config.Database)
 		if dst, ok := e.gormTables["default"]; ok {
 			if err := gormx.This().InitGormTable("default", dst...); err != nil {
 				log.Error("初始化数据库表失败!")
@@ -199,10 +199,10 @@ func (e *Engine) initCommon() {
 	// 连接redis
 	if e.flag[MultiRedis] {
 		e.config.MultiRedis = anyx.IfZero(e.config.MultiRedis, &redisx.MultiRedis{})
-		e.runConfigurator(e.config.MultiRedis)
+		e.RunConfigurator(e.config.MultiRedis)
 	} else if !redisx.Initialized() {
 		e.config.Redis = anyx.IfZero(e.config.Redis, &redisx.Redis{})
-		e.runConfigurator(e.config.Redis)
+		e.RunConfigurator(e.config.Redis)
 	}
 	e.flag[InitCommonAlready] = true
 }
@@ -225,7 +225,7 @@ func (e *Engine) runCustomFunc() {
 }
 
 // 添加配置器
-func (e *Engine) AddConfig(conf ...configx.Configurator[any]) {
+func (e *Engine) AddConfigurator(conf ...configx.Configurator[any]) {
 	if len(conf) > 0 {
 		e.configurators = append(e.configurators, conf...)
 	}
@@ -235,14 +235,14 @@ func (e *Engine) AddConfig(conf ...configx.Configurator[any]) {
 func (e *Engine) runConfigurators() {
 	if e.configurators != nil && len(e.configurators) > 0 {
 		for _, config := range e.configurators {
-			e.runConfigurator(config)
+			e.RunConfigurator(config)
 		}
 	}
 	e.flag[RunConfiguratorsAlready] = true
 }
 
-// 加载配置器
-func (e *Engine) runConfigurator(conf configx.Configurator[any], must ...bool) {
+// 运行配置器
+func (e *Engine) RunConfigurator(conf configx.Configurator[any], must ...bool) {
 	var ok bool
 	if len(must) > 0 {
 		ok = must[0]
