@@ -10,13 +10,6 @@ import (
 	"strings"
 )
 
-const (
-	GET    = "GET"
-	POST   = "POST"
-	PUT    = "PUT"
-	DELETE = "DELETE"
-)
-
 type Request struct {
 	url    string
 	method string
@@ -74,7 +67,17 @@ func (r *Request) SetHeader(key, value string) *Request {
 	return r
 }
 
-func (r *Request) Do() ([]byte, error) {
+func (r *Request) Authorization(token string) *Request {
+	r.SetHeader("Authorization", token)
+	return r
+}
+
+func (r *Request) Cookie(cookie string) *Request {
+	r.SetHeader("Cookie", cookie)
+	return r
+}
+
+func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 	var body io.Reader
 	var contentType string
 	if r.form != nil {
@@ -86,9 +89,10 @@ func (r *Request) Do() ([]byte, error) {
 		marshal, _ := json.Marshal(r.body)
 		body = bytes.NewReader(marshal)
 	}
-	req, err := http.NewRequest(r.url, r.url, body)
+	var req *http.Request
+	req, err = http.NewRequest(r.url, r.url, body)
 	if err != nil {
-		return nil, err
+		return
 	}
 	req.Header.Set("Content-Type", contentType)
 	if r.header != nil && len(r.header) > 0 {
@@ -96,15 +100,17 @@ func (r *Request) Do() ([]byte, error) {
 			req.Header.Set(key, val)
 		}
 	}
+	// 切换http客户端
 	var resp *http.Response
-	resp, err = httpClient().Do(req)
+	resp, err = SwitchClient(modeAndParam...).Do(req)
 	if err != nil {
-		return nil, err
+		return
 	}
 	defer func(resp *http.Response) {
 		_ = resp.Body.Close()
 	}(resp)
-	return io.ReadAll(resp.Body)
+	res, err = io.ReadAll(resp.Body)
+	return
 }
 
 // map转为Url
