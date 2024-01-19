@@ -4,28 +4,28 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-xuan/quanx/importx/ginx"
+	"github.com/go-xuan/quanx/importx/marshalx"
 	"strings"
 	"time"
 
 	"github.com/go-xuan/quanx/importx/nacosx"
 	"github.com/go-xuan/quanx/utilx/filex"
-	"github.com/go-xuan/quanx/utilx/marshalx"
 )
 
 var Apps []*App
 
 // 微服务网关配置
 type App struct {
-	Name   string   `yaml:"name" json:"name"`     // 微服务名称
-	Group  string   `yaml:"group" json:"group"`   // 微服务分组
-	Prefix string   `yaml:"prefix" json:"prefix"` // 微服务API前缀
-	Router string   `yaml:"router" json:"router"` // 路由规则
-	Auth   string   `yaml:"auth" json:"auth"`     // 鉴权方式(cookie/token/no_auth)
-	Skip   []string `yaml:"skip" json:"skip"`     // 跳过鉴权(白名单)
+	Name     string   `yaml:"name" json:"name"`         // 微服务名称
+	Group    string   `yaml:"group" json:"group"`       // 微服务分组
+	Prefix   string   `yaml:"prefix" json:"prefix"`     // 微服务API前缀
+	Router   string   `yaml:"router" json:"router"`     // 路由规则
+	AuthType string   `yaml:"authType" json:"authType"` // 鉴权方式(cookie/token/no)
+	Skip     []string `yaml:"skip" json:"skip"`         // 跳过鉴权(白名单)
 }
 
 // 获取微服务addr
-func GetServerProxyAddr(group, dataId, url string) (addr string, auth string, err error) {
+func GetServerProxyAddr(group, dataId, url string) (addr string, authType string, err error) {
 	err = ListenConfigChanged(group, dataId)
 	if err != nil {
 		err = errors.New("监听微服务网关配置失败 ：" + err.Error())
@@ -33,11 +33,11 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, auth string, er
 	}
 	for _, server := range Apps {
 		if MatchUrl(url, server.Router) {
-			auth = server.Auth
-			if auth != ginx.NoAuth && len(server.Skip) > 0 {
+			authType = server.AuthType
+			if authType != ginx.NoAuth && len(server.Skip) > 0 {
 				for _, item := range server.Skip {
 					if strings.Contains(url, strings.TrimSpace(item)) {
-						auth = ginx.NoAuth
+						authType = ginx.NoAuth
 					}
 				}
 			}

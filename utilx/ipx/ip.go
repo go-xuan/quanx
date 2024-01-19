@@ -30,39 +30,29 @@ func GetWLANIP() string {
 }
 
 // 检测IP是否存在
-func CheckIpExist(ruleList []string, ip string) bool {
-	if ruleList == nil || len(ruleList) == 0 || ip == "" {
-		return false
-	}
-	for _, rule := range ruleList {
-		if len(strings.Split(rule, `-`)) > 1 {
-			// rule == "a.b.c.x-a.b.c.y"
-			beginIp, endIp, _ := strings.Cut(rule, `-`)
-			prefix, num := SplitIpByLastPoint(ip)
-			prefixBegin, min := SplitIpByLastPoint(beginIp)
-			prefixEnd, max := SplitIpByLastPoint(endIp)
-			if prefix == prefixBegin && num >= min && prefix == prefixEnd && num <= max {
-				return true
-			}
-		} else {
-			ruleNos := strings.Split(rule, `.`)
-			ipNos := strings.Split(ip, `.`)
-			switch len(ruleNos) {
-			case 1:
-				return ruleNos[0] == "*"
-			case 2:
-				if ipNos[0] == ruleNos[0] && ruleNos[1] == "*" {
+func CheckIpExist(rules []string, ip string) bool {
+	if len(rules) > 0 && ip != "" {
+		for _, rule := range rules {
+			if len(strings.Split(rule, `-`)) > 1 {
+				// rule == "a.b.c.x-a.b.c.y"
+				ruleStart, ruleEnd, _ := strings.Cut(rule, `-`)
+				prefix, num := SplitIpByLastPoint(ip)
+				startPrefix, minNum := SplitIpByLastPoint(ruleStart)
+				endPrefix, maxNum := SplitIpByLastPoint(ruleEnd)
+				if prefix == startPrefix && num >= minNum && prefix == endPrefix && num <= maxNum {
 					return true
 				}
-			case 3:
-				if ipNos[0] == ruleNos[0] && ipNos[1] == ruleNos[1] && ruleNos[2] == "*" {
-					return true
-				}
-			case 4:
-				if ipNos[0] == ruleNos[0] && ipNos[1] == ruleNos[1] && ipNos[2] == ruleNos[2] {
-					if ruleNos[3] == "*" || ruleNos[3] == ipNos[3] {
-						return true
-					}
+			} else {
+				ruleNum, ipNum := strings.Split(rule, `.`), strings.Split(ip, `.`)
+				switch len(ruleNum) {
+				case 1:
+					return ruleNum[0] == "*"
+				case 2:
+					return ipNum[0] == ruleNum[0] && ruleNum[1] == "*"
+				case 3:
+					return ipNum[0] == ruleNum[0] && ipNum[1] == ruleNum[1] && ruleNum[2] == "*"
+				case 4:
+					return ipNum[0] == ruleNum[0] && ipNum[1] == ruleNum[1] && ipNum[2] == ruleNum[2] && (ruleNum[3] == "*" || ruleNum[3] == ipNum[3])
 				}
 			}
 		}

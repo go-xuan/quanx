@@ -2,6 +2,7 @@ package quanx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/importx/marshalx"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -16,7 +17,6 @@ import (
 	"github.com/go-xuan/quanx/importx/redisx"
 	"github.com/go-xuan/quanx/utilx/anyx"
 	"github.com/go-xuan/quanx/utilx/ipx"
-	"github.com/go-xuan/quanx/utilx/marshalx"
 )
 
 var engine *Engine

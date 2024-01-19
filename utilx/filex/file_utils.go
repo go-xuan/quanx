@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"net/url"
@@ -131,20 +130,21 @@ func WriteFileLine(filePath string, content []string, mode ...int) error {
 }
 
 // 写入json文件
-func WriteJson(path string, obj interface{}) error {
+func WriteJson(filePath string, obj interface{}) error {
 	jsonByte, err := json.MarshalIndent(obj, "", "	")
 	if err != nil {
 		return err
 	}
-	if err = os.WriteFile(path, jsonByte, 0644); err != nil {
+	CreateDirNotExist(filePath)
+	if err = os.WriteFile(filePath, jsonByte, 0644); err != nil {
 		return err
 	}
 	return nil
 }
 
 // 写入csv文件
-func WriteCSV(path string, data [][]string) error {
-	file, err := os.OpenFile(path, Overwrite, 0644)
+func WriteCSV(filePath string, data [][]string) error {
+	file, err := os.OpenFile(filePath, Overwrite, 0644)
 	if err != nil {
 		return err
 	}
@@ -235,19 +235,20 @@ func Exists(path string) bool {
 }
 
 // 创建文件
-func Create(path string) {
+func Create(path string) error {
 	f, err := os.Create(path)
 	defer func(f *os.File) {
 		_ = f.Close()
 	}(f)
 	if err != nil {
-		log.Error("create file error: ", err.Error())
+		return err
 	}
+	return nil
 }
 
 // 创建文件
-func CreateDirNotExist(path string) {
-	dir, _ := filepath.Split(path)
+func CreateDirNotExist(filePath string) {
+	dir, _ := filepath.Split(filePath)
 	if !Exists(dir) {
 		CreateDir(dir)
 	}

@@ -2,19 +2,22 @@ package ginx
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/quanx/importx/encryptx"
 
 	"github.com/go-xuan/quanx/commonx/respx"
-	"github.com/go-xuan/quanx/utilx/encryptx"
 	"github.com/go-xuan/quanx/utilx/ipx"
-	"github.com/go-xuan/quanx/utilx/stringx"
 )
 
 const (
-	AuthType = "auth-type" // 鉴权方式
-	NoAuth   = "no_auth"   // 免鉴权标识
+	AuthType = "auth_type" // 鉴权方式
+	NoAuth   = "no"        // 免鉴权标识
 	Token    = "token"     // token标识
 	Cookie   = "cookie"    // cookie鉴权标识
 )
+
+func SetAuthType(ctx *gin.Context, authType string) {
+	ctx.Request.Header.Set(AuthType, authType)
+}
 
 func RemoveCookie(ctx *gin.Context) {
 	ctx.SetCookie(Cookie, "", -1, "", "", false, true)
@@ -34,53 +37,41 @@ func SetCookie(ctx *gin.Context, username string, age ...int) {
 	ctx.SetCookie(Cookie, cookie, maxAge, "", "", false, true)
 }
 
-func IP() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		ip := ctx.ClientIP()
-		if ip == "::1" {
-			ip = ipx.GetWLANIP()
-		}
-		ctx.Set("ip", ip)
-		ctx.Next()
-		return
+func CorrectIP(ctx *gin.Context) {
+	ip := ctx.ClientIP()
+	if ip == "::1" {
+		ip = ipx.GetWLANIP()
 	}
+	ctx.Set("ip", ip)
+	ctx.Next()
+	return
 }
 
 // 白名单
-func WhiteList(whiteUri ...string) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		if len(whiteUri) > 0 && stringx.ContainsAny(ctx.Request.URL.Path, whiteUri...) {
-			ctx.Set(AuthType, NoAuth)
-		}
-		ctx.Next()
-		return
-	}
+func NotAuth(ctx *gin.Context) {
+	SetAuthType(ctx, NoAuth)
+	ctx.Next()
+	return
 }
 
 // cookie鉴权
-func Auth() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var msg string
-		switch ctx.Request.Header.Get(AuthType) {
-		case NoAuth:
-			msg = ""
-		case Token:
-			msg = TokenAuth(ctx)
-		default:
-			msg = CookeAuth(ctx)
-		}
-		if msg != "" {
-			ctx.Abort()
-			respx.Exception(ctx, respx.AuthErr, msg)
-		} else {
-			ctx.Next()
-		}
-		return
+func Auth(ctx *gin.Context) {
+	var msg string
+	switch ctx.Request.Header.Get(AuthType) {
+	case NoAuth:
+		msg = ""
+	case Token:
+		msg = TokenAuth(ctx)
+	default:
+		msg = CookeAuth(ctx)
 	}
-}
-
-func SetAuthType(ctx *gin.Context, authType string) {
-	ctx.Request.Header.Set(AuthType, authType)
+	if msg != "" {
+		ctx.Abort()
+		respx.Exception(ctx, respx.AuthErr, msg)
+	} else {
+		ctx.Next()
+	}
+	return
 }
 
 // cookie鉴权

@@ -3,11 +3,13 @@ package marshalx
 import (
 	"encoding/json"
 	"errors"
-	"github.com/BurntSushi/toml"
-	"github.com/go-xuan/quanx/utilx/filex"
-	"github.com/go-xuan/quanx/utilx/marshalx/propertiesx"
-	"gopkg.in/yaml.v3"
+	"github.com/go-xuan/quanx/importx/marshalx/propertiesx"
 	"os"
+
+	"github.com/BurntSushi/toml"
+	"gopkg.in/yaml.v3"
+
+	"github.com/go-xuan/quanx/utilx/filex"
 )
 
 // 读取配置文件到指针
