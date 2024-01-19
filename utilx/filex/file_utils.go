@@ -7,8 +7,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -86,6 +86,7 @@ func ContentReplace(filePath string, replaces map[string]string) error {
 
 // 写入文件
 func WriteFile(filePath, content string, mode ...int) error {
+	CreateDirNotExist(filePath)
 	var flag = Overwrite
 	if len(mode) > 0 {
 		flag = mode[0]
@@ -240,17 +241,25 @@ func Create(path string) {
 		_ = f.Close()
 	}(f)
 	if err != nil {
-		log.Fatalf("db connect error: %#v\n", err.Error())
+		log.Error("create file error: ", err.Error())
+	}
+}
+
+// 创建文件
+func CreateDirNotExist(path string) {
+	dir, _ := filepath.Split(path)
+	if !Exists(dir) {
+		CreateDir(dir)
 	}
 }
 
 // 创建文件夹
-func CreateDir(path string) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+func CreateDir(dir string) {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		// 先创建文件夹
-		_ = os.MkdirAll(path, os.ModePerm)
+		_ = os.MkdirAll(dir, os.ModePerm)
 		// 再修改权限
-		_ = os.Chmod(path, os.ModePerm)
+		_ = os.Chmod(dir, os.ModePerm)
 	}
 }
 

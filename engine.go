@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -16,7 +17,6 @@ import (
 	"github.com/go-xuan/quanx/utilx/anyx"
 	"github.com/go-xuan/quanx/utilx/ipx"
 	"github.com/go-xuan/quanx/utilx/marshalx"
-	"github.com/go-xuan/quanx/utilx/stringx"
 )
 
 var engine *Engine
@@ -85,7 +85,6 @@ const (
 	InitCommonAlready                   // 已初始化基础配置
 	RunCustomFuncAlready                // 已执行自定义函数
 	RunConfiguratorsAlready             // 已执行配置器
-	EnableTableCrud                     // 自动注册表模型的增删改查接口
 )
 
 // 服务配置
@@ -99,7 +98,7 @@ type Server struct {
 
 // 服务地址
 func (s *Server) HttpUrl() string {
-	return fmt.Sprintf(`http://%s:%d/%s`, s.Host, s.Port, stringx.TrimPrefix(s.Prefix, "/"))
+	return fmt.Sprintf(`http://%s:%d/%s`, s.Host, s.Port, strings.TrimPrefix(s.Prefix, "/"))
 }
 
 // 服务运行

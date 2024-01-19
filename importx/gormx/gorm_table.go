@@ -1,9 +1,9 @@
 package gormx
 
 type Table[T any] interface {
-	TableName() string
-	Comment() string
-	InitData() interface{}
+	TableName() string     // 表名
+	Comment() string       // 表注释
+	InitData() interface{} // 表初始数据
 }
 
 // 初始化表结构（基于接口实现）
@@ -13,13 +13,23 @@ func (h *Handler) InitGormTable(source string, dst ...Table[any]) (err error) {
 		if conf.Debug {
 			for _, table := range dst {
 				if db.Migrator().HasTable(table) {
-					err = db.Migrator().AutoMigrate(table)
-					if err != nil {
+					if err = db.Migrator().AutoMigrate(table); err != nil {
 						return
 					}
+					var count int64
+					if err = db.Model(table).Count(&count).Error; err != nil {
+						return
+					} else if count == 0 {
+						// 初始化表数据
+						if initData := table.InitData(); initData != nil {
+							err = db.Create(initData).Error
+							if err != nil {
+								return
+							}
+						}
+					}
 				} else {
-					err = db.Migrator().CreateTable(table)
-					if err != nil {
+					if err = db.Migrator().CreateTable(table); err != nil {
 						return
 					}
 					// 添加表备注

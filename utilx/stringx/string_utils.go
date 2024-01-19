@@ -6,20 +6,20 @@ import (
 	"github.com/go-xuan/quanx/utilx/mathx"
 )
 
-// 去除前缀
-func TrimPrefix(s, prefix string) string {
-	if strings.HasPrefix(s, prefix) {
-		return s[len(prefix):]
-	}
-	return s
-}
-
 // 添加前缀
 func AddPrefix(s, prefix string) string {
 	if strings.HasPrefix(s, prefix) {
 		return s
 	}
 	return prefix + s
+}
+
+// 添加前缀
+func AddSuffix(s, suffix string) string {
+	if strings.HasSuffix(s, suffix) {
+		return s
+	}
+	return s + suffix
 }
 
 // 字符串是否包含

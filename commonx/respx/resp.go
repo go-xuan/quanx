@@ -25,45 +25,25 @@ func BuildResponse(ctx *gin.Context, data interface{}, err error) {
 
 // 成功响应
 func BuildSuccess(ctx *gin.Context, data interface{}) {
-	response := &Response{
-		Code: Success.Code,
-		Msg:  Success.Msg,
-		Data: data,
-	}
-	ctx.JSON(http.StatusOK, response)
+	ctx.JSON(http.StatusOK, &Response{Code: Success.Code, Msg: Success.Msg, Data: data})
 }
 
 // 错误响应
 func BuildError(ctx *gin.Context, err error) {
-	response := &Response{
-		Code: Error.Code,
-		Msg:  Error.Msg,
-		Data: err.Error(),
-	}
-	log.Error("server error ： ", err)
-	ctx.JSON(http.StatusInternalServerError, response)
+	log.Error(Error.Msg, err)
+	ctx.JSON(http.StatusInternalServerError, &Response{Code: Error.Code, Msg: Error.Msg, Data: err.Error()})
 }
 
 // 自定义错误响应
 func Custom(ctx *gin.Context, code int, msg string, data interface{}) {
-	response := &Response{
-		Code: code,
-		Msg:  msg,
-		Data: data,
-	}
 	log.Error(msg, data)
-	ctx.JSON(http.StatusInternalServerError, response)
+	ctx.JSON(http.StatusInternalServerError, &Response{Code: code, Msg: msg, Data: data})
 }
 
 // 异常响应
 func Exception(ctx *gin.Context, enum Enum, data interface{}) {
-	response := &Response{
-		Code: enum.Code,
-		Msg:  enum.Msg,
-		Data: data,
-	}
 	log.Error(enum.Msg, data)
-	ctx.JSON(http.StatusInternalServerError, response)
+	ctx.JSON(http.StatusInternalServerError, &Response{Code: enum.Code, Msg: enum.Msg, Data: data})
 }
 
 // 参数必填
