@@ -48,6 +48,7 @@ func IsEmail(s string) bool {
 func IsPassword(s string) bool {
 	return RegMatch(PasswordRegex, s)
 }
+
 func IsDatetime(s string) bool {
 	return RegMatch(DatetimeRegex, s)
 }

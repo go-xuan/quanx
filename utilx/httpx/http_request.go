@@ -11,14 +11,14 @@ import (
 )
 
 type Request struct {
-	url    string
 	method string
+	url    string
 	header map[string]string
 	body   interface{}
 	form   url.Values
 }
 
-func New(method ...string) *Request {
+func Method(method ...string) *Request {
 	if len(method) > 0 {
 		return &Request{method: method[0]}
 	}
@@ -42,10 +42,12 @@ func (r *Request) Method(method string) *Request {
 	r.method = method
 	return r
 }
+
 func (r *Request) Header(header map[string]string) *Request {
 	r.header = header
 	return r
 }
+
 func (r *Request) Body(body interface{}) *Request {
 	r.body = body
 	return r
@@ -75,6 +77,22 @@ func (r *Request) Authorization(token string) *Request {
 func (r *Request) Cookie(cookie string) *Request {
 	r.SetHeader("Cookie", cookie)
 	return r
+}
+
+func (r *Request) DoHttp() (res []byte, err error) {
+	return r.Do()
+}
+
+func (r *Request) DoProxy(proxyUrl string) (res []byte, err error) {
+	return r.Do(Proxy, proxyUrl)
+}
+
+func (r *Request) DoHttps(crt string) (res []byte, err error) {
+	return r.Do(Https, crt)
+}
+
+func (r *Request) DoHttpsProxy(proxyUrl, crt string) (res []byte, err error) {
+	return r.Do(HttpsProxy, proxyUrl, crt)
 }
 
 func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {

@@ -8,11 +8,11 @@ type Time time.Time
 type Date time.Time
 
 func (t *Time) UnmarshalJSON(data []byte) error {
-	tt, err := time.ParseInLocation(`"`+TimeFmt+`"`, string(data), time.Local)
+	location, err := time.ParseInLocation(`"2006-01-02 15:04:05"`, string(data), time.Local)
 	if err != nil {
 		return err
 	}
-	*t = Time(tt)
+	*t = Time(location)
 	return nil
 }
 
@@ -29,11 +29,11 @@ func (t *Time) String() string {
 }
 
 func (t *Date) UnmarshalJSON(data []byte) error {
-	tt, err := time.ParseInLocation(`"`+TimeFmt+`"`, string(data), time.Local)
+	location, err := time.ParseInLocation(`"2006-01-02"`, string(data), time.Local)
 	if err != nil {
 		return err
 	}
-	*t = Date(tt)
+	*t = Date(location)
 	return nil
 }
 

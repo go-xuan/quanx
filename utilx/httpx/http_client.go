@@ -12,8 +12,8 @@ import (
 
 const (
 	Http       = "HTTP"
+	Proxy      = "Proxy"
 	Https      = "HTTPS"
-	HttpProxy  = "httpProxy"
 	HttpsProxy = "httpsProxy"
 	GET        = "GET"
 	POST       = "POST"
@@ -44,7 +44,7 @@ func httpClient() *Client {
 func SwitchClient(modeAndParam ...string) *Client {
 	if len(modeAndParam) == 2 && modeAndParam[0] == Https {
 		client = newHttpsClient(modeAndParam[1])
-	} else if len(modeAndParam) == 2 && modeAndParam[0] == HttpProxy {
+	} else if len(modeAndParam) == 2 && modeAndParam[0] == Proxy {
 		client = newHttpProxyClient(modeAndParam[1])
 	} else if len(modeAndParam) == 3 && modeAndParam[0] == HttpsProxy {
 		client = newHttpsProxyClient(modeAndParam[1], modeAndParam[2])
@@ -76,12 +76,12 @@ func newHttpsClient(crt string) *Client {
 }
 
 func newHttpProxyClient(proxyUrl string) *Client {
-	if client == nil || client.mode != HttpProxy {
+	if client == nil || client.mode != Proxy {
 		var transport = newTransport()
 		if proxyURL, err := url.Parse(proxyUrl); err == nil {
 			transport.Proxy = http.ProxyURL(proxyURL)
 		}
-		client = &Client{mode: HttpProxy, client: &http.Client{Transport: transport}}
+		client = &Client{mode: Proxy, client: &http.Client{Transport: transport}}
 	}
 	return client
 }

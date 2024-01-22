@@ -81,6 +81,17 @@ func YesterdayStr() string {
 	return time.Now().AddDate(0, 0, -1).Format(DateFmt)
 }
 
+// 是否闰年
+func IsLeapYear(year int) bool {
+	if year <= 0 {
+		return false
+	}
+	if (year%4 == 0 && year%100 != 0) || year%400 == 0 {
+		return true
+	}
+	return false
+}
+
 // 获取生肖
 func ShengXiao(year int) string {
 	for {
