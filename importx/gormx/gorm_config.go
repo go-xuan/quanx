@@ -115,7 +115,7 @@ func (d *Database) ToString(title string) string {
 
 // 配置器名称
 func (d *Database) Title() string {
-	return "inti database"
+	return "init database"
 }
 
 func (d *Database) Reader() *configx.Reader {

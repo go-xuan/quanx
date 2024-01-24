@@ -2,7 +2,6 @@ package quanx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/importx/marshalx"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/go-xuan/quanx/configx"
 	"github.com/go-xuan/quanx/importx/gormx"
 	"github.com/go-xuan/quanx/importx/logx"
+	"github.com/go-xuan/quanx/importx/marshalx"
 	"github.com/go-xuan/quanx/importx/nacosx"
 	"github.com/go-xuan/quanx/importx/redisx"
 	"github.com/go-xuan/quanx/utilx/anyx"
@@ -29,7 +29,7 @@ func GetEngine(modes ...Flag) *Engine {
 			customFuncs:    make([]CustomFunc, 0),
 			configurators:  make([]configx.Configurator[any], 0),
 			ginMiddlewares: make([]gin.HandlerFunc, 0),
-			gormTables:     make(map[string][]gormx.Table[any]),
+			gormTables:     make(map[string][]gormx.Tabler[any]),
 			flag:           make(map[Flag]bool),
 		}
 		gin.SetMode(gin.ReleaseMode)
@@ -45,15 +45,15 @@ func GetServer() *Server {
 
 // 服务配置器
 type Engine struct {
-	flag           map[Flag]bool                 // 服务运行标识
-	config         *Config                       // 服务配置 使用 initConfig()将配置文件加载到此
-	configDir      string                        // 服务配置文件文件夹, 使用 SetConfigDir()设置配置文件路径
-	configurators  []configx.Configurator[any]   // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
-	customFuncs    []CustomFunc                  // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
-	ginEngine      *gin.Engine                   // gin框架实例
-	ginLoaders     []RouterLoader                // gin路由的预加载方法，使用 AddGinRouter()添加自行实现的路由注册方法
-	ginMiddlewares []gin.HandlerFunc             // gin中间件的预加载方法，使用 AddGinRouter()添加gin中间件
-	gormTables     map[string][]gormx.Table[any] // gorm表结构对象，使用 AddTable()/ AddSourceTable() 添加至表结构初始化任务列表，需要实现 gormx.Table 接口
+	flag           map[Flag]bool                  // 服务运行标识
+	config         *Config                        // 服务配置 使用 initConfig()将配置文件加载到此
+	configDir      string                         // 服务配置文件文件夹, 使用 SetConfigDir()设置配置文件路径
+	configurators  []configx.Configurator[any]    // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
+	customFuncs    []CustomFunc                   // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
+	ginEngine      *gin.Engine                    // gin框架实例
+	ginLoaders     []RouterLoader                 // gin路由的预加载方法，使用 AddGinRouter()添加自行实现的路由注册方法
+	ginMiddlewares []gin.HandlerFunc              // gin中间件的预加载方法，使用 AddGinRouter()添加gin中间件
+	gormTables     map[string][]gormx.Tabler[any] // gorm表结构对象，使用 AddTable()/ AddSourceTable() 添加至表结构初始化任务列表，需要实现 gormx.Tabler 接口
 }
 
 // 服务配置
@@ -332,13 +332,13 @@ func (e *Engine) GetConfigPath(name string) string {
 	return anyx.IfZeroElse(e.configDir, name, filepath.Join(e.configDir, name))
 }
 
-// 添加需要初始化的 gormx.Table 模型
-func (e *Engine) AddTable(dst ...gormx.Table[any]) {
+// 添加需要初始化的 gormx.Tabler 模型
+func (e *Engine) AddTable(dst ...gormx.Tabler[any]) {
 	e.AddSourceTable("default", dst...)
 }
 
 // 添加需要某个数据源的gormx.Table模型
-func (e *Engine) AddSourceTable(source string, dst ...gormx.Table[any]) {
+func (e *Engine) AddSourceTable(source string, dst ...gormx.Tabler[any]) {
 	if len(dst) > 0 {
 		e.gormTables[source] = append(e.gormTables[source], dst...)
 	}
