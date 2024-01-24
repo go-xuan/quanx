@@ -170,7 +170,7 @@ func (e *Engine) initConfig() {
 
 // 初始化日志/Nacos/gorm/Redis
 func (e *Engine) initCommon() {
-	var serverName = e.config.Server.Name
+	var serverName = anyx.IfZero(e.config.Server.Name, "app")
 	// 初始化日志
 	e.RunConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
 	// 连接数据库
