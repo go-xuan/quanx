@@ -139,13 +139,15 @@ func (e *Engine) STARTGIN() {
 func (e *Engine) initConfig() {
 	var config = &Config{Server: &Server{}}
 	// 读取本地配置
-	var path = e.GetConfigPath("config.yaml")
-	if err := marshalx.LoadFromFile(config, path); err != nil {
-		log.Error("加载服务配置失败!")
-		panic(err)
-	}
-	if config.Server.Host == "" {
-		config.Server.Host = ipx.GetWLANIP()
+	if !e.flag[DisableGin] {
+		var path = e.GetConfigPath("config.yaml")
+		if err := marshalx.LoadFromFile(config, path); err != nil {
+			log.Error("加载服务配置失败!")
+			panic(err)
+		}
+		if config.Server.Host == "" {
+			config.Server.Host = ipx.GetWLANIP()
+		}
 	}
 	// 初始化nacos
 	if e.flag[EnableNacos] && config.Nacos != nil {
