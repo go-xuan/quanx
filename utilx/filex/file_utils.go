@@ -136,7 +136,17 @@ func WriteJson(filePath string, obj interface{}) error {
 		return err
 	}
 	CreateDirNotExist(filePath)
-	if err = os.WriteFile(filePath, jsonByte, 0644); err != nil {
+	var file *os.File
+	file, err = os.OpenFile(filePath, Overwrite, 0644)
+	if err != nil {
+		return err
+	}
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+	writer := bufio.NewWriter(file)
+	_, _ = writer.Write(jsonByte)
+	if err = writer.Flush(); err != nil {
 		return err
 	}
 	return nil
@@ -144,6 +154,7 @@ func WriteJson(filePath string, obj interface{}) error {
 
 // 写入csv文件
 func WriteCSV(filePath string, data [][]string) error {
+	CreateDirNotExist(filePath)
 	file, err := os.OpenFile(filePath, Overwrite, 0644)
 	if err != nil {
 		return err

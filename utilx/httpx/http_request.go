@@ -97,22 +97,20 @@ func (r *Request) DoHttpsProxy(proxyUrl, crt string) (res []byte, err error) {
 
 func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 	var body io.Reader
-	var contentType string
 	if r.form != nil {
 		r.method = POST
-		contentType = "application/x-www-form-urlencoded"
+		r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
 		body = strings.NewReader(r.form.Encode())
-	} else {
-		contentType = "application/json"
+	} else if r.body != nil {
+		r.SetHeader("Content-Type", "application/json")
 		marshal, _ := json.Marshal(r.body)
 		body = bytes.NewReader(marshal)
 	}
 	var req *http.Request
-	req, err = http.NewRequest(r.url, r.url, body)
+	req, err = http.NewRequest(r.method, r.url, body)
 	if err != nil {
 		return
 	}
-	req.Header.Set("Content-Type", contentType)
 	if r.header != nil && len(r.header) > 0 {
 		for key, val := range r.header {
 			req.Header.Set(key, val)
@@ -124,9 +122,7 @@ func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 	if err != nil {
 		return
 	}
-	defer func(resp *http.Response) {
-		_ = resp.Body.Close()
-	}(resp)
+	defer resp.Body.Close()
 	res, err = io.ReadAll(resp.Body)
 	return
 }

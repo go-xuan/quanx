@@ -8,7 +8,6 @@ import (
 
 // 执行shell命令
 func ExecCommand(dir, shell string) (out string, err error) {
-	fmt.Println(shell)
 	var obf bytes.Buffer
 	cmd := exec.Command("/bin/bash", "-c", shell)
 	cmd.Dir = dir
