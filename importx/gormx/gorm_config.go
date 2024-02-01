@@ -183,19 +183,6 @@ const (
 	Postgres = "postgres"
 )
 
-// 获取数据库连接DSN
-func (d *Database) GetDSN() (dsn string) {
-	switch strings.ToLower(d.Type) {
-	case Mysql:
-		dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?clientFoundRows=false&parseTime=true&timeout=1800s&charset=utf8&collation=utf8_general_ci&loc=Local",
-			d.Username, d.Password, d.Host, d.Port, d.Database)
-	case Postgres:
-		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			d.Host, d.Port, d.Username, d.Password, d.Database)
-	}
-	return
-}
-
 // 名称
 func (d *Database) CommentTableSql(table, comment string) string {
 	switch strings.ToLower(d.Type) {
@@ -209,15 +196,14 @@ func (d *Database) CommentTableSql(table, comment string) string {
 
 // 根据dsn生成gormDB
 func (d *Database) GetGormDB() (gormDb *gorm.DB, err error) {
+	var dial gorm.Dialector
 	switch strings.ToLower(d.Type) {
 	case Mysql:
-		dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?clientFoundRows=false&parseTime=true&timeout=1800s&charset=utf8&collation=utf8_general_ci&loc=Local",
-			d.Username, d.Password, d.Host, d.Port, d.Database)
-		return gorm.Open(mysql.Open(dsn), &gorm.Config{NamingStrategy: schema.NamingStrategy{SingularTable: true}})
+		dial = mysql.Open(fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?clientFoundRows=false&parseTime=true&timeout=1800s&charset=utf8&collation=utf8_general_ci&loc=Local",
+			d.Username, d.Password, d.Host, d.Port, d.Database))
 	case Postgres:
-		dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			d.Host, d.Port, d.Username, d.Password, d.Database)
-		return gorm.Open(postgres.Open(dsn), &gorm.Config{NamingStrategy: schema.NamingStrategy{SingularTable: true}})
+		dial = postgres.Open(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			d.Host, d.Port, d.Username, d.Password, d.Database))
 	}
-	return
+	return gorm.Open(dial, &gorm.Config{NamingStrategy: schema.NamingStrategy{SingularTable: true}})
 }

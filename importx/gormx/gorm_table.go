@@ -2,7 +2,7 @@ package gormx
 
 type Tabler[T any] interface {
 	TableName() string     // 表名
-	Comment() string       // 表注释
+	TableComment() string  // 表注释
 	InitData() interface{} // 表初始数据
 }
 
@@ -33,8 +33,8 @@ func (h *Handler) InitGormTable(source string, dst ...Tabler[any]) (err error) {
 						return
 					}
 					// 添加表备注
-					if tableName, comment := table.TableName(), table.Comment(); tableName != "" && comment != "" {
-						err = db.Exec(conf.CommentTableSql(tableName, comment)).Error
+					if name, comment := table.TableName(), table.TableComment(); name != "" && comment != "" {
+						err = db.Exec(conf.CommentTableSql(name, comment)).Error
 						if err != nil {
 							return
 						}
