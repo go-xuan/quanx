@@ -7,38 +7,38 @@ import (
 )
 
 // if执行方法
-func IfFunc(exp bool, ifF, elseF func()) {
+func IfElseFunc(exp bool, trueFunc, falseFunc func()) {
 	if exp {
-		ifF()
+		trueFunc()
 	} else {
-		elseF()
-	}
-}
-
-// 判空取默认值
-func IfZero[T any](target, v1 T) T {
-	if reflect.ValueOf(&target).Elem().IsZero() {
-		return v1
-	}
-	return target
-}
-
-// 判空
-func IfZeroElse[T any](target, v1, v2 T) T {
-	if reflect.ValueOf(&target).Elem().IsZero() {
-		return v1
-	} else {
-		return v2
+		falseFunc()
 	}
 }
 
 // if取值
-func IfElse[T any](exp bool, v1, v2 T) T {
+func IfElseValue[T any](exp bool, trueValue, falseValue T) T {
 	if exp {
-		return v1
+		return trueValue
 	} else {
-		return v2
+		return falseValue
 	}
+}
+
+// 判空
+func IfElseZero[T any](target, defaultValue, elseValue T) T {
+	if reflect.ValueOf(&target).Elem().IsZero() {
+		return defaultValue
+	} else {
+		return elseValue
+	}
+}
+
+// 判空取默认值
+func IfZero[T any](target, defaultValue T) T {
+	if reflect.ValueOf(&target).Elem().IsZero() {
+		return defaultValue
+	}
+	return target
 }
 
 // 设置默认值

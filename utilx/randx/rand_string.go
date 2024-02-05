@@ -84,7 +84,7 @@ func IdCard() string {
 	now := time.Now().Unix()
 	diff := Int64Range(1, now)
 	birthday := time.Unix(diff, 0).Format("20060102")
-	provinceCodes := strings.Split(HubeiProvincecode, ",")
+	provinceCodes := strings.Split(HubeiProvinceCode, ",")
 	x := IntRange(0, len(provinceCodes)-1)
 	sb.WriteString(provinceCodes[x])
 	sb.WriteString(birthday)

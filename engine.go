@@ -331,7 +331,7 @@ func (e *Engine) SetConfigDir(dir string) {
 
 // 设置配置文件
 func (e *Engine) GetConfigPath(name string) string {
-	return anyx.IfZeroElse(e.configDir, name, filepath.Join(e.configDir, name))
+	return anyx.IfElseZero(e.configDir, name, filepath.Join(e.configDir, name))
 }
 
 // 添加需要初始化的 gormx.Tabler 模型

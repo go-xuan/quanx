@@ -5,6 +5,7 @@ import "strings"
 type Id[T any] struct {
 	Id T `form:"id" json:"id" binding:"required"`
 }
+
 type Ids[T any] struct {
 	Ids []T `form:"ids" json:"ids" binding:"required"`
 }
