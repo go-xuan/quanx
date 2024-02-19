@@ -75,10 +75,10 @@ func SubString(s string, start, end int) string {
 	return string(r[start:end])
 }
 
-// 分割字符串
-func Cut(s, sep string, fromRight ...bool) (string, string) {
+// 分割字符串（默认从左数）
+func Cut(s, sep string, right ...bool) (string, string) {
 	if strings.Contains(s, sep) {
-		var i = anyx.IfElseValue(len(fromRight) > 0 && fromRight[0], strings.LastIndex(s, sep), strings.Index(s, sep))
+		var i = anyx.IfElseValue(len(right) > 0 && right[0], strings.LastIndex(s, sep), strings.Index(s, sep))
 		return s[:i], s[i+len(sep):]
 	}
 	return s, ""
@@ -94,8 +94,8 @@ func Insert(s, insert string, index ...int) string {
 	return s + insert
 }
 
-// 字符填充(将字符以固定长度填充,默认前缀填充)
-func Fill(s, fill string, length int, suffix ...bool) string {
+// 字符以固定长度填充（默认填充左边）
+func Fill(s, fill string, length int, right ...bool) string {
 	strLen, addLen := len(s), len(fill)
 	fillLen := length - strLen
 	if fillLen <= 0 && addLen == 0 {
@@ -105,7 +105,7 @@ func Fill(s, fill string, length int, suffix ...bool) string {
 	for i := 0; i < fillLen; i++ {
 		fillStr.WriteString(string(fill[i%addLen]))
 	}
-	return anyx.IfElseValue(len(suffix) > 0 && suffix[0], s+fillStr.String(), fillStr.String()+s)
+	return anyx.IfElseValue(len(right) > 0 && right[0], s+fillStr.String(), fillStr.String()+s)
 }
 
 // 转下划线

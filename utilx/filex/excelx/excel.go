@@ -2,9 +2,8 @@ package excelx
 
 import (
 	"encoding/json"
-	"github.com/go-xuan/quanx/utilx/filex"
-	"path"
 	"reflect"
+	"strings"
 
 	"github.com/tealeg/xlsx"
 	"github.com/tidwall/gjson"
@@ -127,10 +126,7 @@ func ExcelSplit(excelPath, sheetName string) (newExcelPath string, err error) {
 			}
 		}
 	}
-	dir, fileName := filex.SplitPath(excelPath)
-	fileName, _ = stringx.Cut(fileName, ".")
-
-	newExcelPath = path.Join(dir, fileName+"_split.xlsx")
+	newExcelPath = stringx.Insert(excelPath, "_split", strings.LastIndex(excelPath, ".")-1)
 	err = newExcelFile.Save(newExcelPath)
 	if err != nil {
 		return
