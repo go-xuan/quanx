@@ -21,7 +21,7 @@ const (
 type MultiRedis []*Redis
 
 // 配置信息格式化
-func (mr MultiRedis) Title() string {
+func (m MultiRedis) Title() string {
 	return "Init multi-redis"
 }
 
@@ -33,8 +33,8 @@ func (MultiRedis) Reader() *configx.Reader {
 	}
 }
 
-func (mr MultiRedis) Run() error {
-	if len(mr) == 0 {
+func (m MultiRedis) Run() error {
+	if len(m) == 0 {
 		log.Info("redis not connected! reason: multi-redis.yaml not found!")
 		return nil
 	}
@@ -42,7 +42,7 @@ func (mr MultiRedis) Run() error {
 		CmdMap:    make(map[string]redis.Cmdable),
 		ConfigMap: make(map[string]*Redis),
 	}
-	for i, r := range mr {
+	for i, r := range m {
 		if r.Enable {
 			var cmd = r.NewRedisCmdable()
 			ok, err := Ping(cmd)
