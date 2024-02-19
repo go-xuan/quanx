@@ -15,7 +15,6 @@ import (
 
 const ExcelTag = "excel"
 
-type SheetInfoList []*SheetInfo
 type SheetInfo struct {
 	SheetName string `json:"sheetName"`
 	StartRow  int    `json:"startRow"`
@@ -91,8 +90,8 @@ func ExcelSplit(excelPath, sheetName string) (newExcelPath string, err error) {
 	// 读取目标sheet
 	var theSheet = anyx.IfZero(xlsxFile.Sheet[sheetName], xlsxFile.Sheets[0])
 	// 新增sheet页
-	var NewExcelFile = xlsx.NewFile()
-	var addSheetList SheetInfoList
+	var newExcelFile = xlsx.NewFile()
+	var addSheetList []*SheetInfo
 	for rowNo, rowData := range theSheet.Rows {
 		// 如果是合并单元格
 		if rowData.Cells == nil || len(rowData.Cells) == 0 {
@@ -102,7 +101,7 @@ func ExcelSplit(excelPath, sheetName string) (newExcelPath string, err error) {
 			if len(addSheetName) > 30 {
 				addSheetName = addSheetName[:30]
 			}
-			_, err = NewExcelFile.AddSheet(addSheetName)
+			_, err = newExcelFile.AddSheet(addSheetName)
 			addSheetList = append(addSheetList, &SheetInfo{addSheetName, rowNo, 0})
 		} else {
 			continue
@@ -117,10 +116,10 @@ func ExcelSplit(excelPath, sheetName string) (newExcelPath string, err error) {
 		}
 	}
 	for _, item := range addSheetList {
-		if NewExcelFile.Sheet[item.SheetName] != nil {
+		if newExcelFile.Sheet[item.SheetName] != nil {
 			for rowNo, rowData := range theSheet.Rows {
 				if rowNo >= item.StartRow && rowNo <= item.EndRow {
-					row := NewExcelFile.Sheet[item.SheetName].AddRow()
+					row := newExcelFile.Sheet[item.SheetName].AddRow()
 					for _, cell := range rowData.Cells {
 						row.AddCell().Value = cell.Value
 					}
@@ -129,9 +128,10 @@ func ExcelSplit(excelPath, sheetName string) (newExcelPath string, err error) {
 		}
 	}
 	dir, fileName := filex.SplitPath(excelPath)
-	fileName, _ = stringx.CutFromLeft(fileName, ".")
+	fileName, _ = stringx.Cut(fileName, ".")
+
 	newExcelPath = path.Join(dir, fileName+"_split.xlsx")
-	err = NewExcelFile.Save(newExcelPath)
+	err = newExcelFile.Save(newExcelPath)
 	if err != nil {
 		return
 	}

@@ -1,6 +1,7 @@
 package stringx
 
 import (
+	"github.com/go-xuan/quanx/utilx/anyx"
 	"strings"
 
 	"github.com/go-xuan/quanx/utilx/mathx"
@@ -74,44 +75,37 @@ func SubString(s string, start, end int) string {
 	return string(r[start:end])
 }
 
-// 将字符串以左数数第一个分隔符分割
-func CutFromLeft(s, sep string) (left string, right string) {
+// 分割字符串
+func Cut(s, sep string, fromRight ...bool) (string, string) {
 	if strings.Contains(s, sep) {
-		i := strings.Index(s, sep)
-		left, right = s[:i], s[i+len(sep):]
-	} else {
-		left = s
+		var i = anyx.IfElseValue(len(fromRight) > 0 && fromRight[0], strings.LastIndex(s, sep), strings.Index(s, sep))
+		return s[:i], s[i+len(sep):]
 	}
-	return
+	return s, ""
 }
 
-// 将字符串以右数第一个分隔符分割
-func CutFromRight(s, sep string) (left string, right string) {
-	if strings.Contains(s, sep) {
-		i := strings.LastIndex(s, sep)
-		left, right = s[:i], s[i+len(sep):]
-	} else {
-		right = s
+// 插入字符串
+func Insert(s, insert string, index ...int) string {
+	if len(index) > 0 {
+		if i := index[0]; index[0] > 0 && index[0] < len(s) {
+			return s[:i] + insert + s[i:]
+		}
 	}
-	return
+	return s + insert
 }
 
 // 字符填充(将字符以固定长度填充,默认前缀填充)
-func Fill(s, add string, length int, suffix ...bool) string {
-	strLen, addLen := len(s), len(add)
+func Fill(s, fill string, length int, suffix ...bool) string {
+	strLen, addLen := len(s), len(fill)
 	fillLen := length - strLen
 	if fillLen <= 0 && addLen == 0 {
 		return s
 	}
 	fillStr := strings.Builder{}
 	for i := 0; i < fillLen; i++ {
-		fillStr.WriteString(string(add[i%addLen]))
+		fillStr.WriteString(string(fill[i%addLen]))
 	}
-	if len(suffix) > 0 && suffix[0] {
-		return s + fillStr.String()
-	} else {
-		return fillStr.String() + s
-	}
+	return anyx.IfElseValue(len(suffix) > 0 && suffix[0], s+fillStr.String(), fillStr.String()+s)
 }
 
 // 转下划线
