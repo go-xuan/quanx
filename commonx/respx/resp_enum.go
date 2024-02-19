@@ -12,5 +12,6 @@ var (
 	ParamErr    = Enum{Code: 10401, Msg: "请求参数错误"}
 	RequiredErr = Enum{Code: 10402, Msg: "请求参数必填"}
 	AuthErr     = Enum{Code: 10403, Msg: "鉴权失败"}
-	ExportErr   = Enum{Code: 10601, Msg: "导出失败"}
+	ImportErr   = Enum{Code: 10601, Msg: "导入失败"}
+	ExportErr   = Enum{Code: 10602, Msg: "导出失败"}
 )

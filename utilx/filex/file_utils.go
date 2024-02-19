@@ -216,14 +216,14 @@ func Pwd() string {
 }
 
 // 拆分为文件路径和文件名
-func SplitPath(path string) (dir string, file string) {
+func SplitPath(path string) (dir string, fileName string) {
 	if path == "" {
 		return
 	}
 	if stringx.ContainsAny(path, "/", "\\") {
-		dir, file = filepath.Split(path)
+		dir, fileName = filepath.Split(path)
 	} else {
-		dir, file = "", path
+		dir, fileName = "", path
 	}
 	return
 }
@@ -289,7 +289,7 @@ func Suffix(path string) string {
 
 // 获取文件名(不带后缀)
 func FileName(path string) string {
-	fullName := filepath.Base(path)
+	var fullName = filepath.Base(path)
 	return strings.TrimSuffix(fullName, filepath.Ext(fullName))
 }
 
@@ -301,11 +301,11 @@ func MustOpen(filePath string, fileName string) (*os.File, error) {
 	}
 	perm := CheckPermission(fileAbsPath)
 	if perm == true {
-		return nil, fmt.Errorf("file.CheckPermission Permission denied src: %s", fileAbsPath)
+		return nil, fmt.Errorf("file permission denied src: %s", fileAbsPath)
 	}
-	err = NotExistCreateFile(fileAbsPath)
+	err = CreateIsNotExist(fileAbsPath)
 	if err != nil {
-		return nil, fmt.Errorf("file.IsNotExistMkDir src: %s, err: %v", fileAbsPath, err)
+		return nil, fmt.Errorf("CreateIsNotExist src: %s, err: %v", fileAbsPath, err)
 	}
 	var file *os.File
 	file, err = Open(fileAbsPath, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
@@ -331,7 +331,7 @@ func CheckPermission(src string) bool {
 }
 
 // 不存在即创建
-func NotExistCreateFile(src string) error {
+func CreateIsNotExist(src string) error {
 	_, err := os.Stat(src)
 	if notExist := os.IsNotExist(err); notExist == true {
 		if _, err = os.Create(src); err != nil {

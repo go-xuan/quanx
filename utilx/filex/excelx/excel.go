@@ -1,14 +1,19 @@
 package excelx
 
 import (
+	"encoding/json"
+	"github.com/go-xuan/quanx/utilx/filex"
 	"path"
 	"reflect"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/tealeg/xlsx"
+	"github.com/tidwall/gjson"
 
+	"github.com/go-xuan/quanx/utilx/anyx"
 	"github.com/go-xuan/quanx/utilx/stringx"
 )
+
+const ExcelTag = "excel"
 
 type SheetInfoList []*SheetInfo
 type SheetInfo struct {
@@ -41,41 +46,50 @@ func DefaultStyle() *xlsx.Style {
 	}
 }
 
-func GetHeadersByStruct(st interface{}) (result []*Header) {
-	typeRef := reflect.TypeOf(st)
+func GetHeadersByReflect(obj interface{}) []*Header {
+	var result []*Header
+	var typeRef = reflect.TypeOf(obj)
 	for i := 0; i < typeRef.NumField(); i++ {
-		if typeRef.Field(i).Tag.Get("export") != "" {
+		if typeRef.Field(i).Tag.Get(ExcelTag) != "" {
 			result = append(result, &Header{
 				Key:  typeRef.Field(i).Tag.Get("json"),
-				Name: typeRef.Field(i).Tag.Get("export"),
+				Name: typeRef.Field(i).Tag.Get(ExcelTag),
 			})
 		}
 	}
-	return
+	return result
+}
+
+func ExcelTagMapping(obj interface{}) map[string]string {
+	var result = make(map[string]string)
+	var headers = GetHeadersByReflect(obj)
+	for _, header := range headers {
+		result[header.Name] = header.Key
+	}
+	return result
+}
+
+func GetSheet(filePath string, sheetName string) (*xlsx.Sheet, error) {
+	if xlsxFile, err := xlsx.OpenFile(filePath); err != nil {
+		return nil, err
+	} else {
+		sheet := anyx.IfZero(xlsxFile.Sheet[sheetName], xlsxFile.Sheets[0])
+		return sheet, nil
+	}
 }
 
 // 在目标sheet页中，根据【具有合并单元格的行】进行横向拆分
 // 取合【并单元格的值】作为拆分出的新sheet名
 // excelPath:目标excel
 // sheetName:目标sheet页,默认取第一个sheet页
-func ExcelSplit(excelPath, sheetName string) (string, error) {
-	var err error
+func ExcelSplit(excelPath, sheetName string) (newExcelPath string, err error) {
 	// 读取excel
 	var xlsxFile *xlsx.File
-	xlsxFile, err = xlsx.OpenFile(excelPath)
-	if err != nil {
-		return excelPath, err
+	if xlsxFile, err = xlsx.OpenFile(excelPath); err != nil {
+		return
 	}
 	// 读取目标sheet
-	var theSheet *xlsx.Sheet
-	if xlsxFile.Sheet[sheetName] == nil {
-		sheetName = xlsxFile.Sheets[0].Name
-	}
-	for _, sheet := range xlsxFile.Sheets {
-		if sheet.Name == sheetName {
-			theSheet = sheet
-		}
-	}
+	var theSheet = anyx.IfZero(xlsxFile.Sheet[sheetName], xlsxFile.Sheets[0])
 	// 新增sheet页
 	var NewExcelFile = xlsx.NewFile()
 	var addSheetList SheetInfoList
@@ -114,41 +128,63 @@ func ExcelSplit(excelPath, sheetName string) (string, error) {
 			}
 		}
 	}
-	dir, excelName := stringx.CutFromRight(excelPath, "\\")
-	excelName, _ = stringx.CutFromLeft(excelName, ".")
-	newExcelPath := path.Join(dir, excelName+"_split.xlsx")
+	dir, fileName := filex.SplitPath(excelPath)
+	fileName, _ = stringx.CutFromLeft(fileName, ".")
+	newExcelPath = path.Join(dir, fileName+"_split.xlsx")
 	err = NewExcelFile.Save(newExcelPath)
 	if err != nil {
-		return excelPath, err
+		return
 	}
-	return newExcelPath, nil
+	return
 }
 
 // excelPath:目标excel
 // sheetName:目标sheet页,默认取第一个sheet页
-func ExcelReader(excelPath, sheetName string, headerMap map[string]string) ([]map[string]string, error) {
-	var resultMapList []map[string]string
-	var err error
-	// 读取excel
-	var xlsxFile *xlsx.File
-	xlsxFile, err = xlsx.OpenFile(excelPath)
-	if err != nil {
-		return nil, err
-	}
+func ExcelReader(excelPath, sheetName string, mapping map[string]string) (data []map[string]string, err error) {
 	// 读取目标sheet
 	var theSheet *xlsx.Sheet
-	if xlsxFile.Sheet[sheetName] == nil {
-		theSheet = xlsxFile.Sheets[0]
-	} else {
-		theSheet = xlsxFile.Sheet[sheetName]
+	if theSheet, err = GetSheet(excelPath, sheetName); err != nil {
+		return
 	}
 	// 读取表头
 	var headers []string
 	for _, cell := range theSheet.Rows[0].Cells {
-		header := headerMap[cell.Value]
-		if header == "" {
-			header = cell.Value
+		var header = anyx.IfZero(mapping[cell.Value], cell.Value)
+		headers = append(headers, header)
+	}
+	// 遍历excel(x:横向坐标，y:纵向坐标)
+	data = make([]map[string]string, 0)
+	for y, row := range theSheet.Rows {
+		if y > 0 {
+			var rowMap = make(map[string]string)
+			for x, cell := range row.Cells {
+				if x >= len(headers) {
+					break
+				}
+				if cell.IsTime() {
+					cell.SetFormat("yyyy-mm-dd h:mm:ss")
+				}
+				rowMap[headers[x]] = cell.String()
+			}
+			data = append(data, rowMap)
 		}
+	}
+	return
+}
+
+// excelPath:目标excel
+// sheetName:目标sheet页,默认取第一个sheet页
+func ExcelReaderAny[T any](excelPath, sheetName string, obj T) (data []*T, err error) {
+	// 读取目标sheet
+	var theSheet *xlsx.Sheet
+	if theSheet, err = GetSheet(excelPath, sheetName); err != nil {
+		return
+	}
+	// 读取表头
+	var mapping = ExcelTagMapping(obj)
+	var headers []string
+	for _, cell := range theSheet.Rows[0].Cells {
+		var header = anyx.IfZero(mapping[cell.Value], cell.Value)
 		headers = append(headers, header)
 	}
 	// 遍历excel(x:横向坐标，y:纵向坐标)
@@ -161,40 +197,43 @@ func ExcelReader(excelPath, sheetName string, headerMap map[string]string) ([]ma
 				}
 				if cell.IsTime() {
 					cell.SetFormat("yyyy-mm-dd h:mm:ss")
-					rowMap[headers[x]] = cell.String()
-				} else {
-					rowMap[headers[x]] = cell.String()
 				}
+				rowMap[headers[x]] = cell.String()
 			}
-			resultMapList = append(resultMapList, rowMap)
+			var item *T
+			if err = anyx.MapToStruct(rowMap, item); err != nil {
+				return
+			}
+			data = append(data, item)
 		}
 	}
-	return resultMapList, nil
+	return
 }
 
 // 将数据写入excel
-func ExcelWriter(excelPath string, st interface{}, dataList []map[string]string) (err error) {
+func ExcelWriter(excelPath string, obj interface{}, data interface{}) (err error) {
 	var xlsxFile = xlsx.NewFile()
 	var sheet *xlsx.Sheet
-	sheet, err = xlsxFile.AddSheet("Sheet1")
-	if err != nil {
-		log.Error("创建excel文件失败：%s", err)
+	if sheet, err = xlsxFile.AddSheet("Sheet1"); err != nil {
 		return
 	}
 	// 写入表头
-	headerRow := sheet.AddRow()
-	headers := GetHeadersByStruct(st)
+	var headerRow = sheet.AddRow()
+	var headers = GetHeadersByReflect(obj)
 	for _, header := range headers {
 		headerRow.AddCell().Value = header.Name
 	}
 	// 写入数据
-	for _, data := range dataList {
-		row := sheet.AddRow()
+	var bytes, _ = json.Marshal(data)
+	var array = gjson.ParseBytes(bytes).Array()
+	for _, item := range array {
+		var dataMap = item.Map()
+		var row = sheet.AddRow()
 		for _, header := range headers {
-			row.AddCell().Value = data[header.Key]
+			row.AddCell().Value = dataMap[header.Key].String()
 		}
 	}
-	//这里从新生成
+	// 这里重新生成
 	err = xlsxFile.Save(excelPath)
 	if err != nil {
 		return

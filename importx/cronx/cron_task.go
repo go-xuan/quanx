@@ -23,11 +23,11 @@ func New() *cron.Cron {
 
 func AddTask(spec string, execFunc func()) {
 	// 给初始化的定时任务指定时间表达式和具体执行的函数
-	entryId, err := New().AddFunc(spec, execFunc)
-	if err != nil {
+	if entryId, err := New().AddFunc(spec, execFunc); err != nil {
 		fmt.Println(err)
+	} else {
+		//运行定时任务
+		go execFunc()
+		fmt.Println(time.Now(), entryId, err)
 	}
-	//运行定时任务
-	go execFunc()
-	fmt.Println(time.Now(), entryId, err)
 }

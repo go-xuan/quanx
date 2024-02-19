@@ -4,7 +4,7 @@ import (
 	"reflect"
 )
 
-// 切片转map
+// 切片分组
 func SliceToMapByField[T any](slice []T, field string) map[string]T {
 	if slice == nil || len(slice) == 0 {
 		return nil

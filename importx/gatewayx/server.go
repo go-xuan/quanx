@@ -3,11 +3,11 @@ package gatewayx
 import (
 	"errors"
 	"fmt"
-	"github.com/go-xuan/quanx/importx/ginx"
-	"github.com/go-xuan/quanx/importx/marshalx"
 	"strings"
 	"time"
 
+	"github.com/go-xuan/quanx/importx/ginx"
+	"github.com/go-xuan/quanx/importx/marshalx"
 	"github.com/go-xuan/quanx/importx/nacosx"
 	"github.com/go-xuan/quanx/utilx/filex"
 )
@@ -19,23 +19,22 @@ type App struct {
 	Name     string   `yaml:"name" json:"name"`         // 微服务名称
 	Group    string   `yaml:"group" json:"group"`       // 微服务分组
 	Prefix   string   `yaml:"prefix" json:"prefix"`     // 微服务API前缀
-	Router   string   `yaml:"router" json:"router"`     // 路由规则
+	Router   string   `yaml:"router" json:"router"`     // API路由
 	AuthType string   `yaml:"authType" json:"authType"` // 鉴权方式(cookie/token/no)
-	Skip     []string `yaml:"skip" json:"skip"`         // 跳过鉴权(白名单)
+	Ignore   []string `yaml:"ignore" json:"ignore"`     // 忽略鉴权(白名单)
 }
 
 // 获取微服务addr
 func GetServerProxyAddr(group, dataId, url string) (addr string, authType string, err error) {
-	err = ListenConfigChanged(group, dataId)
-	if err != nil {
+	if err = ListenConfigChanged(group, dataId); err != nil {
 		err = errors.New("监听微服务网关配置失败 ：" + err.Error())
 		return
 	}
 	for _, server := range Apps {
 		if MatchUrl(url, server.Router) {
 			authType = server.AuthType
-			if authType != ginx.NoAuth && len(server.Skip) > 0 {
-				for _, item := range server.Skip {
+			if authType != ginx.NoAuth && len(server.Ignore) > 0 {
+				for _, item := range server.Ignore {
 					if strings.Contains(url, strings.TrimSpace(item)) {
 						authType = ginx.NoAuth
 					}
@@ -57,8 +56,7 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, authType string
 
 // 校验nacos配置
 func ListenConfigChanged(group, dataId string) (err error) {
-	data, ok := nacosx.GetNacosConfigMonitor().GetConfigData(group, dataId)
-	if ok && data.Changed {
+	if data, ok := nacosx.GetNacosConfigMonitor().GetConfigData(group, dataId); ok && data.Changed {
 		// 将当前最新的content数据同步到servers
 		err = marshalx.UnmarshalToPointer(&Apps, []byte(data.Content), filex.Suffix(dataId))
 		if err != nil {

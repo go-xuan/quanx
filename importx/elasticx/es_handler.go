@@ -16,7 +16,7 @@ type Handler struct {
 	Client *elastic.Client
 }
 
-func One() *Handler {
+func This() *Handler {
 	if handler == nil {
 		panic("The elastic handler has not been initialized, please check the relevant config")
 	}

@@ -2,27 +2,17 @@ package ginx
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/quanx/commonx/constx"
 	"github.com/go-xuan/quanx/commonx/modelx"
 	"github.com/go-xuan/quanx/commonx/respx"
+	"github.com/go-xuan/quanx/utilx/filex/excelx"
 	"gorm.io/gorm"
+	"path/filepath"
+	"time"
 )
 
-type CrudModel interface {
-	Path() string
-	DB() *gorm.DB
-}
-
-type Crud interface {
-	List(ctx *gin.Context)
-	Create(ctx *gin.Context)
-	Update(ctx *gin.Context)
-	Delete(ctx *gin.Context)
-	Detail(ctx *gin.Context)
-}
-
-func NewCrudApi[T any](router *gin.RouterGroup, db *gorm.DB, path string) {
-	var api Crud = &Model[T]{DB: db}
-	group := router.Group(path)
+func NewCrudApi[T any](group *gin.RouterGroup, db *gorm.DB) {
+	var api = &Model[T]{DB: db}
 	group.GET("list", api.List)      // 列表
 	group.POST("create", api.Create) // 新增
 	group.POST("update", api.Update) // 修改
@@ -30,9 +20,14 @@ func NewCrudApi[T any](router *gin.RouterGroup, db *gorm.DB, path string) {
 	group.GET("detail", api.Detail)  // 明细
 }
 
+func NewExcelApi[T any](group *gin.RouterGroup, db *gorm.DB) {
+	var api = &Model[T]{DB: db}
+	group.POST("import", api.Import) // 新增
+	group.POST("export", api.Export) // 修改
+}
+
 type Model[T any] struct {
-	Path string
-	DB   *gorm.DB
+	DB *gorm.DB
 }
 
 func (m *Model[T]) List(ctx *gin.Context) {
@@ -86,4 +81,41 @@ func (m *Model[T]) Detail(ctx *gin.Context) {
 	var result T
 	err = m.DB.Where("id = ? ", form.Id).Find(&result).Error
 	respx.BuildResponse(ctx, result, err)
+}
+
+func (m *Model[T]) Import(ctx *gin.Context) {
+	var err error
+	var form modelx.File
+	if err = ctx.ShouldBind(&form); err != nil {
+		respx.Exception(ctx, respx.ParamErr, err)
+		return
+	}
+	var filePath = filepath.Join(constx.ResourceDir, form.File.Filename)
+	if err = ctx.SaveUploadedFile(form.File, filePath); err != nil {
+		respx.Exception(ctx, respx.ParamErr, err)
+		return
+	}
+	var obj T
+	var data []*T
+	if data, err = excelx.ExcelReaderAny(filePath, "", obj); err != nil {
+		respx.Exception(ctx, respx.ImportErr, err)
+		return
+	}
+	err = m.DB.Model(obj).Create(&data).Error
+	respx.BuildResponse(ctx, nil, err)
+}
+
+func (m *Model[T]) Export(ctx *gin.Context) {
+	var result []*T
+	if err := m.DB.Find(&result).Error; err != nil {
+		respx.Exception(ctx, respx.ImportErr, err)
+		return
+	}
+	var filePath = filepath.Join(constx.ResourceDir, time.Now().Format("20060102150405")+".xlsx")
+	var obj T
+	if err := excelx.ExcelWriter(filePath, obj, result); err != nil {
+		respx.Exception(ctx, respx.ExportErr, err)
+	} else {
+		respx.BuildExcelByFile(ctx, filePath)
+	}
 }

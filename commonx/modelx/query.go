@@ -1,6 +1,9 @@
 package modelx
 
-import "strings"
+import (
+	"mime/multipart"
+	"strings"
+)
 
 type Id[T any] struct {
 	Id T `form:"id" json:"id" binding:"required"`
@@ -8,6 +11,10 @@ type Id[T any] struct {
 
 type Ids[T any] struct {
 	Ids []T `form:"ids" json:"ids" binding:"required"`
+}
+
+type File struct {
+	File *multipart.FileHeader `form:"file"`
 }
 
 // 分页参数
