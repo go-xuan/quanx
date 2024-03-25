@@ -1,6 +1,7 @@
 package snowflakex
 
 import (
+	"github.com/go-xuan/quanx/utilx/anyx"
 	"math"
 	"strconv"
 	"sync"
@@ -33,14 +34,9 @@ type Snowflake struct {
 }
 
 func New(id ...int64) *Snowflake {
-	if snow == nil {
-		if len(id) > 0 {
-			snow = newSnowflake(id[0])
-		} else {
-			snow = newSnowflake(1)
-		}
-	} else if len(id) > 0 {
-		return newSnowflake(id[0])
+	workerId := anyx.IfElseValue(len(id) > 0, id[0], 1)
+	if snow == nil || snow.WorkerId != workerId {
+		snow = newSnowflake(workerId)
 	}
 	return snow
 }

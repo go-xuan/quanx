@@ -73,19 +73,18 @@ func ExcelHeaders(model interface{}) (result []*Header) {
 
 // Excel二进制文件流响应
 func BuildExcelByFile(ctx *gin.Context, filePath string) {
-	var xlsxFile, err = xlsx.OpenFile(filePath)
-	if err != nil {
+	if xlsxFile, err := xlsx.OpenFile(filePath); err != nil {
 		Exception(ctx, ExportErr, err)
 		return
-	}
-	var fileName = url.QueryEscape(filepath.Base(filePath))
-	ctx.Writer.Header().Add("Content-Type", "application/octet-stream")
-	ctx.Writer.Header().Add("Content-Disposition", "attachment;filename*=utf-8''"+fileName)
-	ctx.Writer.Header().Add("Content-Transfer-Encoding", "binary")
-	err = xlsxFile.Write(ctx.Writer)
-	if err != nil {
-		Exception(ctx, ExportErr, err)
-		return
+	} else {
+		var fileName = url.QueryEscape(filepath.Base(filePath))
+		ctx.Writer.Header().Add("Content-Type", "application/octet-stream")
+		ctx.Writer.Header().Add("Content-Disposition", "attachment;filename*=utf-8''"+fileName)
+		ctx.Writer.Header().Add("Content-Transfer-Encoding", "binary")
+		if err = xlsxFile.Write(ctx.Writer); err != nil {
+			Exception(ctx, ExportErr, err)
+			return
+		}
 	}
 	return
 }

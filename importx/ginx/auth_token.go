@@ -3,8 +3,6 @@ package ginx
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -21,17 +19,17 @@ func SetSecretKey(key []byte) {
 
 // 用户token参数
 type User struct {
-	Id         string `json:"id"`          // 用户ID
-	Username   string `json:"username"`    // 用户名
-	Name       string `json:"name"`        // 用户名
-	Phone      string `json:"phone"`       // 登录手机
-	LoginIp    string `json:"loginIp"`     // 登录IP
-	DomainUrl  string `json:"domainUrl"`   // 域名
-	ExpireTime int64  `json:"sessionTime"` // 过期时间
+	Id         int64  `json:"id"`         // 用户ID
+	Account    string `json:"account"`    // 用户账号
+	Name       string `json:"name"`       // 用户姓名
+	Phone      string `json:"phone"`      // 登录手机
+	Ip         string `json:"ip"`         // 登录IP
+	Domain     string `json:"domain"`     // 域名
+	ExpireTime int64  `json:"expireTime"` // 过期时间
 }
 
 func (u *User) RedisKey() string {
-	return "login@token@" + u.Username
+	return "login@token@" + u.Account
 }
 
 // 设置token缓存
@@ -46,28 +44,26 @@ func (u *User) GetTokenCache() string {
 
 // 获取用户ID
 func GetUserId(context *gin.Context) (userId int64) {
-	tp, err := GetUserByToken(context.Request.Header.Get("Authorization"))
-	if err != nil {
+	var err error
+	var userData = make(map[string]interface{})
+	if userData, err = parseToken(context.Request.Header.Get(Authorization)); err != nil {
 		return
 	}
-	userId, err = strconv.ParseInt(tp.Id, 10, 64)
-	if err != nil {
-		return
-	}
+	userId = userData["id"].(int64)
 	return
 }
 
 // 生成token
 func GetTokenByUser(user *User) (token string, err error) {
 	var bytes []byte
-	bytes, err = json.Marshal(user)
-	var mapClaims jwt.MapClaims
-	err = json.Unmarshal(bytes, &mapClaims)
-	if err != nil {
+	if bytes, err = json.Marshal(user); err != nil {
 		return
 	}
-	token, err = generateToken(mapClaims)
-	if err != nil {
+	var mapClaims jwt.MapClaims
+	if err = json.Unmarshal(bytes, &mapClaims); err != nil {
+		return
+	}
+	if token, err = generateToken(mapClaims); err != nil {
 		return
 	}
 	return
@@ -75,20 +71,18 @@ func GetTokenByUser(user *User) (token string, err error) {
 
 // 解析token
 func GetUserByToken(token string) (user *User, err error) {
-	var kvmap map[string]interface{}
-	kvmap, err = parseToken(token)
-	if err != nil {
-		err = errors.New("token parse failed")
+	var userData = make(map[string]interface{})
+	if userData, err = parseToken(token); err != nil {
 		return
 	}
 	user = &User{
-		Id:         kvmap["id"].(string),
-		Username:   kvmap["account"].(string),
-		Name:       kvmap["name"].(string),
-		Phone:      kvmap["phone"].(string),
-		LoginIp:    kvmap["loginIp"].(string),
-		DomainUrl:  kvmap["domainUrl"].(string),
-		ExpireTime: int64(kvmap["sessionTime"].(float64)),
+		Id:         userData["id"].(int64),
+		Account:    userData["account"].(string),
+		Name:       userData["name"].(string),
+		Phone:      userData["phone"].(string),
+		Ip:         userData["ip"].(string),
+		Domain:     userData["domain"].(string),
+		ExpireTime: int64(userData["expireTime"].(float64)),
 	}
 	return
 }
@@ -100,13 +94,13 @@ func generateToken(mapClaims jwt.MapClaims) (string, error) {
 
 // 解析token
 func parseToken(token string) (map[string]interface{}, error) {
-	claim, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+	if claim, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		return SecretKey, nil
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
+	} else {
+		var result = make(map[string]interface{})
+		result = claim.Claims.(jwt.MapClaims)
+		return result, nil
 	}
-	var result = make(map[string]interface{})
-	result = claim.Claims.(jwt.MapClaims)
-	return result, nil
 }

@@ -99,8 +99,7 @@ func (*Redis) Reader() *configx.Reader {
 // 配置器运行
 func (r *Redis) Run() (err error) {
 	if r.Enable {
-		err = anyx.SetDefaultValue(r)
-		if err != nil {
+		if err = anyx.SetDefaultValue(r); err != nil {
 			return
 		}
 		var cmd = r.NewRedisCmdable()

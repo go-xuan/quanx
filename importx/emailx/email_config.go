@@ -23,7 +23,7 @@ func (e *Email) newDialer() *gomail.Dialer {
 
 // 配置信息格式化
 func (e *Email) ToString(title string) string {
-	return fmt.Sprintf("%s => host=%s port=%d Username=%s password=%s", title, e.Host, e.Port, e.Username, e.Password)
+	return fmt.Sprintf("%s => host=%s port=%d Account=%s password=%s", title, e.Host, e.Port, e.Username, e.Password)
 }
 
 // 配置器名称

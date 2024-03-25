@@ -40,8 +40,7 @@ func (*Mongo) Reader() *configx.Reader {
 // 配置器运行
 func (m *Mongo) Run() (err error) {
 	var client *mongo.Client
-	client, err = m.NewClient()
-	if err != nil {
+	if client, err = m.NewClient(); err != nil {
 		log.Error(m.ToString("mongo connect failed!"))
 		log.Error("error : ", err)
 		return
@@ -61,8 +60,7 @@ func (m *Mongo) NewClient() (client *mongo.Client, err error) {
 	// 设置连接选项
 	clientOptions := options.Client().ApplyURI(m.Uri())
 	// 建立连接
-	client, err = mongo.Connect(context.Background(), clientOptions)
-	if err != nil {
+	if client, err = mongo.Connect(context.Background(), clientOptions); err != nil {
 		return
 	}
 	if err = client.Ping(context.Background(), nil); err != nil {

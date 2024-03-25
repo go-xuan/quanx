@@ -85,8 +85,7 @@ func GremlinPost[T any](result T, gremlin string) (requestId string, err error) 
 
 // 查询顶点
 func QueryVertexs[T any](gremlin string) (data Vertexs[T], requestId string, err error) {
-	requestId, err = GremlinPost(data, gremlin)
-	if err != nil {
+	if requestId, err = GremlinPost(data, gremlin); err != nil {
 		return
 	}
 	return
@@ -94,8 +93,7 @@ func QueryVertexs[T any](gremlin string) (data Vertexs[T], requestId string, err
 
 // 查询边
 func QueryEdges[T any](gremlin string) (data Edges[T], requestId string, err error) {
-	requestId, err = GremlinPost(data, gremlin)
-	if err != nil {
+	if requestId, err = GremlinPost(data, gremlin); err != nil {
 		return
 	}
 	return
@@ -103,8 +101,7 @@ func QueryEdges[T any](gremlin string) (data Edges[T], requestId string, err err
 
 // 查询path()
 func QueryPaths[T any](gremlin string) (data Paths[T], requestId string, err error) {
-	requestId, err = GremlinPost(data, gremlin)
-	if err != nil {
+	if requestId, err = GremlinPost(data, gremlin); err != nil {
 		return
 	}
 	return
@@ -112,8 +109,7 @@ func QueryPaths[T any](gremlin string) (data Paths[T], requestId string, err err
 
 // 调用hugegraph的POST接口，返回属性值
 func QueryValues(gremlin string) (data []string, err error) {
-	_, err = GremlinPost(data, gremlin)
-	if err != nil {
+	if _, err = GremlinPost(data, gremlin); err != nil {
 		return
 	}
 	return

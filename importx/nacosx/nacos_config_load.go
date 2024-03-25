@@ -69,8 +69,7 @@ func (c *Config) LoadConfig(config interface{}) (err error) {
 	var param = c.ToConfigParam()
 	// 读取Nacos配置
 	var content string
-	content, err = GetConfigContent(c.Group, c.DataId)
-	if err != nil {
+	if content, err = GetConfigContent(c.Group, c.DataId); err != nil {
 		log.Error("get config from nacos failed : ", err)
 		return
 	}

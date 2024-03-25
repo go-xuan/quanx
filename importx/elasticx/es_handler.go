@@ -23,54 +23,39 @@ func This() *Handler {
 	return handler
 }
 
-func (h *Handler) Create(ctx context.Context, index, id string, body interface{}) {
+func (h *Handler) Create(ctx context.Context, index, id string, body interface{}) (err error) {
 	var result *elastic.IndexResponse
-	var err error
-	result, err = h.Client.Index().Index(index).Id(id).BodyJson(body).Do(ctx)
-	if err != nil {
-		log.Error(err)
+	if result, err = h.Client.Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
+		return
 	}
 	log.Printf("create success: id=%s index=%s type=%s\n", result.Id, result.Index, result.Type)
+	return
 }
 
-func (h *Handler) Update(ctx context.Context, index, id string, body interface{}) {
+func (h *Handler) Update(ctx context.Context, index, id string, body interface{}) (err error) {
 	var result *elastic.UpdateResponse
-	var err error
-	result, err = h.Client.Update().Index(index).Id(id).Doc(body).Do(ctx)
-	if err != nil {
-		log.Error(err)
+	if result, err = h.Client.Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
+		return
 	}
 	log.Printf("update success: id=%s index=%s type=%s\n", result.Id, result.Index, result.Type)
+	return
 }
 
-func (h *Handler) Delete(ctx context.Context, index, id string) {
+func (h *Handler) Delete(ctx context.Context, index, id string) (err error) {
 	var result *elastic.DeleteResponse
-	var err error
-	result, err = h.Client.Delete().Index(index).Id(id).Do(ctx)
-	if err != nil {
-		log.Error(err)
+	if result, err = h.Client.Delete().Index(index).Id(id).Do(ctx); err != nil {
+		return
 	}
 	log.Printf("delete success: %s\n", result.Result)
+	return
 }
 
-func (h *Handler) Get(ctx context.Context, index, id string) *elastic.GetResult {
-	var result *elastic.GetResult
-	var err error
-	result, err = h.Client.Get().Index(index).Id(id).Do(ctx)
-	if err != nil {
-		log.Error(err)
-	}
-	return result
+func (h *Handler) Get(ctx context.Context, index, id string) (result *elastic.GetResult, err error) {
+	return h.Client.Get().Index(index).Id(id).Do(ctx)
 }
 
-func (h *Handler) Search(ctx context.Context, index string, query elastic.Query) *elastic.SearchResult {
-	var result *elastic.SearchResult
-	var err error
-	result, err = h.Client.Search().Index(index).Query(query).Do(ctx)
-	if err != nil {
-		log.Error(err)
-	}
-	return result
+func (h *Handler) Search(ctx context.Context, index string, query elastic.Query) (result *elastic.SearchResult, err error) {
+	return h.Client.Search().Index(index).Query(query).Do(ctx)
 }
 
 // 获取索引中全部文档ID，sortField字段必须支持排序

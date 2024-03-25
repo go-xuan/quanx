@@ -45,13 +45,11 @@ func (md MultiDatabase) Run() (err error) {
 	}
 	for i, d := range md {
 		if d.Enable {
-			err = anyx.SetDefaultValue(d)
-			if err != nil {
+			if err = anyx.SetDefaultValue(d); err != nil {
 				return
 			}
 			var db *gorm.DB
-			db, err = d.NewGormDB()
-			if err != nil {
+			if db, err = d.NewGormDB(); err != nil {
 				log.Error(d.ToString("database connect failed!"))
 				return err
 			}
@@ -98,9 +96,10 @@ type Database struct {
 	Type            string `json:"type" yaml:"type"`                                    // 数据库类型
 	Host            string `json:"host" yaml:"host" default:"localhost"`                // 数据库Host
 	Port            int    `json:"port" yaml:"port"`                                    // 数据库端口
-	Database        string `json:"database" yaml:"database"`                            // 数据库名
 	Username        string `json:"username" yaml:"username"`                            // 用户名
 	Password        string `json:"password" yaml:"password"`                            // 密码
+	Database        string `json:"database" yaml:"database"`                            // 数据库名
+	Schema          string `json:"schema" yaml:"schema"`                                // schema模式名
 	Debug           bool   `json:"debug" yaml:"debug" default:"false"`                  // 开启debug（打印SQL以及初始化模型建表）
 	MaxIdleConns    int    `json:"maxIdleConns" yaml:"maxIdleConns" default:"10"`       // 最大空闲连接
 	MaxOpenConns    int    `json:"maxOpenConns" yaml:"maxOpenConns" default:"10"`       // 最大打开连接
@@ -129,13 +128,11 @@ func (d *Database) Reader() *configx.Reader {
 // 配置器运行
 func (d *Database) Run() (err error) {
 	if d.Enable {
-		err = anyx.SetDefaultValue(d)
-		if err != nil {
+		if err = anyx.SetDefaultValue(d); err != nil {
 			return
 		}
 		var db *gorm.DB
-		db, err = d.NewGormDB()
-		if err != nil {
+		if db, err = d.NewGormDB(); err != nil {
 			log.Error(d.ToString("database connect failed!"))
 			log.Error("error : ", err)
 			return
@@ -158,13 +155,11 @@ func (d *Database) Run() (err error) {
 
 // 创建数据库连接
 func (d *Database) NewGormDB() (gormDB *gorm.DB, err error) {
-	gormDB, err = d.GetGormDB()
-	if err != nil {
+	if gormDB, err = d.GetGormDB(); err != nil {
 		return
 	}
 	var sqlDB *sql.DB
-	sqlDB, err = gormDB.DB()
-	if err != nil {
+	if sqlDB, err = gormDB.DB(); err != nil {
 		return
 	}
 	sqlDB.SetMaxIdleConns(d.MaxIdleConns)
@@ -183,7 +178,7 @@ const (
 	Postgres = "postgres"
 )
 
-// 名称
+// 生成表备注
 func (d *Database) CommentTableSql(table, comment string) string {
 	switch strings.ToLower(d.Type) {
 	case Mysql:

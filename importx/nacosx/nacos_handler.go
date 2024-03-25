@@ -34,16 +34,14 @@ func GetConfigType(dataId string) vo.ConfigType {
 
 func GetConfigContent(group, dataId string) (content string, err error) {
 	var param = vo.ConfigParam{Group: group, DataId: dataId, Type: GetConfigType(dataId)}
-	content, err = This().ConfigClient.GetConfig(param)
-	if err != nil {
+	if content, err = This().ConfigClient.GetConfig(param); err != nil {
 		return
 	}
 	return
 }
 
 func (h *Handler) BuildConfigFromFile(filePath string) (err error) {
-	err = marshalx.LoadFromFile(h.Config, filePath)
-	if err != nil {
+	if err = marshalx.LoadFromFile(h.Config, filePath); err != nil {
 		return
 	}
 	return
@@ -51,8 +49,7 @@ func (h *Handler) BuildConfigFromFile(filePath string) (err error) {
 
 func (h *Handler) BuildConfigFromNacos(group, dataId string) (err error) {
 	module := &Config{Group: group, DataId: dataId}
-	err = module.LoadConfig(h.Config)
-	if err != nil {
+	if err = module.LoadConfig(h.Config); err != nil {
 		return
 	}
 	return

@@ -56,13 +56,11 @@ func (h *Handler) InitTable(source string, dst ...interface{}) (err error) {
 		if conf.Debug {
 			for _, model := range dst {
 				if db.Migrator().HasTable(model) {
-					err = db.Migrator().AutoMigrate(model)
-					if err != nil {
+					if err = db.Migrator().AutoMigrate(model); err != nil {
 						return
 					}
 				} else {
-					err = db.Migrator().CreateTable(model)
-					if err != nil {
+					if err = db.Migrator().CreateTable(model); err != nil {
 						return
 					}
 					// 添加表备注
@@ -70,16 +68,14 @@ func (h *Handler) InitTable(source string, dst ...interface{}) (err error) {
 					if method := refValue.MethodByName("TableComment"); method.IsValid() {
 						tableName := refValue.MethodByName("Table").Call([]reflect.Value{})[0].String()
 						comment := method.Call([]reflect.Value{})[0].String()
-						err = db.Exec(conf.CommentTableSql(tableName, comment)).Error
-						if err != nil {
+						if err = db.Exec(conf.CommentTableSql(tableName, comment)).Error; err != nil {
 							return
 						}
 					}
 					// 初始化表数据
 					if method := refValue.MethodByName("InitData"); method.IsValid() {
 						initData := method.Call([]reflect.Value{})[0].Interface()
-						err = db.Create(initData).Error
-						if err != nil {
+						if err = db.Create(initData).Error; err != nil {
 							return
 						}
 					}

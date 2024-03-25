@@ -22,8 +22,7 @@ func (h *Handler) InitGormTable(source string, dst ...Tabler[any]) (err error) {
 					} else if count == 0 {
 						// 初始化表数据
 						if initData := table.InitData(); initData != nil {
-							err = db.Create(initData).Error
-							if err != nil {
+							if err = db.Create(initData).Error; err != nil {
 								return
 							}
 						}
@@ -34,15 +33,13 @@ func (h *Handler) InitGormTable(source string, dst ...Tabler[any]) (err error) {
 					}
 					// 添加表备注
 					if name, comment := table.TableName(), table.TableComment(); name != "" && comment != "" {
-						err = db.Exec(conf.CommentTableSql(name, comment)).Error
-						if err != nil {
+						if err = db.Exec(conf.CommentTableSql(name, comment)).Error; err != nil {
 							return
 						}
 					}
 					// 初始化表数据
 					if initData := table.InitData(); initData != nil {
-						err = db.Create(initData).Error
-						if err != nil {
+						if err = db.Create(initData).Error; err != nil {
 							return
 						}
 					}

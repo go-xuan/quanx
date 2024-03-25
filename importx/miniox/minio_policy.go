@@ -24,7 +24,7 @@ type Principal struct {
 
 // 存储桶默认配置信息
 func defaultBucketPolicy(bucketName string) string {
-	policy := Policy{
+	if bytes, err := json.Marshal(Policy{
 		Version: "2022-10-17",
 		Statement: []*Statement{{
 			Action:    []string{"s3:ObjectExist"},
@@ -33,10 +33,9 @@ func defaultBucketPolicy(bucketName string) string {
 			Resource:  []string{"arn:aws:s3:::" + bucketName + "/*"},
 			Sid:       "",
 		}},
-	}
-	bytes, err := json.Marshal(policy)
-	if err != nil {
+	}); err != nil {
 		return ""
+	} else {
+		return string(bytes)
 	}
-	return string(bytes)
 }

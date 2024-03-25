@@ -3,17 +3,14 @@ package miniox
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"github.com/go-xuan/quanx/utilx/filex"
 	"io"
 	"mime/multipart"
-	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/minio/minio-go/v7"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/go-xuan/quanx/utilx/filex"
 )
 
 var handler *Handler
@@ -32,24 +29,22 @@ func This() *Handler {
 }
 
 // 创建桶
-func (h *Handler) CreateBucket(ctx context.Context, bucketName string) error {
-	isExist, err := h.Client.BucketExists(ctx, bucketName)
-	if err != nil {
-		return err
+func (h *Handler) CreateBucket(ctx context.Context, bucketName string) (err error) {
+	var exist bool
+	if exist, err = h.Client.BucketExists(ctx, bucketName); err != nil {
+		return
 	}
-	if isExist == false {
-		err = h.Client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: ""})
-		if err != nil {
-			log.Warnf("创建桶失败 error , %+v", err)
-			return err
+	if !exist {
+		if err = h.Client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: ""}); err != nil {
+			log.Warnf("create bucket error , %+v", err)
+			return
 		}
-		err = h.Client.SetBucketPolicy(ctx, bucketName, defaultBucketPolicy(bucketName))
-		if err != nil {
-			log.Warnf("设置桶权限失败 error , %+v", err)
-			return err
+		if err = h.Client.SetBucketPolicy(ctx, bucketName, defaultBucketPolicy(bucketName)); err != nil {
+			log.Warnf("set bucket policy error , %+v", err)
+			return
 		}
 	}
-	return nil
+	return
 }
 
 // 生成minio存储路径
@@ -99,15 +94,12 @@ func (h *Handler) PresignedGetObject(ctx context.Context, minioPath string) (min
 // 通过文件路径上传文件到桶
 func (h *Handler) UploadFileByUrl(ctx context.Context, bucketName string, fileName string, url string) (minioPath string, err error) {
 	var fileBytes []byte
-	fileBytes, err = filex.GetFileBytesByUrl(url)
-	if err != nil {
-		log.Warnf("读取文件失败 , %+v", err)
+	if fileBytes, err = filex.GetFileBytesByUrl(url); err != nil {
 		return
 	}
 	minioPath = h.NewMinioPath(fileName)
-	err = h.PutObject(ctx, bucketName, minioPath, bytes.NewBuffer(fileBytes))
-	if err != nil {
-		log.Warnf("上传文件失败 , %+v", err)
+
+	if err = h.PutObject(ctx, bucketName, minioPath, bytes.NewBuffer(fileBytes)); err != nil {
 		return
 	}
 	return
@@ -116,24 +108,16 @@ func (h *Handler) UploadFileByUrl(ctx context.Context, bucketName string, fileNa
 // 上传文件
 func (h *Handler) UploadFile(ctx context.Context, bucketName string, minioPath string, file *multipart.FileHeader) (err error) {
 	var exist bool
-	exist, err = h.ObjectExist(ctx, h.Config.BucketName, minioPath)
-	if err != nil {
-		log.Error("判断对象是否存在失败 error : ", err)
+	if exist, err = h.ObjectExist(ctx, h.Config.BucketName, minioPath); err != nil {
 		return
 	}
 	if !exist {
 		var mf multipart.File
-		mf, err = file.Open()
-		if err != nil {
-			log.Warnf("打开文件失败 , %+v", err)
+		if mf, err = file.Open(); err != nil {
 			return
 		}
-		defer func(mf multipart.File) {
-			_ = mf.Close()
-		}(mf)
-		err = h.PutObject(ctx, bucketName, minioPath, mf)
-		if err != nil {
-			log.Warn("上传文件失败 , ", err)
+		defer mf.Close()
+		if err = h.PutObject(ctx, bucketName, minioPath, mf); err != nil {
 			return
 		}
 	}
@@ -141,30 +125,21 @@ func (h *Handler) UploadFile(ctx context.Context, bucketName string, minioPath s
 }
 
 // 获取对象是否存在
-func (h *Handler) ObjectExist(ctx context.Context, bucketName string, minioPath string) (bool, error) {
-	objInfo, err := h.Client.StatObject(ctx, bucketName, minioPath, minio.StatObjectOptions{})
-	if err != nil {
-		var minioError minio.ErrorResponse
-		errByte, _ := json.Marshal(err)
-		_ = json.Unmarshal(errByte, &minioError)
-		if minioError.StatusCode == http.StatusNotFound || minioError.Code == "NoSuchKey" {
-			return false, nil
-		} else {
-			log.Error("获取文件失败 , %+v", err)
-			return false, err
-		}
+func (h *Handler) ObjectExist(ctx context.Context, bucketName string, minioPath string) (exist bool, err error) {
+	var objInfo minio.ObjectInfo
+	if objInfo, err = h.Client.StatObject(ctx, bucketName, minioPath, minio.StatObjectOptions{}); err != nil {
+		return
 	}
-	return objInfo.Size > 0, nil
+	exist = objInfo.Size > 0
+	return
 }
 
 // 通过文件名称删除文件
-func (h *Handler) RemoveObjectBatch(ctx context.Context, bucketName string, minioPaths []string) error {
+func (h *Handler) RemoveObjectBatch(ctx context.Context, bucketName string, minioPaths []string) (err error) {
 	for _, minioPath := range minioPaths {
-		err := h.RemoveObject(ctx, bucketName, minioPath)
-		if err != nil {
-			log.Error("删除文件失败 , %+v", err)
-			return err
+		if err = h.RemoveObject(ctx, bucketName, minioPath); err != nil {
+			return
 		}
 	}
-	return nil
+	return
 }

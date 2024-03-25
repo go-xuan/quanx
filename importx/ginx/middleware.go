@@ -3,16 +3,18 @@ package ginx
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/quanx/importx/encryptx"
+	"github.com/go-xuan/quanx/utilx/anyx"
 
 	"github.com/go-xuan/quanx/commonx/respx"
 	"github.com/go-xuan/quanx/utilx/ipx"
 )
 
 const (
-	AuthType = "auth_type" // 鉴权方式
-	NoAuth   = "no"        // 免鉴权标识
-	Token    = "token"     // token标识
-	Cookie   = "cookie"    // cookie鉴权标识
+	AuthType      = "auth_type"     // 鉴权方式
+	NoAuth        = "no"            // 免鉴权标识
+	Token         = "token"         // token标识
+	Cookie        = "cookie"        // cookie鉴权标识
+	Authorization = "Authorization" // cookie鉴权标识
 )
 
 func SetAuthType(ctx *gin.Context, authType string) {
@@ -24,22 +26,19 @@ func RemoveCookie(ctx *gin.Context) {
 }
 
 func SetCookie(ctx *gin.Context, username string, age ...int) {
-	var maxAge = 3600
-	if len(age) > 0 {
-		maxAge = age[0]
-	}
-	cookie, err := encryptx.RSA().Encrypt(username)
-	if err != nil {
+	if cookie, err := encryptx.RSA().Encrypt(username); err != nil {
 		ctx.Abort()
 		respx.BuildError(ctx, err)
 		return
+	} else {
+		var maxAge = anyx.IfElseValue(len(age) > 0, age[0], 3600)
+		ctx.SetCookie(Cookie, cookie, maxAge, "", "", false, true)
 	}
-	ctx.SetCookie(Cookie, cookie, maxAge, "", "", false, true)
 }
 
 func CorrectIP(ctx *gin.Context) {
-	ip := ctx.ClientIP()
-	if ip == "::1" {
+	var ip string
+	if ip = ctx.ClientIP(); ip == "::1" {
 		ip = ipx.GetWLANIP()
 	}
 	ctx.Set("ip", ip)
@@ -56,61 +55,59 @@ func NotAuth(ctx *gin.Context) {
 
 // cookie鉴权
 func Auth(ctx *gin.Context) {
-	var msg string
-	switch ctx.Request.Header.Get(AuthType) {
-	case NoAuth:
-		msg = ""
-	case Token:
-		msg = TokenAuth(ctx)
-	default:
-		msg = CookeAuth(ctx)
-	}
-	if msg != "" {
+	if err := Authenticate(ctx); err != "" {
 		ctx.Abort()
-		respx.Exception(ctx, respx.AuthErr, msg)
+		respx.Exception(ctx, respx.AuthErr, err)
 	} else {
 		ctx.Next()
 	}
 	return
 }
 
+func Authenticate(ctx *gin.Context) string {
+	switch ctx.Request.Header.Get(AuthType) {
+	case NoAuth:
+		return ""
+	case Token:
+		return TokenAuthenticate(ctx)
+	default:
+		return CookeAuthenticate(ctx)
+	}
+}
+
 // cookie鉴权
-func TokenAuth(ctx *gin.Context) string {
-	var token = ctx.Request.Header.Get("Authorization")
-	if token == "" {
-		return "token is required"
+func TokenAuthenticate(ctx *gin.Context) string {
+	if token := ctx.Request.Header.Get(Authorization); token == "" {
+		return respx.AuthRequiredErr.Msg
+	} else {
+		if user, err := GetUserByToken(token); err != nil || user == nil {
+			return respx.AuthInvalidErr.Msg
+		} else if user.GetTokenCache() == "" {
+			return respx.AuthExpiredErr.Msg
+		} else {
+			ctx.Set("user", user)
+		}
+		return ""
 	}
-	var user, err = GetUserByToken(token)
-	if err != nil || user == nil {
-		return "token parse failed"
-	}
-	if user.GetTokenCache() == "" {
-		return "token is expired"
-	}
-	ctx.Set("user", user)
-	return ""
 }
 
 // token鉴权
-func CookeAuth(ctx *gin.Context) string {
-	cookie, err := ctx.Cookie(Cookie)
-	if err != nil {
-		return "cookie is required"
-	}
-	var username string
-	username, err = encryptx.RSA().Decrypt(cookie)
-	if err != nil {
-		return "cookie decrypt failed"
-	}
-	var user = &User{Username: username}
-	if token := user.GetTokenCache(); token == "" {
-		return "cookie is expired"
+func CookeAuthenticate(ctx *gin.Context) string {
+	if cookie, err := ctx.Cookie(Cookie); err != nil {
+		return respx.AuthRequiredErr.Msg
 	} else {
-		user, err = GetUserByToken(token)
-		if err != nil {
-			return err.Error()
+		var account string
+		if account, err = encryptx.RSA().Decrypt(cookie); err != nil {
+			return respx.AuthInvalidErr.Msg
 		}
+		var user = &User{Account: account}
+		if token := user.GetTokenCache(); token == "" {
+			return respx.AuthExpiredErr.Msg
+		} else if user, err = GetUserByToken(token); err != nil {
+			return respx.AuthInvalidErr.Msg
+		} else {
+			ctx.Set("user", user)
+		}
+		return ""
 	}
-	ctx.Set("user", user)
-	return ""
 }

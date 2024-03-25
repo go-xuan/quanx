@@ -2,6 +2,7 @@ package logx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/utilx/anyx"
 	"os"
 	"time"
 
@@ -19,10 +20,7 @@ type LogFormatter struct {
 
 // 日志格式化
 func (f *LogFormatter) Format(entry *log.Entry) ([]byte, error) {
-	timeFormat := f.TimeFormat
-	if timeFormat == "" {
-		timeFormat = TimeFormat
-	}
+	timeFormat := anyx.IfZero(f.TimeFormat, TimeFormat)
 	msg := entry.Message
 	for key, value := range entry.Data {
 		msg += fmt.Sprintf(" , %s : %+v", key, value)
@@ -39,7 +37,6 @@ func (f *LogFormatter) Format(entry *log.Entry) ([]byte, error) {
 // gin框架生成日志Handler
 func LoggerToFile() gin.HandlerFunc {
 	return func(context *gin.Context) {
-		startTime := time.Now()
 		// 处理请求
 		context.Next()
 		ip := context.ClientIP()
@@ -49,7 +46,7 @@ func LoggerToFile() gin.HandlerFunc {
 		// 日志格式
 		log.Infof("[%3d][%10v][%15s][%4s][%s]",
 			context.Writer.Status(),
-			time.Now().Sub(startTime),
+			time.Now().Sub(time.Now()),
 			ip,
 			context.Request.Method,
 			context.Request.RequestURI,

@@ -28,8 +28,7 @@ func Initialized() bool {
 }
 
 func Ping(cmd redis.Cmdable) (bool, error) {
-	_, err := cmd.Ping(context.Background()).Result()
-	if err != nil {
+	if _, err := cmd.Ping(context.Background()).Result(); err != nil {
 		return false, err
 	} else {
 		return true, nil

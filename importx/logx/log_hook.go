@@ -133,11 +133,10 @@ func (hook *LfsHook) Fire(entry *logrus.Entry) error {
 }
 
 // Write a log line to an io.Writer.
-func (hook *LfsHook) ioWrite(entry *logrus.Entry) error {
+func (hook *LfsHook) ioWrite(entry *logrus.Entry) (err error) {
 	var (
 		writer io.Writer
 		msg    []byte
-		err    error
 		ok     bool
 	)
 
@@ -145,28 +144,26 @@ func (hook *LfsHook) ioWrite(entry *logrus.Entry) error {
 		if hook.hasDefaultWriter {
 			writer = hook.defaultWriter
 		} else {
-			return nil
+			return
 		}
 	}
 
-	// use our formatter instead of entry.String()
-	msg, err = hook.formatter.Format(entry)
-	//fmt.Println("ioWrite", entry, string(msg))
-	if err != nil {
+	if msg, err = hook.formatter.Format(entry); err != nil {
 		log.Println("failed to generate string for entry:", err)
-		return err
+		return
 	}
-	_, err = writer.Write(msg)
-	return err
+	if _, err = writer.Write(msg); err != nil {
+		return
+	}
+	return
 }
 
 // Write a log line directly to a file.
-func (hook *LfsHook) fileWrite(entry *logrus.Entry) error {
+func (hook *LfsHook) fileWrite(entry *logrus.Entry) (err error) {
 	var (
 		fd   *os.File
 		path string
 		msg  []byte
-		err  error
 		ok   bool
 	)
 
@@ -174,32 +171,26 @@ func (hook *LfsHook) fileWrite(entry *logrus.Entry) error {
 		if hook.hasDefaultPath {
 			path = hook.defaultPath
 		} else {
-			return nil
+			return
 		}
 	}
 
 	dir := filepath.Dir(path)
 	_ = os.MkdirAll(dir, os.ModePerm)
 
-	fd, err = os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
-	if err != nil {
+	if fd, err = os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666); err != nil {
 		log.Println("failed to open logfile:", path, err)
-		return err
+		return
 	}
-	defer func(fd *os.File) {
-		_ = fd.Close()
-	}(fd)
-
-	//fmt.Println("fileWrite", entry)
-	// use our formatter instead of entry.String()
-	msg, err = hook.formatter.Format(entry)
-
-	if err != nil {
+	defer fd.Close()
+	if msg, err = hook.formatter.Format(entry); err != nil {
 		log.Println("failed to generate string for entry:", err)
-		return err
+		return
 	}
-	_, _ = fd.Write(msg)
-	return nil
+	if _, err = fd.Write(msg); err != nil {
+		return
+	}
+	return
 }
 
 // Levels returns configured log levels.
@@ -244,13 +235,11 @@ func getCaller() *runtime.Frame {
 
 	for f, again := frames.Next(); again; f, again = frames.Next() {
 		pkg := getPackageName(f.Function)
-
 		// If the caller isn't part of this package, we're done
 		if pkg != logrusPackage {
 			return &f
 		}
 	}
-
 	// if we got here, we failed to find the caller's context
 	return nil
 }

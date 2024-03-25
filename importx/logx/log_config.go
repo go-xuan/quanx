@@ -46,8 +46,7 @@ func (*Log) Reader() *configx.Reader {
 
 // 配置器运行
 func (l *Log) Run() error {
-	err := anyx.SetDefaultValue(l)
-	if err != nil {
+	if err := anyx.SetDefaultValue(l); err != nil {
 		return err
 	}
 	filex.CreateDir(l.Dir)
