@@ -41,7 +41,7 @@ func GetConfigContent(group, dataId string) (content string, err error) {
 }
 
 func (h *Handler) BuildConfigFromFile(filePath string) (err error) {
-	if err = marshalx.LoadFromFile(h.Config, filePath); err != nil {
+	if err = marshalx.LoadFromFile(filePath, h.Config); err != nil {
 		return
 	}
 	return

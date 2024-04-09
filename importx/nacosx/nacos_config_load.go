@@ -72,7 +72,7 @@ func (c *Config) LoadConfig(config interface{}) (err error) {
 		log.Error("get nacos config failed : ", err)
 		return
 	}
-	if err = marshalx.UnmarshalToPointer(config, []byte(content), filex.Suffix(c.DataId)); err != nil {
+	if err = marshalx.Unmarshal(filex.Suffix(c.DataId), []byte(content), config); err != nil {
 		log.Error(c.ToString("loading nacos config failed!"))
 		log.Error(" error : ", err)
 		return

@@ -141,7 +141,7 @@ func (e *Engine) initConfig() {
 	// 读取本地配置
 	if !e.flag[DisableGin] {
 		var path = e.GetConfigPath("config.yaml")
-		if err := marshalx.LoadFromFile(config, path); err != nil {
+		if err := marshalx.LoadFromFile(path, config); err != nil {
 			log.Error("加载服务配置失败!")
 			panic(err)
 		}
@@ -255,7 +255,7 @@ func (e *Engine) RunConfigurator(conf configx.Configurator[any], must ...bool) {
 				ok = true
 			}
 		} else {
-			if err := marshalx.LoadFromFile(conf, e.GetConfigPath(reader.FilePath)); err == nil {
+			if err := marshalx.LoadFromFile(e.GetConfigPath(reader.FilePath), conf); err == nil {
 				ok = true
 			}
 		}
@@ -271,7 +271,7 @@ func (e *Engine) RunConfigurator(conf configx.Configurator[any], must ...bool) {
 
 // 初始化本地配置项（立即加载）
 func (e *Engine) InitLocalConfig(config interface{}, filePath string) {
-	if err := marshalx.LoadFromFile(config, filePath); err != nil {
+	if err := marshalx.LoadFromFile(filePath, config); err != nil {
 		panic(err)
 	}
 }

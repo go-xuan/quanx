@@ -2,6 +2,7 @@ package elasticx
 
 import (
 	"context"
+	"github.com/go-xuan/quanx/utilx/slicex"
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
 )
@@ -56,18 +57,15 @@ func (h *Handler) DeleteIndex(ctx context.Context, index string) (ok bool, err e
 
 // 批量索引
 func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (ok bool, err error) {
-	var start, limit, total = 0, 50, len(indices)
-	for start < total {
-		if start+limit > total {
-			limit = total - start
-		}
-		var end = start + limit
+	if err = slicex.ExecInBatches(len(indices), 100, func(x int, y int) (err error) {
 		var resp *elastic.IndicesDeleteResponse
-		if resp, err = h.Client.DeleteIndex(indices[start:end]...).Do(ctx); err != nil {
+		if resp, err = h.Client.DeleteIndex(indices[x:y]...).Do(ctx); err != nil {
 			panic(err)
 		}
-		log.Printf("delete indices[%d-%d] acknowledged：%v\n", start, end, resp.Acknowledged)
-		start = end
+		log.Printf("delete indices[%d-%d] acknowledged：%v\n", x, y, resp.Acknowledged)
+		return
+	}); err != nil {
+		return
 	}
 	return
 }

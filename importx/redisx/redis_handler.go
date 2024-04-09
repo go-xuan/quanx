@@ -2,7 +2,6 @@ package redisx
 
 import (
 	"context"
-
 	"github.com/redis/go-redis/v9"
 )
 
@@ -10,6 +9,7 @@ var handler *Handler
 
 // redis控制器
 type Handler struct {
+	Multi     bool // 是否多redis数据库
 	Cmd       redis.Cmdable
 	Config    *Redis
 	CmdMap    map[string]redis.Cmdable
@@ -35,20 +35,24 @@ func Ping(cmd redis.Cmdable) (bool, error) {
 	}
 }
 
-func GetCmd(source ...string) redis.Cmdable {
-	if len(source) > 0 {
-		if cmd, ok := handler.CmdMap[source[0]]; ok {
+func DB(source ...string) redis.Cmdable {
+	return This().GetCmd(source...)
+}
+
+func (h *Handler) GetCmd(source ...string) redis.Cmdable {
+	if len(source) > 0 && source[0] != "default" {
+		if cmd, ok := h.CmdMap[source[0]]; ok {
 			return cmd
 		}
 	}
-	return handler.Cmd
+	return h.Cmd
 }
 
-func GetConfig(source ...string) *Redis {
-	if len(source) > 0 {
-		if conf, ok := handler.ConfigMap[source[0]]; ok {
+func (h *Handler) GetConfig(source ...string) *Redis {
+	if len(source) > 0 && source[0] != "default" {
+		if conf, ok := h.ConfigMap[source[0]]; ok {
 			return conf
 		}
 	}
-	return handler.Config
+	return h.Config
 }

@@ -14,7 +14,8 @@ const (
 	NoAuth        = "no"            // 免鉴权标识
 	Token         = "token"         // token标识
 	Cookie        = "cookie"        // cookie鉴权标识
-	Authorization = "Authorization" // cookie鉴权标识
+	Authorization = "Authorization" // token鉴权标识
+	UserKey       = "user"          // 用户存储KEY
 )
 
 func SetAuthType(ctx *gin.Context, authType string) {
@@ -22,11 +23,11 @@ func SetAuthType(ctx *gin.Context, authType string) {
 }
 
 func SetUser(ctx *gin.Context, user *User) {
-	ctx.Set("user", user)
+	ctx.Set(UserKey, user)
 }
 
 func GetUser(ctx *gin.Context) *User {
-	if value, ok := ctx.Get("user"); ok {
+	if value, ok := ctx.Get(UserKey); ok {
 		return value.(*User)
 	}
 	return nil
@@ -48,6 +49,7 @@ func RemoveCookie(ctx *gin.Context) {
 	ctx.SetCookie(Cookie, "", -1, "", "", false, true)
 }
 
+// 获取当前请求IP
 func CorrectIP(ctx *gin.Context) {
 	var ip string
 	if ip = ctx.ClientIP(); ip == "::1" {

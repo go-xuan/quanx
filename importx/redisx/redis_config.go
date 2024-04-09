@@ -41,6 +41,7 @@ func (m MultiRedis) Run() error {
 		return nil
 	}
 	handler = &Handler{
+		Multi:     true,
 		CmdMap:    make(map[string]redis.Cmdable),
 		ConfigMap: make(map[string]*Redis),
 	}
@@ -112,6 +113,7 @@ func (r *Redis) Run() (err error) {
 			return err
 		}
 		handler = &Handler{
+			Multi:     false,
 			Cmd:       cmd,
 			Config:    r,
 			CmdMap:    make(map[string]redis.Cmdable),

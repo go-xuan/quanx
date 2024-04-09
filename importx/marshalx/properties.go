@@ -1,15 +1,28 @@
-package propertiesx
+package marshalx
 
 import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/magiconair/properties"
 )
 
+func PropertiesMarshal(v any) (out []byte, err error) {
+	var lines []string
+	val := reflect.ValueOf(v)
+	for i := 0; i < val.NumField(); i++ {
+		key := val.Type().Field(i).Tag.Get("properties")
+		value := val.Field(i).String()
+		lines = append(lines, fmt.Sprintf("%s=%s", key, value))
+	}
+	out = []byte(strings.Join(lines, "\n"))
+	return
+}
+
 // 读取properties文件到指针
-func Unmarshal(bytes []byte, config interface{}) (err error) {
+func PropertiesUnmarshal(bytes []byte, config interface{}) (err error) {
 	valueRef := reflect.ValueOf(config)
 	if valueRef.Type().Kind() != reflect.Ptr {
 		// 对象必须是指针类型
@@ -34,9 +47,9 @@ func Unmarshal(bytes []byte, config interface{}) (err error) {
 		case reflect.Float32, reflect.Float64:
 			field.SetFloat(pp.GetFloat64(tag, 0))
 		case reflect.Struct:
-			setStructValue(pp, field)
+			propertiesSetStructValue(pp, field)
 		case reflect.Pointer:
-			setPointerValue(pp, field)
+			propertiesSetPointerValue(pp, field)
 		default:
 			if tag == "" {
 				continue
@@ -47,7 +60,7 @@ func Unmarshal(bytes []byte, config interface{}) (err error) {
 	return
 }
 
-func setStructValue(pp *properties.Properties, v reflect.Value) {
+func propertiesSetStructValue(pp *properties.Properties, v reflect.Value) {
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		tag := v.Type().Field(i).Tag.Get("properties")
@@ -63,9 +76,9 @@ func setStructValue(pp *properties.Properties, v reflect.Value) {
 		case reflect.Float32, reflect.Float64:
 			field.SetFloat(pp.GetFloat64(tag, 0))
 		case reflect.Struct:
-			setStructValue(pp, field)
+			propertiesSetStructValue(pp, field)
 		case reflect.Pointer:
-			setPointerValue(pp, field)
+			propertiesSetPointerValue(pp, field)
 		default:
 			if tag == "" {
 				continue
@@ -75,7 +88,7 @@ func setStructValue(pp *properties.Properties, v reflect.Value) {
 	}
 }
 
-func setPointerValue(pp *properties.Properties, v reflect.Value) {
+func propertiesSetPointerValue(pp *properties.Properties, v reflect.Value) {
 	for i := 0; i < v.Elem().NumField(); i++ {
 		field := v.Elem().Field(i)
 		tag := v.Elem().Type().Field(i).Tag.Get("properties")
@@ -91,9 +104,9 @@ func setPointerValue(pp *properties.Properties, v reflect.Value) {
 		case reflect.Float32, reflect.Float64:
 			field.SetFloat(pp.GetFloat64(tag, 0))
 		case reflect.Struct:
-			setStructValue(pp, field)
+			propertiesSetStructValue(pp, field)
 		case reflect.Pointer:
-			setPointerValue(pp, field)
+			propertiesSetPointerValue(pp, field)
 		default:
 			if tag == "" {
 				continue
