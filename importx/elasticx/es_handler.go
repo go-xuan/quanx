@@ -2,9 +2,11 @@ package elasticx
 
 import (
 	"context"
-	"github.com/go-xuan/quanx/utilx/slicex"
+
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/utilx/slicex"
 )
 
 var handler *Handler

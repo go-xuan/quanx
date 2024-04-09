@@ -2,10 +2,10 @@ package redisx
 
 import (
 	"context"
-	"github.com/go-xuan/quanx/utilx/slicex"
 	"time"
 
 	"github.com/go-xuan/quanx/importx/marshalx"
+	"github.com/go-xuan/quanx/utilx/slicex"
 )
 
 type RedisService struct {

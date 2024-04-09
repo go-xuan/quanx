@@ -2,12 +2,13 @@ package logx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/utilx/anyx"
 	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/utilx/anyx"
 )
 
 const (

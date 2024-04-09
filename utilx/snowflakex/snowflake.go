@@ -1,11 +1,12 @@
 package snowflakex
 
 import (
-	"github.com/go-xuan/quanx/utilx/anyx"
 	"math"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/go-xuan/quanx/utilx/anyx"
 )
 
 /*

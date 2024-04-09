@@ -3,13 +3,14 @@ package miniox
 import (
 	"bytes"
 	"context"
-	"github.com/go-xuan/quanx/utilx/filex"
 	"io"
 	"mime/multipart"
 	"net/url"
 	"time"
 
 	"github.com/minio/minio-go/v7"
+
+	"github.com/go-xuan/quanx/utilx/filex"
 )
 
 var handler *Handler

@@ -3,11 +3,11 @@ package hugegraphx
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-xuan/quanx/utilx/httpx"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/utilx/httpx"
 )
 
 // hugegraph配置

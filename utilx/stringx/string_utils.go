@@ -1,9 +1,9 @@
 package stringx
 
 import (
-	"github.com/go-xuan/quanx/utilx/anyx"
 	"strings"
 
+	"github.com/go-xuan/quanx/utilx/anyx"
 	"github.com/go-xuan/quanx/utilx/mathx"
 )
 

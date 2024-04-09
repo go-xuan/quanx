@@ -8,9 +8,10 @@ import (
 	"strconv"
 
 	"github.com/BurntSushi/toml"
-	"github.com/go-xuan/quanx/utilx/filex"
 	"github.com/vmihailenco/msgpack"
 	"gopkg.in/yaml.v3"
+
+	"github.com/go-xuan/quanx/utilx/filex"
 )
 
 type CaseType uint

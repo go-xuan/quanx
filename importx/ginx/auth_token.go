@@ -34,12 +34,12 @@ func (u *User) RedisKey() string {
 
 // 设置token缓存
 func (u *User) SetTokenCache(token string, expiration time.Duration) {
-	redisx.GetCmd("user").Set(context.Background(), u.RedisKey(), token, expiration)
+	redisx.DB("user").Set(context.Background(), u.RedisKey(), token, expiration)
 }
 
 // 获取token缓存
 func (u *User) GetTokenCache() string {
-	return redisx.GetCmd("user").Get(context.Background(), u.RedisKey()).Val()
+	return redisx.DB("user").Get(context.Background(), u.RedisKey()).Val()
 }
 
 // 获取用户ID

@@ -1,10 +1,11 @@
 package timex
 
 import (
-	"github.com/go-xuan/quanx/utilx/anyx"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-xuan/quanx/utilx/anyx"
 )
 
 type Unit uint

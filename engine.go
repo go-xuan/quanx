@@ -2,7 +2,6 @@ package quanx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/utilx/osx"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/go-xuan/quanx/importx/nacosx"
 	"github.com/go-xuan/quanx/importx/redisx"
 	"github.com/go-xuan/quanx/utilx/anyx"
+	"github.com/go-xuan/quanx/utilx/osx"
 )
 
 var engine *Engine

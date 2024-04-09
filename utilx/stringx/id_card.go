@@ -1,9 +1,10 @@
 package stringx
 
 import (
-	"github.com/go-xuan/quanx/utilx/timex"
 	"strconv"
 	"time"
+
+	"github.com/go-xuan/quanx/utilx/timex"
 )
 
 var weight = [17]int{7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2}

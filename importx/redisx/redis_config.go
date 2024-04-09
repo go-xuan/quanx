@@ -2,7 +2,6 @@ package redisx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/utilx/anyx"
 	"strconv"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/utilx/anyx"
 )
 
 const (
