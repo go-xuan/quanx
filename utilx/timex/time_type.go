@@ -7,13 +7,13 @@ import (
 type Time time.Time
 type Date time.Time
 
-func (t *Time) UnmarshalJSON(data []byte) error {
-	location, err := time.ParseInLocation(`"2006-01-02 15:04:05"`, string(data), time.Local)
-	if err != nil {
-		return err
+func (t *Time) UnmarshalJSON(data []byte) (err error) {
+	var location time.Time
+	if location, err = time.ParseInLocation(`"2006-01-02 15:04:05"`, string(data), time.Local); err != nil {
+		return
 	}
 	*t = Time(location)
-	return nil
+	return
 }
 
 func (t *Time) MarshalJSON() ([]byte, error) {
@@ -28,13 +28,13 @@ func (t *Time) String() string {
 	return time.Time(*t).Format(TimeFmt)
 }
 
-func (t *Date) UnmarshalJSON(data []byte) error {
-	location, err := time.ParseInLocation(`"2006-01-02"`, string(data), time.Local)
-	if err != nil {
-		return err
+func (t *Date) UnmarshalJSON(data []byte) (err error) {
+	var location time.Time
+	if location, err = time.ParseInLocation(`"2006-01-02"`, string(data), time.Local); err != nil {
+		return
 	}
 	*t = Date(location)
-	return nil
+	return
 }
 
 func (t *Date) MarshalJSON() ([]byte, error) {

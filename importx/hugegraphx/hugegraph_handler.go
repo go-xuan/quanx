@@ -48,12 +48,10 @@ func GremlinGet[T any](result T, gremlin string) (requestId string, err error) {
 		return
 	}
 	requestId = resp.RequestId
-	bytes, err = json.Marshal(resp.Result.Data)
-	if err != nil {
+	if bytes, err = json.Marshal(resp.Result.Data); err != nil {
 		return
 	}
-	err = json.Unmarshal(bytes, &result)
-	if err != nil {
+	if err = json.Unmarshal(bytes, &result); err != nil {
 		return
 	}
 	return

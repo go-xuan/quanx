@@ -66,12 +66,11 @@ func (m *Minio) Endpoint() string {
 
 // 初始化minio客户端
 func (m *Minio) NewClient() (client *minio.Client, err error) {
-	client, err = minio.New(m.Endpoint(), &minio.Options{
+	if client, err = minio.New(m.Endpoint(), &minio.Options{
 		Creds:  credentials.NewStaticV4(m.AccessId, m.AccessSecret, m.SessionToken),
 		Secure: m.Secure,
 		Region: "us-east-1",
-	})
-	if err != nil {
+	}); err != nil {
 		return
 	}
 	return

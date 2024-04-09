@@ -131,8 +131,7 @@ func ExcelSplit(excelPath, sheetName string) (newExcelPath string, err error) {
 		}
 	}
 	newExcelPath = stringx.Insert(excelPath, "_split", strings.LastIndex(excelPath, ".")-1)
-	err = newExcelFile.Save(newExcelPath)
-	if err != nil {
+	if err = newExcelFile.Save(newExcelPath); err != nil {
 		return
 	}
 	return

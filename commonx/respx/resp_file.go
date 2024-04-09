@@ -44,8 +44,7 @@ func BuildExcelByData(ctx *gin.Context, model interface{}, data interface{}, exc
 	ctx.Writer.Header().Add("Content-Type", "application/octet-stream")
 	ctx.Writer.Header().Add("Content-Disposition", "attachment;filename*=utf-8''"+excelName)
 	ctx.Writer.Header().Add("Content-Transfer-Encoding", "binary")
-	err = xlsxFile.Write(ctx.Writer)
-	if err != nil {
+	if err = xlsxFile.Write(ctx.Writer); err != nil {
 		Exception(ctx, ExportErr, err)
 		return
 	}

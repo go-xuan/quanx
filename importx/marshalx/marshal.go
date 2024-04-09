@@ -3,11 +3,10 @@ package marshalx
 import (
 	"encoding/json"
 	"errors"
-	"github.com/go-xuan/quanx/importx/marshalx/propertiesx"
-	"os"
-
 	"github.com/BurntSushi/toml"
+	"github.com/go-xuan/quanx/importx/marshalx/propertiesx"
 	"gopkg.in/yaml.v3"
+	"os"
 
 	"github.com/go-xuan/quanx/utilx/filex"
 )
@@ -18,8 +17,7 @@ func LoadFromFile(config interface{}, filePath string) (err error) {
 		return errors.New("the file not exist : " + filePath)
 	}
 	var bytes []byte
-	bytes, err = os.ReadFile(filePath)
-	if err != nil {
+	if bytes, err = os.ReadFile(filePath); err != nil {
 		return
 	}
 	var suffix = filex.Suffix(filePath)
@@ -33,18 +31,14 @@ func LoadFromFile(config interface{}, filePath string) (err error) {
 func UnmarshalToPointer(config interface{}, bytes []byte, suffix string) (err error) {
 	switch suffix {
 	case filex.Json:
-		err = json.Unmarshal(bytes, config)
+		return json.Unmarshal(bytes, config)
 	case filex.Yaml, filex.Yml:
-		err = yaml.Unmarshal(bytes, config)
+		return yaml.Unmarshal(bytes, config)
 	case filex.Toml:
-		err = toml.Unmarshal(bytes, config)
+		return toml.Unmarshal(bytes, config)
 	case filex.Properties:
-		err = propertiesx.Unmarshal(bytes, config)
+		return propertiesx.Unmarshal(bytes, config)
 	default:
-		err = errors.New("the file type is not supported :" + suffix)
+		return errors.New("the file type is not supported :" + suffix)
 	}
-	if err != nil {
-		return
-	}
-	return
 }

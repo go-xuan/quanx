@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"github.com/minio/minio-go/v7"
-	log "github.com/sirupsen/logrus"
 )
 
 var handler *Handler
+
+const Region = "cn-north-1"
 
 // minio控制器
 type Handler struct {
@@ -35,12 +36,10 @@ func (h *Handler) CreateBucket(ctx context.Context, bucketName string) (err erro
 		return
 	}
 	if !exist {
-		if err = h.Client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: ""}); err != nil {
-			log.Warnf("create bucket error , %+v", err)
+		if err = h.Client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: Region}); err != nil {
 			return
 		}
 		if err = h.Client.SetBucketPolicy(ctx, bucketName, defaultBucketPolicy(bucketName)); err != nil {
-			log.Warnf("set bucket policy error , %+v", err)
 			return
 		}
 	}
@@ -54,8 +53,7 @@ func (h *Handler) NewMinioPath(fileName string) string {
 
 // 上传文件
 func (h *Handler) PutObject(ctx context.Context, bucketName, minioPath string, reader io.Reader) (err error) {
-	_, err = h.Client.PutObject(ctx, bucketName, minioPath, reader, -1, minio.PutObjectOptions{ContentType: "application/octet-stream"})
-	if err != nil {
+	if _, err = h.Client.PutObject(ctx, bucketName, minioPath, reader, -1, minio.PutObjectOptions{ContentType: "application/octet-stream"}); err != nil {
 		return
 	}
 	return
@@ -63,8 +61,7 @@ func (h *Handler) PutObject(ctx context.Context, bucketName, minioPath string, r
 
 // 下载文件
 func (h *Handler) FGetObject(ctx context.Context, bucketName, minioPath, savePath string) (err error) {
-	err = h.Client.FGetObject(ctx, bucketName, minioPath, savePath, minio.GetObjectOptions{})
-	if err != nil {
+	if err = h.Client.FGetObject(ctx, bucketName, minioPath, savePath, minio.GetObjectOptions{}); err != nil {
 		return
 	}
 	return
@@ -72,8 +69,7 @@ func (h *Handler) FGetObject(ctx context.Context, bucketName, minioPath, savePat
 
 // 删除文件
 func (h *Handler) RemoveObject(ctx context.Context, bucketName, minioPath string) (err error) {
-	err = h.Client.RemoveObject(ctx, bucketName, minioPath, minio.RemoveObjectOptions{GovernanceBypass: true})
-	if err != nil {
+	if err = h.Client.RemoveObject(ctx, bucketName, minioPath, minio.RemoveObjectOptions{GovernanceBypass: true}); err != nil {
 		return
 	}
 	return
@@ -82,12 +78,22 @@ func (h *Handler) RemoveObject(ctx context.Context, bucketName, minioPath string
 // 下载链接
 func (h *Handler) PresignedGetObject(ctx context.Context, minioPath string) (minioUrl string, err error) {
 	var URL *url.URL
-	expires := time.Duration(h.Config.Expire) * time.Minute
-	URL, err = h.Client.PresignedGetObject(ctx, h.Config.BucketName, minioPath, expires, nil)
-	if err != nil {
+	if URL, err = h.Client.PresignedGetObject(ctx, h.Config.BucketName, minioPath, h.GetExpireDuration(), nil); err != nil {
 		return
 	}
 	minioUrl = URL.String()
+	return
+}
+
+// 下载链接
+func (h *Handler) PresignedGetObjects(ctx context.Context, minioPaths []string) (minioUrls []string, err error) {
+	var expires = h.GetExpireDuration()
+	for _, minioPath := range minioPaths {
+		var URL *url.URL
+		if URL, err = h.Client.PresignedGetObject(ctx, h.Config.BucketName, minioPath, expires, nil); err == nil {
+			minioUrls = append(minioUrls, URL.String())
+		}
+	}
 	return
 }
 
@@ -98,7 +104,6 @@ func (h *Handler) UploadFileByUrl(ctx context.Context, bucketName string, fileNa
 		return
 	}
 	minioPath = h.NewMinioPath(fileName)
-
 	if err = h.PutObject(ctx, bucketName, minioPath, bytes.NewBuffer(fileBytes)); err != nil {
 		return
 	}
@@ -112,12 +117,12 @@ func (h *Handler) UploadFile(ctx context.Context, bucketName string, minioPath s
 		return
 	}
 	if !exist {
-		var mf multipart.File
-		if mf, err = file.Open(); err != nil {
+		var f multipart.File
+		if f, err = file.Open(); err != nil {
 			return
 		}
-		defer mf.Close()
-		if err = h.PutObject(ctx, bucketName, minioPath, mf); err != nil {
+		defer f.Close()
+		if err = h.PutObject(ctx, bucketName, minioPath, f); err != nil {
 			return
 		}
 	}
@@ -142,4 +147,9 @@ func (h *Handler) RemoveObjectBatch(ctx context.Context, bucketName string, mini
 		}
 	}
 	return
+}
+
+// 下载链接过期时间
+func (h *Handler) GetExpireDuration() time.Duration {
+	return time.Duration(h.Config.Expire) * time.Minute
 }

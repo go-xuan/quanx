@@ -18,8 +18,7 @@ type Configs []*Config
 // 批量加载nacos配置
 func (list Configs) LoadConfig(config interface{}) (err error) {
 	for _, conf := range list {
-		err = conf.LoadConfig(config)
-		if err != nil {
+		if err = conf.LoadConfig(config); err != nil {
 			return
 		}
 	}

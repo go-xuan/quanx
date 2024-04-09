@@ -16,8 +16,7 @@ func Unmarshal(bytes []byte, config interface{}) (err error) {
 		return errors.New("the config must be pointer type")
 	}
 	var pp *properties.Properties
-	pp, err = properties.Load(bytes, properties.UTF8)
-	if err != nil {
+	if pp, err = properties.Load(bytes, properties.UTF8); err != nil {
 		return
 	}
 	for i := 0; i < valueRef.Elem().NumField(); i++ {
