@@ -34,7 +34,7 @@ type Snowflake struct {
 }
 
 func New(id ...int64) *Snowflake {
-	workerId := anyx.IfElseValue(len(id) > 0, id[0], 1)
+	workerId := anyx.If(len(id) > 0, id[0], 1)
 	if snow == nil || snow.WorkerId != workerId {
 		snow = newSnowflake(workerId)
 	}

@@ -38,6 +38,7 @@ func (*Log) Title() string {
 	return "log format"
 }
 
+// 配置文件读取
 func (*Log) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath: "log.yaml",

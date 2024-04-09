@@ -43,6 +43,7 @@ func (n *Nacos) Title() string {
 	return "init nacos"
 }
 
+// 配置文件读取
 func (*Nacos) Reader() *configx.Reader {
 	return nil
 }
@@ -122,7 +123,7 @@ func (n *Nacos) ConfigClient() (client config_client.IConfigClient, err error) {
 		ClientConfig:  n.ClientConfig(),
 		ServerConfigs: n.ServerConfigs(),
 	}); err != nil {
-		log.Error(n.ToString("init nacos config client failed!"))
+		log.Error(n.ToString("init nacos config client failed !"))
 		log.Error("error : ", err)
 		return
 	}

@@ -1,7 +1,8 @@
 package slicex
 
 // 分批次执行
-func BatchExec(start, end, limit int, f func(int, int) error) error {
+func ExecInBatches(end, limit int, f func(int, int) error) error {
+	var start = 0
 	if start < end {
 		for start < end {
 			if start+limit > end {

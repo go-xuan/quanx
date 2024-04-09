@@ -66,7 +66,7 @@ func (h *Handler) InitTable(source string, dst ...interface{}) (err error) {
 					// 添加表备注
 					var refValue = reflect.ValueOf(model)
 					if method := refValue.MethodByName("TableComment"); method.IsValid() {
-						tableName := refValue.MethodByName("Table").Call([]reflect.Value{})[0].String()
+						tableName := refValue.MethodByName("Name").Call([]reflect.Value{})[0].String()
 						comment := method.Call([]reflect.Value{})[0].String()
 						if err = db.Exec(conf.CommentTableSql(tableName, comment)).Error; err != nil {
 							return

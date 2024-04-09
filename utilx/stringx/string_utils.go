@@ -7,6 +7,52 @@ import (
 	"github.com/go-xuan/quanx/utilx/mathx"
 )
 
+func Between(whole, start, end string) (from, to int) {
+	var l, sl, el = len(whole), len(start), len(end)
+	var sn, en int // sn:start个数  en:end个数
+	from, to = -1, -1
+	for i := 0; i < l; i++ {
+		if whole[i] == start[0] {
+			if whole[i:i+sl] == start {
+				sn++
+				if sn == 1 {
+					from = i + sl
+				}
+				i = i + sl - 1
+			}
+		} else if whole[i] == end[0] {
+			if whole[i:i+el] == end {
+				en++
+				if en == sn || sn == 1 {
+					to = i
+					break
+				}
+				i = i + el - 1
+			}
+		}
+	}
+	if to == -1 {
+		from = -1
+	}
+	return
+}
+
+func Index(s, substr string, n ...int) int {
+	x := anyx.Default(1, n)
+	l, m, y := len(s), len(substr), 0
+	for i := 0; i < l; i++ {
+		if s[i] == substr[0] {
+			if s[i:i+m] == substr {
+				y++
+				if x == y {
+					return i
+				}
+			}
+		}
+	}
+	return -1
+}
+
 // 添加前缀
 func AddPrefix(s, prefix string) string {
 	if strings.HasPrefix(s, prefix) {
@@ -75,10 +121,10 @@ func SubString(s string, start, end int) string {
 	return string(r[start:end])
 }
 
-// 分割字符串（默认从左数）
-func Cut(s, sep string, right ...bool) (string, string) {
+// 分割字符串
+func Cut(s, sep string, reverse ...bool) (string, string) {
 	if strings.Contains(s, sep) {
-		var i = anyx.IfElseValue(len(right) > 0 && right[0], strings.LastIndex(s, sep), strings.Index(s, sep))
+		var i = anyx.If(len(reverse) > 0 && reverse[0], strings.LastIndex(s, sep), strings.Index(s, sep))
 		return s[:i], s[i+len(sep):]
 	}
 	return s, ""
@@ -105,7 +151,7 @@ func Fill(s, fill string, length int, right ...bool) string {
 	for i := 0; i < fillLen; i++ {
 		fillStr.WriteString(string(fill[i%addLen]))
 	}
-	return anyx.IfElseValue(len(right) > 0 && right[0], s+fillStr.String(), fillStr.String()+s)
+	return anyx.If(len(right) > 0 && right[0], s+fillStr.String(), fillStr.String()+s)
 }
 
 // 转下划线
@@ -196,25 +242,23 @@ func TextSimilarity(source, target string) float64 {
 	return 1.0 - float64(distance)/maxLen
 }
 
-type Mode int
-
 const (
-	Upper Mode = iota
-	Lower
-	UpperCamel
-	LowerCamel
-	Snake
+	Upper      = "upper"      // 大写
+	Lower      = "lower"      // 小写
+	UpperCamel = "upperCamel" // 大驼峰
+	LowerCamel = "lowerCamel" // 小驼峰
+	Snake      = "snake"      // 蛇形
 )
 
-func Transforms(str string, mode ...Mode) map[Mode]string {
-	var result = make(map[Mode]string)
+func Transforms(str string, mode ...string) map[string]string {
+	var result = make(map[string]string)
 	for _, m := range mode {
 		result[m] = Transform(str, m)
 	}
 	return result
 }
 
-func Transform(str string, mode Mode) string {
+func Transform(str string, mode string) string {
 	switch mode {
 	case Upper:
 		return strings.ToUpper(str)

@@ -31,6 +31,7 @@ func (*Email) Title() string {
 	return "init mail-server"
 }
 
+// 配置文件读取
 func (*Email) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "mail.yaml",

@@ -27,6 +27,7 @@ func (*Hugegraph) Title() string {
 	return "init hugegraph"
 }
 
+// 配置文件读取
 func (*Hugegraph) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "hugegraph.yaml",

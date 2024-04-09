@@ -38,7 +38,7 @@ type Send struct {
 // 构建邮件
 func (s *Send) newMessage() *gomail.Message {
 	msg := gomail.NewMessage()
-	msg.SetHeader("From", s.From)
+	msg.SetHeader("Name", s.From)
 	msg.SetHeader("To", s.To...)
 	msg.SetHeader("Cc", s.Cc...)
 	msg.SetHeader("Subject", s.Title)

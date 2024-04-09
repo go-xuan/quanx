@@ -12,7 +12,10 @@ import (
 	"github.com/go-xuan/quanx/utilx/stringx"
 )
 
-const ExcelTag = "excel"
+const (
+	JsonTag  = "json"
+	ExcelTag = "excel"
+)
 
 type SheetInfo struct {
 	SheetName string `json:"sheetName"`
@@ -44,13 +47,14 @@ func DefaultStyle() *xlsx.Style {
 	}
 }
 
+// 通过反射获取excel标签
 func GetHeadersByReflect(obj interface{}) []*Header {
 	var result []*Header
 	var typeRef = reflect.TypeOf(obj)
 	for i := 0; i < typeRef.NumField(); i++ {
 		if typeRef.Field(i).Tag.Get(ExcelTag) != "" {
 			result = append(result, &Header{
-				Key:  typeRef.Field(i).Tag.Get("json"),
+				Key:  typeRef.Field(i).Tag.Get(JsonTag),
 				Name: typeRef.Field(i).Tag.Get(ExcelTag),
 			})
 		}
@@ -230,8 +234,7 @@ func ExcelWriter(excelPath string, obj interface{}, data interface{}) (err error
 		}
 	}
 	// 这里重新生成
-	err = xlsxFile.Save(excelPath)
-	if err != nil {
+	if err = xlsxFile.Save(excelPath); err != nil {
 		return
 	}
 	return

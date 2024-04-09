@@ -23,17 +23,6 @@ func String(size ...int) string {
 	return string(bytes)
 }
 
-// 随机枚举
-func Enum(enum string) string {
-	list := strings.Split(enum, ",")
-	return list[IntRange(0, len(list)-1)]
-}
-
-// 单选
-func Radio(options []string) string {
-	return options[IntRange(0, len(options)-1)]
-}
-
 // 随机长度数字码
 func NumberCode(length int) string {
 	bytes := make([]byte, length)
@@ -49,19 +38,12 @@ func UUID() string {
 	return uuid.NewString()
 }
 
-// 随机长度数字码
-func RandFrom(in string, sep string) string {
-	split := strings.Split(in, sep)
-	return split[IntRange(0, len(split)-1)]
-}
-
 // 随机姓名
 func Name() string {
-	sep := ","
 	sb := strings.Builder{}
-	sb.WriteString(RandFrom(XingShi, sep))
-	sb.WriteString(RandFrom(NumberCn, sep))
-	sb.WriteString(RandFrom(ShengXiao, sep))
+	sb.WriteString(Enum(XingShi, ","))
+	sb.WriteString(Enum(NumberCn, ","))
+	sb.WriteString(Enum(ShengXiao, ","))
 	return sb.String()
 }
 
@@ -84,9 +66,7 @@ func IdCard() string {
 	now := time.Now().Unix()
 	diff := Int64Range(1, now)
 	birthday := time.Unix(diff, 0).Format("20060102")
-	provinceCodes := strings.Split(HubeiProvinceCode, ",")
-	x := IntRange(0, len(provinceCodes)-1)
-	sb.WriteString(provinceCodes[x])
+	sb.WriteString(Enum(HubeiProvinceCode, ","))
 	sb.WriteString(birthday)
 	sb.WriteString(NumberCode(3))
 	last := stringx.GetIdCardLastCode(sb.String())
@@ -97,10 +77,8 @@ func IdCard() string {
 // 随机车牌号
 func PlateNo() string {
 	sb := strings.Builder{}
-	provinces := strings.Split(ProvinceSimple, ",")
-	x := IntRange(0, len(provinces)-1)
 	y := IntRange(0, len(Uppers)-20)
-	sb.WriteString(provinces[x])
+	sb.WriteString(Enum(ProvinceSimple, ","))
 	sb.WriteString(string(Uppers[y]))
 	for i := 0; i < 5; i++ {
 		if Bool() {

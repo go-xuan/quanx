@@ -1,8 +1,6 @@
-package anyx
+package slicex
 
-import (
-	"reflect"
-)
+import "reflect"
 
 // 切片分组
 func SliceToMapByField[T any](slice []T, field string) map[string]T {
@@ -38,7 +36,7 @@ func SliceGroupByName[T any](slice []T, field string) map[string][]T {
 		return nil
 	}
 	if reflect.ValueOf(slice[0]).Kind() != reflect.Struct {
-		panic("切片元素类型必须为结构体(struct)")
+		panic("the type of the slice element must be struct")
 	}
 	var result = make(map[string][]T)
 	for _, item := range slice {
@@ -55,7 +53,7 @@ func SliceGroupByIndex[T any](slice []T, index int) map[string][]T {
 		return nil
 	}
 	if reflect.ValueOf(slice[0]).Kind() != reflect.Struct {
-		panic("切片元素类型必须为结构体(struct)")
+		panic("the type of the slice element must be struct")
 	}
 	var result = make(map[string][]T)
 	for _, item := range slice {
@@ -72,7 +70,7 @@ func PtrSliceGroupByField[T any](PtrSlice []*T, field string) map[string][]*T {
 		return nil
 	}
 	if reflect.ValueOf(PtrSlice[0]).Kind() != reflect.Pointer {
-		panic("切片元素类型必须为指针(Pointer)")
+		panic("the type of the slice element must be pointer")
 	}
 	var result = make(map[string][]*T)
 	for _, ptr := range PtrSlice {
@@ -89,7 +87,7 @@ func PtrSliceGroupByIndex[T any](PtrSlice []*T, index int) map[string][]*T {
 		return nil
 	}
 	if reflect.ValueOf(PtrSlice[0]).Kind() != reflect.Pointer {
-		panic("切片元素类型必须为指针(Pointer)")
+		panic("the type of the slice element must be pointer")
 	}
 	var result = make(map[string][]*T)
 	for _, ptr := range PtrSlice {

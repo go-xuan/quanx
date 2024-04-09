@@ -4,9 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/quanx/importx/encryptx"
 	"github.com/go-xuan/quanx/utilx/anyx"
+	"github.com/go-xuan/quanx/utilx/osx"
 
 	"github.com/go-xuan/quanx/commonx/respx"
-	"github.com/go-xuan/quanx/utilx/ipx"
 )
 
 const (
@@ -31,7 +31,7 @@ func SetCookie(ctx *gin.Context, username string, age ...int) {
 		respx.BuildError(ctx, err)
 		return
 	} else {
-		var maxAge = anyx.IfElseValue(len(age) > 0, age[0], 3600)
+		var maxAge = anyx.If(len(age) > 0, age[0], 3600)
 		ctx.SetCookie(Cookie, cookie, maxAge, "", "", false, true)
 	}
 }
@@ -39,7 +39,7 @@ func SetCookie(ctx *gin.Context, username string, age ...int) {
 func CorrectIP(ctx *gin.Context) {
 	var ip string
 	if ip = ctx.ClientIP(); ip == "::1" {
-		ip = ipx.GetWLANIP()
+		ip = osx.GetWLANIP()
 	}
 	ctx.Set("ip", ip)
 	ctx.Next()

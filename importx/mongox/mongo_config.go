@@ -29,6 +29,7 @@ func (m *Mongo) Title() string {
 	return "init mongo"
 }
 
+// 配置文件读取
 func (*Mongo) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "mongo.yaml",

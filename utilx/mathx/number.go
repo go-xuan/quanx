@@ -37,7 +37,8 @@ type PowerLevel struct {
 
 // 中文数字转阿拉伯数字
 // 0 <= result < 10^12
-func ConvertChinese2Arab(input string) (result int) {
+func ConvertChinese2Arab(input string) int {
+	var result int
 	cnRunes := []rune(input)
 	cur := 0 // 当前数字
 	sum := 0 // 当前总和，当跨亿级或万级时需要清零重新求和
@@ -77,12 +78,13 @@ func ConvertChinese2Arab(input string) (result int) {
 			}
 		}
 	}
-	return
+	return result
 }
 
 // 阿拉伯转中文
 // 0 <= input < 10^12
-func ConvertArabToChinese(input int) (result string) {
+func ConvertArabToChinese(input int) string {
+	var result string
 	var arabs []int
 	for ; input > 0; input = input / 10 {
 		// arabs是倒序
@@ -105,7 +107,7 @@ func ConvertArabToChinese(input int) (result string) {
 	}
 	result = strings.Replace(result, "亿万", "亿", 1)
 	result = strings.TrimSuffix(result, "零个")
-	return
+	return result
 }
 
 func MinInt(a, b, c int) int {

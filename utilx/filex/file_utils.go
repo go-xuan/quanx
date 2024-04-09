@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/go-xuan/quanx/utilx/anyx"
 	"io"
 	"net/http"
 	"net/url"
@@ -50,19 +51,15 @@ func ReadFile(filePath string) (bytes []byte, err error) {
 // 按行读取
 func ReadFileLine(filePath string) (lines []string, err error) {
 	var file *os.File
-	file, err = os.OpenFile(filePath, os.O_RDONLY, 0666)
-	if err != nil {
+	if file, err = os.OpenFile(filePath, os.O_RDONLY, 0666); err != nil {
 		return
 	}
-	defer func(file *os.File) {
-		err = file.Close()
-	}(file)
+	defer file.Close()
 	// 按行处理txt
 	reader := bufio.NewReader(file)
 	for {
 		var line []byte
-		line, _, err = reader.ReadLine()
-		if err == io.EOF {
+		if line, _, err = reader.ReadLine(); err == io.EOF {
 			break
 		}
 		lines = append(lines, string(line))
@@ -71,10 +68,10 @@ func ReadFileLine(filePath string) (lines []string, err error) {
 }
 
 // 更新文件
-func ContentReplace(filePath string, replaces map[string]string) error {
-	bytes, err := os.ReadFile(filePath)
-	if nil != err {
-		return fmt.Errorf(" %s read file error: %v", filePath, err)
+func ContentReplace(filePath string, replaces map[string]string) (err error) {
+	var bytes []byte
+	if bytes, err = os.ReadFile(filePath); err != nil {
+		return
 	}
 	content := string(bytes)
 	for k, v := range replaces {
@@ -84,40 +81,32 @@ func ContentReplace(filePath string, replaces map[string]string) error {
 }
 
 // 写入文件
-func WriteFile(filePath, content string, mode ...int) error {
+func WriteFile(filePath, content string, mode ...int) (err error) {
 	CreateDirNotExist(filePath)
-	var flag = Overwrite
-	if len(mode) > 0 {
-		flag = mode[0]
-	}
-	file, err := os.OpenFile(filePath, flag, 0644)
-	if err != nil {
+	var flag = anyx.If(len(mode) > 0, mode[0], Overwrite)
+	var file *os.File
+	if file, err = os.OpenFile(filePath, flag, 0644); err != nil {
 		return err
 	}
-	defer func(file *os.File) {
-		_ = file.Close()
-	}(file)
+	defer file.Close()
 	writer := bufio.NewWriter(file)
-	_, _ = writer.WriteString(content)
-	if err = writer.Flush(); err != nil {
-		return err
+	if _, err = writer.WriteString(content); err != nil {
+		return
 	}
-	return nil
+	if err = writer.Flush(); err != nil {
+		return
+	}
+	return
 }
 
 // 数组按行写入文件
-func WriteFileLine(filePath string, content []string, mode ...int) error {
-	var flag = Overwrite
-	if len(mode) > 0 {
-		flag = mode[0]
+func WriteFileLine(filePath string, content []string, mode ...int) (err error) {
+	var flag = anyx.If(len(mode) > 0, mode[0], Overwrite)
+	var file *os.File
+	if file, err = os.OpenFile(filePath, flag, 0644); err != nil {
+		return
 	}
-	file, err := os.OpenFile(filePath, flag, 0644)
-	if err != nil {
-		return err
-	}
-	defer func(file *os.File) {
-		err = file.Close()
-	}(file)
+	defer file.Close()
 	writer := bufio.NewWriter(file)
 	for _, line := range content {
 		_, _ = writer.WriteString(line)
@@ -126,50 +115,47 @@ func WriteFileLine(filePath string, content []string, mode ...int) error {
 	if err = writer.Flush(); err != nil {
 		return err
 	}
-	return nil
+	return
 }
 
 // 写入json文件
-func WriteJson(filePath string, obj interface{}) error {
-	jsonByte, err := json.MarshalIndent(obj, "", "	")
-	if err != nil {
-		return err
+func WriteJson(filePath string, obj interface{}) (err error) {
+	var bytes []byte
+	if bytes, err = json.MarshalIndent(obj, "", "	"); err != nil {
+		return
 	}
 	CreateDirNotExist(filePath)
 	var file *os.File
-	file, err = os.OpenFile(filePath, Overwrite, 0644)
-	if err != nil {
-		return err
+	if file, err = os.OpenFile(filePath, Overwrite, 0644); err != nil {
+		return
 	}
-	defer func(file *os.File) {
-		_ = file.Close()
-	}(file)
+	defer file.Close()
 	writer := bufio.NewWriter(file)
-	_, _ = writer.Write(jsonByte)
-	if err = writer.Flush(); err != nil {
-		return err
+	if _, err = writer.Write(bytes); err != nil {
+		return
 	}
-	return nil
+	if err = writer.Flush(); err != nil {
+		return
+	}
+	return
 }
 
 // 写入csv文件
-func WriteCSV(filePath string, data [][]string) error {
+func WriteCSV(filePath string, data [][]string) (err error) {
 	CreateDirNotExist(filePath)
-	file, err := os.OpenFile(filePath, Overwrite, 0644)
-	if err != nil {
-		return err
+	var file *os.File
+	if file, err = os.OpenFile(filePath, Overwrite, 0644); err != nil {
+		return
 	}
-	defer func(file *os.File) {
-		err = file.Close()
-	}(file)
+	defer file.Close()
 	writer := csv.NewWriter(file)
 	writer.Comma = ','
 	writer.UseCRLF = true
 	if err = writer.WriteAll(data); err != nil {
-		return err
+		return
 	}
 	writer.Flush()
-	return nil
+	return
 }
 
 type File struct {
@@ -179,7 +165,7 @@ type File struct {
 
 // 获取目录下所有文件路径
 func FileScan(dir string, suffix string) (files []*File, err error) {
-	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	if err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -201,8 +187,7 @@ func FileScan(dir string, suffix string) (files []*File, err error) {
 			}
 		}
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		os.Exit(1)
 	}
 	return
@@ -230,11 +215,11 @@ func SplitPath(path string) (dir string, fileName string) {
 
 // 判断是否文件夹
 func IsDir(path string) bool {
-	s, err := os.Stat(path)
-	if err != nil {
+	if s, err := os.Stat(path); err != nil {
 		return false
+	} else {
+		return s.IsDir()
 	}
-	return s.IsDir()
 }
 
 // 判断所给路径文件或文件夹是否存在
@@ -246,15 +231,13 @@ func Exists(path string) bool {
 }
 
 // 创建文件
-func Create(path string) error {
-	f, err := os.Create(path)
-	defer func(f *os.File) {
-		_ = f.Close()
-	}(f)
-	if err != nil {
-		return err
+func Create(path string) (err error) {
+	var f *os.File
+	if f, err = os.Create(path); err != nil {
+		return
 	}
-	return nil
+	defer f.Close()
+	return
 }
 
 // 创建文件
@@ -294,34 +277,32 @@ func FileName(path string) string {
 }
 
 // 强制打开文件
-func MustOpen(filePath string, fileName string) (*os.File, error) {
-	fileAbsPath, err := filepath.Abs(filepath.Join(filePath, fileName))
-	if err != nil {
-		return nil, err
+func MustOpen(filePath string, fileName string) (file *os.File, err error) {
+	var fileAbsPath string
+	if fileAbsPath, err = filepath.Abs(filepath.Join(filePath, fileName)); err != nil {
+		return
 	}
-	perm := CheckPermission(fileAbsPath)
-	if perm == true {
-		return nil, fmt.Errorf("file permission denied src: %s", fileAbsPath)
+	if perm := CheckPermission(fileAbsPath); perm == true {
+		err = fmt.Errorf("file permission denied : %s", fileAbsPath)
+		return
 	}
-	err = CreateIsNotExist(fileAbsPath)
-	if err != nil {
-		return nil, fmt.Errorf("CreateIsNotExist src: %s, err: %v", fileAbsPath, err)
+	if err = CreateIsNotExist(fileAbsPath); err != nil {
+		return
 	}
-	var file *os.File
-	file, err = Open(fileAbsPath, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
-	if err != nil {
-		return nil, fmt.Errorf("fail to OpenFile :%v", err)
+
+	if file, err = Open(fileAbsPath, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644); err != nil {
+		return
 	}
-	return file, nil
+	return
 }
 
 // 打开文件
 func Open(name string, flag int, perm os.FileMode) (*os.File, error) {
-	f, err := os.OpenFile(name, flag, perm)
-	if err != nil {
+	if f, err := os.OpenFile(name, flag, perm); err != nil {
 		return nil, err
+	} else {
+		return f, nil
 	}
-	return f, nil
 }
 
 // 检查是否有权限
@@ -348,8 +329,7 @@ func CreateIsNotExist(src string) error {
 }
 
 // 通过url获取文件字节
-func GetFileBytesByUrl(fileUrl string) ([]byte, error) {
-	var result []byte
+func GetFileBytesByUrl(fileUrl string) (bytes []byte, err error) {
 	var tr = &http.Transport{
 		IdleConnTimeout:       time.Second * 2048,
 		ResponseHeaderTimeout: time.Second * 10,
@@ -360,19 +340,16 @@ func GetFileBytesByUrl(fileUrl string) ([]byte, error) {
 		fileUrl = requestURI.String()
 	}
 	var client = &http.Client{Transport: tr}
-	resp, err := client.Get(fileUrl)
-	if err != nil {
-		return nil, err
+	var resp *http.Response
+	if resp, err = client.Get(fileUrl); err != nil {
+		return
 	}
-	body := resp.Body
-	defer func(body io.ReadCloser) {
-		_ = body.Close()
-	}(body)
-	result, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	var body = resp.Body
+	defer body.Close()
+	if bytes, err = io.ReadAll(body); err != nil {
+		return
 	}
-	return result, nil
+	return
 }
 
 // 获取文件字节的二进制

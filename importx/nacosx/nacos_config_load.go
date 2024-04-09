@@ -63,22 +63,22 @@ func (c *Config) LoadConfig(config interface{}) (err error) {
 	valueRef := reflect.ValueOf(config)
 	// 修改值必须是指针类型否则不可行
 	if valueRef.Type().Kind() != reflect.Ptr {
-		log.Error("load nacos config failed!")
-		return errors.New("the input parameter is not of pointer type")
+		log.Error("loading nacos config failed!")
+		return errors.New("the input parameter is not a pointer type")
 	}
 	var param = c.ToConfigParam()
 	// 读取Nacos配置
 	var content string
 	if content, err = GetConfigContent(c.Group, c.DataId); err != nil {
-		log.Error("get config from nacos failed : ", err)
+		log.Error("get nacos config failed : ", err)
 		return
 	}
 	if err = marshalx.UnmarshalToPointer(config, []byte(content), filex.Suffix(c.DataId)); err != nil {
-		log.Error(c.ToString("load nacos config failed!"))
+		log.Error(c.ToString("loading nacos config failed!"))
 		log.Error(" error : ", err)
 		return
 	}
-	log.Info(c.ToString("load nacos config successful!"))
+	log.Info(c.ToString("loading nacos config successful!"))
 	// 设置Nacos配置监听
 	if c.Listen {
 		// 新增nacos配置监听
@@ -95,6 +95,6 @@ func (c *Config) LoadConfig(config interface{}) (err error) {
 }
 
 func ConfigChangedMonitor(namespace, group, dataId, data string) {
-	log.Errorf("Listen nacos config changed!!!\n dataId=%s group=%s namespace=%s\n改动后内容如下:\n%s", dataId, group, namespace, data)
+	log.Errorf("nacos config has changed!!!\n dataId=%s group=%s namespace=%s\n改动后内容如下:\n%s", dataId, group, namespace, data)
 	GetNacosConfigMonitor().UpdateConfigData(group, dataId, data)
 }

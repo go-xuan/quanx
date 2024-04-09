@@ -37,6 +37,7 @@ func (*Minio) Title() string {
 	return "init minio"
 }
 
+// 配置文件读取
 func (*Minio) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "minio.yaml",

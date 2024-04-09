@@ -26,6 +26,7 @@ func (*Elastic) Title() string {
 	return "init elastic-search"
 }
 
+// 配置文件读取
 func (*Elastic) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "elastic.yaml",
@@ -35,20 +36,19 @@ func (*Elastic) Reader() *configx.Reader {
 }
 
 // 配置器运行
-func (e *Elastic) Run() error {
-	if e.Host == "" {
-		return nil
+func (e *Elastic) Run() (err error) {
+	if e.Host != "" {
+		var url = e.Url()
+		var client *elastic.Client
+		if client, err = e.NewClient(url); err != nil {
+			log.Error(e.ToString("elastic search connect failed!"))
+			log.Error("error : ", err)
+			return
+		}
+		handler = &Handler{Config: e, Url: url, Client: client}
+		log.Error(e.ToString("elastic search connect successful!"))
 	}
-	var url = e.Url()
-	client, err := e.NewClient(url)
-	if err != nil {
-		log.Error(e.ToString("elastic search connect failed!"))
-		log.Error("error : ", err)
-		return err
-	}
-	handler = &Handler{Config: e, Url: url, Client: client}
-	log.Error(e.ToString("elastic search connect successful!"))
-	return nil
+	return
 }
 
 func (e *Elastic) Url() string {
@@ -56,8 +56,7 @@ func (e *Elastic) Url() string {
 }
 
 func (e *Elastic) NewClient(url string) (client *elastic.Client, err error) {
-	client, err = elastic.NewClient(elastic.SetURL(url), elastic.SetSniff(false))
-	if err != nil {
+	if client, err = elastic.NewClient(elastic.SetURL(url), elastic.SetSniff(false)); err != nil {
 		return
 	}
 	var result *elastic.PingResult

@@ -2,6 +2,7 @@ package quanx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/utilx/osx"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -16,7 +17,6 @@ import (
 	"github.com/go-xuan/quanx/importx/nacosx"
 	"github.com/go-xuan/quanx/importx/redisx"
 	"github.com/go-xuan/quanx/utilx/anyx"
-	"github.com/go-xuan/quanx/utilx/ipx"
 )
 
 var engine *Engine
@@ -146,7 +146,7 @@ func (e *Engine) initConfig() {
 			panic(err)
 		}
 		if config.Server.Host == "" {
-			config.Server.Host = ipx.GetWLANIP()
+			config.Server.Host = osx.GetWLANIP()
 		}
 	}
 	// 初始化nacos
@@ -181,7 +181,7 @@ func (e *Engine) initCommon() {
 			for source := range gormx.This().DBMap {
 				if dst, ok := e.gormTables[source]; ok {
 					if err := gormx.This().InitGormTable(source, dst...); err != nil {
-						log.Error("初始化数据库表失败!")
+						log.Error("failed to initialize the table structure !")
 						panic(err)
 					}
 				}
@@ -192,7 +192,7 @@ func (e *Engine) initCommon() {
 		e.RunConfigurator(e.config.Database)
 		if dst, ok := e.gormTables["default"]; ok {
 			if err := gormx.This().InitGormTable("default", dst...); err != nil {
-				log.Error("初始化数据库表失败!")
+				log.Error("failed to initialize the table structure !")
 				panic(err)
 			}
 		}
@@ -280,7 +280,7 @@ func (e *Engine) InitLocalConfig(config interface{}, filePath string) {
 func (e *Engine) InitNacosConfig(config interface{}, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() {
 		if nacosx.This().ConfigClient == nil {
-			panic("未初始化nacos配置中心客户端")
+			panic("nacos config client is uninitialized !")
 		}
 		var item = nacosx.NewConfig(e.config.Server.Name, dataId)
 		if len(listen) > 0 {
@@ -288,7 +288,7 @@ func (e *Engine) InitNacosConfig(config interface{}, dataId string, listen ...bo
 		}
 		// 加载微服务配置
 		if err := item.LoadConfig(config); err != nil {
-			panic("加载nacos配置失败" + err.Error())
+			panic("loading nacos config failed : " + err.Error())
 		}
 	})
 }
@@ -310,7 +310,7 @@ func (e *Engine) startGin() {
 	var port = ":" + strconv.Itoa(e.config.Server.Port)
 	log.Info("API接口请求地址: http://" + e.config.Server.Host + port)
 	if err := e.ginEngine.Run(port); err != nil {
-		log.Error("gin-Engine 运行失败!!!")
+		log.Error("gin-Engine run failed !")
 		panic(err)
 	}
 }
@@ -331,7 +331,7 @@ func (e *Engine) SetConfigDir(dir string) {
 
 // 设置配置文件
 func (e *Engine) GetConfigPath(name string) string {
-	return anyx.IfElseZero(e.configDir, name, filepath.Join(e.configDir, name))
+	return anyx.IfZeroElse(e.configDir, name, filepath.Join(e.configDir, name))
 }
 
 // 添加需要初始化的 gormx.Tabler 模型
@@ -374,7 +374,7 @@ func (e *Engine) InitGinLoader(group *gin.RouterGroup) {
 // 服务保活
 func PanicRecover() {
 	if err := recover(); err != nil {
-		log.Errorf("服务运行失败!错误为 : %s", err)
+		log.Error("server run panic : ", err)
 		return
 	}
 	select {}

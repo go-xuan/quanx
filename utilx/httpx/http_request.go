@@ -107,8 +107,7 @@ func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 		body = bytes.NewReader(marshal)
 	}
 	var req *http.Request
-	req, err = http.NewRequest(r.method, r.url, body)
-	if err != nil {
+	if req, err = http.NewRequest(r.method, r.url, body); err != nil {
 		return
 	}
 	if r.header != nil && len(r.header) > 0 {
@@ -118,13 +117,12 @@ func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 	}
 	// 切换http客户端
 	var resp *http.Response
-	resp, err = SwitchClient(modeAndParam...).Do(req)
-	if err != nil {
+	if resp, err = SwitchClient(modeAndParam...).Do(req); err != nil {
 		return
 	}
-	defer resp.Body.Close()
-	res, err = io.ReadAll(resp.Body)
-	return
+	var reader = resp.Body
+	defer reader.Close()
+	return io.ReadAll(reader)
 }
 
 // map转为Url

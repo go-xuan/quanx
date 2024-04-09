@@ -2,7 +2,6 @@ package elasticx
 
 import (
 	"context"
-
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
 )
@@ -23,30 +22,80 @@ func This() *Handler {
 	return handler
 }
 
-func (h *Handler) Create(ctx context.Context, index, id string, body interface{}) (err error) {
-	var result *elastic.IndexResponse
-	if result, err = h.Client.Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
+// 查询所有索引
+func (h *Handler) AllIndices(ctx context.Context) (indices []string, err error) {
+	var resp elastic.CatIndicesResponse
+	if resp, err = h.Client.CatIndices().Do(ctx); err != nil {
 		return
 	}
-	log.Printf("create success: id=%s index=%s type=%s\n", result.Id, result.Index, result.Type)
+	for _, row := range resp {
+		indices = append(indices, row.Index)
+	}
+	return
+}
+
+// 创建索引
+func (h *Handler) CreateIndex(ctx context.Context, index string) (ok bool, err error) {
+	var resp *elastic.IndicesDeleteResponse
+	if resp, err = h.Client.DeleteIndex(index).Do(ctx); err != nil {
+		return
+	}
+	ok = resp.Acknowledged
+	return
+}
+
+// 删除索引
+func (h *Handler) DeleteIndex(ctx context.Context, index string) (ok bool, err error) {
+	var resp *elastic.IndicesDeleteResponse
+	if resp, err = h.Client.DeleteIndex(index).Do(ctx); err != nil {
+		return
+	}
+	ok = resp.Acknowledged
+	return
+}
+
+// 批量索引
+func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (ok bool, err error) {
+	var start, limit, total = 0, 50, len(indices)
+	for start < total {
+		if start+limit > total {
+			limit = total - start
+		}
+		var end = start + limit
+		var resp *elastic.IndicesDeleteResponse
+		if resp, err = h.Client.DeleteIndex(indices[start:end]...).Do(ctx); err != nil {
+			panic(err)
+		}
+		log.Printf("delete indices[%d-%d] acknowledged：%v\n", start, end, resp.Acknowledged)
+		start = end
+	}
+	return
+}
+
+func (h *Handler) Create(ctx context.Context, index, id string, body interface{}) (err error) {
+	var resp *elastic.IndexResponse
+	if resp, err = h.Client.Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
+		return
+	}
+	log.Printf("create success: id=%s index=%s type=%s\n", resp.Id, resp.Index, resp.Type)
 	return
 }
 
 func (h *Handler) Update(ctx context.Context, index, id string, body interface{}) (err error) {
-	var result *elastic.UpdateResponse
-	if result, err = h.Client.Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
+	var resp *elastic.UpdateResponse
+	if resp, err = h.Client.Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
 		return
 	}
-	log.Printf("update success: id=%s index=%s type=%s\n", result.Id, result.Index, result.Type)
+	log.Printf("update success: id=%s index=%s type=%s\n", resp.Id, resp.Index, resp.Type)
 	return
 }
 
 func (h *Handler) Delete(ctx context.Context, index, id string) (err error) {
-	var result *elastic.DeleteResponse
-	if result, err = h.Client.Delete().Index(index).Id(id).Do(ctx); err != nil {
+	var resp *elastic.DeleteResponse
+	if resp, err = h.Client.Delete().Index(index).Id(id).Do(ctx); err != nil {
 		return
 	}
-	log.Printf("delete success: %s\n", result.Result)
+	log.Printf("delete success: %s\n", resp.Result)
 	return
 }
 

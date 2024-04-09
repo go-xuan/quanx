@@ -96,7 +96,6 @@ func newHttpsProxyClient(proxyUrl string, crt string) *Client {
 			mode:   HttpsProxy,
 			client: &http.Client{Transport: transport},
 		}
-
 	}
 	return client
 }

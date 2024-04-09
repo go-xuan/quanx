@@ -25,6 +25,7 @@ func (m MultiRedis) Title() string {
 	return "Init multi-redis"
 }
 
+// 配置文件读取
 func (MultiRedis) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "multi_redis.yaml",
@@ -33,6 +34,7 @@ func (MultiRedis) Reader() *configx.Reader {
 	}
 }
 
+// 配置器运行
 func (m MultiRedis) Run() error {
 	if len(m) == 0 {
 		log.Info("redis not connected! reason: multi-redis.yaml not found!")

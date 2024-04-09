@@ -117,6 +117,7 @@ func (d *Database) Title() string {
 	return "init database"
 }
 
+// 配置文件读取
 func (d *Database) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "database.yaml",
