@@ -3,13 +3,13 @@ package gatewayx
 import (
 	"errors"
 	"fmt"
+	"github.com/go-xuan/quanx/importx/marshalx"
+	"github.com/go-xuan/quanx/utilx/filex"
 	"strings"
 	"time"
 
 	"github.com/go-xuan/quanx/importx/ginx"
-	"github.com/go-xuan/quanx/importx/marshalx"
 	"github.com/go-xuan/quanx/importx/nacosx"
-	"github.com/go-xuan/quanx/utilx/filex"
 )
 
 var Apps []*App
@@ -40,8 +40,7 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, authType string
 					}
 				}
 			}
-			addr, err = nacosx.SelectOneHealthyInstance(server.Name, server.Group)
-			if err != nil {
+			if addr, err = nacosx.SelectOneHealthyInstance(server.Name, server.Group); err != nil {
 				err = errors.New("微服务实例未注册 ：" + err.Error())
 				return
 			}
@@ -58,8 +57,7 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, authType string
 func ListenConfigChanged(group, dataId string) (err error) {
 	if data, ok := nacosx.GetNacosConfigMonitor().GetConfigData(group, dataId); ok && data.Changed {
 		// 将当前最新的content数据同步到servers
-		err = marshalx.UnmarshalToPointer(&Apps, []byte(data.Content), filex.Suffix(dataId))
-		if err != nil {
+		if err = marshalx.UnmarshalToPointer(&Apps, []byte(data.Content), filex.Suffix(dataId)); err != nil {
 			return
 		}
 		// 更新nacos监控中配置值

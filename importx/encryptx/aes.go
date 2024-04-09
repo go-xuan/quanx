@@ -19,8 +19,7 @@ type Aes struct {
 func AES() *Aes {
 	if aesX == nil {
 		var err error
-		aesX, err = newAES()
-		if err != nil {
+		if aesX, err = newAES(); err != nil {
 			return nil
 		}
 	}
@@ -30,8 +29,7 @@ func AES() *Aes {
 func newAES() (myRsa *Aes, err error) {
 	var key = []byte(randx.String(16))
 	var block cipher.Block
-	block, err = aes.NewCipher(key)
-	if err != nil {
+	if block, err = aes.NewCipher(key); err != nil {
 		return
 	}
 	var iv = []byte(randx.String(block.BlockSize()))
@@ -56,8 +54,7 @@ func (m *Aes) Decrypt(plaintext []byte) (ciphertext []byte) {
 
 func AesEncrypt(plaintext []byte, key []byte, iv []byte) (ciphertext []byte, err error) {
 	var block cipher.Block
-	block, err = aes.NewCipher(key)
-	if err != nil {
+	if block, err = aes.NewCipher(key); err != nil {
 		return
 	}
 	ciphertext = make([]byte, len(plaintext))
@@ -67,8 +64,7 @@ func AesEncrypt(plaintext []byte, key []byte, iv []byte) (ciphertext []byte, err
 
 func AesDecrypt(ciphertext []byte, key []byte, iv []byte) (plaintext []byte, err error) {
 	var block cipher.Block
-	block, err = aes.NewCipher(key)
-	if err != nil {
+	if block, err = aes.NewCipher(key); err != nil {
 		return
 	}
 	plaintext = make([]byte, len(ciphertext))

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	defaultDir    = "pem"
+	defaultDir    = "resource/pem"
 	privateKeyPem = "rsa-private.pem"
 	publicKeyPem  = "rsa-public.pem"
 )
@@ -33,8 +33,7 @@ type RsaData struct {
 func RSA() *Rsa {
 	if rsaX == nil {
 		var err error
-		rsaX, err = newRSA(defaultDir)
-		if err != nil {
+		if rsaX, err = newRSA(defaultDir); err != nil {
 			return nil
 		}
 	}
@@ -44,8 +43,7 @@ func RSA() *Rsa {
 // 公钥加密
 func (m *Rsa) Encrypt(plaintext string) (ciphertext string, err error) {
 	var bytes []byte
-	bytes, err = rsa.EncryptPKCS1v15(rand.Reader, &m.privateKey.PublicKey, []byte(plaintext))
-	if err != nil {
+	if bytes, err = rsa.EncryptPKCS1v15(rand.Reader, &m.privateKey.PublicKey, []byte(plaintext)); err != nil {
 		return
 	}
 	ciphertext = EncodeBase64(bytes, true)
@@ -56,8 +54,7 @@ func (m *Rsa) Encrypt(plaintext string) (ciphertext string, err error) {
 func (m *Rsa) Decrypt(ciphertext string) (plaintext string, err error) {
 	var base64 = DecodeBase64(ciphertext, true)
 	var bytes []byte
-	bytes, err = rsa.DecryptPKCS1v15(rand.Reader, m.privateKey, base64)
-	if err != nil {
+	if bytes, err = rsa.DecryptPKCS1v15(rand.Reader, m.privateKey, base64); err != nil {
 		return
 	}
 	plaintext = string(bytes)
@@ -71,8 +68,7 @@ func newRSA(dir string) (myRsa *Rsa, err error) {
 	var privateKey = &rsa.PrivateKey{}
 	if filex.Exists(priPath) && filex.Exists(pubPath) {
 		priBytes = PemDecode(priPath)
-		privateKey, err = x509.ParsePKCS1PrivateKey(priBytes)
-		if err != nil {
+		if privateKey, err = x509.ParsePKCS1PrivateKey(priBytes); err != nil {
 			return
 		}
 		pubBytes = PemDecode(pubPath)
@@ -80,13 +76,11 @@ func newRSA(dir string) (myRsa *Rsa, err error) {
 		// 先确保文件夹存在
 		filex.CreateDir(dir)
 		// 生成私钥
-		privateKey, priBytes, err = NewRSAPrivateKey(priPath)
-		if err != nil {
+		if privateKey, priBytes, err = NewRSAPrivateKey(priPath); err != nil {
 			return
 		}
 		// 生成公钥
-		pubBytes, err = NewRSAPublicKey(pubPath, &privateKey.PublicKey)
-		if err != nil {
+		if pubBytes, err = NewRSAPublicKey(pubPath, &privateKey.PublicKey); err != nil {
 			return
 		}
 	}
@@ -111,21 +105,18 @@ func PemDecode(pemPath string) []byte {
 func NewRSAPrivateKey(pemPath string) (key *rsa.PrivateKey, derBytes []byte, err error) {
 	// 生成RSA密钥对
 	key = &rsa.PrivateKey{}
-	key, err = rsa.GenerateKey(rand.Reader, 1024)
-	if err != nil {
+	if key, err = rsa.GenerateKey(rand.Reader, 1024); err != nil {
 		return
 	}
 	// 将私钥对象转换成DER编码形式
 	derBytes = x509.MarshalPKCS1PrivateKey(key)
 	// 创建私钥pem文件
 	var file *os.File
-	file, err = os.Create(pemPath)
-	if err != nil {
+	if file, err = os.Create(pemPath); err != nil {
 		return
 	}
 	// 对密钥信息进行编码，写入到私钥文件中
-	err = pem.Encode(file, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: derBytes})
-	if err != nil {
+	if err = pem.Encode(file, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: derBytes}); err != nil {
 		return
 	}
 	return
@@ -136,13 +127,11 @@ func NewRSAPublicKey(pemPath string, key *rsa.PublicKey) (derBytes []byte, err e
 	derBytes = x509.MarshalPKCS1PublicKey(key)
 	// 创建公钥pem文件
 	var file *os.File
-	file, err = os.Create(pemPath)
-	if err != nil {
+	if file, err = os.Create(pemPath); err != nil {
 		return
 	}
 	// 对公钥信息进行编码，写入到公钥文件中
-	err = pem.Encode(file, &pem.Block{Type: "RSA PUBLIC KEY", Bytes: derBytes})
-	if err != nil {
+	if err = pem.Encode(file, &pem.Block{Type: "RSA PUBLIC KEY", Bytes: derBytes}); err != nil {
 		return
 	}
 	return
@@ -151,12 +140,10 @@ func NewRSAPublicKey(pemPath string, key *rsa.PublicKey) (derBytes []byte, err e
 // 根据第三方公钥加密
 func RsaEncrypt(plaintext []byte, pemPath string) (ciphertext []byte, err error) {
 	var key *rsa.PublicKey
-	key, err = x509.ParsePKCS1PublicKey(PemDecode(pemPath))
-	if err != nil {
+	if key, err = x509.ParsePKCS1PublicKey(PemDecode(pemPath)); err != nil {
 		return
 	}
-	ciphertext, err = rsa.EncryptPKCS1v15(rand.Reader, key, plaintext)
-	if err != nil {
+	if ciphertext, err = rsa.EncryptPKCS1v15(rand.Reader, key, plaintext); err != nil {
 		return
 	}
 	return
@@ -165,12 +152,10 @@ func RsaEncrypt(plaintext []byte, pemPath string) (ciphertext []byte, err error)
 // 根据第三方私钥解密
 func RsaDecrypt(plaintext []byte, pemPath string) (ciphertext []byte, err error) {
 	var key *rsa.PrivateKey
-	key, err = x509.ParsePKCS1PrivateKey(PemDecode(pemPath))
-	if err != nil {
+	if key, err = x509.ParsePKCS1PrivateKey(PemDecode(pemPath)); err != nil {
 		return
 	}
-	ciphertext, err = rsa.DecryptPKCS1v15(rand.Reader, key, plaintext)
-	if err != nil {
+	if ciphertext, err = rsa.DecryptPKCS1v15(rand.Reader, key, plaintext); err != nil {
 		return
 	}
 	return
@@ -179,12 +164,10 @@ func RsaDecrypt(plaintext []byte, pemPath string) (ciphertext []byte, err error)
 // 根据第三方公钥加密
 func RsaEncryptPKIX(plaintext []byte, pemPath string) (ciphertext []byte, err error) {
 	var key any
-	key, err = x509.ParsePKIXPublicKey(PemDecode(pemPath))
-	if err != nil {
+	if key, err = x509.ParsePKIXPublicKey(PemDecode(pemPath)); err != nil {
 		return
 	}
-	ciphertext, err = rsa.EncryptPKCS1v15(rand.Reader, key.(*rsa.PublicKey), plaintext)
-	if err != nil {
+	if ciphertext, err = rsa.EncryptPKCS1v15(rand.Reader, key.(*rsa.PublicKey), plaintext); err != nil {
 		return
 	}
 	return
@@ -193,12 +176,11 @@ func RsaEncryptPKIX(plaintext []byte, pemPath string) (ciphertext []byte, err er
 // 根据第三方私钥解密
 func RsaDecryptPKIX(plaintext []byte, pemPath string) (ciphertext []byte, err error) {
 	var key any
-	key, err = x509.ParsePKCS8PrivateKey(PemDecode(pemPath))
-	if err != nil {
+
+	if key, err = x509.ParsePKCS8PrivateKey(PemDecode(pemPath)); err != nil {
 		return
 	}
-	ciphertext, err = rsa.DecryptPKCS1v15(rand.Reader, key.(*rsa.PrivateKey), plaintext)
-	if err != nil {
+	if ciphertext, err = rsa.DecryptPKCS1v15(rand.Reader, key.(*rsa.PrivateKey), plaintext); err != nil {
 		return
 	}
 	return
