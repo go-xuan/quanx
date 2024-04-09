@@ -21,8 +21,15 @@ func SetAuthType(ctx *gin.Context, authType string) {
 	ctx.Request.Header.Set(AuthType, authType)
 }
 
-func RemoveCookie(ctx *gin.Context) {
-	ctx.SetCookie(Cookie, "", -1, "", "", false, true)
+func SetUser(ctx *gin.Context, user *User) {
+	ctx.Set("user", user)
+}
+
+func GetUser(ctx *gin.Context) *User {
+	if value, ok := ctx.Get("user"); ok {
+		return value.(*User)
+	}
+	return nil
 }
 
 func SetCookie(ctx *gin.Context, username string, age ...int) {
@@ -36,6 +43,11 @@ func SetCookie(ctx *gin.Context, username string, age ...int) {
 	}
 }
 
+// maxAge=-1即可移除cookie
+func RemoveCookie(ctx *gin.Context) {
+	ctx.SetCookie(Cookie, "", -1, "", "", false, true)
+}
+
 func CorrectIP(ctx *gin.Context) {
 	var ip string
 	if ip = ctx.ClientIP(); ip == "::1" {
@@ -46,16 +58,16 @@ func CorrectIP(ctx *gin.Context) {
 	return
 }
 
-// 白名单
+// 免鉴权
 func NotAuth(ctx *gin.Context) {
 	SetAuthType(ctx, NoAuth)
 	ctx.Next()
 	return
 }
 
-// cookie鉴权
+// 开启鉴权
 func Auth(ctx *gin.Context) {
-	if err := Authenticate(ctx); err != "" {
+	if err := authenticate(ctx); err != "" {
 		ctx.Abort()
 		respx.Exception(ctx, respx.AuthErr, err)
 	} else {
@@ -64,19 +76,19 @@ func Auth(ctx *gin.Context) {
 	return
 }
 
-func Authenticate(ctx *gin.Context) string {
+func authenticate(ctx *gin.Context) string {
 	switch ctx.Request.Header.Get(AuthType) {
 	case NoAuth:
 		return ""
 	case Token:
-		return TokenAuthenticate(ctx)
+		return authenticateToken(ctx)
 	default:
-		return CookeAuthenticate(ctx)
+		return authenticateCookie(ctx)
 	}
 }
 
 // cookie鉴权
-func TokenAuthenticate(ctx *gin.Context) string {
+func authenticateToken(ctx *gin.Context) string {
 	if token := ctx.Request.Header.Get(Authorization); token == "" {
 		return respx.AuthRequiredErr.Msg
 	} else {
@@ -85,14 +97,14 @@ func TokenAuthenticate(ctx *gin.Context) string {
 		} else if user.GetTokenCache() == "" {
 			return respx.AuthExpiredErr.Msg
 		} else {
-			ctx.Set("user", user)
+			SetUser(ctx, user)
 		}
 		return ""
 	}
 }
 
 // token鉴权
-func CookeAuthenticate(ctx *gin.Context) string {
+func authenticateCookie(ctx *gin.Context) string {
 	if cookie, err := ctx.Cookie(Cookie); err != nil {
 		return respx.AuthRequiredErr.Msg
 	} else {
@@ -106,7 +118,7 @@ func CookeAuthenticate(ctx *gin.Context) string {
 		} else if user, err = GetUserByToken(token); err != nil {
 			return respx.AuthInvalidErr.Msg
 		} else {
-			ctx.Set("user", user)
+			SetUser(ctx, user)
 		}
 		return ""
 	}
