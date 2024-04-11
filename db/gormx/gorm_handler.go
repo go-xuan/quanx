@@ -1,6 +1,7 @@
 package gormx
 
 import (
+	"github.com/go-xuan/quanx/common/constx"
 	"gorm.io/gorm"
 	"reflect"
 )
@@ -32,7 +33,7 @@ func Initialized() bool {
 }
 
 func (h *Handler) GetDB(source ...string) *gorm.DB {
-	if len(source) > 0 && source[0] != "default" {
+	if len(source) > 0 && source[0] != constx.Default {
 		if db, ok := h.DBMap[source[0]]; ok {
 			return db
 		}
@@ -41,7 +42,7 @@ func (h *Handler) GetDB(source ...string) *gorm.DB {
 }
 
 func (h *Handler) GetConfig(source ...string) *Database {
-	if len(source) > 0 && source[0] != "default" {
+	if len(source) > 0 && source[0] != constx.Default {
 		if conf, ok := h.ConfigMap[source[0]]; ok {
 			return conf
 		}

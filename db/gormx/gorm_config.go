@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 
+	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/frame/confx"
 	"github.com/go-xuan/quanx/utils/anyx"
 )
@@ -55,7 +56,7 @@ func (md MultiDatabase) Run() (err error) {
 			}
 			handler.DBMap[d.Source] = db
 			handler.ConfigMap[d.Source] = d
-			if i == 0 || d.Source == "default" {
+			if i == 0 || d.Source == constx.Default {
 				handler.DB = db
 				handler.Config = d
 			}
@@ -66,28 +67,6 @@ func (md MultiDatabase) Run() (err error) {
 		log.Info("database not connected! reason: multi-database.yaml is empty or {database.enable} is false")
 	}
 	return
-}
-
-// 根据数据源名称获取配置
-func (md MultiDatabase) GetConfig(source string) *Database {
-	for _, config := range md {
-		if config.Source == source {
-			return config
-		}
-	}
-	return nil
-}
-
-// 获取默认配置
-func (md MultiDatabase) GetDefault() *Database {
-	if len(md) > 0 {
-		var conf = md.GetConfig("default")
-		if conf == nil {
-			conf = md[0]
-		}
-		return conf
-	}
-	return nil
 }
 
 type Database struct {
@@ -198,7 +177,7 @@ func (d *Database) GetGormDB() (gormDb *gorm.DB, err error) {
 		dial = mysql.Open(fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?clientFoundRows=false&parseTime=true&timeout=1800s&charset=utf8&collation=utf8_general_ci&loc=Local",
 			d.Username, d.Password, d.Host, d.Port, d.Database))
 	case Postgres:
-		dial = postgres.Open(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		dial = postgres.Open(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
 			d.Host, d.Port, d.Username, d.Password, d.Database))
 	}
 	return gorm.Open(dial, &gorm.Config{NamingStrategy: schema.NamingStrategy{SingularTable: true}})

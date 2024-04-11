@@ -2,6 +2,7 @@ package redisx
 
 import (
 	"context"
+	"github.com/go-xuan/quanx/common/constx"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -41,7 +42,7 @@ func DB(source ...string) redis.Cmdable {
 }
 
 func (h *Handler) GetCmd(source ...string) redis.Cmdable {
-	if len(source) > 0 && source[0] != "default" {
+	if len(source) > 0 && source[0] != constx.Default {
 		if cmd, ok := h.CmdMap[source[0]]; ok {
 			return cmd
 		}
@@ -50,7 +51,7 @@ func (h *Handler) GetCmd(source ...string) redis.Cmdable {
 }
 
 func (h *Handler) GetConfig(source ...string) *Redis {
-	if len(source) > 0 && source[0] != "default" {
+	if len(source) > 0 && source[0] != constx.Default {
 		if conf, ok := h.ConfigMap[source[0]]; ok {
 			return conf
 		}

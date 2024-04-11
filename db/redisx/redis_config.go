@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/frame/confx"
 	"github.com/go-xuan/quanx/utils/anyx"
 )
@@ -56,7 +57,7 @@ func (m MultiRedis) Run() error {
 			}
 			handler.CmdMap[r.Source] = cmd
 			handler.ConfigMap[r.Source] = r
-			if i == 0 || r.Source == "default" {
+			if i == 0 || r.Source == constx.Default {
 				handler.Cmd = cmd
 				handler.Config = r
 			}

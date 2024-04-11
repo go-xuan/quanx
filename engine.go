@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/db/gormx"
 	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/frame/confx"
@@ -26,6 +27,7 @@ func GetEngine(modes ...Flag) *Engine {
 	if engine == nil {
 		engine = &Engine{
 			config:         &Config{},
+			configDir:      constx.ConfDir,
 			customFuncs:    make([]CustomFunc, 0),
 			configurators:  make([]confx.Configurator[any], 0),
 			ginMiddlewares: make([]gin.HandlerFunc, 0),
@@ -190,8 +192,8 @@ func (e *Engine) initCommon() {
 	} else if !gormx.Initialized() {
 		e.config.Database = anyx.IfZero(e.config.Database, &gormx.Database{})
 		e.RunConfigurator(e.config.Database)
-		if dst, ok := e.gormTables["default"]; ok {
-			if err := gormx.This().InitGormTable("default", dst...); err != nil {
+		if dst, ok := e.gormTables[constx.Default]; ok {
+			if err := gormx.This().InitGormTable(constx.Default, dst...); err != nil {
 				log.Error("failed to initialize the table structure !")
 				panic(err)
 			}
@@ -333,7 +335,7 @@ func (e *Engine) GetConfigPath(name string) string {
 
 // 添加需要初始化的 gormx.Tabler 模型
 func (e *Engine) AddTable(dst ...gormx.Tabler[any]) {
-	e.AddSourceTable("default", dst...)
+	e.AddSourceTable(constx.Default, dst...)
 }
 
 // 添加需要某个数据源的gormx.Table模型
