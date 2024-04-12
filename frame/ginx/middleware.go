@@ -2,21 +2,26 @@ package ginx
 
 import (
 	"github.com/gin-gonic/gin"
-	respx2 "github.com/go-xuan/quanx/net/respx"
-
+	"github.com/go-xuan/quanx/frame/cachex"
+	"github.com/go-xuan/quanx/net/respx"
 	"github.com/go-xuan/quanx/os/encryptx"
 	"github.com/go-xuan/quanx/os/ipx"
 	"github.com/go-xuan/quanx/utils/anyx"
 )
 
 const (
-	AuthType      = "auth_type"     // 鉴权方式
-	NoAuth        = "no"            // 免鉴权标识
-	Token         = "token"         // token标识
-	Cookie        = "cookie"        // cookie鉴权标识
-	Authorization = "Authorization" // token鉴权标识
-	UserKey       = "user"          // 用户存储KEY
+	AuthType        = "auth_type"     // 鉴权方式
+	NoAuth          = "no"            // 免鉴权标识
+	Token           = "token"         // token标识
+	Cookie          = "cookie"        // cookie鉴权标识
+	Authorization   = "Authorization" // token鉴权标识
+	UserKey         = "user"          // 用户信息存储KEY
+	IPKey           = "ip"            // 用户存储KEY
+	AuthCacheSource = "auth"          // 用户存储KEY
 )
+
+// token 缓存
+var AuthCache *cachex.CacheClient[any]
 
 func SetAuthType(ctx *gin.Context, authType string) {
 	ctx.Request.Header.Set(AuthType, authType)
@@ -36,7 +41,7 @@ func GetUser(ctx *gin.Context) *User {
 func SetCookie(ctx *gin.Context, username string, age ...int) {
 	if cookie, err := encryptx.RSA().Encrypt(username); err != nil {
 		ctx.Abort()
-		respx2.BuildError(ctx, err)
+		respx.BuildError(ctx, err)
 		return
 	} else {
 		var maxAge = anyx.If(len(age) > 0, age[0], 3600)
@@ -49,15 +54,20 @@ func RemoveCookie(ctx *gin.Context) {
 	ctx.SetCookie(Cookie, "", -1, "", "", false, true)
 }
 
-// 获取当前请求IP
-func CorrectIP(ctx *gin.Context) {
+// 校验请求IP
+func CheckIP(ctx *gin.Context) {
 	var ip string
 	if ip = ctx.ClientIP(); ip == "::1" {
 		ip = ipx.GetWLANIP()
 	}
-	ctx.Set("ip", ip)
+	ctx.Set(IPKey, ip)
 	ctx.Next()
 	return
+}
+
+// 当前请求IP
+func GetCorrectIP(ctx *gin.Context) string {
+	return ctx.GetString(IPKey)
 }
 
 // 免鉴权
@@ -69,9 +79,12 @@ func NotAuth(ctx *gin.Context) {
 
 // 开启鉴权
 func Auth(ctx *gin.Context) {
+	if AuthCache == nil {
+		AuthCache = cachex.Client(AuthCacheSource)
+	}
 	if err := authenticate(ctx); err != "" {
 		ctx.Abort()
-		respx2.Exception(ctx, respx2.AuthErr, err)
+		respx.Exception(ctx, respx.AuthErr, err)
 	} else {
 		ctx.Next()
 	}
@@ -92,12 +105,12 @@ func authenticate(ctx *gin.Context) string {
 // cookie鉴权
 func authenticateToken(ctx *gin.Context) string {
 	if token := ctx.Request.Header.Get(Authorization); token == "" {
-		return respx2.AuthRequiredErr.Msg
+		return respx.AuthRequiredErr.Msg
 	} else {
-		if user, err := GetUserByToken(token); err != nil || user == nil {
-			return respx2.AuthInvalidErr.Msg
-		} else if user.GetTokenCache() == "" {
-			return respx2.AuthExpiredErr.Msg
+		if user, err := ParseUserFromToken(token); err != nil || user == nil {
+			return respx.AuthInvalidErr.Msg
+		} else if AuthCache.Get(ctx.Request.Context(), user.Account).(string) == "" {
+			return respx.AuthExpiredErr.Msg
 		} else {
 			SetUser(ctx, user)
 		}
@@ -108,17 +121,17 @@ func authenticateToken(ctx *gin.Context) string {
 // token鉴权
 func authenticateCookie(ctx *gin.Context) string {
 	if cookie, err := ctx.Cookie(Cookie); err != nil {
-		return respx2.AuthRequiredErr.Msg
+		return respx.AuthRequiredErr.Msg
 	} else {
 		var account string
 		if account, err = encryptx.RSA().Decrypt(cookie); err != nil {
-			return respx2.AuthInvalidErr.Msg
+			return respx.AuthInvalidErr.Msg
 		}
 		var user = &User{Account: account}
-		if token := user.GetTokenCache(); token == "" {
-			return respx2.AuthExpiredErr.Msg
-		} else if user, err = GetUserByToken(token); err != nil {
-			return respx2.AuthInvalidErr.Msg
+		if token := AuthCache.Get(ctx.Request.Context(), user.Account).(string); token == "" {
+			return respx.AuthExpiredErr.Msg
+		} else if user, err = ParseUserFromToken(token); err != nil {
+			return respx.AuthInvalidErr.Msg
 		} else {
 			SetUser(ctx, user)
 		}

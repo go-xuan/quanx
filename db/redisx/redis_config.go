@@ -18,11 +18,23 @@ const (
 	Cluster           // 集群
 )
 
-// redis连接配置
+// 多redis连接配置
 type MultiRedis []*Redis
 
+// redis连接配置
+type Redis struct {
+	Source   string `json:"source" yaml:"source"`     // 数据源名称
+	Enable   bool   `json:"enable" yaml:"enable"`     // 数据源启用
+	Mode     int    `json:"mode" yaml:"mode"`         // 模式（0-单机；1-集群），默认单机模式
+	Host     string `json:"host" yaml:"host"`         // 主机
+	Port     int    `json:"port" yaml:"port"`         // 端口
+	Password string `json:"password" yaml:"password"` // 密码
+	Database int    `json:"database" yaml:"database"` // 数据库，默认0
+	PoolSize int    `json:"poolSize" yaml:"poolSize"` // 池大小
+}
+
 // 配置信息格式化
-func (m MultiRedis) Title() string {
+func (MultiRedis) Title() string {
 	return "Init multi-redis"
 }
 
@@ -49,8 +61,7 @@ func (m MultiRedis) Run() error {
 	for i, r := range m {
 		if r.Enable {
 			var cmd = r.NewRedisCmdable()
-			ok, err := Ping(cmd)
-			if !ok && err != nil {
+			if ok, err := Ping(cmd); !ok && err != nil {
 				log.Error(r.ToString("redis连接失败!"))
 				log.Error("error : ", err)
 				return err
@@ -70,17 +81,6 @@ func (m MultiRedis) Run() error {
 	return nil
 }
 
-type Redis struct {
-	Source   string `json:"source" yaml:"source"`     // 数据源名称
-	Enable   bool   `json:"enable" yaml:"enable"`     // 数据源启用
-	Mode     int    `json:"mode" yaml:"mode"`         // 模式（0-单机；1-集群），默认单机模式
-	Host     string `json:"host" yaml:"host"`         // 主机
-	Port     int    `json:"port" yaml:"port"`         // 端口
-	Password string `json:"password" yaml:"password"` // 密码
-	Database int    `json:"database" yaml:"database"` // 数据库，默认0
-	PoolSize int    `json:"poolSize" yaml:"poolSize"` // 池大小
-}
-
 // 配置信息格式化
 func (r *Redis) ToString(title string) string {
 	return fmt.Sprintf("%s => source=%s mode=%d host=%s port=%d database=%d",
@@ -92,6 +92,7 @@ func (r *Redis) Title() string {
 	return "connect redis"
 }
 
+// 配置文件读取
 func (*Redis) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "redis.yaml",
@@ -111,7 +112,7 @@ func (r *Redis) Run() (err error) {
 		if ok, err = Ping(cmd); !ok && err != nil {
 			log.Error(r.ToString("redis connect failed"))
 			log.Error("error : ", err)
-			return err
+			return
 		}
 		handler = &Handler{
 			Multi:     false,
@@ -135,28 +136,27 @@ func (r *Redis) Address() string {
 }
 
 // 初始化redis，默认单机模式
-func (r *Redis) NewRedisCmdable(database ...int) (cmd redis.Cmdable) {
+func (r *Redis) NewRedisCmdable(database ...int) redis.Cmdable {
 	var db = r.Database
 	if len(database) > 0 {
 		db = database[0]
 	}
 	switch r.Mode {
 	case StandAlone:
-		cmd = redis.NewClient(&redis.Options{
+		return redis.NewClient(&redis.Options{
 			Addr:     r.Host + ":" + strconv.Itoa(r.Port),
 			Password: r.Password,
 			PoolSize: r.PoolSize,
 			DB:       db,
 		})
 	case Cluster:
-		cmd = redis.NewClusterClient(&redis.ClusterOptions{
+		return redis.NewClusterClient(&redis.ClusterOptions{
 			Addrs:    strings.Split(r.Host, ","),
 			Password: r.Password,
 			PoolSize: r.PoolSize,
 		})
 	default:
 		log.Warn("redis模式配置错误!", r)
-		return
+		return nil
 	}
-	return
 }

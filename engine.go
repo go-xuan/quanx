@@ -2,6 +2,7 @@ package quanx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/frame/cachex"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -67,6 +68,7 @@ type Config struct {
 	Redis         *redisx.Redis        `yaml:"redis"`         // redis配置
 	MultiDatabase *gormx.MultiDatabase `yaml:"multiDatabase"` // 多数据源配置
 	MultiRedis    *redisx.MultiRedis   `yaml:"multiRedis"`    // 多redis配置
+	Cache         *cachex.MultiCache   `yaml:"cache"`         // 缓存配置
 }
 
 // gin路由加载器
@@ -79,14 +81,14 @@ type CustomFunc func()
 type Flag int
 
 const (
-	DisableGin              Flag = iota // 关闭gin
-	EnableNacos                         // 启用nacos
-	MultiDB                             // 启用多数据源
-	MultiRedis                          // 启用多Redis
-	InitConfigAlready                   // 已加载配置
-	InitCommonAlready                   // 已初始化基础配置
-	RunCustomFuncAlready                // 已执行自定义函数
-	RunConfiguratorsAlready             // 已执行配置器
+	DisableGin          Flag = iota // 关闭gin
+	EnableNacos                     // 启用nacos
+	MultiDB                         // 启用多数据源
+	MultiRedis                      // 启用多Redis
+	HasInitConfig                   // 已加载配置
+	HasInitFrameBasic               // 已初始化基础配置
+	HasRunCustomFunc                // 已执行自定义函数
+	HasRunConfigurators             // 已执行配置器
 )
 
 // 服务配置
@@ -112,19 +114,19 @@ func (e *Engine) RUN() {
 // 服务准备
 func (e *Engine) PREPARE() {
 	// 加载配置
-	if !e.flag[InitConfigAlready] {
+	if !e.flag[HasInitConfig] {
 		e.initConfig()
 	}
-	// 初始化基础配置(日志/Nacos/gorm/Redis)
-	if !e.flag[InitCommonAlready] {
-		e.initCommon()
+	// 初始化框架基础（log/nacos/gorm/redis/cache）
+	if !e.flag[HasInitFrameBasic] {
+		e.initFrameBasic()
 	}
 	// 执行配置器
-	if !e.flag[RunConfiguratorsAlready] {
+	if !e.flag[HasRunConfigurators] {
 		e.runConfigurators()
 	}
 	// 执行自定义函数
-	if !e.flag[RunCustomFuncAlready] {
+	if !e.flag[HasRunCustomFunc] {
 		e.runCustomFunc()
 	}
 }
@@ -167,15 +169,16 @@ func (e *Engine) initConfig() {
 		}
 	}
 	e.config = config
-	e.flag[InitConfigAlready] = true
+	e.flag[HasInitConfig] = true
 }
 
-// 初始化日志/Nacos/gorm/Redis
-func (e *Engine) initCommon() {
-	var serverName = anyx.IfZero(e.config.Server.Name, "app")
+// 初始化框架基础（log/nacos/gorm/redis）
+func (e *Engine) initFrameBasic() {
 	// 初始化日志
+	var serverName = anyx.IfZero(e.config.Server.Name, "app")
 	e.RunConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
-	// 连接数据库
+
+	// 初始化数据库连接
 	if e.flag[MultiDB] {
 		e.config.MultiDatabase = anyx.IfZero(e.config.MultiDatabase, &gormx.MultiDatabase{})
 		e.RunConfigurator(e.config.MultiDatabase)
@@ -199,7 +202,8 @@ func (e *Engine) initCommon() {
 			}
 		}
 	}
-	// 连接redis
+
+	// 初始化redis连接
 	if e.flag[MultiRedis] {
 		e.config.MultiRedis = anyx.IfZero(e.config.MultiRedis, &redisx.MultiRedis{})
 		e.RunConfigurator(e.config.MultiRedis)
@@ -207,7 +211,14 @@ func (e *Engine) initCommon() {
 		e.config.Redis = anyx.IfZero(e.config.Redis, &redisx.Redis{})
 		e.RunConfigurator(e.config.Redis)
 	}
-	e.flag[InitCommonAlready] = true
+
+	// 初始化缓存配置
+	if redisx.Initialized() {
+		e.config.Cache = anyx.IfZero(e.config.Cache, cachex.Default())
+		e.RunConfigurator(e.config.Cache)
+	}
+	// 完成框架基础初始化
+	e.flag[HasInitFrameBasic] = true
 }
 
 // 添加自定义函数
@@ -224,7 +235,8 @@ func (e *Engine) runCustomFunc() {
 			f()
 		}
 	}
-	e.flag[RunCustomFuncAlready] = true
+	// 完成自定义函数执行
+	e.flag[HasRunCustomFunc] = true
 }
 
 // 添加配置器
@@ -241,7 +253,7 @@ func (e *Engine) runConfigurators() {
 			e.RunConfigurator(config)
 		}
 	}
-	e.flag[RunConfiguratorsAlready] = true
+	e.flag[HasRunConfigurators] = true
 }
 
 // 运行配置器

@@ -1,18 +1,16 @@
 package ginx
 
 import (
-	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-
-	"github.com/go-xuan/quanx/db/redisx"
 )
 
+// jwt秘钥
 var SecretKey []byte
 
+// 初始化jwt秘钥
 func SetSecretKey(key []byte) {
 	SecretKey = key
 }
@@ -28,20 +26,6 @@ type User struct {
 	ExpireTime int64  `json:"expireTime"` // 过期时间
 }
 
-func (u *User) RedisKey() string {
-	return "login@token@" + u.Account
-}
-
-// 设置token缓存
-func (u *User) SetTokenCache(token string, expiration time.Duration) {
-	redisx.DB("user").Set(context.Background(), u.RedisKey(), token, expiration)
-}
-
-// 获取token缓存
-func (u *User) GetTokenCache() string {
-	return redisx.DB("user").Get(context.Background(), u.RedisKey()).Val()
-}
-
 // 获取用户ID
 func GetUserId(context *gin.Context) (userId int64) {
 	var err error
@@ -54,7 +38,7 @@ func GetUserId(context *gin.Context) (userId int64) {
 }
 
 // 生成token
-func GetTokenByUser(user *User) (token string, err error) {
+func NewToken(user *User) (token string, err error) {
 	var bytes []byte
 	if bytes, err = json.Marshal(user); err != nil {
 		return
@@ -70,7 +54,7 @@ func GetTokenByUser(user *User) (token string, err error) {
 }
 
 // 解析token
-func GetUserByToken(token string) (user *User, err error) {
+func ParseUserFromToken(token string) (user *User, err error) {
 	var userData = make(map[string]interface{})
 	if userData, err = parseToken(token); err != nil {
 		return

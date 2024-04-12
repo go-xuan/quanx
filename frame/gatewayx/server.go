@@ -56,7 +56,7 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, authType string
 func ListenConfigChanged(group, dataId string) (err error) {
 	if data, ok := nacosx.GetNacosConfigMonitor().GetConfigData(group, dataId); ok && data.Changed {
 		// 将当前最新的content数据同步到servers
-		if err = marshalx.GetCase(dataId).Unmarshal([]byte(data.Content), &Apps); err != nil {
+		if err = marshalx.NewCase(dataId).Unmarshal([]byte(data.Content), &Apps); err != nil {
 			return
 		}
 		// 更新nacos监控中配置值

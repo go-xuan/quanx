@@ -37,11 +37,11 @@ func Ping(cmd redis.Cmdable) (bool, error) {
 	}
 }
 
-func DB(source ...string) redis.Cmdable {
-	return This().GetCmd(source...)
+func Cmdable(source ...string) redis.Cmdable {
+	return This().GetCmdable(source...)
 }
 
-func (h *Handler) GetCmd(source ...string) redis.Cmdable {
+func (h *Handler) GetCmdable(source ...string) redis.Cmdable {
 	if len(source) > 0 && source[0] != constx.Default {
 		if cmd, ok := h.CmdMap[source[0]]; ok {
 			return cmd

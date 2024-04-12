@@ -11,6 +11,7 @@ import (
 	"github.com/vmihailenco/msgpack"
 	"gopkg.in/yaml.v3"
 
+	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/os/filex"
 	"github.com/go-xuan/quanx/utils/stringx"
 )
@@ -28,6 +29,7 @@ const (
 
 // 序列化方案
 type Case struct {
+	Name      string
 	Marshal   func(any) ([]byte, error)
 	Unmarshal func([]byte, any) error
 }
@@ -40,21 +42,25 @@ func Identify(s string) string {
 	return s
 }
 
-func GetCase(s string) *Case {
+func NewCase(s string) *Case {
 	switch Identify(s) {
 	case Json:
-		return &Case{Marshal: json.Marshal, Unmarshal: json.Unmarshal}
+		return &Case{Name: Json, Marshal: json.Marshal, Unmarshal: json.Unmarshal}
 	case Yaml, Yml:
-		return &Case{Marshal: yaml.Marshal, Unmarshal: yaml.Unmarshal}
+		return &Case{Name: Yaml, Marshal: yaml.Marshal, Unmarshal: yaml.Unmarshal}
 	case Toml:
-		return &Case{Marshal: TomlMarshal, Unmarshal: toml.Unmarshal}
+		return &Case{Name: Toml, Marshal: TomlMarshal, Unmarshal: toml.Unmarshal}
 	case Properties:
-		return &Case{Marshal: PropertiesMarshal, Unmarshal: PropertiesUnmarshal}
+		return &Case{Name: Properties, Marshal: PropertiesMarshal, Unmarshal: PropertiesUnmarshal}
 	case Msgpack:
-		return &Case{Marshal: msgpack.Marshal, Unmarshal: msgpack.Unmarshal}
+		return &Case{Name: Msgpack, Marshal: msgpack.Marshal, Unmarshal: msgpack.Unmarshal}
 	default:
-		return &Case{Marshal: DefaultMarshal, Unmarshal: DefaultUnmarshal}
+		return DefaultCase()
 	}
+}
+
+func DefaultCase() *Case {
+	return &Case{Name: constx.Default, Marshal: DefaultMarshal, Unmarshal: DefaultUnmarshal}
 }
 
 func DefaultMarshal(v any) (out []byte, err error) {
@@ -106,7 +112,7 @@ func LoadFromFile(path string, v any) (err error) {
 	if b, err = os.ReadFile(path); err != nil {
 		return
 	}
-	if err = GetCase(path).Unmarshal(b, v); err != nil {
+	if err = NewCase(path).Unmarshal(b, v); err != nil {
 		return
 	}
 	return
