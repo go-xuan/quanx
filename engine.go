@@ -215,8 +215,8 @@ func (e *Engine) initFrameBasic() {
 
 	// 初始化缓存配置
 	if redisx.Initialized() {
-		e.config.Cache = anyx.IfZero(e.config.Cache, cachex.Default())
-		e.RunConfigurator(e.config.Cache)
+		e.config.Cache = anyx.IfZero(e.config.Cache, &cachex.MultiCache{})
+		e.RunConfigurator(e.config.Cache, true)
 	}
 	// 完成框架基础初始化
 	e.flag[HasInitFrameBasic] = true

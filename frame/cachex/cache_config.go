@@ -3,6 +3,7 @@ package cachex
 import (
 	"context"
 	"fmt"
+	"github.com/go-xuan/quanx/utils/anyx"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -28,8 +29,8 @@ type Cache struct {
 	marshalCase *marshalx.Case // 序列化方案
 }
 
-func Default() *MultiCache {
-	return &MultiCache{&Cache{
+func Default() MultiCache {
+	return MultiCache{&Cache{
 		Source:  constx.Default,
 		Prefix:  "cache",
 		Marshal: marshalx.Msgpack,
@@ -52,16 +53,13 @@ func (MultiCache) Reader() *confx.Reader {
 
 // 配置器运行
 func (m MultiCache) Run() error {
-	if len(m) == 0 {
-		log.Info("cache init failed! reason: cache.yaml not found!")
-		return nil
-	}
 	handler = &Handler{
 		Multi:     true,
 		ClientMap: make(map[string]*CacheClient[any]),
 		ConfigMap: make(map[string]*Cache),
 	}
-	for i, cache := range m {
+	multi := anyx.IfZero(m, Default())
+	for i, cache := range multi {
 		// 初始化缓存属性
 		cache.InitAttribute()
 		var client = cache.CacheClient()
@@ -72,9 +70,6 @@ func (m MultiCache) Run() error {
 			handler.Config = cache
 		}
 		log.Info(cache.ToString("cache init success!"))
-	}
-	if len(handler.ConfigMap) == 0 {
-		log.Info("cache init failed! reason: cache.yaml is empty!")
 	}
 	return nil
 }
