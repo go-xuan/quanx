@@ -3,7 +3,6 @@ package cachex
 import (
 	"context"
 	"fmt"
-	"github.com/go-xuan/quanx/utils/anyx"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -13,6 +12,7 @@ import (
 	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/frame/confx"
 	"github.com/go-xuan/quanx/os/marshalx"
+	"github.com/go-xuan/quanx/utils/anyx"
 	"github.com/go-xuan/quanx/utils/slicex"
 )
 
