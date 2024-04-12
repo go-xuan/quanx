@@ -2,9 +2,10 @@ package redisx
 
 import (
 	"context"
-	"github.com/go-xuan/quanx/common/constx"
 
 	"github.com/redis/go-redis/v9"
+
+	"github.com/go-xuan/quanx/common/constx"
 )
 
 var handler *Handler

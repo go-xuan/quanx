@@ -2,8 +2,8 @@ package randx
 
 import (
 	"math"
-
-	"github.com/go-xuan/quanx/utils/mathx"
+	
+	"github.com/go-xuan/quanx/utils/floatx"
 )
 
 // 随机整数
@@ -43,5 +43,5 @@ func Float64Range(min, max float64, prec int) float64 {
 		return min
 	}
 	float := NewRand().Float64()*(max-min) + min
-	return mathx.Ground(float, prec)
+	return floatx.Ground(float, prec)
 }

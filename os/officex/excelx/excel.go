@@ -91,7 +91,7 @@ func ExcelSplit(excelPath, sheetName string) (newExcelPath string, err error) {
 		return
 	}
 	// 读取目标sheet
-	var theSheet = anyx.IfZero(xlsxFile.Sheet[sheetName], xlsxFile.Sheets[0])
+	theSheet := anyx.IfZero(xlsxFile.Sheet[sheetName], xlsxFile.Sheets[0])
 	// 新增sheet页
 	var newExcelFile = xlsx.NewFile()
 	var addSheetList []*SheetInfo
@@ -148,7 +148,7 @@ func ExcelReader(excelPath, sheetName string, mapping map[string]string) (data [
 	// 读取表头
 	var headers []string
 	for _, cell := range theSheet.Rows[0].Cells {
-		var header = anyx.IfZero(mapping[cell.Value], cell.Value)
+		var header = stringx.IfZero(mapping[cell.Value], cell.Value)
 		headers = append(headers, header)
 	}
 	// 遍历excel(x:横向坐标，y:纵向坐标)
@@ -183,7 +183,7 @@ func ExcelReaderAny[T any](excelPath, sheetName string, obj T) (data []*T, err e
 	var mapping = ExcelTagMapping(obj)
 	var headers []string
 	for _, cell := range theSheet.Rows[0].Cells {
-		var header = anyx.IfZero(mapping[cell.Value], cell.Value)
+		var header = stringx.IfZero(mapping[cell.Value], cell.Value)
 		headers = append(headers, header)
 	}
 	// 遍历excel(x:横向坐标，y:纵向坐标)

@@ -13,26 +13,17 @@ func If[T any](x bool, t, f T) T {
 	}
 }
 
-// 判空
-func IfZeroElse[T any](x, t, f T) T {
+// 判空时取默认值
+func IfZero[T any](x, def T) T {
 	if reflect.ValueOf(&x).Elem().IsZero() {
-		return t
-	} else {
-		return f
-	}
-}
-
-// 判空取默认值
-func IfZero[T any](x, t T) T {
-	if reflect.ValueOf(&x).Elem().IsZero() {
-		return t
+		return def
 	}
 	return x
 }
 
-func Default[T any](x []T, d T) T {
+func Default[T any](x []T, def T) T {
 	if len(x) == 0 {
-		return d
+		return def
 	} else {
 		return x[0]
 	}

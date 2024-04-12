@@ -98,6 +98,24 @@ func HasEmpty(s ...string) bool {
 	return false
 }
 
+// 不等时取默认值
+func IfNot(s, v, def string) string {
+	if s != v {
+		return def
+	} else {
+		return s
+	}
+}
+
+// 为空时取默认值
+func IfZero(s, def string) string {
+	if s == "" {
+		return def
+	} else {
+		return s
+	}
+}
+
 // 反转
 func Reverse(s string) string {
 	runes := []rune(s)

@@ -2,10 +2,11 @@ package ginx
 
 import (
 	"github.com/gin-gonic/gin"
+
+	"github.com/go-xuan/quanx"
 	"github.com/go-xuan/quanx/frame/cachex"
 	"github.com/go-xuan/quanx/net/respx"
 	"github.com/go-xuan/quanx/os/encryptx"
-	"github.com/go-xuan/quanx/os/ipx"
 	"github.com/go-xuan/quanx/utils/anyx"
 )
 
@@ -44,7 +45,7 @@ func SetCookie(ctx *gin.Context, username string, age ...int) {
 		respx.BuildError(ctx, err)
 		return
 	} else {
-		var maxAge = anyx.If(len(age) > 0, age[0], 3600)
+		var maxAge = anyx.Default(age, 3600)
 		ctx.SetCookie(Cookie, cookie, maxAge, "", "", false, true)
 	}
 }
@@ -58,7 +59,7 @@ func RemoveCookie(ctx *gin.Context) {
 func CheckIP(ctx *gin.Context) {
 	var ip string
 	if ip = ctx.ClientIP(); ip == "::1" {
-		ip = ipx.GetWLANIP()
+		ip = quanx.GetServer().Host
 	}
 	ctx.Set(IPKey, ip)
 	ctx.Next()

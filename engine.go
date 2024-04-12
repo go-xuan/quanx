@@ -2,7 +2,6 @@ package quanx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/frame/cachex"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -13,12 +12,14 @@ import (
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/db/gormx"
 	"github.com/go-xuan/quanx/db/redisx"
+	"github.com/go-xuan/quanx/frame/cachex"
 	"github.com/go-xuan/quanx/frame/confx"
 	"github.com/go-xuan/quanx/frame/nacosx"
 	"github.com/go-xuan/quanx/os/ipx"
 	"github.com/go-xuan/quanx/os/logx"
 	"github.com/go-xuan/quanx/os/marshalx"
 	"github.com/go-xuan/quanx/utils/anyx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 var engine *Engine
@@ -175,7 +176,7 @@ func (e *Engine) initConfig() {
 // 初始化框架基础（log/nacos/gorm/redis）
 func (e *Engine) initFrameBasic() {
 	// 初始化日志
-	var serverName = anyx.IfZero(e.config.Server.Name, "app")
+	var serverName = stringx.IfZero(e.config.Server.Name, "app")
 	e.RunConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
 
 	// 初始化数据库连接
@@ -341,8 +342,12 @@ func (e *Engine) SetConfigDir(dir string) {
 }
 
 // 设置配置文件
-func (e *Engine) GetConfigPath(name string) string {
-	return anyx.IfZeroElse(e.configDir, name, filepath.Join(e.configDir, name))
+func (e *Engine) GetConfigPath(path string) string {
+	if e.configDir == "" {
+		return path
+	} else {
+		return filepath.Join(e.configDir, path)
+	}
 }
 
 // 添加需要初始化的 gormx.Tabler 模型

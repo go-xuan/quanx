@@ -1,9 +1,10 @@
 package gormx
 
 import (
-	"github.com/go-xuan/quanx/common/constx"
 	"gorm.io/gorm"
 	"reflect"
+
+	"github.com/go-xuan/quanx/common/constx"
 )
 
 var handler *Handler

@@ -1,4 +1,4 @@
-package mathx
+package stringx
 
 import (
 	"math"
@@ -108,13 +108,4 @@ func ConvertArabToChinese(input int) string {
 	result = strings.Replace(result, "亿万", "亿", 1)
 	result = strings.TrimSuffix(result, "零个")
 	return result
-}
-
-func MinInt(a, b, c int) int {
-	if a <= b && a <= c {
-		return a
-	} else if b <= a && b <= c {
-		return b
-	}
-	return c
 }

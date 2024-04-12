@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/utils/anyx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 const (
@@ -21,7 +21,7 @@ type LogFormatter struct {
 
 // 日志格式化
 func (f *LogFormatter) Format(entry *log.Entry) ([]byte, error) {
-	timeFormat := anyx.IfZero(f.TimeFormat, TimeFormat)
+	timeFormat := stringx.IfZero(f.TimeFormat, TimeFormat)
 	msg := entry.Message
 	for key, value := range entry.Data {
 		msg += fmt.Sprintf(" , %s : %+v", key, value)
@@ -40,10 +40,7 @@ func LoggerToFile() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		// 处理请求
 		context.Next()
-		ip := context.ClientIP()
-		if ip == "::1" {
-			ip = "localhost"
-		}
+		ip := stringx.IfNot(context.ClientIP(), "::1", "localhost")
 		// 日志格式
 		log.Infof("[%3d][%10v][%15s][%4s][%s]",
 			context.Writer.Status(),

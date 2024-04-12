@@ -1,6 +1,9 @@
-package mathx
+package floatx
 
-import "math"
+import (
+	"math"
+	"strconv"
+)
 
 // 计算比率
 func Ratio(numerator, denominator, prec int) float64 {
@@ -19,4 +22,8 @@ func Ground(target float64, prec int) float64 {
 		p := math.Pow10(prec)
 		return math.Floor(target*p+0.5) / p
 	}
+}
+
+func ToString(f float64) string {
+	return strconv.FormatFloat(f, 'f', -1, 64)
 }

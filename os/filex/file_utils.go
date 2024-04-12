@@ -83,7 +83,7 @@ func ContentReplace(filePath string, replaces map[string]string) (err error) {
 // 写入文件
 func WriteFile(filePath, content string, mode ...int) (err error) {
 	CreateDirNotExist(filePath)
-	var flag = anyx.If(len(mode) > 0, mode[0], Overwrite)
+	var flag = anyx.Default(mode, Overwrite)
 	var file *os.File
 	if file, err = os.OpenFile(filePath, flag, 0644); err != nil {
 		return err
@@ -101,7 +101,7 @@ func WriteFile(filePath, content string, mode ...int) (err error) {
 
 // 数组按行写入文件
 func WriteFileLine(filePath string, content []string, mode ...int) (err error) {
-	var flag = anyx.If(len(mode) > 0, mode[0], Overwrite)
+	var flag = anyx.Default(mode, Overwrite)
 	var file *os.File
 	if file, err = os.OpenFile(filePath, flag, 0644); err != nil {
 		return
