@@ -16,21 +16,22 @@ func SetDefaultValue(obj interface{}) error {
 	for i := 0; i < valueRef.Elem().NumField(); i++ {
 		field := valueRef.Elem().Field(i)
 		if field.IsZero() {
-			value := valueRef.Elem().Type().Field(i).Tag.Get("default")
-			switch field.Kind() {
-			case reflect.String:
-				field.SetString(value)
-			case reflect.Bool:
-				field.SetBool(value == "true")
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-				reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				intVal, _ := strconv.ParseInt(value, 10, 64)
-				field.SetInt(intVal)
-			case reflect.Float32, reflect.Float64:
-				floatValue, _ := strconv.ParseFloat(value, 64)
-				field.SetFloat(floatValue)
-			default:
-				return fmt.Errorf("unsupported type %T", value)
+			if value := valueRef.Elem().Type().Field(i).Tag.Get("default"); value != "" {
+				switch field.Kind() {
+				case reflect.String:
+					field.SetString(value)
+				case reflect.Bool:
+					field.SetBool(value == "true")
+				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+					reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+					intVal, _ := strconv.ParseInt(value, 10, 64)
+					field.SetInt(intVal)
+				case reflect.Float32, reflect.Float64:
+					floatValue, _ := strconv.ParseFloat(value, 64)
+					field.SetFloat(floatValue)
+				default:
+					return fmt.Errorf("unsupported type %T", value)
+				}
 			}
 		}
 	}

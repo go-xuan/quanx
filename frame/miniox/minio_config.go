@@ -33,8 +33,8 @@ func (m *Minio) ToString(title string) string {
 }
 
 // 配置器名称
-func (*Minio) Title() string {
-	return "init minio"
+func (*Minio) Theme() string {
+	return "Minio"
 }
 
 // 配置文件读取
@@ -50,12 +50,12 @@ func (*Minio) Reader() *confx.Reader {
 func (m *Minio) Run() error {
 	client, err := m.NewClient()
 	if err != nil {
-		log.Error(m.ToString("minio connect failed!"))
+		log.Error(m.ToString("Minio connect failed!"))
 		log.Error("error : ", err)
 		return err
 	}
 	handler = &Handler{Config: m, Client: client}
-	log.Info(m.ToString("minio connect successful!"))
+	log.Info(m.ToString("Minio connect successful!"))
 	return nil
 }
 
@@ -69,7 +69,7 @@ func (m *Minio) NewClient() (client *minio.Client, err error) {
 	if client, err = minio.New(m.Endpoint(), &minio.Options{
 		Creds:  credentials.NewStaticV4(m.AccessId, m.AccessSecret, m.SessionToken),
 		Secure: m.Secure,
-		Region: "us-east-1",
+		Region: Region,
 	}); err != nil {
 		return
 	}

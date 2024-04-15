@@ -25,7 +25,7 @@ type Handler struct {
 
 func This() *Handler {
 	if handler == nil {
-		panic("The minio handler has not been initialized, please check the relevant config")
+		panic("the minio handler has not been initialized, please check the relevant config")
 	}
 	return handler
 }

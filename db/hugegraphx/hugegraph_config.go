@@ -23,8 +23,8 @@ func (h *Hugegraph) ToString(title string) string {
 }
 
 // 配置器名称
-func (*Hugegraph) Title() string {
-	return "init hugegraph"
+func (*Hugegraph) Theme() string {
+	return "Hugegraph"
 }
 
 // 配置文件读取
@@ -44,9 +44,9 @@ func (h *Hugegraph) Run() error {
 	if handler == nil {
 		if h.Ping() {
 			handler = &Handler{Config: h, GremlinUrl: h.GremlinUrl(), SchemaUrl: h.SchemaUrl()}
-			log.Info(h.ToString("hugegraph connect successful!"))
+			log.Info(h.ToString("Hugegraph connect successful!"))
 		} else {
-			log.Error(h.ToString("hugegraph connect failed!"))
+			log.Error(h.ToString("Hugegraph connect failed!"))
 		}
 	}
 	return nil

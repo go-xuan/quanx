@@ -18,10 +18,9 @@ const (
 	Cluster           // 集群
 )
 
-// 多redis连接配置
+// redis连接配置
 type MultiRedis []*Redis
 
-// redis连接配置
 type Redis struct {
 	Source   string `json:"source" yaml:"source"`     // 数据源名称
 	Enable   bool   `json:"enable" yaml:"enable"`     // 数据源启用
@@ -34,23 +33,23 @@ type Redis struct {
 }
 
 // 配置信息格式化
-func (MultiRedis) Title() string {
-	return "Init multi-redis"
+func (MultiRedis) Theme() string {
+	return "Redis"
 }
 
 // 配置文件读取
 func (MultiRedis) Reader() *confx.Reader {
 	return &confx.Reader{
-		FilePath:    "multi_redis.yaml",
-		NacosDataId: "multi_redis.yaml",
+		FilePath:    "redis.yaml",
+		NacosDataId: "redis.yaml",
 		Listen:      false,
 	}
 }
 
 // 配置器运行
-func (m MultiRedis) Run() error {
-	if len(m) == 0 {
-		log.Info("redis not connected! reason: multi-redis.yaml not found!")
+func (conf MultiRedis) Run() error {
+	if len(conf) == 0 {
+		log.Error("redis connect failed! reason: redis.yaml not found!")
 		return nil
 	}
 	handler = &Handler{
@@ -58,11 +57,11 @@ func (m MultiRedis) Run() error {
 		CmdMap:    make(map[string]redis.Cmdable),
 		ConfigMap: make(map[string]*Redis),
 	}
-	for i, r := range m {
+	for i, r := range conf {
 		if r.Enable {
 			var cmd = r.NewRedisCmdable()
 			if ok, err := Ping(cmd); !ok && err != nil {
-				log.Error(r.ToString("redis连接失败!"))
+				log.Error(r.ToString("redis connect failed!"))
 				log.Error("error : ", err)
 				return err
 			}
@@ -72,11 +71,11 @@ func (m MultiRedis) Run() error {
 				handler.Cmd = cmd
 				handler.Config = r
 			}
-			log.Info(r.ToString("redis连接成功!"))
+			log.Info(r.ToString("redis connect successful!"))
 		}
 	}
 	if len(handler.ConfigMap) == 0 {
-		log.Info("redis not connected! reason: multi-redis.yaml is empty or {redis.enable} is false")
+		log.Error("redis connect failed! reason: redis.yaml is empty or all enable values are false!")
 	}
 	return nil
 }
@@ -88,8 +87,8 @@ func (r *Redis) ToString(title string) string {
 }
 
 // 配置器名称
-func (r *Redis) Title() string {
-	return "connect redis"
+func (r *Redis) Theme() string {
+	return "Redis"
 }
 
 // 配置文件读取
@@ -110,7 +109,7 @@ func (r *Redis) Run() (err error) {
 		var cmd = r.NewRedisCmdable()
 		var ok bool
 		if ok, err = Ping(cmd); !ok && err != nil {
-			log.Error(r.ToString("redis connect failed"))
+			log.Error(r.ToString("Redis connect failed"))
 			log.Error("error : ", err)
 			return
 		}
@@ -123,10 +122,10 @@ func (r *Redis) Run() (err error) {
 		}
 		handler.CmdMap[r.Source] = cmd
 		handler.ConfigMap[r.Source] = r
-		log.Info(r.ToString("redis connect successful"))
+		log.Info(r.ToString("Redis connect successful"))
 		return
 	}
-	log.Info("redis not connected ! reason: redis.yaml is empty or {redis.enable} is false")
+	log.Error(`Redis connect failed! reason: redis.yaml is empty or the value of "enable" is false`)
 	return
 }
 
@@ -156,7 +155,7 @@ func (r *Redis) NewRedisCmdable(database ...int) redis.Cmdable {
 			PoolSize: r.PoolSize,
 		})
 	default:
-		log.Warn("redis模式配置错误!", r)
+		log.Warn(r.ToString("the mode of redis is wrong"))
 		return nil
 	}
 }

@@ -11,7 +11,7 @@ import (
 var handler *Handler
 
 type Handler struct {
-	Config       *Nacos                      // nacos配置
+	Config       *NacosConfig                // nacos配置
 	ConfigClient config_client.IConfigClient // nacos配置中心客户端
 	NamingClient naming_client.INamingClient // nacos服务发现客户端
 }
@@ -33,6 +33,7 @@ func GetConfigType(dataId string) vo.ConfigType {
 	return ""
 }
 
+// 获取nacos配置文件内容
 func GetConfigContent(group, dataId string) (content string, err error) {
 	var param = vo.ConfigParam{Group: group, DataId: dataId, Type: GetConfigType(dataId)}
 	if content, err = This().ConfigClient.GetConfig(param); err != nil {
@@ -41,16 +42,18 @@ func GetConfigContent(group, dataId string) (content string, err error) {
 	return
 }
 
-func (h *Handler) BuildConfigFromFile(filePath string) (err error) {
-	if err = marshalx.LoadFromFile(filePath, h.Config); err != nil {
+// 基于文件构建配置
+func (h *Handler) BuildConfigFromFile(path string) (err error) {
+	if err = marshalx.UnmarshalFromFile(path, h.Config); err != nil {
 		return
 	}
 	return
 }
 
+// 基于nacos构建配置
 func (h *Handler) BuildConfigFromNacos(group, dataId string) (err error) {
 	module := &Config{Group: group, DataId: dataId}
-	if err = module.LoadConfig(h.Config); err != nil {
+	if err = module.Loading(h.Config); err != nil {
 		return
 	}
 	return

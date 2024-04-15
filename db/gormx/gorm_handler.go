@@ -12,10 +12,10 @@ var handler *Handler
 // Gorm处理器
 type Handler struct {
 	Multi     bool // 是否多数据源连接
-	DB        *gorm.DB
 	Config    *Database
-	DBMap     map[string]*gorm.DB
+	DB        *gorm.DB
 	ConfigMap map[string]*Database
+	DBMap     map[string]*gorm.DB
 }
 
 func DB(source ...string) *gorm.DB {

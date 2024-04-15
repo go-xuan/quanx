@@ -20,23 +20,40 @@ import (
 // 数据源配置
 type MultiDatabase []*Database
 
-// 配置器名称
-func (MultiDatabase) Title() string {
-	return "init multi-database"
+type Database struct {
+	Source          string `json:"source" yaml:"source" default:"default"`              // 数据源名称
+	Enable          bool   `json:"enable" yaml:"enable"`                                // 数据源启用
+	Type            string `json:"type" yaml:"type"`                                    // 数据库类型
+	Host            string `json:"host" yaml:"host" default:"localhost"`                // 数据库Host
+	Port            int    `json:"port" yaml:"port"`                                    // 数据库端口
+	Username        string `json:"username" yaml:"username"`                            // 用户名
+	Password        string `json:"password" yaml:"password"`                            // 密码
+	Database        string `json:"database" yaml:"database"`                            // 数据库名
+	Schema          string `json:"schema" yaml:"schema"`                                // schema模式名
+	Debug           bool   `json:"debug" yaml:"debug" default:"false"`                  // 开启debug（打印SQL以及初始化模型建表）
+	MaxIdleConns    int    `json:"maxIdleConns" yaml:"maxIdleConns" default:"10"`       // 最大空闲连接
+	MaxOpenConns    int    `json:"maxOpenConns" yaml:"maxOpenConns" default:"10"`       // 最大打开连接
+	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
 }
 
+// 配置器名称
+func (MultiDatabase) Theme() string {
+	return "Database"
+}
+
+// 配置文件读取
 func (MultiDatabase) Reader() *confx.Reader {
 	return &confx.Reader{
-		FilePath:    "multi_database.yaml",
-		NacosDataId: "multi_database.yaml",
+		FilePath:    "database.yaml",
+		NacosDataId: "database.yaml",
 		Listen:      false,
 	}
 }
 
 // 配置器运行
-func (md MultiDatabase) Run() (err error) {
-	if len(md) == 0 {
-		log.Info("database not connected! reason: multi-database.yaml not found!")
+func (c MultiDatabase) Run() (err error) {
+	if len(c) == 0 {
+		log.Error("database connect failed! reason: database.yaml not found!")
 		return
 	}
 	handler = &Handler{
@@ -44,7 +61,7 @@ func (md MultiDatabase) Run() (err error) {
 		DBMap:     make(map[string]*gorm.DB),
 		ConfigMap: make(map[string]*Database),
 	}
-	for i, d := range md {
+	for i, d := range c {
 		if d.Enable {
 			if err = anyx.SetDefaultValue(d); err != nil {
 				return
@@ -64,25 +81,9 @@ func (md MultiDatabase) Run() (err error) {
 		}
 	}
 	if len(handler.ConfigMap) == 0 {
-		log.Info("database not connected! reason: multi-database.yaml is empty or {database.enable} is false")
+		log.Error("database connect failed! reason: database.yaml is empty or all enable values are false!")
 	}
 	return
-}
-
-type Database struct {
-	Source          string `json:"source" yaml:"source" default:"default"`              // 数据源名称
-	Enable          bool   `json:"enable" yaml:"enable"`                                // 数据源启用
-	Type            string `json:"type" yaml:"type"`                                    // 数据库类型
-	Host            string `json:"host" yaml:"host" default:"localhost"`                // 数据库Host
-	Port            int    `json:"port" yaml:"port"`                                    // 数据库端口
-	Username        string `json:"username" yaml:"username"`                            // 用户名
-	Password        string `json:"password" yaml:"password"`                            // 密码
-	Database        string `json:"database" yaml:"database"`                            // 数据库名
-	Schema          string `json:"schema" yaml:"schema"`                                // schema模式名
-	Debug           bool   `json:"debug" yaml:"debug" default:"false"`                  // 开启debug（打印SQL以及初始化模型建表）
-	MaxIdleConns    int    `json:"maxIdleConns" yaml:"maxIdleConns" default:"10"`       // 最大空闲连接
-	MaxOpenConns    int    `json:"maxOpenConns" yaml:"maxOpenConns" default:"10"`       // 最大打开连接
-	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
 }
 
 // 配置信息格式化
@@ -92,8 +93,8 @@ func (d *Database) ToString(title string) string {
 }
 
 // 配置器名称
-func (d *Database) Title() string {
-	return "init database"
+func (d *Database) Theme() string {
+	return "Database"
 }
 
 // 配置文件读取
@@ -113,7 +114,7 @@ func (d *Database) Run() (err error) {
 		}
 		var db *gorm.DB
 		if db, err = d.NewGormDB(); err != nil {
-			log.Error(d.ToString("database connect failed!"))
+			log.Error(d.ToString("Database connect failed!"))
 			log.Error("error : ", err)
 			return
 		}
@@ -126,10 +127,10 @@ func (d *Database) Run() (err error) {
 		}
 		handler.DBMap[d.Source] = db
 		handler.ConfigMap[d.Source] = d
-		log.Info(d.ToString("database connect successful!"))
+		log.Info(d.ToString("Database connect successful!"))
 		return
 	}
-	log.Info("database not connected! reason: database.yaml is empty or {database.enable} is false")
+	log.Info("Database connect failed! reason: database.yaml is empty or the value of enable is false")
 	return
 }
 
@@ -162,9 +163,9 @@ const (
 func (d *Database) CommentTableSql(table, comment string) string {
 	switch strings.ToLower(d.Type) {
 	case Mysql:
-		return "ALTER TABLE " + table + " COMMENT = '" + comment + "'"
+		return "alter table " + table + " comment = '" + comment + "'"
 	case Postgres:
-		return "COMMENT ON TABLE " + table + " IS '" + comment + "'"
+		return "comment on table " + table + " is '" + comment + "'"
 	}
 	return ""
 }

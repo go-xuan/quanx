@@ -25,8 +25,8 @@ func (m *Mongo) ToString(title string) string {
 }
 
 // 配置器名称
-func (m *Mongo) Title() string {
-	return "init mongo"
+func (m *Mongo) Theme() string {
+	return "Mongo"
 }
 
 // 配置文件读取
@@ -42,12 +42,12 @@ func (*Mongo) Reader() *confx.Reader {
 func (m *Mongo) Run() (err error) {
 	var client *mongo.Client
 	if client, err = m.NewClient(); err != nil {
-		log.Error(m.ToString("mongo connect failed!"))
+		log.Error(m.ToString("Mongo connect failed!"))
 		log.Error("error : ", err)
 		return
 	}
 	handler = &Handler{Config: m, Client: client}
-	log.Error(m.ToString("mongo connect successful!"))
+	log.Error(m.ToString("Mongo connect successful!"))
 	return
 
 }

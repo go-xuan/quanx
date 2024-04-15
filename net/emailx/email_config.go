@@ -27,8 +27,8 @@ func (e *Email) ToString(title string) string {
 }
 
 // 配置器名称
-func (*Email) Title() string {
-	return "init mail-server"
+func (*Email) Theme() string {
+	return "EmailServer"
 }
 
 // 配置文件读取

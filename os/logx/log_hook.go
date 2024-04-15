@@ -114,7 +114,7 @@ func (hook *LfsHook) SetDefaultWriter(defaultWriter io.Writer) {
 }
 
 // writes the log file to defined path or using the defined writer.
-// Title who run this function needs to write permissions to the file or directory if the file does not yet exist.
+// Theme who run this function needs to write permissions to the file or directory if the file does not yet exist.
 func (hook *LfsHook) Fire(entry *logrus.Entry) error {
 	caller := getCaller()
 	splitsFile := strings.Split(caller.File, "/")

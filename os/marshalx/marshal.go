@@ -104,7 +104,7 @@ func DefaultUnmarshal(data []byte, v any) (err error) {
 }
 
 // 读取配置文件到指针
-func LoadFromFile(path string, v any) (err error) {
+func UnmarshalFromFile(path string, v any) (err error) {
 	if !filex.Exists(path) {
 		return errors.New("the file not exist : " + path)
 	}

@@ -2,6 +2,8 @@ package nacosx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/common/constx"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -22,87 +24,89 @@ const (
 )
 
 // nacos访问配置
-type Nacos struct {
-	Address   string `yaml:"address" json:"address"`                          // nacos服务地址,多个以英文逗号分割
-	Username  string `yaml:"username" json:"username" default:"nacos"`        // 用户名
-	Password  string `yaml:"password" json:"password" default:"nacos"`        // 密码
-	NameSpace string `yaml:"nameSpace" json:"nameSpace" default:"public"`     // 命名空间
-	Mode      int    `yaml:"mode" json:"mode" default:"2"`                    // 模式
-	LogDir    string `yaml:"logDir" json:"logDir" default:".nacos/log"`       // 日志文件夹
-	CacheDir  string `yaml:"cacheDir" json:"cacheDir" default:".nacos/cache"` // 缓存文件夹
+type NacosConfig struct {
+	Address   string `yaml:"address" json:"address" default:"127.0.0.1"`  // nacos服务地址,多个以英文逗号分割
+	Username  string `yaml:"username" json:"username" default:"nacos"`    // 用户名
+	Password  string `yaml:"password" json:"password" default:"nacos"`    // 密码
+	NameSpace string `yaml:"nameSpace" json:"nameSpace" default:"public"` // 命名空间
+	Mode      int    `yaml:"mode" json:"mode" default:"2"`                // 模式（0-仅用配置中心；1-仅用服务发现；2-配置中心和服务发现都用）
 }
 
 // 配置信息格式化
-func (n *Nacos) ToString(title string) string {
+func (conf *NacosConfig) ToString(title string) string {
 	return fmt.Sprintf("%s => address=%s username=%s password=%s nameSpace=%s mode=%d",
-		title, n.AddressUrl(), n.Username, n.Password, n.NameSpace, n.Mode)
+		title, conf.AddressUrl(), conf.Username, conf.Password, conf.NameSpace, conf.Mode)
 }
 
 // 配置器名称
-func (n *Nacos) Title() string {
-	return "init nacos"
+func (conf *NacosConfig) Theme() string {
+	return "Nacos"
 }
 
 // 配置文件读取
-func (*Nacos) Reader() *confx.Reader {
+func (*NacosConfig) Reader() *confx.Reader {
 	return nil
 }
 
 // 配置器运行
-func (n *Nacos) Run() (err error) {
+func (conf *NacosConfig) Run() (err error) {
 	if handler == nil {
-		handler = &Handler{Config: n}
-		switch n.Mode {
+		handler = &Handler{Config: conf}
+		var clientParam = vo.NacosClientParam{
+			ClientConfig:  conf.ClientConfig(),
+			ServerConfigs: conf.ServerConfigs(),
+		}
+		switch conf.Mode {
 		case OnlyConfig:
-			if handler.ConfigClient, err = n.ConfigClient(); err != nil {
+			if handler.ConfigClient, err = conf.ConfigClient(clientParam); err != nil {
 				return
 			}
 		case OnlyNaming:
-			if handler.NamingClient, err = n.NamingClient(); err != nil {
+			if handler.NamingClient, err = conf.NamingClient(clientParam); err != nil {
 				return
 			}
 		case ConfigAndNaming:
-			if handler.ConfigClient, err = n.ConfigClient(); err != nil {
+			if handler.ConfigClient, err = conf.ConfigClient(clientParam); err != nil {
 				return
 			}
-			if handler.NamingClient, err = n.NamingClient(); err != nil {
+			if handler.NamingClient, err = conf.NamingClient(clientParam); err != nil {
 				return
 			}
 		}
 	}
-	log.Info(n.ToString("connect nacos successful!"))
+	log.Info(conf.ToString("Nacos connect successful!"))
 	return
 }
 
 // nacos访问地址
-func (n *Nacos) AddressUrl() string {
-	return n.Address + "/nacos"
+func (conf *NacosConfig) AddressUrl() string {
+	return conf.Address + "/nacos"
 }
 
 // 开启服务注册
-func (n *Nacos) EnableNaming() bool {
-	return n.Mode == OnlyNaming || n.Mode == ConfigAndNaming
+func (conf *NacosConfig) EnableNaming() bool {
+	return conf.Mode == OnlyNaming || conf.Mode == ConfigAndNaming
 }
 
 // nacos客户端配置
-func (n *Nacos) ClientConfig() *constant.ClientConfig {
+func (conf *NacosConfig) ClientConfig() *constant.ClientConfig {
 	return &constant.ClientConfig{
+		Username:            conf.Username,
+		Password:            conf.Password,
 		TimeoutMs:           10 * 1000,
 		BeatInterval:        3 * 1000,
 		NotLoadCacheAtStart: true,
-		NamespaceId:         n.NameSpace,
-		LogDir:              n.LogDir,
-		CacheDir:            n.CacheDir,
-		Username:            n.Username,
-		Password:            n.Password,
+		NamespaceId:         conf.NameSpace,
+		LogDir:              filepath.Join(constx.ResourceDir, ".nacos/log"),
+		CacheDir:            filepath.Join(constx.ResourceDir, ".nacos/cache"),
 	}
 }
 
 // nacos服务中间件配置
-func (n *Nacos) ServerConfigs() (serverConfigs []constant.ServerConfig) {
-	var adds = strings.Split(n.Address, ",")
+func (conf *NacosConfig) ServerConfigs() (serverConfigs []constant.ServerConfig) {
+	var adds = strings.Split(conf.Address, ",")
 	if len(adds) == 0 {
-		log.Error("nacos.address cannot be empty!")
+		log.Error("the address of nacos cannot be empty!")
 		return
 	}
 	for _, addStr := range adds {
@@ -118,12 +122,9 @@ func (n *Nacos) ServerConfigs() (serverConfigs []constant.ServerConfig) {
 }
 
 // 初始化Nacos配置中心客户端
-func (n *Nacos) ConfigClient() (client config_client.IConfigClient, err error) {
-	if client, err = clients.NewConfigClient(vo.NacosClientParam{
-		ClientConfig:  n.ClientConfig(),
-		ServerConfigs: n.ServerConfigs(),
-	}); err != nil {
-		log.Error(n.ToString("init nacos config client failed !"))
+func (conf *NacosConfig) ConfigClient(param vo.NacosClientParam) (client config_client.IConfigClient, err error) {
+	if client, err = clients.NewConfigClient(param); err != nil {
+		log.Error(conf.ToString("init nacos config client failed !"))
 		log.Error("error : ", err)
 		return
 	}
@@ -131,12 +132,9 @@ func (n *Nacos) ConfigClient() (client config_client.IConfigClient, err error) {
 }
 
 // 初始化Nacos服务发现客户端
-func (n *Nacos) NamingClient() (client naming_client.INamingClient, err error) {
-	if client, err = clients.NewNamingClient(vo.NacosClientParam{
-		ClientConfig:  n.ClientConfig(),
-		ServerConfigs: n.ServerConfigs(),
-	}); err != nil {
-		log.Error(n.ToString("init nacos naming client failed!"))
+func (conf *NacosConfig) NamingClient(param vo.NacosClientParam) (client naming_client.INamingClient, err error) {
+	if client, err = clients.NewNamingClient(param); err != nil {
+		log.Error(conf.ToString("init nacos naming client failed!"))
 		log.Error("error : ", err)
 		return
 	}

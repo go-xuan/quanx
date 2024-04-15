@@ -50,7 +50,7 @@ func GetServer() *Server {
 // 服务配置器
 type Engine struct {
 	flag           map[Flag]bool                  // 服务运行标识
-	config         *Config                        // 服务配置 使用 initConfig()将配置文件加载到此
+	config         *Config                        // 服务配置 使用 loadingConfig()将配置文件加载到此
 	configDir      string                         // 服务配置文件文件夹, 使用 SetConfigDir()设置配置文件路径
 	configurators  []confx.Configurator[any]      // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
 	customFuncs    []CustomFunc                   // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
@@ -62,14 +62,12 @@ type Engine struct {
 
 // 服务配置
 type Config struct {
-	Server        *Server              `yaml:"server"`        // 服务配置
-	Log           *logx.Log            `yaml:"log"`           // 日志配置
-	Nacos         *nacosx.Nacos        `yaml:"nacos"`         // nacos访问配置
-	Database      *gormx.Database      `yaml:"database"`      // 数据源配置
-	Redis         *redisx.Redis        `yaml:"redis"`         // redis配置
-	MultiDatabase *gormx.MultiDatabase `yaml:"multiDatabase"` // 多数据源配置
-	MultiRedis    *redisx.MultiRedis   `yaml:"multiRedis"`    // 多redis配置
-	Cache         *cachex.MultiCache   `yaml:"cache"`         // 缓存配置
+	Server   *Server              `yaml:"server"`   // 服务配置
+	Log      *logx.LogConfig      `yaml:"log"`      // 日志配置
+	Nacos    *nacosx.NacosConfig  `yaml:"nacos"`    // nacos访问配置
+	Database *gormx.MultiDatabase `yaml:"database"` // 数据源配置
+	Redis    *redisx.MultiRedis   `yaml:"redis"`    // redis配置
+	Cache    *cachex.MultiCache   `yaml:"cache"`    // 缓存配置
 }
 
 // gin路由加载器
@@ -82,14 +80,15 @@ type CustomFunc func()
 type Flag int
 
 const (
-	DisableGin          Flag = iota // 关闭gin
+	Lightweight         Flag = iota // 轻量化
 	EnableNacos                     // 启用nacos
-	MultiDB                         // 启用多数据源
-	MultiRedis                      // 启用多Redis
-	HasInitConfig                   // 已加载配置
-	HasInitFrameBasic               // 已初始化基础配置
+	HasLoadingConfig                // 已加载配置
+	HasBuildFrameBasic              // 已构建框架基础
 	HasRunCustomFunc                // 已执行自定义函数
 	HasRunConfigurators             // 已执行配置器
+	MultiDatabase                   // 开启多数据源
+	MultiRedis                      // 开启多redis源
+	MultiCache                      // 开启多缓存源
 )
 
 // 服务配置
@@ -97,7 +96,7 @@ type Server struct {
 	Name   string `yaml:"name"`                     // 服务名
 	Host   string `yaml:"host" default:"127.0.0.1"` // 服务host
 	Port   int    `yaml:"port" default:"8888"`      // 服务端口
-	Prefix string `yaml:"prefix" default:"app"`     // RESTFul api prefix（接口根路由）
+	Prefix string `yaml:"prefix" default:"app"`     // api prefix（接口根路由）
 	Debug  bool   `yaml:"debug"`                    // 是否调试环境
 }
 
@@ -108,19 +107,19 @@ func (s *Server) HttpUrl() string {
 
 // 服务运行
 func (e *Engine) RUN() {
-	e.PREPARE()  // 服务准备
-	e.STARTGIN() // 服务启动
+	e.Prepare() // 服务准备
+	e.Start()   // 服务启动
 }
 
 // 服务准备
-func (e *Engine) PREPARE() {
+func (e *Engine) Prepare() {
 	// 加载配置
-	if !e.flag[HasInitConfig] {
-		e.initConfig()
+	if !e.flag[HasLoadingConfig] {
+		e.loadingConfig()
 	}
-	// 初始化框架基础（log/nacos/gorm/redis/cache）
-	if !e.flag[HasInitFrameBasic] {
-		e.initFrameBasic()
+	// 构建框架基础（log/nacos/gorm/redis/cache）
+	if !e.flag[HasBuildFrameBasic] {
+		e.buildFrameBasic()
 	}
 	// 执行配置器
 	if !e.flag[HasRunConfigurators] {
@@ -133,28 +132,27 @@ func (e *Engine) PREPARE() {
 }
 
 // 服务启动
-func (e *Engine) STARTGIN() {
-	if !e.flag[DisableGin] {
+func (e *Engine) Start() {
+	if !e.flag[Lightweight] {
 		defer PanicRecover()
 		e.startGin()
 	}
 }
 
 // 加载服务配置
-func (e *Engine) initConfig() {
+func (e *Engine) loadingConfig() {
 	var config = &Config{Server: &Server{}}
-	// 读取本地配置
-	if !e.flag[DisableGin] {
-		var path = e.GetConfigPath("config.yaml")
-		if err := marshalx.LoadFromFile(path, config); err != nil {
-			log.Error("加载服务配置失败!")
+	if !e.flag[Lightweight] {
+		var path = e.GetConfigPath(constx.Config)
+		if err := marshalx.UnmarshalFromFile(path, config); err != nil {
+			log.Error("loading config.yaml failed!")
 			panic(err)
 		}
 		if config.Server.Host == "" {
 			config.Server.Host = ipx.GetWLANIP()
 		}
 	}
-	// 初始化nacos
+	// 从nacos加载配置
 	if e.flag[EnableNacos] && config.Nacos != nil {
 		e.RunConfigurator(config.Nacos, true)
 		if config.Nacos.EnableNaming() {
@@ -170,56 +168,62 @@ func (e *Engine) initConfig() {
 		}
 	}
 	e.config = config
-	e.flag[HasInitConfig] = true
+	e.flag[HasLoadingConfig] = true
 }
 
-// 初始化框架基础（log/nacos/gorm/redis）
-func (e *Engine) initFrameBasic() {
+// 构建框架基础（log/nacos/gorm/redis）
+func (e *Engine) buildFrameBasic() {
 	// 初始化日志
 	var serverName = stringx.IfZero(e.config.Server.Name, "app")
 	e.RunConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
 
 	// 初始化数据库连接
-	if e.flag[MultiDB] {
-		e.config.MultiDatabase = anyx.IfZero(e.config.MultiDatabase, &gormx.MultiDatabase{})
-		e.RunConfigurator(e.config.MultiDatabase)
-		if gormx.Initialized() && gormx.This().Multi {
-			for source := range gormx.This().DBMap {
-				if dst, ok := e.gormTables[source]; ok {
-					if err := gormx.This().InitGormTable(source, dst...); err != nil {
-						log.Error("failed to initialize the table structure !")
-						panic(err)
-					}
-				}
-			}
-		}
-	} else if !gormx.Initialized() {
-		e.config.Database = anyx.IfZero(e.config.Database, &gormx.Database{})
+	if e.flag[MultiDatabase] {
+		e.config.Database = anyx.IfZero(e.config.Database, &gormx.MultiDatabase{})
 		e.RunConfigurator(e.config.Database)
-		if dst, ok := e.gormTables[constx.Default]; ok {
-			if err := gormx.This().InitGormTable(constx.Default, dst...); err != nil {
-				log.Error("failed to initialize the table structure !")
-				panic(err)
+	} else {
+		var database = &gormx.Database{}
+		e.RunConfigurator(database)
+		e.config.Database = &gormx.MultiDatabase{database}
+	}
+	// 初始化表结构
+	if gormx.Initialized() {
+		for source := range gormx.This().DBMap {
+			if dst, ok := e.gormTables[source]; ok {
+				if err := gormx.This().InitGormTable(source, dst...); err != nil {
+					log.Error("create table failed!")
+					panic(err)
+				}
 			}
 		}
 	}
 
 	// 初始化redis连接
 	if e.flag[MultiRedis] {
-		e.config.MultiRedis = anyx.IfZero(e.config.MultiRedis, &redisx.MultiRedis{})
-		e.RunConfigurator(e.config.MultiRedis)
-	} else if !redisx.Initialized() {
-		e.config.Redis = anyx.IfZero(e.config.Redis, &redisx.Redis{})
+		e.config.Redis = anyx.IfZero(e.config.Redis, &redisx.MultiRedis{})
 		e.RunConfigurator(e.config.Redis)
+	} else {
+		var redis = &redisx.Redis{}
+		e.RunConfigurator(redis)
+		e.config.Redis = &redisx.MultiRedis{redis}
 	}
 
-	// 初始化缓存配置
+	// 初始化缓存
 	if redisx.Initialized() {
 		e.config.Cache = anyx.IfZero(e.config.Cache, &cachex.MultiCache{})
 		e.RunConfigurator(e.config.Cache, true)
+
+		if e.flag[MultiCache] {
+			e.config.Cache = anyx.IfZero(e.config.Cache, &cachex.MultiCache{})
+			e.RunConfigurator(e.config.Cache)
+		} else {
+			var cache = &cachex.Cache{}
+			e.RunConfigurator(cache, true)
+			e.config.Cache = &cachex.MultiCache{cache}
+		}
 	}
 	// 完成框架基础初始化
-	e.flag[HasInitFrameBasic] = true
+	e.flag[HasBuildFrameBasic] = true
 }
 
 // 添加自定义函数
@@ -263,43 +267,41 @@ func (e *Engine) RunConfigurator(conf confx.Configurator[any], must ...bool) {
 	if reader := conf.Reader(); reader != nil {
 		if e.flag[EnableNacos] {
 			reader.NacosGroup = e.config.Server.Name
-			if err := nacosx.NewConfig(reader.NacosGroup, reader.NacosDataId).LoadConfig(conf); err == nil {
+			if err := nacosx.NewConfig(reader.NacosGroup, reader.NacosDataId).Loading(conf); err == nil {
 				ok = true
 			}
 		} else {
-			if err := marshalx.LoadFromFile(e.GetConfigPath(reader.FilePath), conf); err == nil {
+			if err := marshalx.UnmarshalFromFile(e.GetConfigPath(reader.FilePath), conf); err == nil {
 				ok = true
 			}
 		}
 	}
 	if ok {
 		if err := conf.Run(); err != nil {
-			log.Error(conf.Title() + " error!")
+			log.Error(conf.Theme(), " initialized failed!")
 			panic(err)
 		}
-		log.Info(conf.Title() + " completed!")
+		log.Info(conf.Theme(), " initialized completed!")
 	}
 }
 
 // 初始化本地配置项（立即加载）
-func (e *Engine) InitLocalConfig(config interface{}, filePath string) {
-	if err := marshalx.LoadFromFile(filePath, config); err != nil {
+func (e *Engine) LoadingLocalConfig(v any, path string) {
+	if err := marshalx.UnmarshalFromFile(path, v); err != nil {
 		panic(err)
 	}
 }
 
 // 初始化Nacos配置项（以自定义函数的形式延迟加载）
-func (e *Engine) InitNacosConfig(config interface{}, dataId string, listen ...bool) {
+func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() {
 		if nacosx.This().ConfigClient == nil {
 			panic("nacos config client is uninitialized !")
 		}
-		var item = nacosx.NewConfig(e.config.Server.Name, dataId)
-		if len(listen) > 0 {
-			item.Listen = listen[0]
-		}
+		var config = nacosx.NewConfig(e.config.Server.Name, dataId)
+		config.Listen = anyx.Default(listen, false)
 		// 加载微服务配置
-		if err := item.LoadConfig(config); err != nil {
+		if err := config.Loading(v); err != nil {
 			panic("loading nacos config failed : " + err.Error())
 		}
 	})

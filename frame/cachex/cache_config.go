@@ -16,30 +16,61 @@ import (
 	"github.com/go-xuan/quanx/utils/slicex"
 )
 
-// 多类缓存配置
+// 缓存配置
 type MultiCache []*Cache
 
-// 缓存配置
 type Cache struct {
-	Source      string         `json:"source" yaml:"source" default:"default"` // 缓存存储数据源名称
-	Prefix      string         `json:"prefix" yaml:"prefix"`                   // 缓存KEY前缀前缀
-	Marshal     string         `json:"marshal" yaml:"marshal"`                 // 序列化方案
+	Source      string         `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称
+	Prefix      string         `json:"prefix" yaml:"prefix" default:"default"`   // 缓存KEY前缀前缀
+	Marshal     string         `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
 	config      *redisx.Redis  // redis配置
 	cmdable     redis.Cmdable  // redis连接
 	marshalCase *marshalx.Case // 序列化方案
 }
 
-func Default() MultiCache {
-	return MultiCache{&Cache{
+func (c *Cache) Theme() string {
+	return "Cache"
+}
+
+func (c *Cache) Reader() *confx.Reader {
+	return &confx.Reader{
+		FilePath:    "cache.yaml",
+		NacosDataId: "cache.yaml",
+		Listen:      false,
+	}
+}
+
+func (c *Cache) Run() (err error) {
+	if err = anyx.SetDefaultValue(c); err != nil {
+		return
+	}
+	// 初始化缓存属性
+	c.InitAttribute()
+	client := c.CacheClient()
+	handler = &Handler{
+		Multi:     false,
+		Client:    client,
+		Config:    c,
+		ClientMap: make(map[string]*CacheClient[any]),
+		ConfigMap: make(map[string]*Cache),
+	}
+	handler.ClientMap[c.Source] = client
+	handler.ConfigMap[c.Source] = c
+	log.Info(c.ToString("Cache init successful!"))
+	return
+}
+
+func Default() *Cache {
+	return &Cache{
 		Source:  constx.Default,
 		Prefix:  "cache",
 		Marshal: marshalx.Msgpack,
-	}}
+	}
 }
 
 // 配置信息格式化
-func (MultiCache) Title() string {
-	return "Init multi-redis"
+func (MultiCache) Theme() string {
+	return "Cache"
 }
 
 // 配置文件读取
@@ -58,18 +89,18 @@ func (m MultiCache) Run() error {
 		ClientMap: make(map[string]*CacheClient[any]),
 		ConfigMap: make(map[string]*Cache),
 	}
-	multi := anyx.IfZero(m, Default())
+	multi := anyx.IfZero(m, MultiCache{Default()})
 	for i, cache := range multi {
 		// 初始化缓存属性
 		cache.InitAttribute()
-		var client = cache.CacheClient()
+		client := cache.CacheClient()
 		handler.ClientMap[cache.Source] = client
 		handler.ConfigMap[cache.Source] = cache
 		if i == 0 || cache.Source == constx.Default {
 			handler.Client = client
 			handler.Config = cache
 		}
-		log.Info(cache.ToString("cache init success!"))
+		log.Info(cache.ToString("init cache successful!"))
 	}
 	return nil
 }

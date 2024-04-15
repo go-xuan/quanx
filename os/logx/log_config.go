@@ -13,12 +13,12 @@ import (
 	"github.com/go-xuan/quanx/utils/anyx"
 )
 
-func New(app string) *Log {
-	return &Log{FileName: app + ".log"}
+func New(app string) *LogConfig {
+	return &LogConfig{FileName: app + ".log"}
 }
 
 // 日志配置
-type Log struct {
+type LogConfig struct {
 	FileName string `json:"fileName" yaml:"fileName" default:"app.log"` // 日志文件名
 	Dir      string `json:"dir" yaml:"dir" default:"resource/log"`      // 日志保存文件夹
 	Level    string `json:"level" yaml:"level" default:"debug"`         // 日志级别
@@ -28,25 +28,25 @@ type Log struct {
 }
 
 // 配置信息格式化
-func (l *Log) ToString() string {
+func (l *LogConfig) ToString() string {
 	return fmt.Sprintf("logPath=%s level=%s maxSize=%d maxAge=%d backups=%d",
 		l.LogPath(), l.Level, l.MaxSize, l.MaxAge, l.Backups)
 }
 
 // 配置器名称
-func (*Log) Title() string {
-	return "log format"
+func (*LogConfig) Theme() string {
+	return "Log"
 }
 
 // 配置文件读取
-func (*Log) Reader() *confx.Reader {
+func (*LogConfig) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath: "log.yaml",
 	}
 }
 
 // 配置器运行
-func (l *Log) Run() error {
+func (l *LogConfig) Run() error {
 	if err := anyx.SetDefaultValue(l); err != nil {
 		return err
 	}
@@ -80,12 +80,12 @@ func (l *Log) Run() error {
 	return nil
 }
 
-func (l *Log) LogPath() string {
+func (l *LogConfig) LogPath() string {
 	return filepath.Join(l.Dir, l.FileName)
 }
 
 // 默认日志配置
-func (l *Log) defaultLogger() lumberjack.Logger {
+func (l *LogConfig) defaultLogger() lumberjack.Logger {
 	return lumberjack.Logger{
 		Filename:   l.LogPath(),
 		MaxSize:    100,

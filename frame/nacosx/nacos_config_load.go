@@ -16,9 +16,9 @@ import (
 type Configs []*Config
 
 // 批量加载nacos配置
-func (list Configs) LoadConfig(config interface{}) (err error) {
+func (list Configs) Loading(v any) (err error) {
 	for _, conf := range list {
-		if err = conf.LoadConfig(config); err != nil {
+		if err = conf.Loading(v); err != nil {
 			return
 		}
 	}
@@ -43,6 +43,7 @@ type Config struct {
 	Listen bool          `yaml:"listen"` // 是否启用监听
 }
 
+// 初始化
 func NewConfig(group, dataId string) *Config {
 	return &Config{Group: group, DataId: dataId, Type: vo.ConfigType(filex.Suffix(dataId))}
 }
@@ -58,42 +59,41 @@ func (c *Config) ToConfigParam() vo.ConfigParam {
 }
 
 // 加载nacos配置
-func (c *Config) LoadConfig(config interface{}) (err error) {
-	valueRef := reflect.ValueOf(config)
+func (c *Config) Loading(v any) (err error) {
+	valueRef := reflect.ValueOf(v)
 	// 修改值必须是指针类型否则不可行
 	if valueRef.Type().Kind() != reflect.Ptr {
-		log.Error("loading nacos config failed!")
+		log.Error("Loading nacos config failed!")
 		return errors.New("the input parameter is not a pointer type")
 	}
 	var param = c.ToConfigParam()
 	// 读取Nacos配置
 	var content string
 	if content, err = GetConfigContent(c.Group, c.DataId); err != nil {
-		log.Error("get nacos config failed : ", err)
+		log.Error("get config content from nacos failed : ", err)
 		return
 	}
-	if err = marshalx.NewCase(c.DataId).Unmarshal([]byte(content), config); err != nil {
-		log.Error(c.ToString("loading nacos config failed!"))
+	if err = marshalx.NewCase(c.DataId).Unmarshal([]byte(content), v); err != nil {
+		log.Error(c.ToString("Loading config from nacos failed!"))
 		log.Error(" error : ", err)
 		return
 	}
-	log.Info(c.ToString("loading nacos config successful!"))
+	log.Info(c.ToString("Loading config from nacos successful!"))
 	// 设置Nacos配置监听
 	if c.Listen {
 		// 新增nacos配置监听
 		GetNacosConfigMonitor().AddConfigData(c.Group, c.DataId, content)
-		param.OnChange = ConfigChangedMonitor
+		// 配置监听响应方法
+		param.OnChange = func(namespace, group, dataId, data string) {
+			log.Errorf("The config on nacos has changed!!!\n dataId=%s group=%s namespace=%s\nThe latest config content is :\n%s", dataId, group, namespace, data)
+			GetNacosConfigMonitor().UpdateConfigData(group, dataId, data)
+		}
 		if err = This().ConfigClient.ListenConfig(param); err != nil {
-			log.Error(c.ToString("listen nacos config failed!"))
+			log.Error(c.ToString("The config on nacos listen failed!"))
 			log.Error(" error : ", err)
 			return
 		}
-		log.Info(c.ToString("listen nacos config successful!"))
+		log.Info(c.ToString("The config on nacos listen successful!"))
 	}
 	return
-}
-
-func ConfigChangedMonitor(namespace, group, dataId, data string) {
-	log.Errorf("nacos config has changed!!!\n dataId=%s group=%s namespace=%s\n改动后内容如下:\n%s", dataId, group, namespace, data)
-	GetNacosConfigMonitor().UpdateConfigData(group, dataId, data)
 }
