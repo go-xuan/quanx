@@ -17,7 +17,7 @@ require (
 	github.com/tealeg/xlsx v1.0.5
 	github.com/tidwall/gjson v1.17.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	go.mongodb.org/mongo-driver v1.14.0
+	go.mongodb.org/mongo-driver v1.15.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
