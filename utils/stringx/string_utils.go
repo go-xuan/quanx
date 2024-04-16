@@ -8,9 +8,18 @@ import (
 
 // 获取起始字符首次出现和结尾字符末次出现的下标
 func Between(s, start, end string) (from, to int) {
-	var l, m, n = len(s), len(start), len(end)
-	var x, y int // x:start个数  y:end个数
+	if start == end {
+		indices := AllIndex(s, start, 2)
+		from, to = indices[0], indices[1]
+		return
+	}
 	from, to = -1, -1
+	var l, m, n = len(s), len(start), len(end)
+	if m > l || n > l {
+		return
+	}
+	// x:start个数  y:end个数
+	var x, y int
 	for i := 0; i < l; i++ {
 		if s[i] == start[0] {
 			if s[i:i+m] == start {
@@ -38,21 +47,24 @@ func Between(s, start, end string) (from, to int) {
 }
 
 // 获取子串下标
-// index：表示获取第n处出现位置的起始下标，默认index=1即正序第1次，index=-1即倒序第1次
-func Index(s, substr string, index ...int) int {
-	x := anyx.Default(index, 1)
-	l, m, n := len(s), len(substr), 0
+// position：表示获取位置，默认position=1即正序第1处，position=-1即倒序第1处
+func Index(s, sep string, position ...int) int {
+	l, m, n := len(s), len(sep), 0
+	if m > l {
+		return -1
+	}
+	x := anyx.Default(position, 1)
 	for i := 0; i <= l-m; i++ {
-		if x > 0 { // 正序
-			if s[i] == substr[0] && s[i:i+m] == substr {
+		if x > 0 {
+			if s[i] == sep[0] && s[i:i+m] == sep {
 				n++
 				if x == n {
 					return i
 				}
 			}
-		} else { // 倒序
+		} else {
 			j := l - i
-			if s[j-1] == substr[m-1] && s[j-m:j] == substr {
+			if s[j-1] == sep[m-1] && s[j-m:j] == sep {
 				n--
 				if x == n {
 					return j - m
@@ -61,6 +73,25 @@ func Index(s, substr string, index ...int) int {
 		}
 	}
 	return -1
+}
+
+// 获取所有下标
+func AllIndex(s, sep string, x int) []int {
+	var indices = make([]int, x)
+	for i := 0; i < x; i++ {
+		indices[i] = -1
+	}
+	l, m, n := len(s), len(sep), 0
+	for i := 0; i <= l-m; i++ {
+		if s[i] == sep[0] && s[i:i+m] == sep {
+			n++
+			if n <= x {
+				indices[n-1] = i
+			}
+			i = i + m - 1
+		}
+	}
+	return indices
 }
 
 // 添加前缀
@@ -80,9 +111,19 @@ func AddSuffix(s, suffix string) string {
 }
 
 // 字符串是否包含
-func ContainsAny(s string, substrs ...string) bool {
-	for _, sub := range substrs {
-		if strings.Contains(s, sub) {
+func Contains(s string, seps ...string) (string, int) {
+	for _, sep := range seps {
+		if i := Index(s, sep); i >= 0 {
+			return sep, i
+		}
+	}
+	return "", -1
+}
+
+// 字符串是否包含
+func ContainsAny(s string, seps ...string) bool {
+	for _, sep := range seps {
+		if Index(s, sep) >= 0 {
 			return true
 		}
 	}
@@ -90,9 +131,9 @@ func ContainsAny(s string, substrs ...string) bool {
 }
 
 // 字符串是否包含
-func ContainsBoth(s string, substrs ...string) bool {
-	for _, sub := range substrs {
-		if !strings.Contains(s, sub) {
+func ContainsBoth(s string, seps ...string) bool {
+	for _, sep := range seps {
+		if Index(s, sep) == -1 {
 			return false
 		}
 	}
@@ -150,18 +191,18 @@ func SubString(s string, start, end int) string {
 }
 
 // 分割字符串（reverse=true从右往左）
-func Cut(s, sep string, reverse ...bool) (string, string) {
-	if strings.Contains(s, sep) {
-		var i = anyx.If(len(reverse) > 0 && reverse[0], strings.LastIndex(s, sep), strings.Index(s, sep))
+// position：表示分割位置，默认position=1即正序第1处，position=-1即倒序第1处
+func Cut(s, sep string, position ...int) (string, string) {
+	if i := Index(s, sep, position...); i >= 0 {
 		return s[:i], s[i+len(sep):]
 	}
 	return s, ""
 }
 
 // 插入字符串
-func Insert(s, insert string, index ...int) string {
-	if len(index) > 0 {
-		if i := index[0]; index[0] > 0 && index[0] < len(s) {
+func Insert(s, insert string, position ...int) string {
+	if len(position) > 0 {
+		if i := position[0]; position[0] > 0 && position[0] < len(s) {
 			return s[:i] + insert + s[i:]
 		}
 	}
