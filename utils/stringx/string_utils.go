@@ -6,27 +6,28 @@ import (
 	"github.com/go-xuan/quanx/utils/anyx"
 )
 
-func Between(whole, start, end string) (from, to int) {
-	var l, sl, el = len(whole), len(start), len(end)
-	var sn, en int // sn:start个数  en:end个数
+// 获取起始字符首次出现和结尾字符末次出现的下标
+func Between(s, start, end string) (from, to int) {
+	var l, m, n = len(s), len(start), len(end)
+	var x, y int // x:start个数  y:end个数
 	from, to = -1, -1
 	for i := 0; i < l; i++ {
-		if whole[i] == start[0] {
-			if whole[i:i+sl] == start {
-				sn++
-				if sn == 1 {
-					from = i + sl
+		if s[i] == start[0] {
+			if s[i:i+m] == start {
+				x++
+				if x == 1 {
+					from = i + m
 				}
-				i = i + sl - 1
+				i = i + m - 1
 			}
-		} else if whole[i] == end[0] {
-			if whole[i:i+el] == end {
-				en++
-				if en == sn || sn == 1 {
+		} else if s[i] == end[0] {
+			if s[i:i+n] == end {
+				y++
+				if y == x || x == 1 {
 					to = i
 					break
 				}
-				i = i + el - 1
+				i = i + n - 1
 			}
 		}
 	}
@@ -36,15 +37,25 @@ func Between(whole, start, end string) (from, to int) {
 	return
 }
 
-func Index(s, substr string, n ...int) int {
-	x := anyx.Default(n, 1)
-	l, m, y := len(s), len(substr), 0
-	for i := 0; i < l; i++ {
-		if s[i] == substr[0] {
-			if s[i:i+m] == substr {
-				y++
-				if x == y {
+// 获取子串下标
+// index：表示获取第n处出现位置的起始下标，默认index=1即正序第1次，index=-1即倒序第1次
+func Index(s, substr string, index ...int) int {
+	x := anyx.Default(index, 1)
+	l, m, n := len(s), len(substr), 0
+	for i := 0; i <= l-m; i++ {
+		if x > 0 { // 正序
+			if s[i] == substr[0] && s[i:i+m] == substr {
+				n++
+				if x == n {
 					return i
+				}
+			}
+		} else { // 倒序
+			j := l - i
+			if s[j-1] == substr[m-1] && s[j-m:j] == substr {
+				n--
+				if x == n {
+					return j - m
 				}
 			}
 		}
