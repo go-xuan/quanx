@@ -13,9 +13,9 @@ var handler *Handler
 // redis控制器
 type Handler struct {
 	Multi     bool // 是否多redis数据库
-	Cmd       redis.Cmdable
+	Client    *redis.UniversalClient
 	Config    *Redis
-	CmdMap    map[string]redis.Cmdable
+	clientMap map[string]*redis.UniversalClient
 	ConfigMap map[string]*Redis
 }
 
@@ -30,25 +30,25 @@ func Initialized() bool {
 	return handler != nil
 }
 
-func Ping(cmd redis.Cmdable) (bool, error) {
-	if _, err := cmd.Ping(context.Background()).Result(); err != nil {
+func Ping(client redis.UniversalClient) (bool, error) {
+	if _, err := client.Ping(context.Background()).Result(); err != nil {
 		return false, err
 	} else {
 		return true, nil
 	}
 }
 
-func Cmdable(source ...string) redis.Cmdable {
-	return This().GetCmdable(source...)
+func Client(source ...string) *redis.UniversalClient {
+	return This().GetClient(source...)
 }
 
-func (h *Handler) GetCmdable(source ...string) redis.Cmdable {
+func (h *Handler) GetClient(source ...string) *redis.UniversalClient {
 	if len(source) > 0 && source[0] != constx.Default {
-		if cmd, ok := h.CmdMap[source[0]]; ok {
-			return cmd
+		if client, ok := h.clientMap[source[0]]; ok {
+			return client
 		}
 	}
-	return h.Cmd
+	return h.Client
 }
 
 func (h *Handler) GetConfig(source ...string) *Redis {

@@ -2,6 +2,7 @@ package redisx
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 
@@ -27,9 +28,18 @@ type Redis struct {
 	Mode     int    `json:"mode" yaml:"mode"`         // 模式（0-单机；1-集群），默认单机模式
 	Host     string `json:"host" yaml:"host"`         // 主机
 	Port     int    `json:"port" yaml:"port"`         // 端口
+	Username string `json:"username" yaml:"username"` // 用户名
 	Password string `json:"password" yaml:"password"` // 密码
 	Database int    `json:"database" yaml:"database"` // 数据库，默认0
 	PoolSize int    `json:"poolSize" yaml:"poolSize"` // 池大小
+	SSH      SSH    `json:"ssh" yaml:"ssh"`           // ssh
+}
+
+type SSH struct {
+	Host     string `json:"host" yaml:"host"`         // 主机
+	Port     int    `json:"port" yaml:"port"`         // 端口
+	Username string `json:"username" yaml:"username"` // 用户名
+	Password string `json:"password" yaml:"password"` // 密码
 }
 
 // 配置信息格式化
@@ -54,21 +64,21 @@ func (conf MultiRedis) Run() error {
 	}
 	handler = &Handler{
 		Multi:     true,
-		CmdMap:    make(map[string]redis.Cmdable),
+		clientMap: make(map[string]*redis.UniversalClient),
 		ConfigMap: make(map[string]*Redis),
 	}
 	for i, r := range conf {
 		if r.Enable {
-			var cmd = r.NewRedisCmdable()
-			if ok, err := Ping(cmd); !ok && err != nil {
+			var client = r.NewRedisClient()
+			if ok, err := Ping(*client); !ok && err != nil {
 				log.Error(r.ToString("redis connect failed!"))
 				log.Error("error : ", err)
 				return err
 			}
-			handler.CmdMap[r.Source] = cmd
+			handler.clientMap[r.Source] = client
 			handler.ConfigMap[r.Source] = r
 			if i == 0 || r.Source == constx.Default {
-				handler.Cmd = cmd
+				handler.Client = client
 				handler.Config = r
 			}
 			log.Info(r.ToString("redis connect successful!"))
@@ -106,21 +116,21 @@ func (r *Redis) Run() (err error) {
 		if err = anyx.SetDefaultValue(r); err != nil {
 			return
 		}
-		var cmd = r.NewRedisCmdable()
+		var client = r.NewRedisClient()
 		var ok bool
-		if ok, err = Ping(cmd); !ok && err != nil {
+		if ok, err = Ping(*client); !ok && err != nil {
 			log.Error(r.ToString("Redis connect failed"))
 			log.Error("error : ", err)
 			return
 		}
 		handler = &Handler{
 			Multi:     false,
-			Cmd:       cmd,
+			Client:    client,
 			Config:    r,
-			CmdMap:    make(map[string]redis.Cmdable),
+			clientMap: make(map[string]*redis.UniversalClient),
 			ConfigMap: make(map[string]*Redis),
 		}
-		handler.CmdMap[r.Source] = cmd
+		handler.clientMap[r.Source] = client
 		handler.ConfigMap[r.Source] = r
 		log.Info(r.ToString("Redis connect successful"))
 		return
@@ -134,28 +144,32 @@ func (r *Redis) Address() string {
 	return fmt.Sprintf("%s:%d", r.Host, r.Port)
 }
 
-// 初始化redis，默认单机模式
-func (r *Redis) NewRedisCmdable(database ...int) redis.Cmdable {
-	var db = r.Database
-	if len(database) > 0 {
-		db = database[0]
-	}
+// 初始化redis客户端
+// UniversalClient并不是一个客户端，而是对 Client、ClusterClient、FailoverClient 客户端的包装。根据不同的选项，客户端的类型如下：
+// 1、如果指定了MasterName选项，则返回FailoverClient哨兵客户端。
+// 2、如果Addrs是2个以上的地址，则返回ClusterClient集群客户端。
+// 3、其他情况，返回Client单节点客户端。
+func (r *Redis) NewRedisClient() *redis.UniversalClient {
+	var client redis.UniversalClient
 	switch r.Mode {
 	case StandAlone:
-		return redis.NewClient(&redis.Options{
-			Addr:     r.Host + ":" + strconv.Itoa(r.Port),
+		client = redis.NewUniversalClient(&redis.UniversalOptions{
+			Addrs:    []string{net.JoinHostPort(r.Host, strconv.Itoa(r.Port))},
+			Username: r.Username,
 			Password: r.Password,
 			PoolSize: r.PoolSize,
-			DB:       db,
+			DB:       r.Database,
 		})
 	case Cluster:
-		return redis.NewClusterClient(&redis.ClusterOptions{
+		client = redis.NewUniversalClient(&redis.UniversalOptions{
 			Addrs:    strings.Split(r.Host, ","),
+			Username: r.Username,
 			Password: r.Password,
 			PoolSize: r.PoolSize,
 		})
 	default:
-		log.Warn(r.ToString("the mode of redis is wrong"))
+		log.Warn(r.ToString("the mode value can only be 1 or 2"))
 		return nil
 	}
+	return &client
 }

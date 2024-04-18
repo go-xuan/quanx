@@ -20,12 +20,12 @@ import (
 type MultiCache []*Cache
 
 type Cache struct {
-	Source      string         `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称
-	Prefix      string         `json:"prefix" yaml:"prefix" default:"default"`   // 缓存KEY前缀前缀
-	Marshal     string         `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
-	config      *redisx.Redis  // redis配置
-	cmdable     redis.Cmdable  // redis连接
-	marshalCase *marshalx.Case // 序列化方案
+	Source      string                 `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称
+	Prefix      string                 `json:"prefix" yaml:"prefix" default:"default"`   // 缓存KEY前缀前缀
+	Marshal     string                 `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
+	config      *redisx.Redis          // redis配置
+	client      *redis.UniversalClient // redis连接客户端
+	marshalCase *marshalx.Case         // 序列化方案
 }
 
 func (c *Cache) Theme() string {
@@ -56,7 +56,7 @@ func (c *Cache) Run() (err error) {
 	}
 	handler.ClientMap[c.Source] = client
 	handler.ConfigMap[c.Source] = c
-	log.Info(c.ToString("Cache init successful!"))
+	log.Info(c.ToString("Cache Init Successful!"))
 	return
 }
 
@@ -116,8 +116,8 @@ func (c *Cache) InitAttribute() {
 	if c.config == nil {
 		c.config = redisx.This().GetConfig(c.Source)
 	}
-	if c.cmdable == nil {
-		c.cmdable = redisx.This().GetCmdable(c.Source)
+	if c.client == nil {
+		c.client = redisx.This().GetClient(c.Source)
 	}
 	if c.marshalCase == nil {
 		c.marshalCase = marshalx.DefaultCase()
@@ -156,11 +156,11 @@ func (c *Cache) CASE() *marshalx.Case {
 	return c.marshalCase
 }
 
-func (c *Cache) RedisDB() redis.Cmdable {
-	if c.cmdable == nil {
-		c.cmdable = redisx.This().GetCmdable(c.Source)
+func (c *Cache) RedisDB() redis.UniversalClient {
+	if c.client == nil {
+		c.client = redisx.This().GetClient(c.Source)
 	}
-	return c.cmdable
+	return *c.client
 }
 
 func (c *Cache) Get(ctx context.Context, key string, v any) error {
