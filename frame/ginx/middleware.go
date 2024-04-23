@@ -110,7 +110,7 @@ func authenticateToken(ctx *gin.Context) string {
 	} else {
 		if user, err := ParseUserFromToken(token); err != nil || user == nil {
 			return respx.AuthInvalidErr.Msg
-		} else if AuthCache.Get(ctx.Request.Context(), user.Account).(string) == "" {
+		} else if AuthCache.Get(ctx.Request.Context(), user.Account) == nil {
 			return respx.AuthExpiredErr.Msg
 		} else {
 			SetUser(ctx, user)
@@ -129,9 +129,9 @@ func authenticateCookie(ctx *gin.Context) string {
 			return respx.AuthInvalidErr.Msg
 		}
 		var user = &User{Account: account}
-		if token := AuthCache.Get(ctx.Request.Context(), user.Account).(string); token == "" {
+		if token := AuthCache.Get(ctx.Request.Context(), user.Account); token == nil {
 			return respx.AuthExpiredErr.Msg
-		} else if user, err = ParseUserFromToken(token); err != nil {
+		} else if user, err = ParseUserFromToken(token.(string)); err != nil {
 			return respx.AuthInvalidErr.Msg
 		} else {
 			SetUser(ctx, user)

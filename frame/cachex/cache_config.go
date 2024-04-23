@@ -40,8 +40,7 @@ func (c *Cache) Run() (err error) {
 	if err = anyx.SetDefaultValue(c); err != nil {
 		return
 	}
-	// 初始化缓存属性
-	client := c.CacheClient()
+	var client = c.CacheClient()
 	handler = &Handler{
 		Multi:     false,
 		Client:    client,
@@ -82,7 +81,7 @@ func (m MultiCache) Run() error {
 	}
 	multi := anyx.IfZero(m, MultiCache{Default()})
 	for i, cache := range multi {
-		client := cache.CacheClient()
+		var client = cache.CacheClient()
 		handler.ClientMap[cache.Source] = client
 		if i == 0 || cache.Source == constx.Default {
 			handler.Client = client
@@ -99,23 +98,18 @@ func (c *Cache) ToString(title string) string {
 }
 
 func (c *Cache) CacheClient() *CacheClient {
-	var config = redisx.This().GetConfig(c.Source)
-	var client = redisx.This().GetClient(c.Source)
-	var marshalCase = marshalx.DefaultCase()
+	var client = redisx.Client(c.Source)
+	unmarshal := marshalx.NewCase(c.Marshal).Unmarshal
 	return &CacheClient{
-		config:      config,
-		client:      client,
-		marshalCase: marshalCase,
+		key: func(k string) string {
+			return c.Prefix + k
+		},
 		set: func(ctx context.Context, k string, v any, duration time.Duration) {
 			client.Set(ctx, k, v, duration)
 		},
 		get: func(ctx context.Context, k string) (v any) {
-			if value, err := client.Get(ctx, k).Bytes(); err != nil {
-				return
-			} else {
-				if err = marshalCase.Unmarshal(value, v); err != nil {
-					return
-				}
+			if value, err := client.Get(ctx, k).Bytes(); err == nil {
+				_ = unmarshal(value, v)
 			}
 			return
 		},
