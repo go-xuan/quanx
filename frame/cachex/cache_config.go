@@ -3,9 +3,9 @@ package cachex
 import (
 	"context"
 	"fmt"
+	"github.com/go-xuan/quanx/utils/slicex"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
@@ -13,19 +13,15 @@ import (
 	"github.com/go-xuan/quanx/frame/confx"
 	"github.com/go-xuan/quanx/os/marshalx"
 	"github.com/go-xuan/quanx/utils/anyx"
-	"github.com/go-xuan/quanx/utils/slicex"
 )
 
 // 缓存配置
 type MultiCache []*Cache
 
 type Cache struct {
-	Source      string                 `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称
-	Prefix      string                 `json:"prefix" yaml:"prefix" default:"default"`   // 缓存KEY前缀前缀
-	Marshal     string                 `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
-	config      *redisx.Redis          // redis配置
-	client      *redis.UniversalClient // redis连接客户端
-	marshalCase *marshalx.Case         // 序列化方案
+	Source  string `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称
+	Prefix  string `json:"prefix" yaml:"prefix" default:"default"`   // 缓存KEY前缀前缀
+	Marshal string `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
 }
 
 func (c *Cache) Theme() string {
@@ -45,17 +41,13 @@ func (c *Cache) Run() (err error) {
 		return
 	}
 	// 初始化缓存属性
-	c.InitAttribute()
 	client := c.CacheClient()
 	handler = &Handler{
 		Multi:     false,
 		Client:    client,
-		Config:    c,
 		ClientMap: make(map[string]*CacheClient),
-		ConfigMap: make(map[string]*Cache),
 	}
 	handler.ClientMap[c.Source] = client
-	handler.ConfigMap[c.Source] = c
 	log.Info(c.ToString("Cache Init Successful!"))
 	return
 }
@@ -87,18 +79,13 @@ func (m MultiCache) Run() error {
 	handler = &Handler{
 		Multi:     true,
 		ClientMap: make(map[string]*CacheClient),
-		ConfigMap: make(map[string]*Cache),
 	}
 	multi := anyx.IfZero(m, MultiCache{Default()})
 	for i, cache := range multi {
-		// 初始化缓存属性
-		cache.InitAttribute()
 		client := cache.CacheClient()
 		handler.ClientMap[cache.Source] = client
-		handler.ConfigMap[cache.Source] = cache
 		if i == 0 || cache.Source == constx.Default {
 			handler.Client = client
-			handler.Config = cache
 		}
 		log.Info(cache.ToString("init cache successful!"))
 	}
@@ -111,108 +98,70 @@ func (c *Cache) ToString(title string) string {
 		title, c.Source, c.Prefix, c.Marshal)
 }
 
-// 初始化属性
-func (c *Cache) InitAttribute() {
-	if c.config == nil {
-		c.config = redisx.This().GetConfig(c.Source)
-	}
-	if c.client == nil {
-		c.client = redisx.This().GetClient(c.Source)
-	}
-	if c.marshalCase == nil {
-		c.marshalCase = marshalx.DefaultCase()
-	}
-}
-
 func (c *Cache) CacheClient() *CacheClient {
+	var config = redisx.This().GetConfig(c.Source)
+	var client = redisx.This().GetClient(c.Source)
+	var marshalCase = marshalx.DefaultCase()
 	return &CacheClient{
-		Set: func(ctx context.Context, id string, v any, duration time.Duration) {
-			_ = c.Set(ctx, id, v, duration)
+		config:      config,
+		client:      client,
+		marshalCase: marshalCase,
+		set: func(ctx context.Context, k string, v any, duration time.Duration) {
+			client.Set(ctx, k, v, duration)
 		},
-		Get: func(ctx context.Context, id string) (v any) {
-			_ = c.Get(ctx, id, v)
-			return
-		},
-		Del: func(ctx context.Context, s string) {
-			_, _ = c.Delete(ctx, s)
-		},
-		Exist: func(ctx context.Context, s string) bool {
-			var exist, err = c.Exists(ctx, s)
-			return exist > 0 && err == nil
-		},
-	}
-}
-
-func (c *Cache) CASE() *marshalx.Case {
-	if c.marshalCase == nil {
-		c.marshalCase = marshalx.DefaultCase()
-	}
-	return c.marshalCase
-}
-
-func (c *Cache) RedisDB() redis.UniversalClient {
-	if c.client == nil {
-		c.client = redisx.This().GetClient(c.Source)
-	}
-	return *c.client
-}
-
-func (c *Cache) Get(ctx context.Context, key string, v any) error {
-	if value, err := c.RedisDB().Get(ctx, c.Prefix+key).Bytes(); err != nil {
-		return err
-	} else {
-		return c.CASE().Unmarshal(value, v)
-	}
-}
-
-func (c *Cache) Set(ctx context.Context, key string, v any, expiration time.Duration) error {
-	if value, err := c.CASE().Marshal(v); err != nil {
-		return err
-	} else {
-		return c.RedisDB().Set(ctx, c.Prefix+key, value, expiration).Err()
-	}
-}
-
-func (c *Cache) SetNX(ctx context.Context, key string, v any, expiration time.Duration) error {
-	if value, err := c.CASE().Marshal(v); err != nil {
-		return err
-	} else {
-		return c.RedisDB().SetNX(ctx, c.Prefix+key, value, expiration).Err()
-	}
-}
-
-func (c *Cache) Exists(ctx context.Context, keys ...string) (total int64, err error) {
-	if l := len(keys); l > 0 {
-		if err = slicex.ExecInBatches(l, 100, func(x int, y int) (err error) {
-			var batches = c.AddPrefix(keys[x:y])
-			var n int64
-			if n, err = c.RedisDB().Exists(ctx, batches...).Result(); err != nil {
+		get: func(ctx context.Context, k string) (v any) {
+			if value, err := client.Get(ctx, k).Bytes(); err != nil {
 				return
+			} else {
+				if err = marshalCase.Unmarshal(value, v); err != nil {
+					return
+				}
 			}
-			total += n
 			return
-		}); err != nil {
-			return
-		}
-	}
-	return
-}
-
-func (c *Cache) Delete(ctx context.Context, keys ...string) (total int64, err error) {
-	if l := len(keys); l > 0 {
-		if err = slicex.ExecInBatches(l, 100, func(x int, y int) (err error) {
-			var batches = c.AddPrefix(keys[x:y])
-			var n int64
-			if n, err = c.RedisDB().Del(ctx, batches...).Result(); err != nil {
-				return
+		},
+		delete: func(ctx context.Context, k ...string) int64 {
+			var total int64
+			var err error
+			if l := len(k); l > 100 {
+				if err = slicex.ExecInBatches(l, 100, func(x int, y int) (err error) {
+					var n int64
+					if n, err = client.Del(ctx, k[x:y]...).Result(); err != nil {
+						return
+					}
+					total += n
+					return
+				}); err != nil {
+					return total
+				}
+			} else {
+				if total, err = client.Del(ctx, k...).Result(); err != nil {
+					return total
+				}
 			}
-			total += n
-			return
-		}); err != nil {
-			return
-		}
+			return 0
+		},
+		exists: func(ctx context.Context, k ...string) bool {
+			var total int64
+			var err error
+			if l := len(k); l > 100 {
+				if err = slicex.ExecInBatches(l, 100, func(x int, y int) (err error) {
+					var n int64
+					if n, err = client.Exists(ctx, k[x:y]...).Result(); err != nil {
+						return
+					}
+					total += n
+					return
+				}); err != nil {
+					return false
+				}
+			} else {
+				if total, err = client.Exists(ctx, k...).Result(); err != nil {
+					return false
+				}
+			}
+			return total > 0
+		},
 	}
-	return
 }
 
 func (c *Cache) AddPrefix(keys []string) []string {

@@ -9,9 +9,7 @@ var handler *Handler
 type Handler struct {
 	Multi     bool // 是否多缓存
 	Client    *CacheClient
-	Config    *Cache
 	ClientMap map[string]*CacheClient
-	ConfigMap map[string]*Cache
 }
 
 func This() *Handler {
@@ -36,13 +34,4 @@ func (h *Handler) GetClient(source ...string) *CacheClient {
 		}
 	}
 	return h.Client
-}
-
-func (h *Handler) GetConfig(source ...string) *Cache {
-	if len(source) > 0 && source[0] != constx.Default {
-		if conf, ok := h.ConfigMap[source[0]]; ok {
-			return conf
-		}
-	}
-	return h.Config
 }
