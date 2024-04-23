@@ -145,7 +145,7 @@ func (r *Redis) Address() string {
 }
 
 // 初始化redis客户端
-// UniversalClient并不是一个客户端，而是对 Client、ClusterClient、FailoverClient 客户端的包装。根据不同的选项，客户端的类型如下：
+// UniversalClient并不是一个客户端，而是对单节点客户端/集群客户端/哨兵客户端的包装。根据不同的选项，客户端的类型如下：
 // 1、如果指定了MasterName选项，则返回FailoverClient哨兵客户端。
 // 2、如果Addrs是2个以上的地址，则返回ClusterClient集群客户端。
 // 3、其他情况，返回Client单节点客户端。

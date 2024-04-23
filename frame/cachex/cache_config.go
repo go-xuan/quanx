@@ -51,7 +51,7 @@ func (c *Cache) Run() (err error) {
 		Multi:     false,
 		Client:    client,
 		Config:    c,
-		ClientMap: make(map[string]*CacheClient[any]),
+		ClientMap: make(map[string]*CacheClient),
 		ConfigMap: make(map[string]*Cache),
 	}
 	handler.ClientMap[c.Source] = client
@@ -86,7 +86,7 @@ func (MultiCache) Reader() *confx.Reader {
 func (m MultiCache) Run() error {
 	handler = &Handler{
 		Multi:     true,
-		ClientMap: make(map[string]*CacheClient[any]),
+		ClientMap: make(map[string]*CacheClient),
 		ConfigMap: make(map[string]*Cache),
 	}
 	multi := anyx.IfZero(m, MultiCache{Default()})
@@ -124,27 +124,21 @@ func (c *Cache) InitAttribute() {
 	}
 }
 
-func (c *Cache) CacheClient() *CacheClient[any] {
-	return &CacheClient[any]{
+func (c *Cache) CacheClient() *CacheClient {
+	return &CacheClient{
 		Set: func(ctx context.Context, id string, v any, duration time.Duration) {
 			_ = c.Set(ctx, id, v, duration)
 		},
 		Get: func(ctx context.Context, id string) (v any) {
-			if exist, err := c.Exists(ctx, id); exist > 0 && err == nil {
-				if err = c.Get(ctx, id, v); err != nil {
-					return
-				}
-			}
+			_ = c.Get(ctx, id, v)
 			return
 		},
 		Del: func(ctx context.Context, s string) {
 			_, _ = c.Delete(ctx, s)
 		},
 		Exist: func(ctx context.Context, s string) bool {
-			if exist, err := c.Exists(ctx, s); exist > 0 && err == nil {
-				return true
-			}
-			return false
+			var exist, err = c.Exists(ctx, s)
+			return exist > 0 && err == nil
 		},
 	}
 }

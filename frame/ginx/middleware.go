@@ -22,7 +22,7 @@ const (
 )
 
 // token 缓存
-var AuthCache *cachex.CacheClient[any]
+var AuthCache *cachex.CacheClient
 
 func SetAuthType(ctx *gin.Context, authType string) {
 	ctx.Request.Header.Set(AuthType, authType)

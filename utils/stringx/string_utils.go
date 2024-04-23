@@ -112,12 +112,17 @@ func AddSuffix(s, suffix string) string {
 
 // 字符串是否包含
 func Contains(s string, seps ...string) (string, int) {
+	var hit, index = "", -1
 	for _, sep := range seps {
 		if i := Index(s, sep); i >= 0 {
-			return sep, i
+			if i < index {
+				hit, index = sep, i
+			} else if index == -1 {
+				hit, index = sep, i
+			}
 		}
 	}
-	return "", -1
+	return hit, index
 }
 
 // 字符串是否包含

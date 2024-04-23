@@ -1,7 +1,6 @@
 package timex
 
 import (
-	"strconv"
 	"strings"
 	"time"
 
@@ -157,11 +156,7 @@ func MonthInterval(small, big time.Time) int {
 
 // 间隔天数
 func DayInterval(start, end time.Time) int {
-	if diff, err := strconv.Atoi(strconv.FormatInt((end.Unix()-start.Unix())/86400, 10)); err == nil {
-		return 0
-	} else {
-		return diff
-	}
+	return int((end.Unix() - start.Unix()) / 86400)
 }
 
 // 根据时间范围生成月份切片

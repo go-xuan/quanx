@@ -31,11 +31,6 @@ const (
 	DirAndFile = "all"
 	OnlyDir    = "dir"
 	OnlyFile   = "file"
-	Json       = "json"
-	Yml        = "yml"
-	Yaml       = "yaml"
-	Toml       = "toml"
-	Properties = "properties"
 )
 
 // 读取文件内容

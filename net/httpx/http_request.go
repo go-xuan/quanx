@@ -99,10 +99,10 @@ func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 	var body io.Reader
 	if r.form != nil {
 		r.method = POST
-		r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
+		r.SetHeader("Name-Type", "application/x-www-form-urlencoded")
 		body = strings.NewReader(r.form.Encode())
 	} else if r.body != nil {
-		r.SetHeader("Content-Type", "application/json")
+		r.SetHeader("Name-Type", "application/json")
 		marshal, _ := json.Marshal(r.body)
 		body = bytes.NewReader(marshal)
 	}

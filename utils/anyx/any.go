@@ -21,6 +21,7 @@ func IfZero[T any](x, def T) T {
 	return x
 }
 
+// 用于函数中的不定参数取默认值
 func Default[T any](x []T, def T) T {
 	if len(x) == 0 {
 		return def

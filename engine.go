@@ -80,15 +80,15 @@ type CustomFunc func()
 type Flag int
 
 const (
-	Lightweight         Flag = iota // 轻量化
+	Lightweight         Flag = iota // 轻量化（即非web应用）
 	EnableNacos                     // 启用nacos
+	MultiDatabase                   // 开启多数据源
+	MultiRedis                      // 开启多redis源
+	MultiCache                      // 开启多缓存源
 	HasLoadingConfig                // 已加载配置
 	HasBuildFrameBasic              // 已构建框架基础
 	HasRunCustomFunc                // 已执行自定义函数
 	HasRunConfigurators             // 已执行配置器
-	MultiDatabase                   // 开启多数据源
-	MultiRedis                      // 开启多redis源
-	MultiCache                      // 开启多缓存源
 )
 
 // 服务配置

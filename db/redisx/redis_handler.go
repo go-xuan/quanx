@@ -38,8 +38,8 @@ func Ping(client redis.UniversalClient) (bool, error) {
 	}
 }
 
-func Client(source ...string) *redis.UniversalClient {
-	return This().GetClient(source...)
+func Client(source ...string) redis.UniversalClient {
+	return *This().GetClient(source...)
 }
 
 func (h *Handler) GetClient(source ...string) *redis.UniversalClient {
