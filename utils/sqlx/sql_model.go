@@ -2,11 +2,10 @@ package sqlx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/types/stringx"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 type SQL struct {

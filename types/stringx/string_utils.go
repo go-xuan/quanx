@@ -3,7 +3,7 @@ package stringx
 import (
 	"strings"
 
-	"github.com/go-xuan/quanx/utils/anyx"
+	"github.com/go-xuan/quanx/types/anyx"
 )
 
 // 获取起始字符首次出现和结尾字符末次出现的下标

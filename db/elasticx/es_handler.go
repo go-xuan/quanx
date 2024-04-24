@@ -6,7 +6,7 @@ import (
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/utils/slicex"
+	"github.com/go-xuan/quanx/types/slicex"
 )
 
 var handler *Handler

@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/frame/confx"
-	"github.com/go-xuan/quanx/utils/timex"
+	"github.com/go-xuan/quanx/types/timex"
 )
 
 type Minio struct {

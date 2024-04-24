@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-xuan/quanx/frame/confx"
 	"github.com/go-xuan/quanx/os/filex"
-	"github.com/go-xuan/quanx/utils/anyx"
+	"github.com/go-xuan/quanx/types/anyx"
 )
 
 func New(app string) *LogConfig {

@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/os/filex"
-	"github.com/go-xuan/quanx/os/marshalx"
+	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
 // 配置项

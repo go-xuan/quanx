@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/go-xuan/quanx/utils/anyx"
+	"github.com/go-xuan/quanx/types/anyx"
 )
 
 func SqlFormat(sql string) string {
@@ -20,15 +20,15 @@ func Format(sql string, space ...int) *SQL {
 
 func newSQL(sql string, space ...int) *SQL {
 	return initSQL(sql, space...).
-		prepareSQL().     // sql预备
-		extractLimit().   // 提取limit
+		prepareSQL(). // sql预备
+		extractLimit(). // 提取limit
 		extractOrderBy(). // 提取order by
-		extractFields().  // 提取查询字段
-		extractFrom().    // 提取from主表
-		extractJoins().   // 提取表关联
-		extractWhere().   // 提取where
+		extractFields(). // 提取查询字段
+		extractFrom(). // 提取from主表
+		extractJoins(). // 提取表关联
+		extractWhere(). // 提取where
 		extractGroupBy(). // 提取group By
-		extractHaving()   // 提取having
+		extractHaving() // 提取having
 }
 
 func initSQL(sql string, space ...int) *SQL {

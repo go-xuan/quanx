@@ -3,7 +3,6 @@ package cachex
 import (
 	"context"
 	"fmt"
-	"github.com/go-xuan/quanx/utils/slicex"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -11,8 +10,9 @@ import (
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/frame/confx"
-	"github.com/go-xuan/quanx/os/marshalx"
-	"github.com/go-xuan/quanx/utils/anyx"
+	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/types/slicex"
+	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
 // 缓存配置

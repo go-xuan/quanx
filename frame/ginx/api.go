@@ -10,7 +10,7 @@ import (
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/common/modelx"
 	"github.com/go-xuan/quanx/net/respx"
-	"github.com/go-xuan/quanx/os/officex/excelx"
+	"github.com/go-xuan/quanx/utils/officex/excelx"
 )
 
 func NewCrudApi[T any](group *gin.RouterGroup, db *gorm.DB) {

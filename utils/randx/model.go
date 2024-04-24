@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/utils/stringx"
-	"github.com/go-xuan/quanx/utils/timex"
+	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/types/timex"
 )
 
 // 随机数模型

@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/go-xuan/quanx/utils/stringx"
+	"github.com/go-xuan/quanx/types/stringx"
 )
 
 // 随机字符串

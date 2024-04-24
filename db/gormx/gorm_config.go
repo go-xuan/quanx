@@ -14,7 +14,7 @@ import (
 
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/frame/confx"
-	"github.com/go-xuan/quanx/utils/anyx"
+	"github.com/go-xuan/quanx/types/anyx"
 )
 
 // 数据源配置

@@ -6,7 +6,7 @@ import (
 	"encoding/csv"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/utils/anyx"
-	"github.com/go-xuan/quanx/utils/stringx"
+	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/types/stringx"
 )
 
 const (
@@ -35,9 +35,7 @@ const (
 
 // 读取文件内容
 func ReadFile(filePath string) (bytes []byte, err error) {
-	bytes, err = os.ReadFile(filePath)
-	if nil != err {
-		err = fmt.Errorf(" %s read file error: %v", filePath, err)
+	if bytes, err = os.ReadFile(filePath); err != nil {
 		return
 	}
 	return
@@ -278,7 +276,7 @@ func MustOpen(filePath string, fileName string) (file *os.File, err error) {
 		return
 	}
 	if perm := CheckPermission(fileAbsPath); perm == true {
-		err = fmt.Errorf("file permission denied : %s", fileAbsPath)
+		err = errors.New("file permission denied :" + fileAbsPath)
 		return
 	}
 	if err = CreateIsNotExist(fileAbsPath); err != nil {

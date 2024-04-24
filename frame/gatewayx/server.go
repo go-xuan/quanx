@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-xuan/quanx/frame/ginx"
 	"github.com/go-xuan/quanx/frame/nacosx"
-	"github.com/go-xuan/quanx/os/marshalx"
+	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
 var Apps []*App

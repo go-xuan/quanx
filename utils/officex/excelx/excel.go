@@ -8,8 +8,8 @@ import (
 	"github.com/tealeg/xlsx"
 	"github.com/tidwall/gjson"
 
-	"github.com/go-xuan/quanx/utils/anyx"
-	"github.com/go-xuan/quanx/utils/stringx"
+	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/types/stringx"
 )
 
 const (

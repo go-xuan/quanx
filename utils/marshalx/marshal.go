@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/os/filex"
-	"github.com/go-xuan/quanx/utils/stringx"
+	"github.com/go-xuan/quanx/types/stringx"
 )
 
 // 序列化类型

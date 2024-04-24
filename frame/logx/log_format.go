@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/utils/stringx"
+	"github.com/go-xuan/quanx/types/stringx"
 )
 
 const (

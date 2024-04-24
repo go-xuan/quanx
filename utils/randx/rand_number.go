@@ -2,8 +2,8 @@ package randx
 
 import (
 	"math"
-	
-	"github.com/go-xuan/quanx/utils/floatx"
+
+	"github.com/go-xuan/quanx/types/floatx"
 )
 
 // 随机整数

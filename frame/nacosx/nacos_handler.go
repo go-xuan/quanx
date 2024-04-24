@@ -5,7 +5,7 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/vo"
 
-	"github.com/go-xuan/quanx/os/marshalx"
+	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
 var handler *Handler
