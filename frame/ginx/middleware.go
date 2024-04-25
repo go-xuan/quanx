@@ -5,9 +5,10 @@ import (
 
 	"github.com/go-xuan/quanx"
 	"github.com/go-xuan/quanx/frame/cachex"
+	"github.com/go-xuan/quanx/frame/errorx"
 	"github.com/go-xuan/quanx/net/respx"
-	"github.com/go-xuan/quanx/os/encryptx"
 	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/utils/encryptx"
 )
 
 const (
@@ -83,7 +84,7 @@ func Auth(ctx *gin.Context) {
 	if AuthCache == nil {
 		AuthCache = cachex.Client(AuthCacheSource)
 	}
-	if err := authenticate(ctx); err != "" {
+	if err := authenticate(ctx); err != nil {
 		ctx.Abort()
 		respx.Exception(ctx, respx.AuthErr, err)
 	} else {
@@ -92,10 +93,10 @@ func Auth(ctx *gin.Context) {
 	return
 }
 
-func authenticate(ctx *gin.Context) string {
+func authenticate(ctx *gin.Context) error {
 	switch ctx.Request.Header.Get(AuthType) {
 	case NoAuth:
-		return ""
+		return nil
 	case Token:
 		return authenticateToken(ctx)
 	default:
@@ -104,38 +105,38 @@ func authenticate(ctx *gin.Context) string {
 }
 
 // cookie鉴权
-func authenticateToken(ctx *gin.Context) string {
+func authenticateToken(ctx *gin.Context) error {
 	if token := ctx.Request.Header.Get(Authorization); token == "" {
-		return respx.AuthRequiredErr.Msg
+		return errorx.New("token is required")
 	} else {
 		if user, err := ParseUserFromToken(token); err != nil || user == nil {
-			return respx.AuthInvalidErr.Msg
+			return errorx.New("token is invalid")
 		} else if AuthCache.Get(ctx.Request.Context(), user.Account) == nil {
-			return respx.AuthExpiredErr.Msg
+			return errorx.New("token is expired")
 		} else {
 			SetUser(ctx, user)
 		}
-		return ""
+		return nil
 	}
 }
 
 // token鉴权
-func authenticateCookie(ctx *gin.Context) string {
+func authenticateCookie(ctx *gin.Context) error {
 	if cookie, err := ctx.Cookie(Cookie); err != nil {
-		return respx.AuthRequiredErr.Msg
+		return errorx.New("cookie is required")
 	} else {
 		var account string
 		if account, err = encryptx.RSA().Decrypt(cookie); err != nil {
-			return respx.AuthInvalidErr.Msg
+			return errorx.New("cookie is invalid")
 		}
 		var user = &User{Account: account}
 		if token := AuthCache.Get(ctx.Request.Context(), user.Account); token == nil {
-			return respx.AuthExpiredErr.Msg
+			return errorx.New("cookie is expired")
 		} else if user, err = ParseUserFromToken(token.(string)); err != nil {
-			return respx.AuthInvalidErr.Msg
+			return errorx.New("cookie is invalid")
 		} else {
 			SetUser(ctx, user)
 		}
-		return ""
+		return nil
 	}
 }
