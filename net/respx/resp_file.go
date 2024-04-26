@@ -17,7 +17,7 @@ func File(ctx *gin.Context, filePath string) {
 }
 
 // 返回Excel二进制文件流
-func BuildExcelByData(ctx *gin.Context, model interface{}, data interface{}, excelName string) {
+func BuildExcelByData(ctx *gin.Context, model any, data any, excelName string) {
 	var xlsxFile = xlsx.NewFile()
 	sheet, err := xlsxFile.AddSheet("Sheet1")
 	if err != nil {
@@ -57,7 +57,7 @@ type Header struct {
 	Name string
 }
 
-func ExcelHeaders(model interface{}) (result []*Header) {
+func ExcelHeaders(model any) (result []*Header) {
 	typeRef := reflect.TypeOf(model)
 	for i := 0; i < typeRef.NumField(); i++ {
 		if typeRef.Field(i).Tag.Get("export") != "" {

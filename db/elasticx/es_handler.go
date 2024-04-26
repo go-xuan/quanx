@@ -72,7 +72,7 @@ func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (ok bool,
 	return
 }
 
-func (h *Handler) Create(ctx context.Context, index, id string, body interface{}) (err error) {
+func (h *Handler) Create(ctx context.Context, index, id string, body any) (err error) {
 	var resp *elastic.IndexResponse
 	if resp, err = h.Client.Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
 		return
@@ -81,7 +81,7 @@ func (h *Handler) Create(ctx context.Context, index, id string, body interface{}
 	return
 }
 
-func (h *Handler) Update(ctx context.Context, index, id string, body interface{}) (err error) {
+func (h *Handler) Update(ctx context.Context, index, id string, body any) (err error) {
 	var resp *elastic.UpdateResponse
 	if resp, err = h.Client.Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
 		return

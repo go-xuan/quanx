@@ -52,7 +52,7 @@ func (h *Handler) GetConfig(source ...string) *Database {
 }
 
 // 初始化表结构（基于反射）
-func (h *Handler) InitTable(source string, dst ...interface{}) (err error) {
+func (h *Handler) InitTable(source string, dst ...any) (err error) {
 	var db, conf = h.DBMap[source], h.ConfigMap[source]
 	if db != nil && conf != nil && len(dst) > 0 {
 		if conf.Debug {

@@ -8,8 +8,8 @@ import (
 )
 
 // 设置默认值
-func SetDefaultValue(obj interface{}) error {
-	valueRef := reflect.ValueOf(obj)
+func SetDefaultValue(v any) error {
+	valueRef := reflect.ValueOf(v)
 	if valueRef.Type().Kind() != reflect.Ptr {
 		return errors.New("the obj must be pointer type")
 	}
@@ -38,10 +38,10 @@ func SetDefaultValue(obj interface{}) error {
 	return nil
 }
 
-func MapToStruct(m map[string]string, obj interface{}) error {
-	v := reflect.ValueOf(obj).Elem() // 获取指向结构体的值类型
+func MapToStruct(m map[string]string, v any) error {
+	elem := reflect.ValueOf(v).Elem() // 获取指向结构体的值类型
 	for key, value := range m {
-		field := v.FieldByName(key) // 根据字段名称查找对应的字段
+		field := elem.FieldByName(key) // 根据字段名称查找对应的字段
 		if field.IsValid() && field.CanSet() {
 			switch field.Kind() {
 			case reflect.String:

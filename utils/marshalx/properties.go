@@ -22,8 +22,8 @@ func PropertiesMarshal(v any) (out []byte, err error) {
 }
 
 // 读取properties文件到指针
-func PropertiesUnmarshal(bytes []byte, config interface{}) (err error) {
-	valueRef := reflect.ValueOf(config)
+func PropertiesUnmarshal(bytes []byte, v any) (err error) {
+	valueRef := reflect.ValueOf(v)
 	if valueRef.Type().Kind() != reflect.Ptr {
 		// 对象必须是指针类型
 		return errors.New("the config must be pointer type")

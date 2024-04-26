@@ -29,7 +29,7 @@ type User struct {
 // 获取用户ID
 func GetUserId(context *gin.Context) (userId int64) {
 	var err error
-	var userData = make(map[string]interface{})
+	var userData = make(map[string]any)
 	if userData, err = parseToken(context.Request.Header.Get(Authorization)); err != nil {
 		return
 	}
@@ -55,7 +55,7 @@ func NewToken(user *User) (token string, err error) {
 
 // 解析token
 func ParseUserFromToken(token string) (user *User, err error) {
-	var userData = make(map[string]interface{})
+	var userData = make(map[string]any)
 	if userData, err = parseToken(token); err != nil {
 		return
 	}
@@ -77,13 +77,13 @@ func generateToken(mapClaims jwt.MapClaims) (string, error) {
 }
 
 // 解析token
-func parseToken(token string) (map[string]interface{}, error) {
-	if claim, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+func parseToken(token string) (map[string]any, error) {
+	if claim, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
 		return SecretKey, nil
 	}); err != nil {
 		return nil, err
 	} else {
-		var result = make(map[string]interface{})
+		var result = make(map[string]any)
 		result = claim.Claims.(jwt.MapClaims)
 		return result, nil
 	}

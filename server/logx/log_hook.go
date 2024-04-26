@@ -46,7 +46,7 @@ type LfsHook struct {
 // returns new LFS hook.
 // Output can be a string, io.Writer, WriterMap or PathMap.
 // If using io.Writer or WriterMap, user is responsible for closing the used io.Writer.
-func NewHook(output interface{}, formatter logrus.Formatter) *LfsHook {
+func NewHook(output any, formatter logrus.Formatter) *LfsHook {
 	hook := &LfsHook{
 		lock: new(sync.Mutex),
 	}

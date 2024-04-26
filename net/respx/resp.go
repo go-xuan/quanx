@@ -9,13 +9,13 @@ import (
 
 // 正常响应
 type Response struct {
-	Code int         `json:"code"` // 响应状态码
-	Msg  string      `json:"msg"`  // 响应消息
-	Data interface{} `json:"data"` // 响应数据
+	Code int    `json:"code"` // 响应状态码
+	Msg  string `json:"msg"`  // 响应消息
+	Data any    `json:"data"` // 响应数据
 }
 
 // 响应
-func BuildResponse(ctx *gin.Context, data interface{}, err error) {
+func BuildResponse(ctx *gin.Context, data any, err error) {
 	if err != nil {
 		BuildError(ctx, err)
 	} else {
@@ -24,7 +24,7 @@ func BuildResponse(ctx *gin.Context, data interface{}, err error) {
 }
 
 // 成功响应
-func BuildSuccess(ctx *gin.Context, data interface{}) {
+func BuildSuccess(ctx *gin.Context, data any) {
 	ctx.JSON(http.StatusOK, &Response{Code: Success.Code, Msg: Success.Msg, Data: data})
 }
 
@@ -35,13 +35,13 @@ func BuildError(ctx *gin.Context, err error) {
 }
 
 // 自定义错误响应
-func Custom(ctx *gin.Context, code int, msg string, data interface{}) {
+func Custom(ctx *gin.Context, code int, msg string, data any) {
 	log.Error(msg, data)
 	ctx.JSON(http.StatusInternalServerError, &Response{Code: code, Msg: msg, Data: data})
 }
 
 // 异常响应
-func Exception(ctx *gin.Context, enum Enum, data interface{}) {
+func Exception(ctx *gin.Context, enum Enum, data any) {
 	log.Error(enum.Msg, data)
 	ctx.JSON(http.StatusInternalServerError, &Response{Code: enum.Code, Msg: enum.Msg, Data: data})
 }

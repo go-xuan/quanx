@@ -14,7 +14,7 @@ type Request struct {
 	method string
 	url    string
 	header map[string]string
-	body   interface{}
+	body   any
 	form   url.Values
 }
 
@@ -48,7 +48,7 @@ func (r *Request) Header(header map[string]string) *Request {
 	return r
 }
 
-func (r *Request) Body(body interface{}) *Request {
+func (r *Request) Body(body any) *Request {
 	r.body = body
 	return r
 }
@@ -126,7 +126,7 @@ func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 }
 
 // map转为Url
-func MapToUrl(params map[string]interface{}) (s string) {
+func MapToUrl(params map[string]any) (s string) {
 	sb := strings.Builder{}
 	for k, v := range params {
 		sb.WriteString("&")
@@ -137,16 +137,16 @@ func MapToUrl(params map[string]interface{}) (s string) {
 	return sb.String()[1:]
 }
 
-func typeSwitcher(t interface{}) string {
-	switch v := t.(type) {
+func typeSwitcher(v any) string {
+	switch t := v.(type) {
 	case int:
-		return strconv.Itoa(v)
+		return strconv.Itoa(t)
 	case string:
-		return v
+		return t
 	case int64:
-		return strconv.FormatInt(v, 10)
+		return strconv.FormatInt(t, 10)
 	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
+		return strconv.FormatFloat(t, 'f', -1, 64)
 	default:
 		return ""
 	}

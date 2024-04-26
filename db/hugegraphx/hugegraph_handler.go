@@ -60,8 +60,7 @@ func GremlinGet[T any](result T, gremlin string) (requestId string, err error) {
 
 // gremlin查询API-Post请求
 func GremlinPost[T any](result T, gremlin string) (requestId string, err error) {
-	var bindings interface{} // 构建绑定参数
-	var aliases interface{}  // 构建图别名
+	var bindings, aliases any // 构建绑定参数和图别名
 	_ = json.Unmarshal([]byte(`{}`), &bindings)
 	_ = json.Unmarshal([]byte(`{"graph": "hugegraph","g": "__g_hugegraph"}`), &aliases)
 	var bytes []byte

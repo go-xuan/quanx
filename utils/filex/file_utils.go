@@ -112,9 +112,9 @@ func WriteFileLine(filePath string, content []string, mode ...int) (err error) {
 }
 
 // 写入json文件
-func WriteJson(filePath string, obj interface{}) (err error) {
+func WriteJson(filePath string, v any) (err error) {
 	var bytes []byte
-	if bytes, err = json.MarshalIndent(obj, "", "	"); err != nil {
+	if bytes, err = json.MarshalIndent(v, "", "	"); err != nil {
 		return
 	}
 	CreateDirNotExist(filePath)

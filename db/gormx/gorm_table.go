@@ -1,9 +1,9 @@
 package gormx
 
 type Tabler[T any] interface {
-	TableName() string     // 表名
-	TableComment() string  // 表注释
-	InitData() interface{} // 表初始数据
+	TableName() string    // 表名
+	TableComment() string // 表注释
+	InitData() any        // 表初始数据
 }
 
 // 初始化表结构（基于接口实现）

@@ -2,10 +2,10 @@ package hugegraphx
 
 // post接口请求参数
 type Param struct {
-	Gremlin  string      `json:"gremlin" `  // gremlin执行语句
-	Bindings interface{} `json:"bindings" ` // 绑定参数
-	Language string      `json:"language" ` // 语言
-	Aliases  interface{} `json:"aliases" `  // 别名
+	Gremlin  string `json:"gremlin" `  // gremlin执行语句
+	Bindings any    `json:"bindings" ` // 绑定参数
+	Language string `json:"language" ` // 语言
+	Aliases  any    `json:"aliases" `  // 别名
 }
 
 // post接口返回结果
@@ -29,15 +29,15 @@ type Versions struct {
 
 // 返回结果
 type Result[T any] struct {
-	Data T           `json:"data"` // 结果体
-	Meta interface{} `json:"meta"` // 元数据
+	Data T   `json:"data"` // 结果体
+	Meta any `json:"meta"` // 元数据
 }
 
 // 返回状态
 type Status struct {
-	Message    string      `json:"message"`    // 请求ID
-	Code       int64       `json:"code"`       // 状态码
-	Attributes interface{} `json:"attributes"` // 属性
+	Message    string `json:"message"`    // 请求ID
+	Code       int64  `json:"code"`       // 状态码
+	Attributes any    `json:"attributes"` // 属性
 }
 
 // hugegraph查询【顶点】返回的data结果
@@ -65,7 +65,7 @@ type Edge[T any] struct {
 // hugegraph查询path()时返回的data结果
 type Paths[T any] []*Path[T]
 type Path[T any] struct {
-	Labels  interface{}    `json:"labels"`
+	Labels  any            `json:"labels"`
 	Objects PathObjects[T] `json:"objects"`
 }
 

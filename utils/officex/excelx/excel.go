@@ -48,9 +48,9 @@ func DefaultStyle() *xlsx.Style {
 }
 
 // 通过反射获取excel标签
-func GetHeadersByReflect(obj interface{}) []*Header {
+func GetHeadersByReflect(v any) []*Header {
 	var result []*Header
-	var typeRef = reflect.TypeOf(obj)
+	var typeRef = reflect.TypeOf(v)
 	for i := 0; i < typeRef.NumField(); i++ {
 		if typeRef.Field(i).Tag.Get(ExcelTag) != "" {
 			result = append(result, &Header{
@@ -62,9 +62,9 @@ func GetHeadersByReflect(obj interface{}) []*Header {
 	return result
 }
 
-func ExcelTagMapping(obj interface{}) map[string]string {
+func ExcelTagMapping(v any) map[string]string {
 	var result = make(map[string]string)
-	var headers = GetHeadersByReflect(obj)
+	var headers = GetHeadersByReflect(v)
 	for _, header := range headers {
 		result[header.Name] = header.Key
 	}
@@ -210,7 +210,7 @@ func ExcelReaderAny[T any](excelPath, sheetName string, obj T) (data []*T, err e
 }
 
 // 将数据写入excel
-func ExcelWriter(excelPath string, obj interface{}, data interface{}) (err error) {
+func ExcelWriter(excelPath string, obj any, data any) (err error) {
 	var xlsxFile = xlsx.NewFile()
 	var sheet *xlsx.Sheet
 	if sheet, err = xlsxFile.AddSheet("Sheet1"); err != nil {
