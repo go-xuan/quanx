@@ -47,7 +47,7 @@ func (s *CronScheduler) Stop() {
 	s.cron.Stop()
 }
 
-func (s *CronScheduler) SetTask(id string, spec string, task func()) error {
+func (s *CronScheduler) AddTask(id string, spec string, task func()) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	// 定时任务如果已存在则先移除再新增
