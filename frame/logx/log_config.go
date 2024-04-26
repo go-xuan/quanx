@@ -9,8 +9,8 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/go-xuan/quanx/frame/confx"
-	"github.com/go-xuan/quanx/os/filex"
 	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/utils/filex"
 )
 
 func New(app string) *LogConfig {

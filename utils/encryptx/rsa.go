@@ -8,7 +8,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/utils/filex"
 )
 
 const (

@@ -1,11 +1,11 @@
 package ginx
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 
 	"github.com/go-xuan/quanx"
 	"github.com/go-xuan/quanx/frame/cachex"
-	"github.com/go-xuan/quanx/frame/errorx"
 	"github.com/go-xuan/quanx/net/respx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/utils/encryptx"
@@ -107,12 +107,12 @@ func authenticate(ctx *gin.Context) error {
 // cookie鉴权
 func authenticateToken(ctx *gin.Context) error {
 	if token := ctx.Request.Header.Get(Authorization); token == "" {
-		return errorx.New("token is required")
+		return errors.New("token is required")
 	} else {
 		if user, err := ParseUserFromToken(token); err != nil || user == nil {
-			return errorx.New("token is invalid")
+			return errors.New("token is invalid")
 		} else if AuthCache.Get(ctx.Request.Context(), user.Account) == nil {
-			return errorx.New("token is expired")
+			return errors.New("token is expired")
 		} else {
 			SetUser(ctx, user)
 		}
@@ -123,17 +123,17 @@ func authenticateToken(ctx *gin.Context) error {
 // token鉴权
 func authenticateCookie(ctx *gin.Context) error {
 	if cookie, err := ctx.Cookie(Cookie); err != nil {
-		return errorx.New("cookie is required")
+		return errors.New("cookie is required")
 	} else {
 		var account string
 		if account, err = encryptx.RSA().Decrypt(cookie); err != nil {
-			return errorx.New("cookie is invalid")
+			return errors.New("cookie is invalid")
 		}
 		var user = &User{Account: account}
 		if token := AuthCache.Get(ctx.Request.Context(), user.Account); token == nil {
-			return errorx.New("cookie is expired")
+			return errors.New("cookie is expired")
 		} else if user, err = ParseUserFromToken(token.(string)); err != nil {
-			return errorx.New("cookie is invalid")
+			return errors.New("cookie is invalid")
 		} else {
 			SetUser(ctx, user)
 		}

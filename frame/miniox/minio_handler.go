@@ -10,7 +10,7 @@ import (
 
 	"github.com/minio/minio-go/v7"
 
-	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/utils/filex"
 )
 
 var handler *Handler

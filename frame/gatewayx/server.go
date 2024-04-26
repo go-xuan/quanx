@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-xuan/quanx/frame/ginx"
 	"github.com/go-xuan/quanx/frame/nacosx"
+	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
@@ -34,7 +35,7 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, authType string
 			authType = server.AuthType
 			if authType != ginx.NoAuth && len(server.Ignore) > 0 {
 				for _, item := range server.Ignore {
-					if strings.Contains(url, strings.TrimSpace(item)) {
+					if stringx.Index(url, strings.TrimSpace(item)) >= 0 {
 						authType = ginx.NoAuth
 					}
 				}
@@ -47,7 +48,7 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, authType string
 			return
 		}
 	}
-	err = errors.New(fmt.Sprintf("未找到对应的网关路由配置，请检查微服务配置文件，或者确认请求接口[%s]是否正确", url))
+	err = fmt.Errorf("未找到对应的网关路由配置，请检查微服务配置文件，或者确认请求接口[%s]是否正确", url)
 	return
 
 }
@@ -70,10 +71,10 @@ func ListenConfigChanged(group, dataId string) (err error) {
 func MatchUrl(uri, rule string) bool {
 	if rule == "*" || rule == "/*" {
 		return true
-	} else if strings.Contains(rule, ",") {
+	} else if stringx.Index(rule, ",") >= 0 {
 		var list = strings.Split(rule, ",")
 		for _, item := range list {
-			if strings.Contains(uri, strings.TrimSpace(item)) {
+			if stringx.Index(uri, strings.TrimSpace(item)) >= 0 {
 				return true
 			}
 		}
@@ -83,10 +84,10 @@ func MatchUrl(uri, rule string) bool {
 		var prefix = strings.TrimSuffix(rule, `/*`)
 		if strings.HasPrefix(uri, prefix) {
 			uri = uri[len(prefix):]
-			return !strings.Contains(uri, `/`)
+			return stringx.Index(uri, `/`) < 0
 		}
 	} else {
-		return strings.Contains(uri, rule)
+		return stringx.Index(uri, rule) >= 0
 	}
 	return false
 }

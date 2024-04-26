@@ -2,7 +2,6 @@ package quanx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/utils/marshalx"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -17,9 +16,10 @@ import (
 	"github.com/go-xuan/quanx/frame/confx"
 	"github.com/go-xuan/quanx/frame/logx"
 	"github.com/go-xuan/quanx/frame/nacosx"
-	"github.com/go-xuan/quanx/os/ipx"
+	"github.com/go-xuan/quanx/net/ipx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
 var engine *Engine
@@ -30,7 +30,7 @@ func GetEngine(modes ...Flag) *Engine {
 		engine = &Engine{
 			config:         &Config{},
 			configDir:      constx.ConfDir,
-			customFuncs:    make([]CustomFunc, 0),
+			customFuncs:    make([]func(), 0),
 			configurators:  make([]confx.Configurator[any], 0),
 			ginMiddlewares: make([]gin.HandlerFunc, 0),
 			gormTables:     make(map[string][]gormx.Tabler[any]),
@@ -53,7 +53,7 @@ type Engine struct {
 	config         *Config                        // 服务配置 使用 loadingConfig()将配置文件加载到此
 	configDir      string                         // 服务配置文件文件夹, 使用 SetConfigDir()设置配置文件路径
 	configurators  []confx.Configurator[any]      // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
-	customFuncs    []CustomFunc                   // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
+	customFuncs    []func()                       // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
 	ginEngine      *gin.Engine                    // gin框架实例
 	ginLoaders     []RouterLoader                 // gin路由的预加载方法，使用 AddGinRouter()添加自行实现的路由注册方法
 	ginMiddlewares []gin.HandlerFunc              // gin中间件的预加载方法，使用 AddGinRouter()添加gin中间件
@@ -72,9 +72,6 @@ type Config struct {
 
 // gin路由加载器
 type RouterLoader func(router *gin.RouterGroup)
-
-// 自定义函数
-type CustomFunc func()
 
 // 服务启动标识
 type Flag int
@@ -97,7 +94,7 @@ type Server struct {
 	Host   string `yaml:"host" default:"127.0.0.1"` // 服务host
 	Port   int    `yaml:"port" default:"8888"`      // 服务端口
 	Prefix string `yaml:"prefix" default:"app"`     // api prefix（接口根路由）
-	Debug  bool   `yaml:"debug"`                    // 是否调试环境
+	Debug  bool   `yaml:"debug" default:"false"`    // 是否调试环境
 }
 
 // 服务地址
@@ -227,17 +224,17 @@ func (e *Engine) buildFrameBasic() {
 }
 
 // 添加自定义函数
-func (e *Engine) AddCustomFunc(starter ...CustomFunc) {
-	if len(starter) > 0 {
-		e.customFuncs = append(e.customFuncs, starter...)
+func (e *Engine) AddCustomFunc(customFunc ...func()) {
+	if len(customFunc) > 0 {
+		e.customFuncs = append(e.customFuncs, customFunc...)
 	}
 }
 
 // 执行自定义函数
 func (e *Engine) runCustomFunc() {
 	if e.customFuncs != nil && len(e.customFuncs) > 0 {
-		for _, f := range e.customFuncs {
-			f()
+		for _, customFunc := range e.customFuncs {
+			customFunc()
 		}
 	}
 	// 完成自定义函数执行

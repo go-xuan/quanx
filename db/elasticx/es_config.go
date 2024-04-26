@@ -64,6 +64,6 @@ func (e *Elastic) NewClient(url string) (client *elastic.Client, err error) {
 	if result, code, err = client.Ping(url).Do(context.Background()); err != nil && code != 200 {
 		return
 	}
-	log.Info("ElasticSearch version : ", result.Version.Number)
+	log.Info("ElasticSearch Version : ", result.Version.Number)
 	return
 }

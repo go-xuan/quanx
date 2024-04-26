@@ -8,7 +8,7 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/vo"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/utils/filex"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
