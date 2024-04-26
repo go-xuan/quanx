@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm/schema"
 
 	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/frame/confx"
+	"github.com/go-xuan/quanx/server/confx"
 	"github.com/go-xuan/quanx/types/anyx"
 )
 

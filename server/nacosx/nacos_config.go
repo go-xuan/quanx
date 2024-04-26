@@ -14,7 +14,7 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/vo"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/frame/confx"
+	"github.com/go-xuan/quanx/server/confx"
 )
 
 const (

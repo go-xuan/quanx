@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/frame/ginx"
-	"github.com/go-xuan/quanx/frame/nacosx"
+	"github.com/go-xuan/quanx/server/ginx"
+	"github.com/go-xuan/quanx/server/nacosx"
 	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )

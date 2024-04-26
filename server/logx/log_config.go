@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/go-xuan/quanx/frame/confx"
+	"github.com/go-xuan/quanx/server/confx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/utils/filex"
 )

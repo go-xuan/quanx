@@ -1,4 +1,4 @@
-package quanx
+package server
 
 import (
 	"fmt"

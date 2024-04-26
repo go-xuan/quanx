@@ -3,10 +3,10 @@ package ginx
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/quanx/server"
 
-	"github.com/go-xuan/quanx"
-	"github.com/go-xuan/quanx/frame/cachex"
 	"github.com/go-xuan/quanx/net/respx"
+	"github.com/go-xuan/quanx/server/cachex"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/utils/encryptx"
 )
@@ -60,7 +60,7 @@ func RemoveCookie(ctx *gin.Context) {
 func CheckIP(ctx *gin.Context) {
 	var ip string
 	if ip = ctx.ClientIP(); ip == "::1" {
-		ip = quanx.GetServer().Host
+		ip = server.GetServer().Host
 	}
 	ctx.Set(IPKey, ip)
 	ctx.Next()

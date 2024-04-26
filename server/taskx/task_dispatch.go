@@ -7,6 +7,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	normal = iota
+	isolateBefore
+	isolateAfter
+)
+
 type Dispatch struct {
 	flag    *atomic.Uint32
 	mutex   sync.Mutex
@@ -25,16 +31,16 @@ func NewDispatch() *Dispatch {
 func (d *Dispatch) Execute() {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
-	if d.flag.Load() == 1 && d.isolate != nil {
+	if d.flag.Load() == isolateBefore && d.isolate != nil {
 		d.isolate()
 	}
 	for _, task := range d.tasks {
 		task()
 	}
-	if d.flag.Load() == 2 && d.isolate != nil {
+	if d.flag.Load() == isolateAfter && d.isolate != nil {
 		d.isolate()
 	}
-	d.flag.Store(0)
+	d.flag.Store(normal)
 	d.isolate = nil
 	d.tasks = make([]func(), 0)
 }
@@ -49,23 +55,23 @@ func (d *Dispatch) Register(task ...func()) {
 	d.tasks = append(d.tasks, task...)
 }
 
-func (d *Dispatch) MustFirst(task func()) {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
-	d.flag.Store(1)
-	if d.isolate == nil {
-		d.isolate = task
-	} else {
-		log.Warn("isolate task has been registered")
-	}
+func (d *Dispatch) Before(task func()) {
+	d.setIsolate(task, isolateBefore)
 }
-func (d *Dispatch) MustLast(task func()) {
+
+func (d *Dispatch) After(task func()) {
+	d.setIsolate(task, isolateAfter)
+}
+
+func (d *Dispatch) setIsolate(task func(), flag uint32) {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
-	d.flag.Store(2)
-	if d.isolate == nil {
+	if d.flag.Load() == normal && d.isolate == nil {
 		d.isolate = task
-	} else {
-		log.Warn("isolate task has been registered")
+		d.flag.Store(flag)
+	} else if d.flag.Load() == isolateBefore {
+		log.Warn("isolate task has been registered as before task")
+	} else if d.flag.Load() == isolateAfter {
+		log.Warn("isolate task has been registered as after task")
 	}
 }
