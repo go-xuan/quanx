@@ -2,7 +2,6 @@ package logx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/types/intx"
 	"path/filepath"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 
 	"github.com/go-xuan/quanx/server/confx"
 	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/types/intx"
 	"github.com/go-xuan/quanx/utils/filex"
 )
 
