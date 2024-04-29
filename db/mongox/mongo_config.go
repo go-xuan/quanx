@@ -20,8 +20,8 @@ type Mongo struct {
 }
 
 // 配置信息格式化
-func (m *Mongo) ToString(title string) string {
-	return fmt.Sprintf("%s => host=%s port=%d database=%s", title, m.Host, m.Port, m.Database)
+func (m *Mongo) ToString() string {
+	return fmt.Sprintf("host=%s port=%d database=%s", m.Host, m.Port, m.Database)
 }
 
 // 配置器名称
@@ -41,13 +41,13 @@ func (*Mongo) Reader() *confx.Reader {
 // 配置器运行
 func (m *Mongo) Run() (err error) {
 	var client *mongo.Client
+	var toString = m.ToString()
 	if client, err = m.NewClient(); err != nil {
-		log.Error(m.ToString("Mongo connect failed!"))
-		log.Error("error : ", err)
+		log.Error("Mongo Connect Failed : ", toString, err)
 		return
 	}
 	handler = &Handler{Config: m, Client: client}
-	log.Error(m.ToString("Mongo connect successful!"))
+	log.Info("Mongo Connect Successful : ", toString)
 	return
 
 }

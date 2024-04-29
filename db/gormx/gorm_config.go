@@ -21,7 +21,7 @@ import (
 type MultiDatabase []*Database
 
 type Database struct {
-	Source          string `json:"source" yaml:"source" default:"default"`              // 数据源名称
+	Name            string `json:"name" yaml:"name" default:"default"`                  // 数据源名称
 	Enable          bool   `json:"enable" yaml:"enable"`                                // 数据源启用
 	Type            string `json:"type" yaml:"type"`                                    // 数据库类型
 	Host            string `json:"host" yaml:"host" default:"localhost"`                // 数据库Host
@@ -53,7 +53,7 @@ func (MultiDatabase) Reader() *confx.Reader {
 // 配置器运行
 func (c MultiDatabase) Run() (err error) {
 	if len(c) == 0 {
-		log.Error("database connect failed! reason: database.yaml not found!")
+		log.Error("Database Connect Failed! Reason: database.yaml Not Found")
 		return
 	}
 	handler = &Handler{
@@ -67,29 +67,30 @@ func (c MultiDatabase) Run() (err error) {
 				return
 			}
 			var db *gorm.DB
+			var toString = d.ToString()
 			if db, err = d.NewGormDB(); err != nil {
-				log.Error(d.ToString("database connect failed!"))
+				log.Error("Database Connect Failed : ", toString, err)
 				return err
 			}
-			handler.DBMap[d.Source] = db
-			handler.ConfigMap[d.Source] = d
-			if i == 0 || d.Source == constx.Default {
+			handler.DBMap[d.Name] = db
+			handler.ConfigMap[d.Name] = d
+			if i == 0 || d.Name == constx.Default {
 				handler.DB = db
 				handler.Config = d
 			}
-			log.Info(d.ToString("database connect successful!"))
+			log.Info("Database Connect Successful : ", toString)
 		}
 	}
 	if len(handler.ConfigMap) == 0 {
-		log.Error("database connect failed! reason: database.yaml is empty or all enable values are false!")
+		log.Error("Database Connect Failed! reason: database.yaml is empty or all enable values are false")
 	}
 	return
 }
 
 // 配置信息格式化
-func (d *Database) ToString(title string) string {
-	return fmt.Sprintf("%s => source=%s type=%s host=%s port=%d database=%s debug=%v",
-		title, d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
+func (d *Database) ToString() string {
+	return fmt.Sprintf("name=%s type=%s host=%s port=%d database=%s debug=%v",
+		d.Name, d.Type, d.Host, d.Port, d.Database, d.Debug)
 }
 
 // 配置器名称
@@ -113,9 +114,9 @@ func (d *Database) Run() (err error) {
 			return
 		}
 		var db *gorm.DB
+		var toString = d.ToString()
 		if db, err = d.NewGormDB(); err != nil {
-			log.Error(d.ToString("Database connect failed!"))
-			log.Error("error : ", err)
+			log.Error("Database Connect Failed : ", toString, err)
 			return
 		}
 		handler = &Handler{
@@ -125,12 +126,12 @@ func (d *Database) Run() (err error) {
 			DBMap:     make(map[string]*gorm.DB),
 			ConfigMap: make(map[string]*Database),
 		}
-		handler.DBMap[d.Source] = db
-		handler.ConfigMap[d.Source] = d
-		log.Info(d.ToString("Database connect successful!"))
+		handler.DBMap[d.Name] = db
+		handler.ConfigMap[d.Name] = d
+		log.Info("Database Connect Successful : ", toString)
 		return
 	}
-	log.Info("Database connect failed! reason: database.yaml is empty or the value of enable is false")
+	log.Info("Database Connect Failed! reason: database.yaml is empty or the value of enable is false")
 	return
 }
 

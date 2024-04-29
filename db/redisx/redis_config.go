@@ -23,7 +23,7 @@ const (
 type MultiRedis []*Redis
 
 type Redis struct {
-	Source   string `json:"source" yaml:"source"`     // 数据源名称
+	Name     string `json:"name" yaml:"name"`         // 数据源名称
 	Enable   bool   `json:"enable" yaml:"enable"`     // 数据源启用
 	Mode     int    `json:"mode" yaml:"mode"`         // 模式（0-单机；1-集群），默认单机模式
 	Host     string `json:"host" yaml:"host"`         // 主机
@@ -32,14 +32,6 @@ type Redis struct {
 	Password string `json:"password" yaml:"password"` // 密码
 	Database int    `json:"database" yaml:"database"` // 数据库，默认0
 	PoolSize int    `json:"poolSize" yaml:"poolSize"` // 池大小
-	SSH      SSH    `json:"ssh" yaml:"ssh"`           // ssh
-}
-
-type SSH struct {
-	Host     string `json:"host" yaml:"host"`         // 主机
-	Port     int    `json:"port" yaml:"port"`         // 端口
-	Username string `json:"username" yaml:"username"` // 用户名
-	Password string `json:"password" yaml:"password"` // 密码
 }
 
 // 配置信息格式化
@@ -59,7 +51,7 @@ func (MultiRedis) Reader() *confx.Reader {
 // 配置器运行
 func (conf MultiRedis) Run() error {
 	if len(conf) == 0 {
-		log.Error("redis connect failed! reason: redis.yaml not found!")
+		log.Error("Redis Connect Failed! Reason: redis.yaml Not Found")
 		return nil
 	}
 	handler = &Handler{
@@ -69,31 +61,31 @@ func (conf MultiRedis) Run() error {
 	}
 	for i, r := range conf {
 		if r.Enable {
+			var toString = r.ToString()
 			var client = r.NewRedisClient()
 			if ok, err := Ping(*client); !ok && err != nil {
-				log.Error(r.ToString("redis connect failed!"))
-				log.Error("error : ", err)
+				log.Error("Redis Connect Failed : ", toString)
 				return err
 			}
-			handler.clientMap[r.Source] = client
-			handler.ConfigMap[r.Source] = r
-			if i == 0 || r.Source == constx.Default {
+			handler.clientMap[r.Name] = client
+			handler.ConfigMap[r.Name] = r
+			if i == 0 || r.Name == constx.Default {
 				handler.Client = client
 				handler.Config = r
 			}
-			log.Info(r.ToString("redis connect successful!"))
+			log.Info("Redis Connect Successful : ", toString)
 		}
 	}
 	if len(handler.ConfigMap) == 0 {
-		log.Error("redis connect failed! reason: redis.yaml is empty or all enable values are false!")
+		log.Error("Redis Connect Failed! reason: redis.yaml is empty or all enable values are false")
 	}
 	return nil
 }
 
 // 配置信息格式化
-func (r *Redis) ToString(title string) string {
-	return fmt.Sprintf("%s => source=%s mode=%d host=%s port=%d database=%d",
-		title, r.Source, r.Mode, r.Host, r.Port, r.Database)
+func (r *Redis) ToString() string {
+	return fmt.Sprintf("name=%s mode=%d host=%s port=%d database=%d",
+		r.Name, r.Mode, r.Host, r.Port, r.Database)
 }
 
 // 配置器名称
@@ -113,14 +105,13 @@ func (*Redis) Reader() *confx.Reader {
 // 配置器运行
 func (r *Redis) Run() (err error) {
 	if r.Enable {
+
 		if err = anyx.SetDefaultValue(r); err != nil {
 			return
 		}
-		var client = r.NewRedisClient()
-		var ok bool
+		var client, toString, ok = r.NewRedisClient(), r.ToString(), false
 		if ok, err = Ping(*client); !ok && err != nil {
-			log.Error(r.ToString("Redis connect failed"))
-			log.Error("error : ", err)
+			log.Error("Redis Connect Failed : ", toString, err)
 			return
 		}
 		handler = &Handler{
@@ -130,12 +121,12 @@ func (r *Redis) Run() (err error) {
 			clientMap: make(map[string]*redis.UniversalClient),
 			ConfigMap: make(map[string]*Redis),
 		}
-		handler.clientMap[r.Source] = client
-		handler.ConfigMap[r.Source] = r
-		log.Info(r.ToString("Redis connect successful"))
+		handler.clientMap[r.Name] = client
+		handler.ConfigMap[r.Name] = r
+		log.Info("Redis Connect Successful : ", toString)
 		return
 	}
-	log.Error(`Redis connect failed! reason: redis.yaml is empty or the value of "enable" is false`)
+	log.Error(`Redis Connect Failed! reason: redis.yaml is empty or the value of "enable" is false`)
 	return
 }
 
@@ -168,7 +159,7 @@ func (r *Redis) NewRedisClient() *redis.UniversalClient {
 			PoolSize: r.PoolSize,
 		})
 	default:
-		log.Warn(r.ToString("the mode value can only be 1 or 2"))
+		log.Warn("Mode Is Invalid : ", r.ToString())
 		return nil
 	}
 	return &client

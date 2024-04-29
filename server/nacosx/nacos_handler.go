@@ -11,7 +11,7 @@ import (
 var handler *Handler
 
 type Handler struct {
-	Config       *NacosConfig                // nacos配置
+	Config       *Nacos                      // nacos配置
 	ConfigClient config_client.IConfigClient // nacos配置中心客户端
 	NamingClient naming_client.INamingClient // nacos服务发现客户端
 }
@@ -34,7 +34,7 @@ func GetConfigType(dataId string) vo.ConfigType {
 }
 
 // 获取nacos配置文件内容
-func GetConfigContent(group, dataId string) (content string, err error) {
+func ReadConfigContent(group, dataId string) (content string, err error) {
 	var param = vo.ConfigParam{Group: group, DataId: dataId, Type: GetConfigType(dataId)}
 	if content, err = This().ConfigClient.GetConfig(param); err != nil {
 		return

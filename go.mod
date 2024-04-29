@@ -23,12 +23,12 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.6
 	gorm.io/driver/postgres v1.5.7
-	gorm.io/gorm v1.25.9
+	gorm.io/gorm v1.25.10
 )
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/aliyun/alibaba-cloud-sdk-go v1.62.724 // indirect
+	github.com/aliyun/alibaba-cloud-sdk-go v1.62.727 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect

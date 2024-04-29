@@ -64,7 +64,7 @@ type Engine struct {
 type Config struct {
 	Server   *Server              `yaml:"server"`   // 服务配置
 	Log      *logx.LogConfig      `yaml:"log"`      // 日志配置
-	Nacos    *nacosx.NacosConfig  `yaml:"nacos"`    // nacos访问配置
+	Nacos    *nacosx.Nacos        `yaml:"nacos"`    // nacos访问配置
 	Database *gormx.MultiDatabase `yaml:"database"` // 数据源配置
 	Redis    *redisx.MultiRedis   `yaml:"redis"`    // redis配置
 	Cache    *cachex.MultiCache   `yaml:"cache"`    // 缓存配置
@@ -131,7 +131,7 @@ func (e *Engine) loadingConfig() {
 		if !e.flag[Lightweight] {
 			var path = e.GetConfigPath(constx.Config)
 			if err := marshalx.UnmarshalFromFile(path, config); err != nil {
-				log.Errorf("loading %s failed!", constx.Config)
+				log.Errorf("Loading %s Failed", constx.Config)
 				panic(err)
 			}
 
@@ -145,7 +145,7 @@ func (e *Engine) loadingConfig() {
 			if config.Nacos.EnableNaming() {
 				// 注册nacos服务Nacos
 				nacosx.RegisterInstance(
-					nacosx.ServerInstance{
+					&nacosx.ServerInstance{
 						Name:  config.Server.Name,
 						Host:  config.Server.Host,
 						Port:  config.Server.Port,
@@ -181,7 +181,7 @@ func (e *Engine) buildFrameBasic() {
 			for source := range gormx.This().DBMap {
 				if dst, ok := e.gormTables[source]; ok {
 					if err := gormx.This().InitGormTable(source, dst...); err != nil {
-						log.Error("create table failed!")
+						log.Error("Create Table Failed")
 						panic(err)
 					}
 				}
@@ -270,10 +270,10 @@ func (e *Engine) RunConfigurator(conf confx.Configurator[any], must ...bool) {
 	}
 	if ok {
 		if err := conf.Run(); err != nil {
-			log.Error(conf.Theme(), " initialized failed!")
+			log.Error(conf.Theme(), " Run Failed")
 			panic(err)
 		}
-		log.Info(conf.Theme(), " initialized completed!")
+		log.Info(conf.Theme(), " Run Completed")
 	}
 }
 
@@ -288,7 +288,7 @@ func (e *Engine) LoadingLocalConfig(v any, path string) {
 func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() {
 		if nacosx.This().ConfigClient == nil {
-			panic("nacos config client is uninitialized !")
+			panic("nacos config client is uninitialized ")
 		}
 		var config = nacosx.NewConfig(e.config.Server.Name, dataId)
 		config.Listen = anyx.Default(listen, false)
@@ -316,7 +316,7 @@ func (e *Engine) startGin() {
 	var port = ":" + strconv.Itoa(e.config.Server.Port)
 	log.Info("API接口请求地址: http://" + e.config.Server.Host + port)
 	if err := e.ginEngine.Run(port); err != nil {
-		log.Error("gin-Engine run failed !")
+		log.Error("gin-Engine run failed ")
 		panic(err)
 	}
 }
@@ -377,7 +377,7 @@ func (e *Engine) InitGinLoader(group *gin.RouterGroup) {
 			loader(group)
 		}
 	} else {
-		log.Warn("engine.ginLoaders is empty !")
+		log.Warn("engine.ginLoaders is empty ")
 	}
 }
 

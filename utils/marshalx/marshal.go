@@ -117,3 +117,15 @@ func UnmarshalFromFile(path string, v any) (err error) {
 	}
 	return
 }
+
+func AnyToStruct[T any](v any, s string) (t T, err error) {
+	var toCase = NewCase(s)
+	var bytes []byte
+	if bytes, err = toCase.Marshal(v); err != nil {
+		return
+	}
+	if err = toCase.Unmarshal(bytes, &t); err != nil {
+		return
+	}
+	return
+}
