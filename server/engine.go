@@ -307,7 +307,7 @@ func (e *Engine) startGin() {
 	if e.ginEngine == nil {
 		e.ginEngine = gin.New()
 	}
-	e.ginEngine.Use(gin.Recovery(), logx.LoggerToFile())
+	e.ginEngine.Use(gin.Recovery(), logx.GinRequestLog)
 	e.ginEngine.Use(e.ginMiddlewares...)
 	_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
 	// 注册服务根路由，并执行路由注册函数

@@ -19,7 +19,8 @@ var defaultFormatter = &logrus.TextFormatter{
 	DisableColors:          true,
 	DisableTimestamp:       true,
 	DisableLevelTruncation: true,
-	DisableSorting:         false}
+	DisableSorting:         false,
+}
 
 // is map for mapping a log level to a file's path.
 // Multiple levels may share a file, but multiple files may not be used for one level.

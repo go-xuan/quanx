@@ -2,6 +2,7 @@ package logx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/types/intx"
 	"path/filepath"
 	"strings"
 
@@ -51,25 +52,21 @@ func (l *LogConfig) Run() error {
 		return err
 	}
 	filex.CreateDir(l.Dir)
-	var logWriter = l.defaultLogger()
-	if l.MaxSize != 0 {
-		logWriter.MaxSize = l.MaxSize
-	}
-	if l.MaxAge != 0 {
-		logWriter.MaxAge = l.MaxAge
-	}
-	if l.Backups != 0 {
-		logWriter.MaxBackups = l.Backups
+	var logWriter = &lumberjack.Logger{
+		Filename:   l.LogPath(),
+		MaxSize:    intx.IfZero(l.MaxSize, 100),
+		MaxAge:     intx.IfZero(l.MaxSize, 1),
+		MaxBackups: intx.IfZero(l.MaxSize, 10),
 	}
 	var format = &LogFormatter{}
 	var hook = NewHook(WriterMap{
-		logrus.TraceLevel: &logWriter,
-		logrus.DebugLevel: &logWriter,
-		logrus.InfoLevel:  &logWriter,
-		logrus.WarnLevel:  &logWriter,
-		logrus.ErrorLevel: &logWriter,
-		logrus.FatalLevel: &logWriter,
-		logrus.PanicLevel: &logWriter,
+		logrus.TraceLevel: logWriter,
+		logrus.DebugLevel: logWriter,
+		logrus.InfoLevel:  logWriter,
+		logrus.WarnLevel:  logWriter,
+		logrus.ErrorLevel: logWriter,
+		logrus.FatalLevel: logWriter,
+		logrus.PanicLevel: logWriter,
 	}, format)
 	var logger = logrus.StandardLogger()
 	logger.AddHook(hook)
@@ -82,16 +79,6 @@ func (l *LogConfig) Run() error {
 
 func (l *LogConfig) LogPath() string {
 	return filepath.Join(l.Dir, l.FileName)
-}
-
-// 默认日志配置
-func (l *LogConfig) defaultLogger() lumberjack.Logger {
-	return lumberjack.Logger{
-		Filename:   l.LogPath(),
-		MaxSize:    100,
-		MaxAge:     1,
-		MaxBackups: 10,
-	}
 }
 
 // 日志级别
