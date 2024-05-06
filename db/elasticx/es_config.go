@@ -7,7 +7,7 @@ import (
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/server/confx"
+	"github.com/go-xuan/quanx/core/confx"
 )
 
 type Elastic struct {

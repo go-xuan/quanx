@@ -8,8 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/core/confx"
 	"github.com/go-xuan/quanx/db/redisx"
-	"github.com/go-xuan/quanx/server/confx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/slicex"
 	"github.com/go-xuan/quanx/utils/marshalx"

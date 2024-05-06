@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/go-xuan/quanx/types/anyx"
 )
 
 type Request struct {
@@ -16,13 +18,16 @@ type Request struct {
 	header map[string]string
 	body   any
 	form   url.Values
+	client *Client
+}
+
+func (r *Request) Https(crt string) *Request {
+	r.client = newHttpsClient(crt)
+	return r
 }
 
 func Method(method ...string) *Request {
-	if len(method) > 0 {
-		return &Request{method: method[0]}
-	}
-	return Get()
+	return &Request{method: anyx.Default(method, GET)}
 }
 
 func Get() *Request {
@@ -99,10 +104,10 @@ func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 	var body io.Reader
 	if r.form != nil {
 		r.method = POST
-		r.SetHeader("Name-Type", "application/x-www-form-urlencoded")
+		r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
 		body = strings.NewReader(r.form.Encode())
 	} else if r.body != nil {
-		r.SetHeader("Name-Type", "application/json")
+		r.SetHeader("Content-Type", "application/json")
 		marshal, _ := json.Marshal(r.body)
 		body = bytes.NewReader(marshal)
 	}

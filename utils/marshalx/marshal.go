@@ -12,8 +12,8 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/file/filex"
 	"github.com/go-xuan/quanx/types/stringx"
-	"github.com/go-xuan/quanx/utils/filex"
 )
 
 // 序列化类型

@@ -11,7 +11,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/server/confx"
+	"github.com/go-xuan/quanx/core/confx"
 	"github.com/go-xuan/quanx/types/timex"
 )
 

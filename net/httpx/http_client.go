@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -21,7 +22,11 @@ const (
 	DELETE     = "DELETE"
 )
 
-var client *Client
+var (
+	client    *Client
+	httpOnce  sync.Once
+	httpsOnce sync.Once
+)
 
 type Client struct {
 	mode   string
@@ -52,25 +57,28 @@ func SwitchClient(modeAndParam ...string) *Client {
 		client = newHttpClient()
 	}
 	return client
-
 }
 
 func newHttpClient() *Client {
 	if client == nil || client.mode != Http {
-		client = &Client{
-			mode:   Http,
-			client: &http.Client{Transport: newTransport()},
-		}
+		httpOnce.Do(func() {
+			client = &Client{
+				mode:   Http,
+				client: &http.Client{Transport: newTransport()},
+			}
+		})
 	}
 	return client
 }
 
 func newHttpsClient(crt string) *Client {
 	if client == nil || client.mode != Https {
-		client = &Client{
-			mode:   Https,
-			client: &http.Client{Transport: newTransport(crt)},
-		}
+		httpsOnce.Do(func() {
+			client = &Client{
+				mode:   Https,
+				client: &http.Client{Transport: newTransport(crt)},
+			}
+		})
 	}
 	return client
 }

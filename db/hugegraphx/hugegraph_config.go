@@ -6,8 +6,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/go-xuan/quanx/core/confx"
 	"github.com/go-xuan/quanx/net/httpx"
-	"github.com/go-xuan/quanx/server/confx"
 )
 
 // hugegraph配置

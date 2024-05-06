@@ -8,10 +8,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/go-xuan/quanx/server/confx"
+	"github.com/go-xuan/quanx/core/confx"
+	"github.com/go-xuan/quanx/file/filex"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/intx"
-	"github.com/go-xuan/quanx/utils/filex"
 )
 
 func New(app string) *LogConfig {
@@ -23,6 +23,7 @@ type LogConfig struct {
 	FileName string `json:"fileName" yaml:"fileName" default:"app.log"` // 日志文件名
 	Dir      string `json:"dir" yaml:"dir" default:"resource/log"`      // 日志保存文件夹
 	Level    string `json:"level" yaml:"level" default:"debug"`         // 日志级别
+	Caller   bool   `json:"caller" yaml:"caller" default:"false"`       // Flag for whether to caller
 	MaxSize  int    `json:"maxSize" yaml:"maxSize" default:"100"`       // 日志大小(单位：mb)
 	MaxAge   int    `json:"maxAge" yaml:"maxAge" default:"1"`           // 日志保留天数(单位：天)
 	Backups  int    `json:"backups" yaml:"backups" default:"10"`        // 日志备份数
@@ -70,10 +71,9 @@ func (l *LogConfig) Run() error {
 	}, format)
 	var logger = logrus.StandardLogger()
 	logger.AddHook(hook)
-	// Flag for whether to l caller info (off by default)
-	logger.SetReportCaller(true)
+	logger.SetReportCaller(l.Caller)
 	logger.SetFormatter(format)
-	logger.SetLevel(getLogrusLevel(l.Level))
+	logger.SetLevel(l.GetLevel())
 	return nil
 }
 
@@ -92,8 +92,8 @@ const (
 )
 
 // 日志级别映射，默认debug
-func getLogrusLevel(level string) logrus.Level {
-	switch strings.ToLower(level) {
+func (l *LogConfig) GetLevel() logrus.Level {
+	switch strings.ToLower(l.Level) {
 	case Trace:
 		return logrus.TraceLevel
 	case Debug:

@@ -6,16 +6,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/server/ginx"
-	"github.com/go-xuan/quanx/server/nacosx"
+	"github.com/go-xuan/quanx/core/ginx"
+	"github.com/go-xuan/quanx/core/nacosx"
 	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
-var Apps []*App
+var Servers []*Server
 
 // 微服务网关配置
-type App struct {
+type Server struct {
 	Name     string   `yaml:"name" json:"name"`         // 微服务名称
 	Group    string   `yaml:"group" json:"group"`       // 微服务分组
 	Prefix   string   `yaml:"prefix" json:"prefix"`     // 微服务API前缀
@@ -30,7 +30,7 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, authType string
 		err = errors.New("监听微服务网关配置失败 ：" + err.Error())
 		return
 	}
-	for _, server := range Apps {
+	for _, server := range Servers {
 		if MatchUrl(url, server.Router) {
 			authType = server.AuthType
 			if authType != ginx.NoAuth && len(server.Ignore) > 0 {
@@ -57,7 +57,7 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, authType string
 func ListenConfigChanged(group, dataId string) (err error) {
 	if data, ok := nacosx.GetNacosConfigMonitor().GetConfigData(group, dataId); ok && data.Changed {
 		// 将当前最新的content数据同步到servers
-		if err = marshalx.NewCase(dataId).Unmarshal([]byte(data.Content), &Apps); err != nil {
+		if err = marshalx.NewCase(dataId).Unmarshal([]byte(data.Content), &Servers); err != nil {
 			return
 		}
 		// 更新nacos监控中配置值

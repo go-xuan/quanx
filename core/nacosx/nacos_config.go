@@ -14,7 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/server/confx"
+	"github.com/go-xuan/quanx/core/confx"
 )
 
 const (

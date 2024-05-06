@@ -2,7 +2,7 @@ package confx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/server"
+	"github.com/go-xuan/quanx/core"
 	"testing"
 )
 
@@ -22,7 +22,7 @@ func (t Test) Run() error {
 
 func TestConfigurator(t *testing.T) {
 	var config = &Test{}
-	var engine = server.GetEngine()
+	var engine = core.GetEngine()
 	engine.AddConfigurator(config)
 	fmt.Println(config.Theme())
 	if err := config.Run(); err != nil {

@@ -8,10 +8,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
-	"strings"
 	"sync"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/types/stringx"
 )
 
 // We are logging to file, strip colors to make the output more readable.
@@ -118,10 +119,9 @@ func (hook *LfsHook) SetDefaultWriter(defaultWriter io.Writer) {
 // Theme who run this function needs to write permissions to the file or directory if the file does not yet exist.
 func (hook *LfsHook) Fire(entry *logrus.Entry) error {
 	caller := getCaller()
-	splitsFile := strings.Split(caller.File, "/")
-	splitsFunc := strings.Split(caller.Function, ".")
-	callStr := fmt.Sprintf("%s:%04d:%s()", splitsFile[len(splitsFile)-1], caller.Line, splitsFunc[len(splitsFunc)-1]) //caller.File + fmt.Sprintf("%d", caller.Line) + caller.Function
-	entry.Data["source"] = fmt.Sprintf("%s", callStr)
+	_, fileName := stringx.Cut(caller.File, "/", -1)
+	_, funcName := stringx.Cut(caller.Function, ".", -1)
+	entry.Data["source"] = fmt.Sprintf("%s:%04d:%s()", fileName, caller.Line, funcName)
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
 	if hook.writers != nil || hook.hasDefaultWriter {
@@ -158,10 +158,10 @@ func (hook *LfsHook) ioWrite(entry *logrus.Entry) (err error) {
 	return
 }
 
-// Write a log line directly to a file.
+// Write a log line directly to a file
 func (hook *LfsHook) fileWrite(entry *logrus.Entry) (err error) {
 	var (
-		fd   *os.File
+		file *os.File
 		path string
 		msg  []byte
 		ok   bool
@@ -178,16 +178,16 @@ func (hook *LfsHook) fileWrite(entry *logrus.Entry) (err error) {
 	dir := filepath.Dir(path)
 	_ = os.MkdirAll(dir, os.ModePerm)
 
-	if fd, err = os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666); err != nil {
+	if file, err = os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666); err != nil {
 		log.Println("failed to open logfile:", path, err)
 		return
 	}
-	defer fd.Close()
+	defer file.Close()
 	if msg, err = hook.formatter.Format(entry); err != nil {
 		log.Println("failed to generate string for entry:", err)
 		return
 	}
-	if _, err = fd.Write(msg); err != nil {
+	if _, err = file.Write(msg); err != nil {
 		return
 	}
 	return
@@ -198,19 +198,11 @@ func (hook *LfsHook) Levels() []logrus.Level {
 	return logrus.AllLevels
 }
 
-var (
-	// qualified package name, cached at first use
-	logrusPackage string
-	// Used for caller information initialisation
-	callerInitOnce sync.Once
-)
-
 // reduces a fully qualified function name to the package name
 // There really ought to be a better way...
 func getPackageName(f string) string {
 	for {
-		lastPeriod := strings.LastIndex(f, ".")
-		lastSlash := strings.LastIndex(f, "/")
+		lastPeriod, lastSlash := stringx.Index(f, ".", -1), stringx.Index(f, "/", -1)
 		if lastPeriod > lastSlash {
 			f = f[:lastPeriod]
 		} else {
@@ -219,6 +211,13 @@ func getPackageName(f string) string {
 	}
 	return f
 }
+
+var (
+	// qualified package name, cached at first use
+	logrusPackage string
+	// Used for caller information initialisation
+	callerInitOnce sync.Once
+)
 
 // retrieves the name of the first non-logrus calling function
 func getCaller() *runtime.Frame {
