@@ -259,7 +259,7 @@ func (e *Engine) RunConfigurator(conf confx.Configurator[any], must ...bool) {
 	if reader := conf.Reader(); reader != nil {
 		if e.flag[EnableNacos] {
 			reader.NacosGroup = e.config.Server.Name
-			if err := nacosx.NewConfig(reader.NacosGroup, reader.NacosDataId).Loading(conf); err == nil {
+			if err := nacosx.NewConfig(reader.NacosGroup, reader.NacosDataId, reader.Listen).Loading(conf); err == nil {
 				ok = true
 			}
 		} else {
@@ -290,8 +290,7 @@ func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 		if nacosx.This().ConfigClient == nil {
 			panic("nacos config client is uninitialized ")
 		}
-		var config = nacosx.NewConfig(e.config.Server.Name, dataId)
-		config.Listen = anyx.Default(listen, false)
+		var config = nacosx.NewConfig(e.config.Server.Name, dataId, listen...)
 		// 加载微服务配置
 		if err := config.Loading(v); err != nil {
 			panic("loading nacos config failed : " + err.Error())

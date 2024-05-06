@@ -3,80 +3,76 @@ package nacosx
 import (
 	"sync"
 	"time"
+
+	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
 var monitor *Monitor
-
-// nacos配置监听
-type Monitor struct {
-	mu        sync.RWMutex                       // 互斥锁
-	Data      map[string]map[string]*MonitorData // 监听数据
-	ConfigNum int                                // 监听数量
-}
-
-// 监听配置数据
-type MonitorData struct {
-	Group      string // 配置分组
-	DataId     string // 配置文件ID
-	Content    string // 配置内容
-	Changed    bool   // 修改标识
-	UpdateTime int64  // 修改时间
-}
 
 // 初始化nacos配置监听
 func GetNacosConfigMonitor() *Monitor {
 	if monitor == nil {
 		monitor = &Monitor{
-			Data:      make(map[string]map[string]*MonitorData),
-			ConfigNum: 0,
+			data: make(map[string]*ConfigData),
+			num:  0,
 		}
 	}
 	return monitor
 }
 
-// 获取nacos配置
-func (m *Monitor) GetConfigData(group, dataId string) (data *MonitorData, exist bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	var gm, ok = m.Data[group]
-	if ok && gm != nil {
-		data, exist = gm[dataId]
-		return
-	}
-	return
+// nacos配置监听
+type Monitor struct {
+	mu   sync.RWMutex           // 互斥锁
+	data map[string]*ConfigData // 配置数据
+	num  int                    // 配置数量
+}
+
+// 监听配置数据
+type ConfigData struct {
+	group   string // 配置分组
+	dataId  string // 配置DataId
+	content string // 配置内容
+	changed bool   // 已修改标识
+	modify  int64  // 最近修改时间
+}
+
+func (d *ConfigData) SetChanged(changed bool) {
+	d.changed = changed
+	d.modify = time.Now().UnixMilli()
+}
+
+func (d *ConfigData) Unmarshal(v any) error {
+	return marshalx.NewCase(d.dataId).Unmarshal([]byte(d.content), v)
+}
+
+func getKey(group, dataId string) string {
+	return group + "_" + dataId
 }
 
 // 新增nacos配置监听
-func (m *Monitor) AddConfigData(group, dataId, content string) {
+func (m *Monitor) Set(group, dataId, content string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	var newData = MonitorData{group, dataId, content, false, time.Now().UnixMilli()}
-	groupData, hasGroup := m.Data[group]
-	if hasGroup && groupData != nil {
-		groupData[dataId] = &newData
-		m.Data[group] = groupData
+	var key = getKey(group, dataId)
+	if data, exist := m.data[key]; !exist {
+		m.data[key] = &ConfigData{
+			group,
+			dataId,
+			content,
+			false,
+			time.Now().UnixMilli()}
+		m.num++
 	} else {
-		var newGroup = make(map[string]*MonitorData)
-		newGroup[dataId] = &newData
-		m.Data[group] = newGroup
+		data.content = content
+		data.SetChanged(true)
 	}
-	m.ConfigNum++
 	return
 }
 
-// 修改nacos配置信息
-func (m *Monitor) UpdateConfigData(group, dataId, content string) bool {
+// 获取nacos配置
+func (m *Monitor) Get(group, dataId string) (data *ConfigData, exist bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	groupData, hasGroup := m.Data[group]
-	if hasGroup && groupData != nil {
-		data, hasData := groupData[dataId]
-		if hasData && data != nil {
-			data.Content = content
-			data.Changed = true
-			data.UpdateTime = time.Now().UnixMilli()
-			return true
-		}
-	}
-	return false
+	data, exist = m.data[getKey(group, dataId)]
+	return
 }

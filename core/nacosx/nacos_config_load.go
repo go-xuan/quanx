@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/file/filex"
+	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
@@ -44,8 +45,13 @@ type Config struct {
 }
 
 // 初始化
-func NewConfig(group, dataId string) *Config {
-	return &Config{Group: group, DataId: dataId, Type: vo.ConfigType(filex.Suffix(dataId))}
+func NewConfig(group, dataId string, listen ...bool) *Config {
+	return &Config{
+		Group:  group,
+		DataId: dataId,
+		Type:   vo.ConfigType(filex.Suffix(dataId)),
+		Listen: anyx.Default(listen, false),
+	}
 }
 
 // 配置信息格式化
@@ -78,14 +84,13 @@ func (c *Config) Loading(v any) (err error) {
 		return
 	}
 	log.Info("Loading Nacos Config Successful : ", toString)
-	// 设置Nacos配置监听
 	if c.Listen {
-		// 新增nacos配置监听
-		GetNacosConfigMonitor().AddConfigData(c.Group, c.DataId, content)
+		// 设置Nacos配置监听
+		GetNacosConfigMonitor().Set(c.Group, c.DataId, content)
 		// 配置监听响应方法
 		param.OnChange = func(namespace, group, dataId, data string) {
 			log.Errorf("The config on nacos has changed!!!\n dataId=%s group=%s namespace=%s\nThe latest config content is :\n%s", dataId, group, namespace, data)
-			GetNacosConfigMonitor().UpdateConfigData(group, dataId, data)
+			GetNacosConfigMonitor().Set(group, dataId, data)
 		}
 		if err = This().ConfigClient.ListenConfig(param); err != nil {
 			log.Error("Listen Nacos Config Failed : ", toString, err)
