@@ -13,18 +13,25 @@ import (
 )
 
 const (
-	AuthType        = "auth_type"     // 鉴权方式
-	NoAuth          = "no"            // 免鉴权标识
-	Token           = "token"         // token标识
-	Cookie          = "cookie"        // cookie鉴权标识
-	Authorization   = "Authorization" // token鉴权标识
-	UserKey         = "user"          // 用户信息存储KEY
-	IPKey           = "ip"            // 用户存储KEY
-	AuthCacheSource = "auth"          // 用户存储KEY
+	AuthType      = "auth_type"     // 鉴权方式
+	NoAuth        = "no"            // 免鉴权标识
+	Token         = "token"         // token标识
+	Cookie        = "cookie"        // cookie鉴权标识
+	Authorization = "Authorization" // token鉴权标识
+	UserKey       = "user"          // 用户信息存储KEY
+	IPKey         = "ip"            // 用户存储KEY
+	UserCacheName = "user"          // 用户存储KEY
 )
 
 // token 缓存
-var AuthCache *cachex.CacheClient
+var cacheClient *cachex.CacheClient
+
+func AuthCache() *cachex.CacheClient {
+	if cacheClient == nil {
+		cacheClient = cachex.Client(UserCacheName)
+	}
+	return cacheClient
+}
 
 func SetAuthType(ctx *gin.Context, authType string) {
 	ctx.Request.Header.Set(AuthType, authType)
@@ -73,21 +80,11 @@ func GetCorrectIP(ctx *gin.Context) string {
 	return ctx.GetString(IPKey)
 }
 
-// 免鉴权
-func NotAuth(ctx *gin.Context) {
-	SetAuthType(ctx, NoAuth)
-	ctx.Next()
-	return
-}
-
 // 开启鉴权
 func Auth(ctx *gin.Context) {
-	if AuthCache == nil {
-		AuthCache = cachex.Client(AuthCacheSource)
-	}
 	if err := authenticate(ctx); err != nil {
 		ctx.Abort()
-		respx.Exception(ctx, respx.AuthErr, err)
+		respx.Exception(ctx, respx.AuthErr, err.Error())
 	} else {
 		ctx.Next()
 	}
@@ -112,7 +109,7 @@ func authenticateToken(ctx *gin.Context) error {
 	} else {
 		if user, err := ParseUserFromToken(token); err != nil || user == nil {
 			return errors.New("token is invalid")
-		} else if AuthCache.Get(ctx.Request.Context(), user.Account) == nil {
+		} else if !AuthCache().Exists(ctx.Request.Context(), user.Account) {
 			return errors.New("token is expired")
 		} else {
 			SetUser(ctx, user)
@@ -127,17 +124,19 @@ func authenticateCookie(ctx *gin.Context) error {
 		return errors.New("cookie is required")
 	} else {
 		var account string
-		if account, err = encryptx.RSA().Decrypt(cookie); err != nil {
-			return errors.New("cookie is invalid")
+		if account, err = encryptx.RSA().Decrypt(cookie); err == nil {
+			if exist := AuthCache().Exists(ctx.Request.Context(), account); !exist {
+				return errors.New("cookie is expired")
+			} else {
+				if token := AuthCache().GetString(ctx.Request.Context(), account); token != "" {
+					var user = &User{}
+					if user, err = ParseUserFromToken(token); err == nil {
+						SetUser(ctx, user)
+						return nil
+					}
+				}
+			}
 		}
-		var user = &User{Account: account}
-		if token := AuthCache.Get(ctx.Request.Context(), user.Account); token == nil {
-			return errors.New("cookie is expired")
-		} else if user, err = ParseUserFromToken(token.(string)); err != nil {
-			return errors.New("cookie is invalid")
-		} else {
-			SetUser(ctx, user)
-		}
-		return nil
+		return errors.New("cookie is invalid")
 	}
 }

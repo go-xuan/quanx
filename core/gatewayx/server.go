@@ -5,12 +5,31 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/go-xuan/quanx/core/confx"
 	"github.com/go-xuan/quanx/core/ginx"
 	"github.com/go-xuan/quanx/core/nacosx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
-var Servers []*Server
+var Servers = &Gateway{}
+
+type Gateway []*Server
+
+func (g *Gateway) Theme() string {
+	return "gateway"
+}
+
+func (g *Gateway) Reader() *confx.Reader {
+	return &confx.Reader{
+		FilePath:    "gateway.yaml",
+		NacosDataId: "gateway.yaml",
+		Listen:      true,
+	}
+}
+
+func (g *Gateway) Run() error {
+	return nil
+}
 
 // 微服务网关配置
 type Server struct {
@@ -28,13 +47,14 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, auth string, er
 		err = errors.New("监听微服务网关配置失败 ：" + err.Error())
 		return
 	}
-	for _, server := range Servers {
+	for _, server := range *Servers {
 		if MatchUrl(url, server.Router) {
 			auth = server.Auth
 			if auth != ginx.NoAuth && len(server.Ignore) > 0 {
 				for _, item := range server.Ignore {
 					if stringx.Index(url, strings.TrimSpace(item)) >= 0 {
 						auth = ginx.NoAuth
+						break
 					}
 				}
 			}
@@ -55,7 +75,7 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, auth string, er
 func ListenConfigChanged(group, dataId string) error {
 	if data, ok := nacosx.GetNacosConfigMonitor().Get(group, dataId); ok {
 		// 将当前最新的content数据同步到servers
-		if err := data.Unmarshal(&Servers); err != nil {
+		if err := data.Unmarshal(Servers); err != nil {
 			return err
 		}
 		// 更新nacos监控中配置值

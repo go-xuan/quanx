@@ -18,8 +18,8 @@ type Handler struct {
 	DBMap     map[string]*gorm.DB
 }
 
-func DB(source ...string) *gorm.DB {
-	return This().GetDB(source...)
+func DB(name ...string) *gorm.DB {
+	return This().GetDB(name...)
 }
 
 func This() *Handler {
@@ -33,18 +33,18 @@ func Initialized() bool {
 	return handler != nil
 }
 
-func (h *Handler) GetDB(source ...string) *gorm.DB {
-	if len(source) > 0 && source[0] != constx.Default {
-		if db, ok := h.DBMap[source[0]]; ok {
+func (h *Handler) GetDB(name ...string) *gorm.DB {
+	if len(name) > 0 && name[0] != constx.Default {
+		if db, ok := h.DBMap[name[0]]; ok {
 			return db
 		}
 	}
 	return h.DB
 }
 
-func (h *Handler) GetConfig(source ...string) *Database {
-	if len(source) > 0 && source[0] != constx.Default {
-		if conf, ok := h.ConfigMap[source[0]]; ok {
+func (h *Handler) GetConfig(name ...string) *Database {
+	if len(name) > 0 && name[0] != constx.Default {
+		if conf, ok := h.ConfigMap[name[0]]; ok {
 			return conf
 		}
 	}
@@ -52,8 +52,8 @@ func (h *Handler) GetConfig(source ...string) *Database {
 }
 
 // 初始化表结构（基于反射）
-func (h *Handler) InitTable(source string, dst ...any) (err error) {
-	var db, conf = h.DBMap[source], h.ConfigMap[source]
+func (h *Handler) InitTable(name string, dst ...any) (err error) {
+	var db, conf = h.DBMap[name], h.ConfigMap[name]
 	if db != nil && conf != nil && len(dst) > 0 {
 		if conf.Debug {
 			for _, model := range dst {

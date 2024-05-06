@@ -78,7 +78,7 @@ func DefaultMarshal(v any) (out []byte, err error) {
 	case reflect.Float64:
 		out = []byte(strconv.FormatFloat(v.(float64), 'f', -1, 64))
 	default:
-		err = errors.New("unsupported type")
+		out, err = json.Marshal(v)
 	}
 	return
 }

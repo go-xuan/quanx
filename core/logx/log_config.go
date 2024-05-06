@@ -43,7 +43,8 @@ func (*LogConfig) Theme() string {
 // 配置文件读取
 func (*LogConfig) Reader() *confx.Reader {
 	return &confx.Reader{
-		FilePath: "log.yaml",
+		FilePath:    "log.yaml",
+		NacosDataId: "log.yaml",
 	}
 }
 

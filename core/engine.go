@@ -113,11 +113,6 @@ func (e *Engine) RUN() {
 	// 执行自定义函数
 	e.runCustomFunc()
 	// 服务启动
-	e.Start()
-}
-
-// 服务启动
-func (e *Engine) Start() {
 	if !e.flag[Lightweight] {
 		defer PanicRecover()
 		e.startGin()
@@ -200,9 +195,6 @@ func (e *Engine) buildFrameBasic() {
 
 		// 初始化缓存
 		if redisx.Initialized() {
-			e.config.Cache = anyx.IfZero(e.config.Cache, &cachex.MultiCache{})
-			e.RunConfigurator(e.config.Cache, true)
-
 			if e.flag[MultiCache] {
 				e.config.Cache = anyx.IfZero(e.config.Cache, &cachex.MultiCache{})
 				e.RunConfigurator(e.config.Cache)

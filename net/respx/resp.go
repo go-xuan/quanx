@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 )
 
 // 正常响应
@@ -30,19 +29,16 @@ func BuildSuccess(ctx *gin.Context, data any) {
 
 // 错误响应
 func BuildError(ctx *gin.Context, err error) {
-	log.Error(Error.Msg, err)
 	ctx.JSON(http.StatusInternalServerError, &Response{Code: Error.Code, Msg: Error.Msg, Data: err.Error()})
 }
 
 // 自定义错误响应
 func Custom(ctx *gin.Context, code int, msg string, data any) {
-	log.Error(msg, data)
 	ctx.JSON(http.StatusInternalServerError, &Response{Code: code, Msg: msg, Data: data})
 }
 
 // 异常响应
 func Exception(ctx *gin.Context, enum Enum, data any) {
-	log.Error(enum.Msg, data)
 	ctx.JSON(http.StatusInternalServerError, &Response{Code: enum.Code, Msg: enum.Msg, Data: data})
 }
 

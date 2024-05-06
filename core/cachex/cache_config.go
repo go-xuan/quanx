@@ -1,17 +1,13 @@
 package cachex
 
 import (
-	"context"
 	"fmt"
-	"time"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/core/confx"
 	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/types/slicex"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
@@ -97,63 +93,10 @@ func (c *Cache) ToString() string {
 }
 
 func (c *Cache) CacheClient() *CacheClient {
-	var client = redisx.Client(c.Name)
-	unmarshal := marshalx.NewCase(c.Marshal).Unmarshal
 	return &CacheClient{
-		key: func(k string) string {
-			return c.Prefix + k
-		},
-		set: func(ctx context.Context, k string, v any, duration time.Duration) {
-			client.Set(ctx, k, v, duration)
-		},
-		get: func(ctx context.Context, k string) (v any) {
-			if value, err := client.Get(ctx, k).Bytes(); err == nil {
-				_ = unmarshal(value, v)
-			}
-			return
-		},
-		delete: func(ctx context.Context, k ...string) int64 {
-			var total int64
-			var err error
-			if l := len(k); l > 100 {
-				if err = slicex.ExecInBatches(l, 100, func(x int, y int) (err error) {
-					var n int64
-					if n, err = client.Del(ctx, k[x:y]...).Result(); err != nil {
-						return
-					}
-					total += n
-					return
-				}); err != nil {
-					return total
-				}
-			} else {
-				if total, err = client.Del(ctx, k...).Result(); err != nil {
-					return total
-				}
-			}
-			return 0
-		},
-		exists: func(ctx context.Context, k ...string) bool {
-			var total int64
-			var err error
-			if l := len(k); l > 100 {
-				if err = slicex.ExecInBatches(l, 100, func(x int, y int) (err error) {
-					var n int64
-					if n, err = client.Exists(ctx, k[x:y]...).Result(); err != nil {
-						return
-					}
-					total += n
-					return
-				}); err != nil {
-					return false
-				}
-			} else {
-				if total, err = client.Exists(ctx, k...).Result(); err != nil {
-					return false
-				}
-			}
-			return total > 0
-		},
+		cache:     c,
+		client:    redisx.Client(c.Name),
+		unmarshal: marshalx.NewCase(c.Marshal).Unmarshal,
 	}
 }
 

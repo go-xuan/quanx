@@ -60,7 +60,7 @@ func ParseUserFromToken(token string) (user *User, err error) {
 		return
 	}
 	user = &User{
-		Id:         userData["id"].(int64),
+		Id:         int64(userData["id"].(float64)),
 		Account:    userData["account"].(string),
 		Name:       userData["name"].(string),
 		Phone:      userData["phone"].(string),
