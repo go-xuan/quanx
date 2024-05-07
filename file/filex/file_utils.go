@@ -22,9 +22,10 @@ import (
 )
 
 const (
-	WriteOnly = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-	Overwrite = os.O_RDWR | os.O_CREATE | os.O_TRUNC
-	Append    = os.O_RDWR | os.O_CREATE | os.O_APPEND
+	Overwrite  = os.O_RDWR | os.O_CREATE | os.O_TRUNC
+	Append     = os.O_RDWR | os.O_CREATE | os.O_APPEND
+	WriteOnly  = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	AppendOnly = os.O_WRONLY | os.O_CREATE | os.O_APPEND
 )
 
 const (

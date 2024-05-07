@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	TimeFormat = "2006-01-02 15:04:05.999999"
+	TimeFormat = "2006-01-02 15:04:05.999"
 )
 
 type LogFormatter struct {
@@ -25,11 +25,10 @@ func (f *LogFormatter) Format(entry *log.Entry) ([]byte, error) {
 	timeFormat := stringx.IfZero(f.TimeFormat, TimeFormat)
 	host, _ := os.Hostname()
 	var b = bytes.Buffer{}
-	b.WriteString(fmt.Sprintf("[%26s][%7s][%s]",
-		time.Now().Format(timeFormat), entry.Level.String(), host))
+	b.WriteString(fmt.Sprintf("[%23s][%7s][%s]", time.Now().Format(timeFormat), entry.Level.String(), host))
 	b.WriteString(entry.Message)
 	for key, value := range entry.Data {
-		b.WriteString(fmt.Sprintf(" , %s : %+v", key, value))
+		b.WriteString(fmt.Sprintf(", %s:%+v", key, value))
 	}
 	b.WriteString("\n")
 	return b.Bytes(), nil

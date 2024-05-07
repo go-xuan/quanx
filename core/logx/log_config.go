@@ -60,7 +60,7 @@ func (l *LogConfig) Run() error {
 		MaxAge:     intx.IfZero(l.MaxSize, 1),
 		MaxBackups: intx.IfZero(l.MaxSize, 10),
 	}
-	var format = &LogFormatter{}
+	var formatter = &LogFormatter{}
 	var hook = NewHook(WriterMap{
 		logrus.TraceLevel: logWriter,
 		logrus.DebugLevel: logWriter,
@@ -69,11 +69,11 @@ func (l *LogConfig) Run() error {
 		logrus.ErrorLevel: logWriter,
 		logrus.FatalLevel: logWriter,
 		logrus.PanicLevel: logWriter,
-	}, format)
+	}, formatter)
 	var logger = logrus.StandardLogger()
 	logger.AddHook(hook)
 	logger.SetReportCaller(l.Caller)
-	logger.SetFormatter(format)
+	logger.SetFormatter(formatter)
 	logger.SetLevel(l.GetLevel())
 	return nil
 }
