@@ -4,20 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
-	"reflect"
-	"strconv"
 
 	"github.com/BurntSushi/toml"
 	"github.com/vmihailenco/msgpack"
 	"gopkg.in/yaml.v3"
 
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/file/filex"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
 // 序列化类型
-
 const (
 	Json       = "json"
 	Yml        = "yml"
@@ -44,8 +40,6 @@ func Identify(s string) string {
 
 func NewCase(s string) *Case {
 	switch Identify(s) {
-	case Json:
-		return &Case{Name: Json, Marshal: json.Marshal, Unmarshal: json.Unmarshal}
 	case Yaml, Yml:
 		return &Case{Name: Yaml, Marshal: yaml.Marshal, Unmarshal: yaml.Unmarshal}
 	case Toml:
@@ -55,52 +49,8 @@ func NewCase(s string) *Case {
 	case Msgpack:
 		return &Case{Name: Msgpack, Marshal: msgpack.Marshal, Unmarshal: msgpack.Unmarshal}
 	default:
-		return DefaultCase()
+		return &Case{Name: Json, Marshal: json.Marshal, Unmarshal: json.Unmarshal}
 	}
-}
-
-func DefaultCase() *Case {
-	return &Case{Name: constx.Default, Marshal: DefaultMarshal, Unmarshal: DefaultUnmarshal}
-}
-
-func DefaultMarshal(v any) (out []byte, err error) {
-	switch reflect.TypeOf(v).Kind() {
-	case reflect.String:
-		out = []byte(v.(string))
-	case reflect.Bool:
-		out = []byte(strconv.FormatBool(v.(bool)))
-	case reflect.Int:
-		out = []byte(strconv.FormatInt(int64(v.(int)), 10))
-	case reflect.Int64:
-		out = []byte(strconv.FormatInt(v.(int64), 10))
-	case reflect.Float32:
-		out = []byte(strconv.FormatFloat(float64(v.(float32)), 'f', -1, 32))
-	case reflect.Float64:
-		out = []byte(strconv.FormatFloat(v.(float64), 'f', -1, 64))
-	default:
-		out, err = json.Marshal(v)
-	}
-	return
-}
-
-func DefaultUnmarshal(data []byte, v any) (err error) {
-	switch reflect.TypeOf(v).Kind() {
-	case reflect.String:
-		v = string(data)
-	case reflect.Bool:
-		v = string(data) == "true"
-	case reflect.Int:
-		v, err = strconv.Atoi(string(data))
-	case reflect.Int64:
-		v, err = strconv.ParseInt(string(data), 10, 64)
-	case reflect.Float32:
-		v, err = strconv.ParseFloat(string(data), 32)
-	case reflect.Float64:
-		v, err = strconv.ParseFloat(string(data), 64)
-	default:
-		err = errors.New("unsupported type")
-	}
-	return
 }
 
 // 读取配置文件到指针
@@ -108,23 +58,23 @@ func UnmarshalFromFile(path string, v any) (err error) {
 	if !filex.Exists(path) {
 		return errors.New("the file not exist : " + path)
 	}
-	var b []byte
-	if b, err = os.ReadFile(path); err != nil {
+	var bytes []byte
+	if bytes, err = os.ReadFile(path); err != nil {
 		return
 	}
-	if err = NewCase(path).Unmarshal(b, v); err != nil {
+	if err = NewCase(path).Unmarshal(bytes, v); err != nil {
 		return
 	}
 	return
 }
 
-func AnyToStruct[T any](v any, s string) (t T, err error) {
-	var toCase = NewCase(s)
+func AnyToStruct[T any](v any, caseType string) (t T, err error) {
+	var newCase = NewCase(caseType)
 	var bytes []byte
-	if bytes, err = toCase.Marshal(v); err != nil {
+	if bytes, err = newCase.Marshal(v); err != nil {
 		return
 	}
-	if err = toCase.Unmarshal(bytes, &t); err != nil {
+	if err = newCase.Unmarshal(bytes, &t); err != nil {
 		return
 	}
 	return
