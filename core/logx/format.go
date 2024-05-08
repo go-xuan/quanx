@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/types/stringx"
 )
@@ -20,8 +20,8 @@ type LogFormatter struct {
 	TimeFormat string
 }
 
-// 日志格式化
-func (f *LogFormatter) Format(entry *log.Entry) ([]byte, error) {
+// 日志格式化,用以实现logrus.Formatter接口
+func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	timeFormat := stringx.IfZero(f.TimeFormat, TimeFormat)
 	host, _ := os.Hostname()
 	var b = bytes.Buffer{}
@@ -34,17 +34,17 @@ func (f *LogFormatter) Format(entry *log.Entry) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-// gin框架生成日志Handler
-func GinRequestLog(context *gin.Context) {
+// gin请求日志中间件
+func GinRequestLog(ctx *gin.Context) {
 	start := time.Now()
 	// 处理请求
-	context.Next()
+	ctx.Next()
 	// 日志格式
-	log.Infof("[%3d][%8dms][%15s][%6s][%s]",
-		context.Writer.Status(),
+	logrus.Infof("[%3d][%8dms][%15s][%6s][%s]",
+		ctx.Writer.Status(),
 		time.Now().Sub(start).Milliseconds(),
-		stringx.IfNot(context.ClientIP(), "::1", "localhost"),
-		context.Request.Method,
-		context.Request.RequestURI,
+		stringx.IfNot(ctx.ClientIP(), "::1", "localhost"),
+		ctx.Request.Method,
+		ctx.Request.RequestURI,
 	)
 }

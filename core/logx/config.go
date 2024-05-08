@@ -22,7 +22,7 @@ func New(app string) *LogConfig {
 type LogConfig struct {
 	FileName string `json:"fileName" yaml:"fileName" default:"app.log"` // 日志文件名
 	Dir      string `json:"dir" yaml:"dir" default:"resource/log"`      // 日志保存文件夹
-	Level    string `json:"level" yaml:"level" default:"debug"`         // 日志级别
+	Level    string `json:"level" yaml:"level" default:"info"`          // 日志级别
 	Caller   bool   `json:"caller" yaml:"caller" default:"false"`       // Flag for whether to caller
 	MaxSize  int    `json:"maxSize" yaml:"maxSize" default:"100"`       // 日志大小(单位：mb)
 	MaxAge   int    `json:"maxAge" yaml:"maxAge" default:"1"`           // 日志保留天数(单位：天)
@@ -54,22 +54,15 @@ func (l *LogConfig) Run() error {
 		return err
 	}
 	filex.CreateDir(l.Dir)
-	var logWriter = &lumberjack.Logger{
+	var output = NewOutput(&lumberjack.Logger{
 		Filename:   l.LogPath(),
 		MaxSize:    intx.IfZero(l.MaxSize, 100),
-		MaxAge:     intx.IfZero(l.MaxSize, 1),
-		MaxBackups: intx.IfZero(l.MaxSize, 10),
-	}
-	var formatter = &LogFormatter{}
-	var hook = NewHook(WriterMap{
-		logrus.TraceLevel: logWriter,
-		logrus.DebugLevel: logWriter,
-		logrus.InfoLevel:  logWriter,
-		logrus.WarnLevel:  logWriter,
-		logrus.ErrorLevel: logWriter,
-		logrus.FatalLevel: logWriter,
-		logrus.PanicLevel: logWriter,
-	}, formatter)
+		MaxAge:     intx.IfZero(l.MaxAge, 7),
+		MaxBackups: intx.IfZero(l.Backups, 10),
+		Compress:   true,
+	})
+	var formatter = &LogFormatter{TimeFormat: TimeFormat}
+	var hook = NewHook(output, formatter)
 	var logger = logrus.StandardLogger()
 	logger.AddHook(hook)
 	logger.SetReportCaller(l.Caller)
@@ -109,5 +102,17 @@ func (l *LogConfig) GetLevel() logrus.Level {
 		return logrus.PanicLevel
 	default:
 		return logrus.DebugLevel
+	}
+}
+
+func AllLevels() []logrus.Level {
+	return []logrus.Level{
+		logrus.TraceLevel,
+		logrus.DebugLevel,
+		logrus.InfoLevel,
+		logrus.WarnLevel,
+		logrus.ErrorLevel,
+		logrus.FatalLevel,
+		logrus.PanicLevel,
 	}
 }
