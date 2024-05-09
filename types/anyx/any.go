@@ -22,7 +22,7 @@ func IfZero[T any](x, def T) T {
 }
 
 // 用于函数中的不定参数取默认值
-func Default[T any](x []T, def T) T {
+func Default[T any](def T, x ...T) T {
 	if len(x) == 0 {
 		return def
 	} else {

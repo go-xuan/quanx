@@ -27,7 +27,7 @@ func (r *Request) Https(crt string) *Request {
 }
 
 func Method(method ...string) *Request {
-	return &Request{method: anyx.Default(method, GET)}
+	return &Request{method: anyx.Default(GET, method...)}
 }
 
 func Get() *Request {

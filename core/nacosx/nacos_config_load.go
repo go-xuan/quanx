@@ -50,7 +50,7 @@ func NewConfig(group, dataId string, listen ...bool) *Config {
 		Group:  group,
 		DataId: dataId,
 		Type:   vo.ConfigType(filex.Suffix(dataId)),
-		Listen: anyx.Default(listen, false),
+		Listen: anyx.Default(false, listen...),
 	}
 }
 

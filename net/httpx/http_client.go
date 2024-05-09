@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"sync"
 	"time"
 )
 
@@ -22,11 +21,7 @@ const (
 	DELETE     = "DELETE"
 )
 
-var (
-	client    *Client
-	httpOnce  sync.Once
-	httpsOnce sync.Once
-)
+var client *Client
 
 type Client struct {
 	mode   string
@@ -61,24 +56,14 @@ func SwitchClient(modeAndParam ...string) *Client {
 
 func newHttpClient() *Client {
 	if client == nil || client.mode != Http {
-		httpOnce.Do(func() {
-			client = &Client{
-				mode:   Http,
-				client: &http.Client{Transport: newTransport()},
-			}
-		})
+		client = &Client{mode: Http, client: &http.Client{Transport: newTransport()}}
 	}
 	return client
 }
 
 func newHttpsClient(crt string) *Client {
 	if client == nil || client.mode != Https {
-		httpsOnce.Do(func() {
-			client = &Client{
-				mode:   Https,
-				client: &http.Client{Transport: newTransport(crt)},
-			}
-		})
+		client = &Client{mode: Https, client: &http.Client{Transport: newTransport(crt)}}
 	}
 	return client
 }
@@ -100,10 +85,7 @@ func newHttpsProxyClient(proxyUrl string, crt string) *Client {
 		if proxyURL, err := url.Parse(proxyUrl); err == nil {
 			transport.Proxy = http.ProxyURL(proxyURL)
 		}
-		client = &Client{
-			mode:   HttpsProxy,
-			client: &http.Client{Transport: transport},
-		}
+		client = &Client{mode: HttpsProxy, client: &http.Client{Transport: transport}}
 	}
 	return client
 }
@@ -123,18 +105,18 @@ func newTransport(crt ...string) *http.Transport {
 }
 
 func newTLSClientConfig(crt ...string) *tls.Config {
-	if len(crt) > 0 {
-		pem, err := os.ReadFile(crt[0])
-		if err != nil {
+	if len(crt) > 0 && crt[0] != "" {
+		if pem, err := os.ReadFile(crt[0]); err != nil {
 			panic(err)
-		}
-		pool := x509.NewCertPool()
-		if ok := pool.AppendCertsFromPEM(pem); !ok {
-			panic(err)
-		}
-		return &tls.Config{
-			ClientCAs:          pool,
-			InsecureSkipVerify: true,
+		} else {
+			pool := x509.NewCertPool()
+			if ok := pool.AppendCertsFromPEM(pem); !ok {
+				panic(err)
+			}
+			return &tls.Config{
+				ClientCAs:          pool,
+				InsecureSkipVerify: true,
+			}
 		}
 	}
 	return nil

@@ -53,7 +53,7 @@ func Index(s, sep string, position ...int) int {
 	if m > l {
 		return -1
 	}
-	x := anyx.Default(position, 1)
+	x := anyx.Default(1, position...)
 	for i := 0; i <= l-m; i++ {
 		if x > 0 {
 			if s[i] == sep[0] && s[i:i+m] == sep {

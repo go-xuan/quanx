@@ -247,7 +247,7 @@ func (e *Engine) runConfigurators() {
 
 // 运行配置器
 func (e *Engine) RunConfigurator(conf confx.Configurator[any], must ...bool) {
-	var ok = anyx.Default(must, false)
+	var ok = anyx.Default(false, must...)
 	if reader := conf.Reader(); reader != nil {
 		if e.flag[EnableNacos] {
 			reader.NacosGroup = e.config.Server.Name

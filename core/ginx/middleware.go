@@ -54,7 +54,7 @@ func SetCookie(ctx *gin.Context, username string, age ...int) {
 		respx.BuildError(ctx, err)
 		return
 	} else {
-		var maxAge = anyx.Default(age, 3600)
+		var maxAge = anyx.Default(3600, age...)
 		ctx.SetCookie(Cookie, cookie, maxAge, "", "", false, true)
 	}
 }
