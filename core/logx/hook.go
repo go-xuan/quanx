@@ -2,6 +2,7 @@ package logx
 
 import (
 	"fmt"
+	"io"
 	"reflect"
 	"runtime"
 	"sync"
@@ -11,25 +12,33 @@ import (
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
-type OutputMap map[logrus.Level]*Output
+type Writers map[logrus.Level]io.Writer
 
 type Hook struct {
 	lock      *sync.Mutex
-	output    OutputMap
+	writers   Writers
 	levels    []logrus.Level
 	formatter logrus.Formatter
 }
 
-func NewHook(output any, formatter logrus.Formatter) *Hook {
+func NewHook(writer any, formatter logrus.Formatter) *Hook {
 	hook := &Hook{lock: new(sync.Mutex)}
 	hook.SetFormatter(formatter)
-	switch output.(type) {
-	case *Output:
-		hook.SetOutput(output.(*Output))
-	case OutputMap:
-		hook.SetOutputMap(output.(OutputMap))
+	switch writer.(type) {
+	case string:
+		hook.SetWriter(&FileWriter{writer.(string)})
+	case map[logrus.Level]string:
+		var writers = make(Writers)
+		for level, path := range writer.(map[logrus.Level]string) {
+			writers[level] = &FileWriter{path}
+		}
+		hook.SetWriters(writers)
+	case io.Writer:
+		hook.SetWriter(writer.(io.Writer))
+	case Writers:
+		hook.SetWriters(writer.(Writers))
 	default:
-		panic(fmt.Sprintf("unsupported output type: %v", reflect.TypeOf(output)))
+		panic(fmt.Sprintf("unsupported writer type: %v", reflect.TypeOf(writer)))
 	}
 	return hook
 }
@@ -45,10 +54,7 @@ func (hook *Hook) Fire(entry *logrus.Entry) error {
 	entry.WithField("position", fmt.Sprintf("%s:%04d:%s()", fileName, caller.Line, funcName))
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
-	if hook.output != nil {
-		return hook.OutputToWriter(entry)
-	}
-	return nil
+	return hook.Write(entry)
 }
 
 func (hook *Hook) SetFormatter(formatter logrus.Formatter) {
@@ -67,38 +73,40 @@ func (hook *Hook) SetFormatter(formatter logrus.Formatter) {
 	hook.formatter = formatter
 }
 
-func (hook *Hook) SetOutputMap(outputMap OutputMap) {
+func (hook *Hook) SetWriters(writers Writers) {
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
-	hook.output = outputMap
-	for level := range outputMap {
+	hook.writers = writers
+	for level := range writers {
 		hook.levels = append(hook.levels, level)
 	}
 }
 
-func (hook *Hook) SetOutput(output *Output) {
+func (hook *Hook) SetWriter(writer io.Writer) {
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
-	hook.output = map[logrus.Level]*Output{
-		logrus.TraceLevel: output,
-		logrus.DebugLevel: output,
-		logrus.InfoLevel:  output,
-		logrus.WarnLevel:  output,
-		logrus.ErrorLevel: output,
-		logrus.FatalLevel: output,
-		logrus.PanicLevel: output,
+	hook.writers = map[logrus.Level]io.Writer{
+		logrus.TraceLevel: writer,
+		logrus.DebugLevel: writer,
+		logrus.InfoLevel:  writer,
+		logrus.WarnLevel:  writer,
+		logrus.ErrorLevel: writer,
+		logrus.FatalLevel: writer,
+		logrus.PanicLevel: writer,
 	}
 	hook.levels = AllLevels()
 }
 
 // 输出到ioWriter
-func (hook *Hook) OutputToWriter(entry *logrus.Entry) (err error) {
-	if output, ok := hook.output[entry.Level]; ok {
-		var bytes []byte
-		if bytes, err = hook.formatter.Format(entry); err != nil {
-			return
+func (hook *Hook) Write(entry *logrus.Entry) (err error) {
+	if hook.writers != nil {
+		if writer, ok := hook.writers[entry.Level]; ok {
+			var bytes []byte
+			if bytes, err = hook.formatter.Format(entry); err != nil {
+				return
+			}
+			_, err = writer.Write(bytes)
 		}
-		_, err = output.Writer.Write(bytes)
 	}
 	return
 }

@@ -54,15 +54,15 @@ func (l *LogConfig) Run() error {
 		return err
 	}
 	filex.CreateDir(l.Dir)
-	var output = NewOutput(&lumberjack.Logger{
+	var writer = &lumberjack.Logger{
 		Filename:   l.LogPath(),
 		MaxSize:    intx.IfZero(l.MaxSize, 100),
 		MaxAge:     intx.IfZero(l.MaxAge, 7),
 		MaxBackups: intx.IfZero(l.Backups, 10),
 		Compress:   true,
-	})
+	}
 	var formatter = &LogFormatter{TimeFormat: TimeFormat}
-	var hook = NewHook(output, formatter)
+	var hook = NewHook(writer, formatter)
 	var logger = logrus.StandardLogger()
 	logger.AddHook(hook)
 	logger.SetReportCaller(l.Caller)
