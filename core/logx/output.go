@@ -11,8 +11,8 @@ type Output struct {
 	Writer io.Writer
 }
 
-func NewOutput(writer io.Writer) Output {
-	return Output{Writer: writer}
+func NewOutput(writer io.Writer) *Output {
+	return &Output{Writer: writer}
 }
 
 type FileWriter struct {
