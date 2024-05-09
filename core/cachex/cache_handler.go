@@ -23,13 +23,13 @@ func Initialized() bool {
 	return handler != nil
 }
 
-func Client(name ...string) *CacheClient {
-	return This().GetClient(name...)
+func Client(source ...string) *CacheClient {
+	return This().GetClient(source...)
 }
 
-func (h *Handler) GetClient(name ...string) *CacheClient {
-	if len(name) > 0 && name[0] != constx.Default {
-		if client, ok := h.ClientMap[name[0]]; ok {
+func (h *Handler) GetClient(source ...string) *CacheClient {
+	if len(source) > 0 && source[0] != constx.Default {
+		if client, ok := h.ClientMap[source[0]]; ok {
 			return client
 		}
 	}

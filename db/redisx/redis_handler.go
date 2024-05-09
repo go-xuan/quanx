@@ -38,22 +38,22 @@ func Ping(client redis.UniversalClient) (bool, error) {
 	}
 }
 
-func Client(name ...string) redis.UniversalClient {
-	return This().GetClient(name...)
+func Client(source ...string) redis.UniversalClient {
+	return This().GetClient(source...)
 }
 
-func (h *Handler) GetClient(name ...string) redis.UniversalClient {
-	if len(name) > 0 && name[0] != constx.Default {
-		if client, ok := h.clientMap[name[0]]; ok {
+func (h *Handler) GetClient(source ...string) redis.UniversalClient {
+	if len(source) > 0 && source[0] != constx.Default {
+		if client, ok := h.clientMap[source[0]]; ok {
 			return *client
 		}
 	}
 	return *h.Client
 }
 
-func (h *Handler) GetConfig(name ...string) *Redis {
-	if len(name) > 0 && name[0] != constx.Default {
-		if conf, ok := h.ConfigMap[name[0]]; ok {
+func (h *Handler) GetConfig(source ...string) *Redis {
+	if len(source) > 0 && source[0] != constx.Default {
+		if conf, ok := h.ConfigMap[source[0]]; ok {
 			return conf
 		}
 	}

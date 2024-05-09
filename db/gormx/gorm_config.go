@@ -21,7 +21,7 @@ import (
 type MultiDatabase []*Database
 
 type Database struct {
-	Name            string `json:"name" yaml:"name" default:"default"`                  // 数据源名称
+	Source          string `json:"source" yaml:"source" default:"default"`              // 数据源名称
 	Enable          bool   `json:"enable" yaml:"enable"`                                // 数据源启用
 	Type            string `json:"type" yaml:"type"`                                    // 数据库类型
 	Host            string `json:"host" yaml:"host" default:"localhost"`                // 数据库Host
@@ -72,9 +72,9 @@ func (c MultiDatabase) Run() (err error) {
 				log.Error("Database Connect Failed : ", toString, err)
 				return err
 			}
-			handler.DBMap[d.Name] = db
-			handler.ConfigMap[d.Name] = d
-			if i == 0 || d.Name == constx.Default {
+			handler.DBMap[d.Source] = db
+			handler.ConfigMap[d.Source] = d
+			if i == 0 || d.Source == constx.Default {
 				handler.DB = db
 				handler.Config = d
 			}
@@ -89,8 +89,8 @@ func (c MultiDatabase) Run() (err error) {
 
 // 配置信息格式化
 func (d *Database) ToString() string {
-	return fmt.Sprintf("name=%s type=%s host=%s port=%d database=%s debug=%v",
-		d.Name, d.Type, d.Host, d.Port, d.Database, d.Debug)
+	return fmt.Sprintf("source=%s type=%s host=%s port=%d database=%s debug=%v",
+		d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
 }
 
 // 配置器名称
@@ -126,8 +126,8 @@ func (d *Database) Run() (err error) {
 			DBMap:     make(map[string]*gorm.DB),
 			ConfigMap: make(map[string]*Database),
 		}
-		handler.DBMap[d.Name] = db
-		handler.ConfigMap[d.Name] = d
+		handler.DBMap[d.Source] = db
+		handler.ConfigMap[d.Source] = d
 		log.Info("Database Connect Successful : ", toString)
 		return
 	}

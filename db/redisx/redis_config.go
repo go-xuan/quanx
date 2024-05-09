@@ -23,15 +23,15 @@ const (
 type MultiRedis []*Redis
 
 type Redis struct {
-	Name     string `json:"name" yaml:"name"`         // 数据源名称
-	Enable   bool   `json:"enable" yaml:"enable"`     // 数据源启用
-	Mode     int    `json:"mode" yaml:"mode"`         // 模式（0-单机；1-集群），默认单机模式
-	Host     string `json:"host" yaml:"host"`         // 主机
-	Port     int    `json:"port" yaml:"port"`         // 端口
-	Username string `json:"username" yaml:"username"` // 用户名
-	Password string `json:"password" yaml:"password"` // 密码
-	Database int    `json:"database" yaml:"database"` // 数据库，默认0
-	PoolSize int    `json:"poolSize" yaml:"poolSize"` // 池大小
+	Source   string `json:"source" yaml:"source" default:"default"` // 数据源名称
+	Enable   bool   `json:"enable" yaml:"enable"`                   // 数据源启用
+	Mode     int    `json:"mode" yaml:"mode" default:"0"`           // 模式（0-单机；1-集群），默认单机模式
+	Host     string `json:"host" yaml:"host"`                       // 主机
+	Port     int    `json:"port" yaml:"port" default:"6379"`        // 端口
+	Username string `json:"username" yaml:"username"`               // 用户名
+	Password string `json:"password" yaml:"password"`               // 密码
+	Database int    `json:"database" yaml:"database" default:"0"`   // 数据库，默认0
+	PoolSize int    `json:"poolSize" yaml:"poolSize"`               // 池大小
 }
 
 // 配置信息格式化
@@ -67,9 +67,9 @@ func (conf MultiRedis) Run() error {
 				log.Error("Redis Connect Failed : ", toString)
 				return err
 			}
-			handler.clientMap[r.Name] = client
-			handler.ConfigMap[r.Name] = r
-			if i == 0 || r.Name == constx.Default {
+			handler.clientMap[r.Source] = client
+			handler.ConfigMap[r.Source] = r
+			if i == 0 || r.Source == constx.Default {
 				handler.Client = client
 				handler.Config = r
 			}
@@ -85,7 +85,7 @@ func (conf MultiRedis) Run() error {
 // 配置信息格式化
 func (r *Redis) ToString() string {
 	return fmt.Sprintf("name=%s mode=%d host=%s port=%d database=%d",
-		r.Name, r.Mode, r.Host, r.Port, r.Database)
+		r.Source, r.Mode, r.Host, r.Port, r.Database)
 }
 
 // 配置器名称
@@ -121,8 +121,8 @@ func (r *Redis) Run() (err error) {
 			clientMap: make(map[string]*redis.UniversalClient),
 			ConfigMap: make(map[string]*Redis),
 		}
-		handler.clientMap[r.Name] = client
-		handler.ConfigMap[r.Name] = r
+		handler.clientMap[r.Source] = client
+		handler.ConfigMap[r.Source] = r
 		log.Info("Redis Connect Successful : ", toString)
 		return
 	}

@@ -15,7 +15,7 @@ import (
 type MultiCache []*Cache
 
 type Cache struct {
-	Name    string `json:"name" yaml:"name" default:"default"`       // 缓存存储数据源名称
+	Source  string `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称
 	Prefix  string `json:"prefix" yaml:"prefix" default:"default"`   // 缓存KEY前缀前缀
 	Marshal string `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
 }
@@ -42,14 +42,14 @@ func (c *Cache) Run() (err error) {
 		Client:    client,
 		ClientMap: make(map[string]*CacheClient),
 	}
-	handler.ClientMap[c.Name] = client
+	handler.ClientMap[c.Source] = client
 	log.Info("Cache Init Successful : ", c.ToString())
 	return
 }
 
 func Default() *Cache {
 	return &Cache{
-		Name:    constx.Default,
+		Source:  constx.Default,
 		Prefix:  "cache",
 		Marshal: marshalx.Msgpack,
 	}
@@ -78,8 +78,8 @@ func (m MultiCache) Run() error {
 	multi := anyx.IfZero(m, MultiCache{Default()})
 	for i, c := range multi {
 		var client = c.CacheClient()
-		handler.ClientMap[c.Name] = client
-		if i == 0 || c.Name == constx.Default {
+		handler.ClientMap[c.Source] = client
+		if i == 0 || c.Source == constx.Default {
 			handler.Client = client
 		}
 		log.Info("Cache Init Successful : ", c.ToString())
@@ -89,13 +89,13 @@ func (m MultiCache) Run() error {
 
 // 配置信息格式化
 func (c *Cache) ToString() string {
-	return fmt.Sprintf("name=%s prefix=%s marshal=%s", c.Name, c.Prefix, c.Marshal)
+	return fmt.Sprintf("name=%s prefix=%s marshal=%s", c.Source, c.Prefix, c.Marshal)
 }
 
 func (c *Cache) CacheClient() *CacheClient {
 	return &CacheClient{
 		cache:     c,
-		client:    redisx.Client(c.Name),
+		client:    redisx.Client(c.Source),
 		unmarshal: marshalx.NewCase(c.Marshal).Unmarshal,
 	}
 }
