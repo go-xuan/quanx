@@ -74,7 +74,7 @@ func (c MultiDatabase) Run() (err error) {
 			}
 			handler.DBMap[d.Source] = db
 			handler.ConfigMap[d.Source] = d
-			if i == 0 || d.Source == constx.Default {
+			if i == 0 || d.Source == constx.DefaultSourceName {
 				handler.DB = db
 				handler.Config = d
 			}

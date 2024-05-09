@@ -97,8 +97,8 @@ func (n *Nacos) ClientConfig() *constant.ClientConfig {
 		BeatInterval:        3 * 1000,
 		NotLoadCacheAtStart: true,
 		NamespaceId:         n.NameSpace,
-		LogDir:              filepath.Join(constx.ResourceDir, ".nacos/log"),
-		CacheDir:            filepath.Join(constx.ResourceDir, ".nacos/cache"),
+		LogDir:              filepath.Join(constx.DefaultResourceDir, ".nacos/log"),
+		CacheDir:            filepath.Join(constx.DefaultResourceDir, ".nacos/cache"),
 	}
 }
 

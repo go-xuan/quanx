@@ -29,7 +29,7 @@ func GetEngine(modes ...Flag) *Engine {
 	if engine == nil {
 		engine = &Engine{
 			config:         &Config{},
-			configDir:      constx.ConfDir,
+			configDir:      constx.DefaultConfDir,
 			customFuncs:    make([]func(), 0),
 			configurators:  make([]confx.Configurator[any], 0),
 			ginMiddlewares: make([]gin.HandlerFunc, 0),
@@ -124,9 +124,9 @@ func (e *Engine) loadingConfig() {
 	if !e.flag[HasLoadingConfig] {
 		var config = &Config{Server: &Server{}}
 		if !e.flag[Lightweight] {
-			var path = e.GetConfigPath(constx.Config)
+			var path = e.GetConfigPath(constx.DefaultServerConfig)
 			if err := marshalx.UnmarshalFromFile(path, config); err != nil {
-				log.Errorf("Loading %s Failed", constx.Config)
+				log.Errorf("Loading %s Failed", constx.DefaultServerConfig)
 				panic(err)
 			}
 
@@ -337,7 +337,7 @@ func (e *Engine) GetConfigPath(path string) string {
 
 // 添加需要初始化的 gormx.Tabler 模型
 func (e *Engine) AddTable(dst ...gormx.Tabler[any]) {
-	e.AddSourceTable(constx.Default, dst...)
+	e.AddSourceTable(constx.DefaultSourceName, dst...)
 }
 
 // 添加需要某个数据源的gormx.Table模型

@@ -17,6 +17,7 @@ func (t Test) Reader() *Reader {
 }
 
 func (t Test) Run() error {
+	fmt.Println("test run")
 	return nil
 }
 

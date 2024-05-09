@@ -31,19 +31,20 @@ const (
 )
 
 // 时间转字符
-func ToString(time time.Time) string {
-	return time.Format(TimeFmt)
+func Format(time time.Time, format ...string) string {
+	return time.Format(anyx.Default(TimeFmt, format...))
 }
 
 // 字符转时间
 func ToTime(timeStr string) time.Time {
-	format := anyx.If(strings.Contains(timeStr, "-") && len(timeStr) == 10, DateFmt, TimeFmt)
-	return TimeFormat(timeStr, format)
+	var format = anyx.If(strings.Contains(timeStr, "-") && len(timeStr) == 10, DateFmt, TimeFmt)
+	return TimeParse(timeStr, format)
 }
 
 // 时间格式化
-func TimeFormat(timeStr string, format string) time.Time {
-	if parseTime, err := time.ParseInLocation(format, timeStr, time.Local); err != nil {
+func TimeParse(timeStr string, format ...string) time.Time {
+	var layout = anyx.Default(TimeFmt, format...)
+	if parseTime, err := time.ParseInLocation(layout, timeStr, time.Local); err != nil {
 		return time.Unix(0, 0)
 	} else {
 		return parseTime
@@ -113,40 +114,40 @@ func ShengXiao(year int) string {
 }
 
 // 间隔时间
-func TimeDiff(small, big time.Time, unit Unit) (diff int64) {
+func TimeDiff(start, end time.Time, unit Unit) (diff int64) {
 	switch unit {
 	case Year:
-		diff = int64(YearInterval(small, big))
+		diff = int64(YearInterval(start, end))
 	case Month:
-		diff = int64(MonthInterval(small, big))
+		diff = int64(MonthInterval(start, end))
 	case Day:
-		diff = (big.Unix() - small.Unix()) / 86400
+		diff = (end.Unix() - start.Unix()) / 86400
 	case Hour:
-		diff = (big.Unix() - small.Unix()) / 3600
+		diff = (end.Unix() - start.Unix()) / 3600
 	case Minute:
-		diff = (big.Unix() - small.Unix()) / 60
+		diff = (end.Unix() - start.Unix()) / 60
 	case Second:
-		diff = big.Unix() - small.Unix()
+		diff = end.Unix() - start.Unix()
 	case Milli:
-		diff = big.UnixMilli() - small.UnixMilli()
+		diff = end.UnixMilli() - start.UnixMilli()
 	case Micro:
-		diff = big.UnixMicro() - small.UnixMicro()
+		diff = end.UnixMicro() - start.UnixMicro()
 	case Nano:
-		diff = big.UnixNano() - small.UnixNano()
+		diff = end.UnixNano() - start.UnixNano()
 	default:
 	}
 	return
 }
 
 // 间隔年数
-func YearInterval(small, big time.Time) int {
-	return big.Year() - small.Year()
+func YearInterval(start, end time.Time) int {
+	return end.Year() - start.Year()
 }
 
 // 间隔月份数
-func MonthInterval(small, big time.Time) int {
-	y1, m1, d1 := small.Date()
-	y2, m2, d2 := big.Date()
+func MonthInterval(start, end time.Time) int {
+	y1, m1, d1 := start.Date()
+	y2, m2, d2 := end.Date()
 	diff := (y2-y1)*12 + int(m2-m1)
 	if d1 <= d2 {
 		diff++

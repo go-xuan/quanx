@@ -49,9 +49,9 @@ func (c *Cache) Run() (err error) {
 
 func Default() *Cache {
 	return &Cache{
-		Source:  constx.Default,
+		Source:  constx.DefaultSourceName,
 		Prefix:  "cache",
-		Marshal: marshalx.Msgpack,
+		Marshal: marshalx.Json,
 	}
 }
 
@@ -79,7 +79,7 @@ func (m MultiCache) Run() error {
 	for i, c := range multi {
 		var client = c.CacheClient()
 		handler.ClientMap[c.Source] = client
-		if i == 0 || c.Source == constx.Default {
+		if i == 0 || c.Source == constx.DefaultSourceName {
 			handler.Client = client
 		}
 		log.Info("Cache Init Successful : ", c.ToString())

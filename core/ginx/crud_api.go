@@ -11,6 +11,7 @@ import (
 	"github.com/go-xuan/quanx/common/modelx"
 	"github.com/go-xuan/quanx/file/excelx"
 	"github.com/go-xuan/quanx/net/respx"
+	"github.com/go-xuan/quanx/types/timex"
 )
 
 func NewCrudApi[T any](group *gin.RouterGroup, db *gorm.DB) {
@@ -92,7 +93,7 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 		respx.Exception(ctx, respx.ParamErr, err)
 		return
 	}
-	var filePath = filepath.Join(constx.ResourceDir, form.File.Filename)
+	var filePath = filepath.Join(constx.DefaultResourceDir, form.File.Filename)
 	if err = ctx.SaveUploadedFile(form.File, filePath); err != nil {
 		respx.Exception(ctx, respx.ParamErr, err)
 		return
@@ -113,7 +114,7 @@ func (m *Model[T]) Export(ctx *gin.Context) {
 		respx.Exception(ctx, respx.ImportErr, err)
 		return
 	}
-	var filePath = filepath.Join(constx.ResourceDir, time.Now().Format("20060102150405")+".xlsx")
+	var filePath = filepath.Join(constx.DefaultResourceDir, time.Now().Format(timex.TimestampFmt)+".xlsx")
 	var obj T
 	if err := excelx.ExcelWriter(filePath, obj, result); err != nil {
 		respx.Exception(ctx, respx.ExportErr, err)

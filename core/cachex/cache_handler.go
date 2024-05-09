@@ -28,7 +28,7 @@ func Client(source ...string) *CacheClient {
 }
 
 func (h *Handler) GetClient(source ...string) *CacheClient {
-	if len(source) > 0 && source[0] != constx.Default {
+	if len(source) > 0 && source[0] != constx.DefaultSourceName {
 		if client, ok := h.ClientMap[source[0]]; ok {
 			return client
 		}

@@ -1,9 +1,9 @@
 package constx
 
-// setting
+// default setting
 const (
-	Config      = "config.yaml"
-	ResourceDir = "resource" // 默认资源存放路径
-	ConfDir     = "conf"     // 配置文件路径
-	Default     = "default"  // 默认源名称（gorm/redis/...）
+	DefaultServerConfig = "config.yaml"
+	DefaultResourceDir  = "resource" // 默认资源存放路径
+	DefaultConfDir      = "conf"     // 配置文件路径
+	DefaultSourceName   = "default"  // 默认源名称（gorm/redis/...）
 )

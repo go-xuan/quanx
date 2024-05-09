@@ -72,8 +72,8 @@ func ParseUserFromToken(token string) (user *User, err error) {
 }
 
 // 生成Token值
-func generateToken(mapClaims jwt.MapClaims) (string, error) {
-	return jwt.NewWithClaims(jwt.SigningMethodHS256, mapClaims).SignedString(SecretKey)
+func generateToken(claims jwt.MapClaims) (string, error) {
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(SecretKey)
 }
 
 // 解析token
