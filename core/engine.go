@@ -2,6 +2,9 @@ package core
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/core/cachex"
+	"github.com/go-xuan/quanx/core/ginx"
+	"github.com/go-xuan/quanx/db/redisx"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -10,12 +13,10 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/core/cachex"
 	"github.com/go-xuan/quanx/core/confx"
 	"github.com/go-xuan/quanx/core/logx"
 	"github.com/go-xuan/quanx/core/nacosx"
 	"github.com/go-xuan/quanx/db/gormx"
-	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/net/ipx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
@@ -298,7 +299,7 @@ func (e *Engine) startGin() {
 	if e.ginEngine == nil {
 		e.ginEngine = gin.New()
 	}
-	e.ginEngine.Use(gin.Recovery(), logx.GinRequestLog)
+	e.ginEngine.Use(gin.Recovery(), ginx.GinRequestLog)
 	e.ginEngine.Use(e.ginMiddlewares...)
 	_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
 	// 注册服务根路由，并执行路由注册函数

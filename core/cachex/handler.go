@@ -23,7 +23,7 @@ func Initialized() bool {
 	return handler != nil
 }
 
-func Client(source ...string) *CacheClient {
+func GetClient(source ...string) *CacheClient {
 	return This().GetClient(source...)
 }
 

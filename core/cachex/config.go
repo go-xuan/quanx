@@ -2,19 +2,27 @@ package cachex
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/db/redisx"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/core/confx"
-	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"
+)
+
+const (
+	CacheTypeRedis = "redis"
+	CacheTypeLocal = "local"
 )
 
 // 缓存配置
 type MultiCache []*Cache
 
 type Cache struct {
+	Type    string `json:"type" yaml:"type" default:"redis"`         // 缓存类型（local/redis）
 	Source  string `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称
 	Prefix  string `json:"prefix" yaml:"prefix" default:"default"`   // 缓存KEY前缀前缀
 	Marshal string `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
@@ -93,19 +101,37 @@ func (c *Cache) ToString() string {
 }
 
 func (c *Cache) CacheClient() *CacheClient {
-	return &CacheClient{
-		cache:     c,
-		client:    redisx.Client(c.Source),
-		unmarshal: marshalx.NewCase(c.Marshal).Unmarshal,
+	if c.Type == CacheTypeRedis {
+		return &CacheClient{
+			cache:     c,
+			client:    &RedisClient{redisx.Client(c.Source)},
+			unmarshal: marshalx.NewCase(c.Marshal).Unmarshal,
+		}
+	} else {
+		return &CacheClient{
+			cache:     c,
+			client:    &LocalClient{localCache},
+			unmarshal: marshalx.NewCase(c.Marshal).Unmarshal,
+		}
 	}
 }
 
-func (c *Cache) AddPrefix(keys []string) []string {
-	var newKeys []string
-	if len(keys) > 0 {
-		for _, key := range keys {
-			newKeys = append(newKeys, c.Prefix+key)
-		}
+func (c *Cache) GetKey(key string) string {
+	if c.Prefix != "" {
+		return stringx.AddSuffix(c.Prefix, ":") + key
+	} else {
+		return key
 	}
-	return newKeys
+}
+
+func (c *Cache) GetKeys(keys []string) []string {
+	if len(keys) > 0 && c.Prefix != "" {
+		prefix := stringx.AddSuffix(c.Prefix, ":")
+		var newKeys []string
+		for _, key := range keys {
+			newKeys = append(newKeys, prefix+key)
+		}
+		return newKeys
+	}
+	return keys
 }

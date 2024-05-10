@@ -2,6 +2,8 @@ package logx
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -14,6 +16,21 @@ import (
 	"github.com/go-xuan/quanx/types/intx"
 )
 
+// 日志级别
+const (
+	TraceLevel = "trace"
+	DebugLevel = "debug"
+	InfoLevel  = "info"
+	ErrorLevel = "error"
+	FatalLevel = "fatal"
+	PanicLevel = "panic"
+)
+
+const (
+	ConsoleOutput = "console"
+	FileOutput    = "file"
+)
+
 func New(app string) *LogConfig {
 	return &LogConfig{FileName: app + ".log"}
 }
@@ -23,6 +40,7 @@ type LogConfig struct {
 	FileName string `json:"fileName" yaml:"fileName" default:"app.log"` // 日志文件名
 	Dir      string `json:"dir" yaml:"dir" default:"resource/log"`      // 日志保存文件夹
 	Level    string `json:"level" yaml:"level" default:"info"`          // 日志级别
+	Output   string `json:"output" yaml:"output" default:"default"`     // 日志输出
 	Caller   bool   `json:"caller" yaml:"caller" default:"false"`       // Flag for whether to caller
 	MaxSize  int    `json:"maxSize" yaml:"maxSize" default:"100"`       // 日志大小(单位：mb)
 	MaxAge   int    `json:"maxAge" yaml:"maxAge" default:"1"`           // 日志保留天数(单位：天)
@@ -54,15 +72,8 @@ func (l *LogConfig) Run() error {
 		return err
 	}
 	filex.CreateDir(l.Dir)
-	var writer = &lumberjack.Logger{
-		Filename:   l.LogPath(),
-		MaxSize:    intx.IfZero(l.MaxSize, 100),
-		MaxAge:     intx.IfZero(l.MaxAge, 7),
-		MaxBackups: intx.IfZero(l.Backups, 10),
-		Compress:   true,
-	}
-	var formatter = &LogFormatter{TimeFormat: TimeFormat}
-	var hook = NewHook(writer, formatter)
+	var formatter = NewLogFormatter("2006-01-02 15:04:05.999")
+	var hook = NewHook(l.LogWriter(), formatter)
 	var logger = logrus.StandardLogger()
 	logger.AddHook(hook)
 	logger.SetReportCaller(l.Caller)
@@ -75,30 +86,37 @@ func (l *LogConfig) LogPath() string {
 	return filepath.Join(l.Dir, l.FileName)
 }
 
-// 日志级别
-const (
-	Trace = "trace"
-	Debug = "debug"
-	Info  = "info"
-	Error = "error"
-	Fatal = "fatal"
-	Panic = "panic"
-)
+func (l *LogConfig) LogWriter() io.Writer {
+	switch l.Output {
+	case ConsoleOutput:
+		return os.Stdout
+	case FileOutput:
+		return &FileWriter{path: l.LogPath()}
+	default:
+		return &lumberjack.Logger{
+			Filename:   l.LogPath(),
+			MaxSize:    intx.IfZero(l.MaxSize, 100),
+			MaxAge:     intx.IfZero(l.MaxAge, 7),
+			MaxBackups: intx.IfZero(l.Backups, 10),
+			Compress:   true,
+		}
+	}
+}
 
 // 日志级别映射，默认debug
 func (l *LogConfig) GetLevel() logrus.Level {
 	switch strings.ToLower(l.Level) {
-	case Trace:
+	case TraceLevel:
 		return logrus.TraceLevel
-	case Debug:
+	case DebugLevel:
 		return logrus.DebugLevel
-	case Info:
+	case InfoLevel:
 		return logrus.InfoLevel
-	case Error:
+	case ErrorLevel:
 		return logrus.ErrorLevel
-	case Fatal:
+	case FatalLevel:
 		return logrus.FatalLevel
-	case Panic:
+	case PanicLevel:
 		return logrus.PanicLevel
 	default:
 		return logrus.DebugLevel

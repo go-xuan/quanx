@@ -2,13 +2,16 @@ package ginx
 
 import (
 	"errors"
+	"github.com/go-xuan/quanx/core/cachex"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/core"
-	"github.com/go-xuan/quanx/core/cachex"
 	"github.com/go-xuan/quanx/net/respx"
 	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/encryptx"
 )
 
@@ -28,7 +31,7 @@ var cacheClient *cachex.CacheClient
 
 func AuthCache() *cachex.CacheClient {
 	if cacheClient == nil {
-		cacheClient = cachex.Client(UserCacheName)
+		cacheClient = cachex.GetClient(UserCacheName)
 	}
 	return cacheClient
 }
@@ -64,13 +67,30 @@ func RemoveCookie(ctx *gin.Context) {
 	ctx.SetCookie(Cookie, "", -1, "", "", false, true)
 }
 
+// gin请求日志中间件
+func GinRequestLog(ctx *gin.Context) {
+	start := time.Now()
+	// 处理请求
+	ctx.Next()
+	var ip string
+	if ipv, ok := ctx.Get(IPKey); ok {
+		ip = ipv.(string)
+	} else {
+		ip = stringx.IfNot(ctx.ClientIP(), "::1", core.GetServer().Host)
+	}
+	// 日志格式
+	logrus.Infof("[%3d][%8dms][%15s][%6s][%s]",
+		ctx.Writer.Status(),
+		time.Now().Sub(start).Milliseconds(),
+		ip,
+		ctx.Request.Method,
+		ctx.Request.RequestURI,
+	)
+}
+
 // 校验请求IP
 func CheckIP(ctx *gin.Context) {
-	var ip string
-	if ip = ctx.ClientIP(); ip == "::1" {
-		ip = core.GetServer().Host
-	}
-	ctx.Set(IPKey, ip)
+	ctx.Set(IPKey, stringx.IfNot(ctx.ClientIP(), "::1", core.GetServer().Host))
 	ctx.Next()
 	return
 }

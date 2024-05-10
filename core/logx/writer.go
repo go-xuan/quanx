@@ -6,7 +6,7 @@ import (
 	"github.com/go-xuan/quanx/file/filex"
 )
 
-// 日志输出
+// 文件输出
 type FileWriter struct {
 	path string
 }
