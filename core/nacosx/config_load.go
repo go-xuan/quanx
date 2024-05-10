@@ -76,14 +76,14 @@ func (c *Config) Loading(v any) (err error) {
 	var toString = c.ToString()
 	var content string
 	if content, err = ReadConfigContent(c.Group, c.DataId); err != nil {
-		log.Error("Read Nacos Config Content Failed : ", toString, err)
+		log.Error("Read Nacos Config Content Failed: ", toString, err)
 		return
 	}
 	if err = marshalx.NewCase(c.DataId).Unmarshal([]byte(content), v); err != nil {
-		log.Error("Loading Nacos Config Failed : ", toString, err)
+		log.Error("Loading Nacos Config Failed: ", toString, err)
 		return
 	}
-	log.Info("Loading Nacos Config Successful : ", toString)
+	log.Info("Loading Nacos Config Successful: ", toString)
 	if c.Listen {
 		// 设置Nacos配置监听
 		GetNacosConfigMonitor().Set(c.Group, c.DataId, content)
@@ -93,10 +93,10 @@ func (c *Config) Loading(v any) (err error) {
 			GetNacosConfigMonitor().Set(group, dataId, data)
 		}
 		if err = This().ConfigClient.ListenConfig(param); err != nil {
-			log.Error("Listen Nacos Config Failed : ", toString, err)
+			log.Error("Listen Nacos Config Failed: ", toString, err)
 			return
 		}
-		log.Info("Listen Nacos Config Successful : ", toString)
+		log.Info("Listen Nacos Config Successful: ", toString)
 	}
 	return
 }

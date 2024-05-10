@@ -69,7 +69,7 @@ func (c MultiDatabase) Run() (err error) {
 			var db *gorm.DB
 			var toString = d.ToString()
 			if db, err = d.NewGormDB(); err != nil {
-				log.Error("Database Connect Failed : ", toString, err)
+				log.Error("Database Connect Failed: ", toString, err)
 				return err
 			}
 			handler.DBMap[d.Source] = db
@@ -78,7 +78,7 @@ func (c MultiDatabase) Run() (err error) {
 				handler.DB = db
 				handler.Config = d
 			}
-			log.Info("Database Connect Successful : ", toString)
+			log.Info("Database Connect Successful: ", toString)
 		}
 	}
 	if len(handler.ConfigMap) == 0 {
@@ -116,7 +116,7 @@ func (d *Database) Run() (err error) {
 		var db *gorm.DB
 		var toString = d.ToString()
 		if db, err = d.NewGormDB(); err != nil {
-			log.Error("Database Connect Failed : ", toString, err)
+			log.Error("Database Connect Failed: ", toString, err)
 			return
 		}
 		handler = &Handler{
@@ -128,7 +128,7 @@ func (d *Database) Run() (err error) {
 		}
 		handler.DBMap[d.Source] = db
 		handler.ConfigMap[d.Source] = d
-		log.Info("Database Connect Successful : ", toString)
+		log.Info("Database Connect Successful: ", toString)
 		return
 	}
 	log.Info("Database Connect Failed! reason: database.yaml is empty or the value of enable is false")

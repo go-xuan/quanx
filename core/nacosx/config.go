@@ -124,7 +124,7 @@ func (n *Nacos) ServerConfigs() (serverConfigs []constant.ServerConfig) {
 // 初始化Nacos配置中心客户端
 func (n *Nacos) ConfigClient(param vo.NacosClientParam) (client config_client.IConfigClient, err error) {
 	if client, err = clients.NewConfigClient(param); err != nil {
-		log.Error("Nacos Config Client Init Failed : ", n.ToString(), err)
+		log.Error("Nacos Config Client Init Failed: ", n.ToString(), err)
 		return
 	}
 	return
@@ -133,7 +133,7 @@ func (n *Nacos) ConfigClient(param vo.NacosClientParam) (client config_client.IC
 // 初始化Nacos服务发现客户端
 func (n *Nacos) NamingClient(param vo.NacosClientParam) (client naming_client.INamingClient, err error) {
 	if client, err = clients.NewNamingClient(param); err != nil {
-		log.Error("Nacos Naming Client Init Failed : ", n.ToString(), err)
+		log.Error("Nacos Naming Client Init Failed: ", n.ToString(), err)
 		return
 	}
 	return

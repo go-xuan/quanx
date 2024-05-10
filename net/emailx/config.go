@@ -43,6 +43,6 @@ func (*Email) Reader() *confx.Reader {
 // 配置器运行
 func (e *Email) Run() error {
 	handler = &Handler{Config: e, Dialer: e.newDialer()}
-	log.Info("Email Server Init Successful : ", e.ToString())
+	log.Info("Email Server Init Successful: ", e.ToString())
 	return nil
 }

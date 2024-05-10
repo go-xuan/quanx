@@ -51,11 +51,11 @@ func (m *Minio) Run() (err error) {
 	var client *minio.Client
 	var toString = m.ToString()
 	if client, err = m.NewClient(); err != nil {
-		log.Error("Minio Connect Failed : ", toString, err)
+		log.Error("Minio Connect Failed: ", toString, err)
 		return
 	}
 	handler = &Handler{Config: m, Client: client}
-	log.Info("Minio Connect Successful : ", toString)
+	log.Info("Minio Connect Successful: ", toString)
 	return
 }
 

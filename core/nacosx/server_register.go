@@ -38,9 +38,9 @@ func RegisterInstance(server *ServerInstance) {
 		Ephemeral:   true,
 		Metadata:    nil,
 	}); err != nil {
-		log.Error("Nacos Server Register Failed : ", toString, err)
+		log.Error("Nacos Server Register Failed: ", toString, err)
 	} else {
-		log.Info("Nacos Server Register Successful : ", toString)
+		log.Info("Nacos Server Register Successful: ", toString)
 	}
 }
 

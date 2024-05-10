@@ -54,7 +54,7 @@ func PropertiesUnmarshal(bytes []byte, v any) (err error) {
 			if tag == "" {
 				continue
 			}
-			fmt.Println("the type not matched : ", field.Kind())
+			fmt.Println("the type not matched: ", field.Kind())
 		}
 	}
 	return
@@ -83,7 +83,7 @@ func propertiesSetStructValue(pp *properties.Properties, v reflect.Value) {
 			if tag == "" {
 				continue
 			}
-			fmt.Println("the type not matched : ", field.Kind())
+			fmt.Println("the type not matched: ", field.Kind())
 		}
 	}
 }
@@ -111,7 +111,7 @@ func propertiesSetPointerValue(pp *properties.Properties, v reflect.Value) {
 			if tag == "" {
 				continue
 			}
-			fmt.Println("the type not matched : ", field.Kind())
+			fmt.Println("the type not matched: ", field.Kind())
 		}
 	}
 }

@@ -41,11 +41,11 @@ func (e *Elastic) Run() (err error) {
 		var url, toString = e.Url(), e.ToString()
 		var client *elastic.Client
 		if client, err = e.NewClient(url); err != nil {
-			log.Error("Elastic Search Connect Failed : ", toString, err)
+			log.Error("Elastic Search Connect Failed: ", toString, err)
 			return
 		}
 		handler = &Handler{Config: e, Url: url, Client: client}
-		log.Info("Elastic Search Connect Successful : ", toString)
+		log.Info("Elastic Search Connect Successful: ", toString)
 	}
 	return
 }
@@ -63,6 +63,6 @@ func (e *Elastic) NewClient(url string) (client *elastic.Client, err error) {
 	if result, code, err = client.Ping(url).Do(context.Background()); err != nil && code != 200 {
 		return
 	}
-	log.Info("ElasticSearch Version : ", result.Version.Number)
+	log.Info("ElasticSearch Version: ", result.Version.Number)
 	return
 }

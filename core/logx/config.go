@@ -37,20 +37,21 @@ func New(app string) *LogConfig {
 
 // 日志配置
 type LogConfig struct {
-	FileName string `json:"fileName" yaml:"fileName" default:"app.log"` // 日志文件名
-	Dir      string `json:"dir" yaml:"dir" default:"resource/log"`      // 日志保存文件夹
-	Level    string `json:"level" yaml:"level" default:"info"`          // 日志级别
-	Output   string `json:"output" yaml:"output" default:"default"`     // 日志输出
-	Caller   bool   `json:"caller" yaml:"caller" default:"false"`       // Flag for whether to caller
-	MaxSize  int    `json:"maxSize" yaml:"maxSize" default:"100"`       // 日志大小(单位：mb)
-	MaxAge   int    `json:"maxAge" yaml:"maxAge" default:"1"`           // 日志保留天数(单位：天)
-	Backups  int    `json:"backups" yaml:"backups" default:"10"`        // 日志备份数
+	FileName string `json:"fileName" yaml:"fileName" default:"app.log"`               // 日志文件名
+	Dir      string `json:"dir" yaml:"dir" default:"resource/log"`                    // 日志保存文件夹
+	Level    string `json:"level" yaml:"level" default:"info"`                        // 日志级别
+	TimeFmt  string `json:"timeFmt" yaml:"timeFmt" default:"2006-01-02 15:04:05.999"` // 时间格式化
+	Output   string `json:"output" yaml:"output" default:"default"`                   // 日志输出
+	Caller   bool   `json:"caller" yaml:"caller" default:"false"`                     // Flag for whether to caller
+	MaxSize  int    `json:"maxSize" yaml:"maxSize" default:"100"`                     // 日志大小(单位：mb)
+	MaxAge   int    `json:"maxAge" yaml:"maxAge" default:"1"`                         // 日志保留天数(单位：天)
+	Backups  int    `json:"backups" yaml:"backups" default:"10"`                      // 日志备份数
 }
 
 // 配置信息格式化
 func (l *LogConfig) ToString() string {
-	return fmt.Sprintf("logPath=%s level=%s maxSize=%d maxAge=%d backups=%d",
-		l.LogPath(), l.Level, l.MaxSize, l.MaxAge, l.Backups)
+	return fmt.Sprintf("logPath=%s level=%s output=%s maxSize=%d maxAge=%d backups=%d",
+		l.LogPath(), l.Level, l.Output, l.MaxSize, l.MaxAge, l.Backups)
 }
 
 // 配置器名称
@@ -72,18 +73,23 @@ func (l *LogConfig) Run() error {
 		return err
 	}
 	filex.CreateDir(l.Dir)
-	var formatter = NewLogFormatter("2006-01-02 15:04:05.999")
-	var hook = NewHook(l.LogWriter(), formatter)
 	var logger = logrus.StandardLogger()
-	logger.AddHook(hook)
-	logger.SetReportCaller(l.Caller)
+	var writer, formatter = l.LogWriter(), l.Formatter()
+	logger.AddHook(NewHook(writer, formatter))
 	logger.SetFormatter(formatter)
+	//logger.SetOutput(writer)
 	logger.SetLevel(l.GetLevel())
+	logger.SetReportCaller(l.Caller)
+	logrus.Info("Log Init Successful: ", l.ToString())
 	return nil
 }
 
 func (l *LogConfig) LogPath() string {
 	return filepath.Join(l.Dir, l.FileName)
+}
+
+func (l *LogConfig) Formatter() *LogFormatter {
+	return &LogFormatter{l.TimeFmt}
 }
 
 func (l *LogConfig) LogWriter() io.Writer {

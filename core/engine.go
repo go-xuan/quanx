@@ -2,9 +2,6 @@ package core
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/core/cachex"
-	"github.com/go-xuan/quanx/core/ginx"
-	"github.com/go-xuan/quanx/db/redisx"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -13,10 +10,12 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/core/cachex"
 	"github.com/go-xuan/quanx/core/confx"
 	"github.com/go-xuan/quanx/core/logx"
 	"github.com/go-xuan/quanx/core/nacosx"
 	"github.com/go-xuan/quanx/db/gormx"
+	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/net/ipx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
@@ -263,10 +262,10 @@ func (e *Engine) RunConfigurator(conf confx.Configurator[any], must ...bool) {
 	}
 	if ok {
 		if err := conf.Run(); err != nil {
-			log.Error(conf.Theme(), " Run Failed")
+			log.Error(conf.Theme(), " Run Failed!")
 			panic(err)
 		}
-		log.Info(conf.Theme(), " Run Completed")
+		log.Info(conf.Theme(), " Run Completed!")
 	}
 }
 
@@ -281,12 +280,12 @@ func (e *Engine) LoadingLocalConfig(v any, path string) {
 func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() {
 		if nacosx.This().ConfigClient == nil {
-			panic("nacos config client is uninitialized ")
+			panic("Nacos Config Client Is Uninitialized ")
 		}
 		var config = nacosx.NewConfig(e.config.Server.Name, dataId, listen...)
 		// 加载微服务配置
 		if err := config.Loading(v); err != nil {
-			panic("loading nacos config failed : " + err.Error())
+			panic("Loading Nacos Config Failed : " + err.Error())
 		}
 	})
 }
@@ -299,7 +298,7 @@ func (e *Engine) startGin() {
 	if e.ginEngine == nil {
 		e.ginEngine = gin.New()
 	}
-	e.ginEngine.Use(gin.Recovery(), ginx.GinRequestLog)
+	e.ginEngine.Use(gin.Recovery(), logx.GinRequestLog)
 	e.ginEngine.Use(e.ginMiddlewares...)
 	_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
 	// 注册服务根路由，并执行路由注册函数
@@ -376,7 +375,7 @@ func (e *Engine) InitGinLoader(group *gin.RouterGroup) {
 // 服务保活
 func PanicRecover() {
 	if err := recover(); err != nil {
-		log.Error("server run panic : ", err)
+		log.Error("server run panic: ", err)
 		return
 	}
 	select {}

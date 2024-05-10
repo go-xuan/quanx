@@ -51,7 +51,7 @@ func (c *Cache) Run() (err error) {
 		ClientMap: make(map[string]*CacheClient),
 	}
 	handler.ClientMap[c.Source] = client
-	log.Info("Cache Init Successful : ", c.ToString())
+	log.Info("Cache Init Successful: ", c.ToString())
 	return
 }
 
@@ -90,14 +90,14 @@ func (m MultiCache) Run() error {
 		if i == 0 || c.Source == constx.DefaultSourceName {
 			handler.Client = client
 		}
-		log.Info("Cache Init Successful : ", c.ToString())
+		log.Info("Cache Init Successful: ", c.ToString())
 	}
 	return nil
 }
 
 // 配置信息格式化
 func (c *Cache) ToString() string {
-	return fmt.Sprintf("name=%s prefix=%s marshal=%s", c.Source, c.Prefix, c.Marshal)
+	return fmt.Sprintf("type=%s source=%s prefix=%s marshal=%s", c.Type, c.Source, c.Prefix, c.Marshal)
 }
 
 func (c *Cache) CacheClient() *CacheClient {
