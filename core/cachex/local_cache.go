@@ -13,9 +13,9 @@ import (
 var localCache *cache.Cache
 
 type LocalCache struct {
-	Expiration int    `json:"expiration" yaml:"expiration"` // 缓存有效期
-	Interval   int    `json:"interval" yaml:"interval"`     // 缓存清理间隔
-	File       string `json:"file" yaml:"file"`             // 缓存加载文件
+	Expiration int    `json:"expiration" yaml:"expiration" default:"-1"` // 缓存有效期
+	Interval   int    `json:"interval" yaml:"interval" default:"-1"`     // 缓存清理间隔
+	File       string `json:"file" yaml:"file"`                          // 缓存加载文件
 }
 
 // 配置信息格式化
