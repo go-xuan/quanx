@@ -56,10 +56,14 @@ func (c MultiDatabase) Run() (err error) {
 		log.Error("Database Connect Failed! Reason: database.yaml Not Found")
 		return
 	}
-	handler = &Handler{
-		Multi:     true,
-		DBMap:     make(map[string]*gorm.DB),
-		ConfigMap: make(map[string]*Database),
+	if handler == nil {
+		handler = &Handler{
+			Multi:     true,
+			DBMap:     make(map[string]*gorm.DB),
+			ConfigMap: make(map[string]*Database),
+		}
+	} else {
+		handler.Multi = true
 	}
 	for i, d := range c {
 		if d.Enable {
@@ -119,15 +123,21 @@ func (d *Database) Run() (err error) {
 			log.Error("Database Connect Failed: ", toString, err)
 			return
 		}
-		handler = &Handler{
-			Multi:     false,
-			DB:        db,
-			Config:    d,
-			DBMap:     make(map[string]*gorm.DB),
-			ConfigMap: make(map[string]*Database),
+
+		if handler == nil {
+			handler = &Handler{
+				Multi:     false,
+				DB:        db,
+				Config:    d,
+				DBMap:     map[string]*gorm.DB{},
+				ConfigMap: make(map[string]*Database),
+			}
+		} else {
+			handler.Multi = true
 		}
 		handler.DBMap[d.Source] = db
 		handler.ConfigMap[d.Source] = d
+
 		log.Info("Database Connect Successful: ", toString)
 		return
 	}

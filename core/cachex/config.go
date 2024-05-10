@@ -45,10 +45,14 @@ func (c *Cache) Run() (err error) {
 		return
 	}
 	var client = c.CacheClient()
-	handler = &Handler{
-		Multi:     false,
-		Client:    client,
-		ClientMap: make(map[string]*CacheClient),
+	if handler == nil {
+		handler = &Handler{
+			Multi:     false,
+			Client:    client,
+			ClientMap: make(map[string]*CacheClient),
+		}
+	} else {
+		handler.Multi = true
 	}
 	handler.ClientMap[c.Source] = client
 	log.Info("Cache Init Successful: ", c.ToString())
@@ -79,9 +83,13 @@ func (MultiCache) Reader() *confx.Reader {
 
 // 配置器运行
 func (m MultiCache) Run() error {
-	handler = &Handler{
-		Multi:     true,
-		ClientMap: make(map[string]*CacheClient),
+	if handler == nil {
+		handler = &Handler{
+			Multi:     true,
+			ClientMap: make(map[string]*CacheClient),
+		}
+	} else {
+		handler.Multi = true
 	}
 	multi := anyx.IfZero(m, MultiCache{Default()})
 	for i, c := range multi {

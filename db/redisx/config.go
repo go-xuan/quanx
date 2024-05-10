@@ -54,10 +54,15 @@ func (conf MultiRedis) Run() error {
 		log.Error("Redis Connect Failed! Reason: redis.yaml Not Found")
 		return nil
 	}
-	handler = &Handler{
-		Multi:     true,
-		clientMap: make(map[string]*redis.UniversalClient),
-		ConfigMap: make(map[string]*Redis),
+
+	if handler == nil {
+		handler = &Handler{
+			Multi:     true,
+			clientMap: make(map[string]*redis.UniversalClient),
+			ConfigMap: make(map[string]*Redis),
+		}
+	} else {
+		handler.Multi = true
 	}
 	for i, r := range conf {
 		if r.Enable {
@@ -105,7 +110,6 @@ func (*Redis) Reader() *confx.Reader {
 // 配置器运行
 func (r *Redis) Run() (err error) {
 	if r.Enable {
-
 		if err = anyx.SetDefaultValue(r); err != nil {
 			return
 		}
@@ -114,12 +118,16 @@ func (r *Redis) Run() (err error) {
 			log.Error("Redis Connect Failed: ", toString, err)
 			return
 		}
-		handler = &Handler{
-			Multi:     false,
-			Client:    client,
-			Config:    r,
-			clientMap: make(map[string]*redis.UniversalClient),
-			ConfigMap: make(map[string]*Redis),
+		if handler == nil {
+			handler = &Handler{
+				Multi:     false,
+				Client:    client,
+				Config:    r,
+				clientMap: make(map[string]*redis.UniversalClient),
+				ConfigMap: make(map[string]*Redis),
+			}
+		} else {
+			handler.Multi = true
 		}
 		handler.clientMap[r.Source] = client
 		handler.ConfigMap[r.Source] = r
