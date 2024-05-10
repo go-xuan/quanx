@@ -39,6 +39,7 @@ func GetEngine(modes ...Flag) *Engine {
 		gin.SetMode(gin.ReleaseMode)
 		engine.SetMode(modes...)
 	}
+	log.SetFormatter(logx.DefaultFormatter())
 	return engine
 }
 

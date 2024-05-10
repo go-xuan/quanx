@@ -74,7 +74,7 @@ func (n *Nacos) Run() (err error) {
 			}
 		}
 	}
-	log.Info("Nacos Connect Successful", n.ToString())
+	log.Info("Nacos Connect Successful: ", n.ToString())
 	return
 }
 

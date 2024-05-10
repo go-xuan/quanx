@@ -17,6 +17,10 @@ type LogFormatter struct {
 	timeFormat string
 }
 
+func DefaultFormatter() *LogFormatter {
+	return &LogFormatter{"2006-01-02 15:04:05.999"}
+}
+
 // 日志格式化,用以实现logrus.Formatter接口
 func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	host, _ := os.Hostname()

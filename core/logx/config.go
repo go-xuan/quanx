@@ -73,13 +73,12 @@ func (l *LogConfig) Run() error {
 		return err
 	}
 	filex.CreateDir(l.Dir)
-	var logger = logrus.StandardLogger()
 	var writer, formatter = l.LogWriter(), l.Formatter()
-	logger.AddHook(NewHook(writer, formatter))
-	logger.SetFormatter(formatter)
+	logrus.AddHook(NewHook(writer, formatter))
+	logrus.SetFormatter(formatter)
 	//logger.SetOutput(writer)
-	logger.SetLevel(l.GetLevel())
-	logger.SetReportCaller(l.Caller)
+	logrus.SetLevel(l.GetLevel())
+	logrus.SetReportCaller(l.Caller)
 	logrus.Info("Log Init Successful: ", l.ToString())
 	return nil
 }
