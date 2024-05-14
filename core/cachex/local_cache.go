@@ -13,8 +13,8 @@ import (
 var localCache *cache.Cache
 
 type LocalCache struct {
-	Expiration int    `json:"expiration" yaml:"expiration" default:"-1"` // 缓存有效期
-	Interval   int    `json:"interval" yaml:"interval" default:"-1"`     // 缓存清理间隔
+	Expiration int    `json:"expiration" yaml:"expiration" default:"-1"` // 默认缓存有效期，-1表示无期
+	Interval   int    `json:"interval" yaml:"interval" default:"-1"`     // 缓存清理间隔，-1表示永不清理
 	File       string `json:"file" yaml:"file"`                          // 缓存加载文件
 }
 

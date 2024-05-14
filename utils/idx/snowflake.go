@@ -1,4 +1,4 @@
-package snowflakex
+package idx
 
 import (
 	"math"
@@ -25,31 +25,31 @@ const (
 	epoch          = int64(946656000000)              // 起始常量时间戳（毫秒）,此处选取的时间是2000-01-01 00:00:00
 )
 
-var snow *Snowflake
+var flake *Flake
 
-type Snowflake struct {
-	sync.Mutex
+type Flake struct {
+	*sync.Mutex
 	WorkerId  int64 // 机器号,0~1023
 	TimeStamp int64 // 时间戳
 	Sequence  int64 // 序列号
 }
 
-func New(id ...int64) *Snowflake {
+func SnowFlake(id ...int64) *Flake {
 	workerId := anyx.Default(1, id...)
-	if snow == nil || snow.WorkerId != workerId {
-		snow = newSnowflake(workerId)
+	if flake == nil || flake.WorkerId != workerId {
+		flake = newSnowflake(workerId)
 	}
-	return snow
+	return flake
 }
 
-func newSnowflake(workerId int64) *Snowflake {
+func newSnowflake(workerId int64) *Flake {
 	if workerId < 0 || workerId > workerMax {
 		workerId = int64(math.Abs(float64(workerId % workerMax)))
 	}
-	return &Snowflake{WorkerId: workerId, TimeStamp: 0, Sequence: 0}
+	return &Flake{WorkerId: workerId, TimeStamp: 0, Sequence: 0}
 }
 
-func (s *Snowflake) Int64() int64 {
+func (s *Flake) Int64() int64 {
 	s.Lock()
 	defer s.Unlock()
 	now := time.Now().UnixNano() / 1e6
@@ -67,6 +67,6 @@ func (s *Snowflake) Int64() int64 {
 	return (now-epoch)<<timeStampShift | (s.WorkerId << workerShift) | (s.Sequence)
 }
 
-func (s *Snowflake) String() string {
+func (s *Flake) String() string {
 	return strconv.FormatInt(s.Int64(), 10)
 }

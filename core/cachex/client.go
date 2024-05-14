@@ -30,20 +30,20 @@ func GetValue[T any](ctx context.Context, client *CacheClient, k string, get fun
 	return v
 }
 
-func (c *CacheClient) Get(ctx context.Context, k string, v any) {
-	if value, err := c.client.GET(ctx, c.cache.GetKey(k)); err == nil {
-		_ = c.unmarshal([]byte(value), v)
+func (c *CacheClient) Get(ctx context.Context, key string, value any) {
+	if v, err := c.client.GET(ctx, c.cache.GetKey(key)); err == nil {
+		_ = c.unmarshal([]byte(v), value)
 	}
 	return
 }
 
-func (c *CacheClient) GetString(ctx context.Context, k string) string {
-	res, _ := c.client.GET(ctx, c.cache.GetKey(k))
+func (c *CacheClient) GetString(ctx context.Context, key string) string {
+	res, _ := c.client.GET(ctx, c.cache.GetKey(key))
 	return res
 }
 
-func (c *CacheClient) Set(ctx context.Context, k string, v any, d time.Duration) {
-	c.client.SET(ctx, c.cache.GetKey(k), v, d)
+func (c *CacheClient) Set(ctx context.Context, key string, value any, expiration time.Duration) {
+	c.client.SET(ctx, c.cache.GetKey(key), value, expiration)
 }
 
 func (c *CacheClient) Delete(ctx context.Context, keys ...string) int64 {
