@@ -1,7 +1,7 @@
 package confx
 
 // 配置器
-type Configurator[T any] interface {
+type Configurator interface {
 	Title() string   // 配置器标题
 	Reader() *Reader // 配置文件读取
 	Run() error      // 配置器运行

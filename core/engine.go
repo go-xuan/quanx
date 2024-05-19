@@ -31,7 +31,7 @@ func GetEngine(modes ...Flag) *Engine {
 			config:         &Config{},
 			configDir:      constx.DefaultConfDir,
 			customFuncs:    make([]func(), 0),
-			configurators:  make([]confx.Configurator[any], 0),
+			configurators:  make([]confx.Configurator, 0),
 			ginMiddlewares: make([]gin.HandlerFunc, 0),
 			gormTables:     make(map[string][]gormx.Tabler[any]),
 			flag:           make(map[Flag]bool),
@@ -53,7 +53,7 @@ type Engine struct {
 	flag           map[Flag]bool                  // 服务运行标识
 	config         *Config                        // 服务配置 使用 loadingConfig()将配置文件加载到此
 	configDir      string                         // 服务配置文件文件夹, 使用 SetConfigDir()设置配置文件路径
-	configurators  []confx.Configurator[any]      // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
+	configurators  []confx.Configurator           // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
 	customFuncs    []func()                       // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
 	ginEngine      *gin.Engine                    // gin框架实例
 	ginLoaders     []RouterLoader                 // gin路由的预加载方法，使用 AddGinRouter()添加自行实现的路由注册方法
@@ -229,7 +229,7 @@ func (e *Engine) runCustomFunc() {
 }
 
 // 添加配置器
-func (e *Engine) AddConfigurator(conf ...confx.Configurator[any]) {
+func (e *Engine) AddConfigurator(conf ...confx.Configurator) {
 	if len(conf) > 0 {
 		e.configurators = append(e.configurators, conf...)
 	}
@@ -247,7 +247,7 @@ func (e *Engine) runConfigurators() {
 }
 
 // 运行配置器
-func (e *Engine) RunConfigurator(conf confx.Configurator[any], must ...bool) {
+func (e *Engine) RunConfigurator(conf confx.Configurator, must ...bool) {
 	var ok = anyx.Default(false, must...)
 	if reader := conf.Reader(); reader != nil {
 		if e.flag[EnableNacos] {
