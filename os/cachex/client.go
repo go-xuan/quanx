@@ -6,10 +6,10 @@ import (
 )
 
 type Client interface {
-	SET(ctx context.Context, k string, v any, expiration time.Duration)
-	GET(ctx context.Context, k string) (string, error)
-	DELETE(ctx context.Context, k ...string) int64
-	EXIST(ctx context.Context, k ...string) bool
+	SET(ctx context.Context, key string, value any, expiration time.Duration)
+	GET(ctx context.Context, key string) (string, error)
+	DELETE(ctx context.Context, keys ...string) int64
+	EXIST(ctx context.Context, keys ...string) bool
 }
 
 type CacheClient struct {
@@ -18,14 +18,14 @@ type CacheClient struct {
 	unmarshal func([]byte, any) error
 }
 
-func GetValue[T any](ctx context.Context, client *CacheClient, k string, get func() T) T {
-	k = client.cache.GetKey(k)
+func GetValue[T any](ctx context.Context, client *CacheClient, key string, get func() T) T {
+	key = client.cache.GetKey(key)
 	var v T
-	if client.Exists(ctx, k) {
-		client.Get(ctx, k, v)
+	if client.Exists(ctx, key) {
+		client.Get(ctx, key, v)
 	} else {
 		v = get()
-		client.Set(ctx, k, v, time.Duration(0))
+		client.Set(ctx, key, v, time.Duration(0))
 	}
 	return v
 }
