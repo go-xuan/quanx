@@ -2,12 +2,12 @@ package cachex
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/db/redisx"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/core/confx"
+	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"
@@ -61,7 +61,7 @@ func (c *Cache) Run() (err error) {
 
 func Default() *Cache {
 	return &Cache{
-		Source:  constx.DefaultSourceName,
+		Source:  constx.DefaultKey,
 		Prefix:  "cache",
 		Marshal: marshalx.Json,
 	}
@@ -95,7 +95,7 @@ func (m MultiCache) Run() error {
 	for i, c := range multi {
 		var client = c.CacheClient()
 		handler.ClientMap[c.Source] = client
-		if i == 0 || c.Source == constx.DefaultSourceName {
+		if i == 0 || c.Source == constx.DefaultKey {
 			handler.Client = client
 		}
 		log.Info("Cache Init Successful: ", c.ToString())

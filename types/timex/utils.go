@@ -108,40 +108,38 @@ func ShengXiao(year int) string {
 			break
 		}
 	}
-	diff := (year - 4) % 12
-	animals := strings.Split(AllShengXiao, ",")
-	return animals[diff]
+	return strings.Split(AllShengXiao, ",")[(year-4)%12]
 }
 
 // 间隔时间
-func TimeDiff(start, end time.Time, unit Unit) (diff int64) {
+func TimeDiff(start, end time.Time, unit Unit) int64 {
 	switch unit {
 	case Year:
-		diff = int64(YearInterval(start, end))
+		return int64(YearInterval(start, end))
 	case Month:
-		diff = int64(MonthInterval(start, end))
+		return int64(MonthInterval(start, end))
 	case Day:
-		diff = (end.Unix() - start.Unix()) / 86400
+		return (end.Unix() - start.Unix()) / 86400
 	case Hour:
-		diff = (end.Unix() - start.Unix()) / 3600
+		return (end.Unix() - start.Unix()) / 3600
 	case Minute:
-		diff = (end.Unix() - start.Unix()) / 60
+		return (end.Unix() - start.Unix()) / 60
 	case Second:
-		diff = end.Unix() - start.Unix()
+		return end.Unix() - start.Unix()
 	case Milli:
-		diff = end.UnixMilli() - start.UnixMilli()
+		return end.UnixMilli() - start.UnixMilli()
 	case Micro:
-		diff = end.UnixMicro() - start.UnixMicro()
+		return end.UnixMicro() - start.UnixMicro()
 	case Nano:
-		diff = end.UnixNano() - start.UnixNano()
+		return end.UnixNano() - start.UnixNano()
 	default:
+		return -1
 	}
-	return
 }
 
-// 间隔年数
-func YearInterval(start, end time.Time) int {
-	return end.Year() - start.Year()
+// 间隔天数
+func DayInterval(start, end time.Time) int {
+	return int((end.Unix() - start.Unix()) / 86400)
 }
 
 // 间隔月份数
@@ -155,52 +153,43 @@ func MonthInterval(start, end time.Time) int {
 	return diff
 }
 
-// 间隔天数
-func DayInterval(start, end time.Time) int {
-	return int((end.Unix() - start.Unix()) / 86400)
+// 间隔年数
+func YearInterval(start, end time.Time) int {
+	return end.Year() - start.Year()
 }
 
-// 根据时间范围生成月份切片
-func MonthSlice(start, end time.Time) []string {
-	diff := MonthInterval(start, end) // 获取相差天数
-	temp := start                     // 获取开始时间
-	var months []string
-	for i := 0; i < diff; i++ {
-		months = append(months, temp.Format(MonthFmt))
-		temp = temp.AddDate(0, 1, 0)
+// 时间切片
+func TimeSlice(start, end time.Time, unit Unit) []string {
+	var slice []string
+	if unit == Day {
+		for start.Unix() <= end.Unix() {
+			slice = append(slice, start.Format(DateFmt))
+			start = start.AddDate(0, 0, 1)
+		}
+	} else if unit == Month {
+		for start.Unix() <= end.Unix() {
+			slice = append(slice, start.Format(MonthFmt))
+			start = start.AddDate(0, 1, 0)
+		}
 	}
-	return months
-}
-
-// 生成日期切片
-func DateSlice(start, end time.Time) []string {
-	diff := DayInterval(start, end) // 获取相差天数
-	temp := start                   // 获取开始时间的当天0点0分0秒
-	var dates []string
-	for i := 0; i <= diff; i++ {
-		dates = append(dates, temp.Format(DateFmt))
-		temp = temp.AddDate(0, 0, 1)
-	}
-	return dates
+	return slice
 }
 
 // 获取特定范围内起止时间(当天/本周/本月/本年)
-func TimeStartAndEnd(unit Unit) (start, end time.Time) {
-	now := time.Now()
+func TimeRange(t time.Time, unit Unit) (start, end time.Time) {
 	switch unit {
 	case Year:
-		start = DayStart(now.AddDate(0, 0, -now.YearDay()+1))
+		start = DayStart(t.AddDate(0, 0, -t.YearDay()+1))
 		end = start.AddDate(1, 0, 0).Add(-time.Second)
 	case Month:
-		start = DayStart(now.AddDate(0, 0, -now.Day()+1))
+		start = DayStart(t.AddDate(0, 0, -t.Day()+1))
 		end = start.AddDate(0, 1, 0).Add(-time.Second)
 	case Week:
-		start = DayStart(now.AddDate(0, 0, int(time.Monday-now.Weekday())))
+		start = DayStart(t.AddDate(0, 0, int(time.Monday-t.Weekday())))
 		end = start.AddDate(0, 0, 7).Add(-time.Second)
-	case Day:
-		start = DayStart(now)
-		end = start.AddDate(0, 0, 1).Add(-time.Second)
 	default:
+		start = DayStart(t)
+		end = start.AddDate(0, 0, 1).Add(-time.Second)
 	}
 	return
 }

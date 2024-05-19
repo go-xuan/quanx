@@ -46,7 +46,7 @@ func newSnowflake(workerId int64) *Flake {
 	if workerId < 0 || workerId > workerMax {
 		workerId = int64(math.Abs(float64(workerId % workerMax)))
 	}
-	return &Flake{WorkerId: workerId, TimeStamp: 0, Sequence: 0}
+	return &Flake{Mutex: new(sync.Mutex), WorkerId: workerId, TimeStamp: 0, Sequence: 0}
 }
 
 func (s *Flake) Int64() int64 {

@@ -74,7 +74,7 @@ func (conf MultiRedis) Run() error {
 			}
 			handler.clientMap[r.Source] = client
 			handler.ConfigMap[r.Source] = r
-			if i == 0 || r.Source == constx.DefaultSourceName {
+			if i == 0 || r.Source == constx.DefaultKey {
 				handler.Client = client
 				handler.Config = r
 			}

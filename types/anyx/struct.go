@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+
+	"github.com/go-xuan/quanx/common/constx"
 )
 
 // 设置默认值
@@ -16,7 +18,7 @@ func SetDefaultValue(v any) error {
 	for i := 0; i < valueRef.Elem().NumField(); i++ {
 		field := valueRef.Elem().Field(i)
 		if field.IsZero() {
-			if value := valueRef.Elem().Type().Field(i).Tag.Get("default"); value != "" {
+			if value := valueRef.Elem().Type().Field(i).Tag.Get(constx.DefaultKey); value != "" {
 				switch field.Kind() {
 				case reflect.String:
 					field.SetString(value)

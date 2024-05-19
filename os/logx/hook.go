@@ -117,28 +117,28 @@ var (
 )
 
 func getCaller() *runtime.Frame {
-	pcs := make([]uintptr, 25)
+	pcs := make([]uintptr, 32)
 	depth := runtime.Callers(4, pcs)
 	frames := runtime.CallersFrames(pcs[:depth])
 	callerOnce.Do(func() {
 		callerPkg = getPackageName(runtime.FuncForPC(pcs[0]).Name())
 	})
-	for f, again := frames.Next(); again; f, again = frames.Next() {
-		if pkg := getPackageName(f.Function); pkg != callerPkg {
-			return &f
+	for frame, more := frames.Next(); more; frame, more = frames.Next() {
+		if pkg := getPackageName(frame.Function); pkg != callerPkg {
+			return &frame
 		}
 	}
 	return nil
 }
 
-func getPackageName(f string) string {
+func getPackageName(function string) string {
 	for {
-		lastPeriod, lastSlash := stringx.Index(f, ".", -1), stringx.Index(f, "/", -1)
-		if lastPeriod > lastSlash {
-			f = f[:lastPeriod]
+		period, slash := stringx.Index(function, ".", -1), stringx.Index(function, "/", -1)
+		if period > slash {
+			function = function[:period]
 		} else {
 			break
 		}
 	}
-	return f
+	return function
 }

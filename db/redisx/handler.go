@@ -43,7 +43,7 @@ func Client(source ...string) redis.UniversalClient {
 }
 
 func (h *Handler) GetClient(source ...string) redis.UniversalClient {
-	if len(source) > 0 && source[0] != constx.DefaultSourceName {
+	if len(source) > 0 && source[0] != constx.DefaultKey {
 		if client, ok := h.clientMap[source[0]]; ok {
 			return *client
 		}
@@ -52,7 +52,7 @@ func (h *Handler) GetClient(source ...string) redis.UniversalClient {
 }
 
 func (h *Handler) GetConfig(source ...string) *Redis {
-	if len(source) > 0 && source[0] != constx.DefaultSourceName {
+	if len(source) > 0 && source[0] != constx.DefaultKey {
 		if conf, ok := h.ConfigMap[source[0]]; ok {
 			return conf
 		}

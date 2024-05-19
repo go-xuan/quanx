@@ -2,6 +2,8 @@ package core
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/os/cachex"
+	logx2 "github.com/go-xuan/quanx/os/logx"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -10,9 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/core/cachex"
 	"github.com/go-xuan/quanx/core/confx"
-	"github.com/go-xuan/quanx/core/logx"
 	"github.com/go-xuan/quanx/core/nacosx"
 	"github.com/go-xuan/quanx/db/gormx"
 	"github.com/go-xuan/quanx/db/redisx"
@@ -39,7 +39,7 @@ func GetEngine(modes ...Flag) *Engine {
 		gin.SetMode(gin.ReleaseMode)
 		engine.SetMode(modes...)
 	}
-	log.SetFormatter(logx.DefaultFormatter())
+	log.SetFormatter(logx2.DefaultFormatter())
 	return engine
 }
 
@@ -64,7 +64,7 @@ type Engine struct {
 // 服务配置
 type Config struct {
 	Server   *Server              `yaml:"server"`   // 服务配置
-	Log      *logx.LogConfig      `yaml:"log"`      // 日志配置
+	Log      *logx2.LogConfig     `yaml:"log"`      // 日志配置
 	Nacos    *nacosx.Nacos        `yaml:"nacos"`    // nacos访问配置
 	Database *gormx.MultiDatabase `yaml:"database"` // 数据源配置
 	Redis    *redisx.MultiRedis   `yaml:"redis"`    // redis配置
@@ -161,7 +161,7 @@ func (e *Engine) buildFrameBasic() {
 	if !e.flag[HasBuildFrameBasic] {
 		// 初始化日志
 		var serverName = stringx.IfZero(e.config.Server.Name, "app")
-		e.RunConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
+		e.RunConfigurator(anyx.IfZero(e.config.Log, logx2.New(serverName)), true)
 
 		// 初始化数据库连接
 		if e.flag[MultiDatabase] {
@@ -299,7 +299,7 @@ func (e *Engine) startGin() {
 	if e.ginEngine == nil {
 		e.ginEngine = gin.New()
 	}
-	e.ginEngine.Use(gin.Recovery(), logx.GinRequestLog)
+	e.ginEngine.Use(gin.Recovery(), logx2.GinRequestLog)
 	e.ginEngine.Use(e.ginMiddlewares...)
 	_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
 	// 注册服务根路由，并执行路由注册函数
@@ -338,7 +338,7 @@ func (e *Engine) GetConfigPath(path string) string {
 
 // 添加需要初始化的 gormx.Tabler 模型
 func (e *Engine) AddTable(dst ...gormx.Tabler[any]) {
-	e.AddSourceTable(constx.DefaultSourceName, dst...)
+	e.AddSourceTable(constx.DefaultKey, dst...)
 }
 
 // 添加需要某个数据源的gormx.Table模型

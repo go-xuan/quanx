@@ -1,82 +1,84 @@
 package idx
 
 import (
-	"github.com/go-xuan/quanx/types/anyx"
 	"sync"
 )
 
-var seqManager *SequenceManager
+var seqManager *SeqManager
 
-type SequenceManager struct {
-	*sync.RWMutex
-	seqMap  map[string]*SequenceData
-	seqList []*SequenceData
+type SeqManager struct {
+	m map[string]*sequence
+	l []*sequence
 }
 
-func Sequence() *SequenceManager {
+func Sequence() *SeqManager {
 	if seqManager == nil {
-		seqManager = &SequenceManager{
-			RWMutex: new(sync.RWMutex),
-			seqList: make([]*SequenceData, 0),
-			seqMap:  make(map[string]*SequenceData),
+		seqManager = &SeqManager{
+			m: make(map[string]*sequence),
+			l: make([]*sequence, 0),
 		}
 	}
 	return seqManager
 }
 
-func (m *SequenceManager) All() []*SequenceData {
-	m.RLock()
-	defer m.RUnlock()
-	return m.seqList
-}
-
-func (m *SequenceManager) Add(name string, start int64, incr ...int64) {
-	m.Lock()
-	defer m.Unlock()
-	var seq = &SequenceData{new(sync.RWMutex), name, start, anyx.Default(1, incr...), start}
-	m.seqMap[name] = seq
-	m.seqList = append(m.seqList, seq)
+// 创建序列
+func (m *SeqManager) Create(name string, start int64, incr int64) {
+	var seq = &sequence{new(sync.RWMutex), name, start, incr, start}
+	m.m[name] = seq
+	m.l = append(m.l, seq)
 }
 
 // 获取序列当前值
-func (m *SequenceManager) CurrVal(name string) int64 {
-	m.RLock()
-	defer m.RUnlock()
-	if seq, ok := m.seqMap[name]; ok {
-		return seq.Curr()
+func (m *SeqManager) CurrVal(name string) int64 {
+	if seq, ok := m.m[name]; ok {
+		return seq.curr()
+	} else {
+		m.Create(name, 0, 1)
+		return 0
 	}
-	return -1
 }
 
-// 获取序列下个值
-func (m *SequenceManager) NextVal(name string) int64 {
-	m.RLock()
-	defer m.RUnlock()
-	if seq, ok := m.seqMap[name]; ok {
-		return seq.Next()
+// 获取序列下值
+func (m *SeqManager) NextVal(name string) int64 {
+	if seq, ok := m.m[name]; ok {
+		return seq.next()
+	} else {
+		m.Create(name, 1, 1)
+		return 1
 	}
-	return -1
+}
+
+// 获取序列当前值
+func (m *SeqManager) NextBatch(name string, n int64) int64 {
+	if seq, ok := m.m[name]; ok {
+		var next = seq.next()
+		seq.set(next + (n-1)*seq.increment)
+		return next
+	} else {
+		m.Create(name, n+1, 1)
+		return 1
+	}
 }
 
 // 设置序列当前值
-func (m *SequenceManager) SetVal(name string, value int64) {
-	m.RLock()
-	defer m.RUnlock()
-	if seq, ok := m.seqMap[name]; ok {
+func (m *SeqManager) Set(name string, value int64) {
+	if seq, ok := m.m[name]; ok {
 		seq.set(value)
+	} else {
+		m.Create(name, value, 1)
 	}
 }
 
 // 序列重置
-func (m *SequenceManager) ResetVal(name string) {
-	m.RLock()
-	defer m.RUnlock()
-	if seq, ok := m.seqMap[name]; ok {
-		seq.Reset()
+func (m *SeqManager) Reset(name string) {
+	if seq, ok := m.m[name]; ok {
+		seq.reset()
+	} else {
+		m.Create(name, 0, 1)
 	}
 }
 
-type SequenceData struct {
+type sequence struct {
 	*sync.RWMutex
 	name      string // 序列名
 	start     int64  // 开始值
@@ -84,26 +86,26 @@ type SequenceData struct {
 	val       int64  // 序列号
 }
 
-func (seq *SequenceData) Curr() int64 {
+func (seq *sequence) curr() int64 {
 	seq.RLock()
 	defer seq.RUnlock()
 	return seq.val
 }
 
-func (seq *SequenceData) Next() int64 {
+func (seq *sequence) next() int64 {
 	seq.Lock()
 	defer seq.Unlock()
 	seq.val += seq.increment
 	return seq.val
 }
 
-func (seq *SequenceData) Reset() {
+func (seq *sequence) reset() {
 	seq.Lock()
 	defer seq.Unlock()
 	seq.val = seq.start
 }
 
-func (seq *SequenceData) set(v int64) {
+func (seq *sequence) set(v int64) {
 	seq.Lock()
 	defer seq.Unlock()
 	if v < seq.start {

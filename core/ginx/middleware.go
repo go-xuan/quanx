@@ -2,10 +2,10 @@ package ginx
 
 import (
 	"errors"
+	cachex2 "github.com/go-xuan/quanx/os/cachex"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/go-xuan/quanx/core/cachex"
 	"github.com/go-xuan/quanx/net/respx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
@@ -24,11 +24,11 @@ const (
 )
 
 // token 缓存
-var cacheClient *cachex.CacheClient
+var cacheClient *cachex2.CacheClient
 
-func AuthCache() *cachex.CacheClient {
+func AuthCache() *cachex2.CacheClient {
 	if cacheClient == nil {
-		cacheClient = cachex.GetClient(UserCacheName)
+		cacheClient = cachex2.GetClient(UserCacheName)
 	}
 	return cacheClient
 }

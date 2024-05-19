@@ -34,7 +34,7 @@ func Initialized() bool {
 }
 
 func (h *Handler) GetDB(source ...string) *gorm.DB {
-	if len(source) > 0 && source[0] != constx.DefaultSourceName {
+	if len(source) > 0 && source[0] != constx.DefaultKey {
 		if db, ok := h.DBMap[source[0]]; ok {
 			return db
 		}
@@ -43,7 +43,7 @@ func (h *Handler) GetDB(source ...string) *gorm.DB {
 }
 
 func (h *Handler) GetConfig(source ...string) *Database {
-	if len(source) > 0 && source[0] != constx.DefaultSourceName {
+	if len(source) > 0 && source[0] != constx.DefaultKey {
 		if conf, ok := h.ConfigMap[source[0]]; ok {
 			return conf
 		}
