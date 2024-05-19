@@ -19,8 +19,8 @@ type LocalCache struct {
 }
 
 // 配置信息格式化
-func (LocalCache) Theme() string {
-	return "Redis"
+func (LocalCache) Title() string {
+	return "Local Cache"
 }
 
 // 配置文件读取
@@ -45,12 +45,12 @@ type LocalClient struct {
 	cache *cache.Cache
 }
 
-func (c *LocalClient) SET(ctx context.Context, k string, v any, d time.Duration) {
-	c.cache.Set(k, v, d)
+func (c *LocalClient) SET(ctx context.Context, key string, value any, d time.Duration) {
+	c.cache.Set(key, value, d)
 }
 
-func (c *LocalClient) GET(ctx context.Context, k string) (string, error) {
-	if v, ok := c.cache.Get(k); ok {
+func (c *LocalClient) GET(ctx context.Context, key string) (string, error) {
+	if v, ok := c.cache.Get(key); ok {
 		return v.(string), nil
 	}
 	return "", errors.New("key not found")

@@ -32,8 +32,8 @@ func (m *Minio) ToString() string {
 	return fmt.Sprintf("host=%s port=%d accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
 }
 
-// 配置器名称
-func (*Minio) Theme() string {
+// 配置器标题
+func (*Minio) Title() string {
 	return "Minio"
 }
 

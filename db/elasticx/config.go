@@ -21,8 +21,8 @@ func (e *Elastic) ToString() string {
 	return fmt.Sprintf("host=%s port=%d", e.Host, e.Port)
 }
 
-// 配置器名称
-func (*Elastic) Theme() string {
+// 配置器标题
+func (*Elastic) Title() string {
 	return "ElasticSearch"
 }
 

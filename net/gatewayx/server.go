@@ -15,7 +15,7 @@ var Servers = &Gateway{}
 
 type Gateway []*Server
 
-func (g *Gateway) Theme() string {
+func (g *Gateway) Title() string {
 	return "gateway"
 }
 

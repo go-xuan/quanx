@@ -263,10 +263,10 @@ func (e *Engine) RunConfigurator(conf confx.Configurator[any], must ...bool) {
 	}
 	if ok {
 		if err := conf.Run(); err != nil {
-			log.Error(conf.Theme(), " Run Failed!")
+			log.Error(conf.Title(), " Run Failed!")
 			panic(err)
 		}
-		log.Info(conf.Theme(), " Run Completed!")
+		log.Info(conf.Title(), " Run Completed!")
 	}
 }
 

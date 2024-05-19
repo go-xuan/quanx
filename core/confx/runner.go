@@ -2,7 +2,7 @@ package confx
 
 // 配置器
 type Configurator[T any] interface {
-	Theme() string   // 配置器主题
+	Title() string   // 配置器标题
 	Reader() *Reader // 配置文件读取
 	Run() error      // 配置器运行
 }

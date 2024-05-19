@@ -36,8 +36,8 @@ type Database struct {
 	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
 }
 
-// 配置器名称
-func (MultiDatabase) Theme() string {
+// 配置器标题
+func (MultiDatabase) Title() string {
 	return "Database"
 }
 
@@ -97,8 +97,8 @@ func (d *Database) ToString() string {
 		d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
 }
 
-// 配置器名称
-func (d *Database) Theme() string {
+// 配置器标题
+func (d *Database) Title() string {
 	return "Database"
 }
 

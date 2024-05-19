@@ -28,10 +28,12 @@ type Cache struct {
 	Marshal string `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
 }
 
-func (c *Cache) Theme() string {
+// 配置器标题
+func (c *Cache) Title() string {
 	return "Cache"
 }
 
+// 配置文件读取
 func (c *Cache) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "cache.yaml",
@@ -40,6 +42,7 @@ func (c *Cache) Reader() *confx.Reader {
 	}
 }
 
+// 配置器运行
 func (c *Cache) Run() (err error) {
 	if err = anyx.SetDefaultValue(c); err != nil {
 		return
@@ -68,7 +71,7 @@ func Default() *Cache {
 }
 
 // 配置信息格式化
-func (MultiCache) Theme() string {
+func (MultiCache) Title() string {
 	return "Cache"
 }
 

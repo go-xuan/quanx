@@ -54,8 +54,8 @@ func (l *LogConfig) ToString() string {
 		l.LogPath(), l.Level, l.Output, l.MaxSize, l.MaxAge, l.Backups)
 }
 
-// 配置器名称
-func (*LogConfig) Theme() string {
+// 配置器标题
+func (*LogConfig) Title() string {
 	return "Log"
 }
 

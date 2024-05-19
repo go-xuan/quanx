@@ -38,8 +38,8 @@ func (n *Nacos) ToString() string {
 		n.AddressUrl(), n.Username, n.Password, n.NameSpace, n.Mode)
 }
 
-// 配置器名称
-func (n *Nacos) Theme() string {
+// 配置器标题
+func (n *Nacos) Title() string {
 	return "Nacos"
 }
 

@@ -35,7 +35,7 @@ type Redis struct {
 }
 
 // 配置信息格式化
-func (MultiRedis) Theme() string {
+func (MultiRedis) Title() string {
 	return "Redis"
 }
 
@@ -93,8 +93,8 @@ func (r *Redis) ToString() string {
 		r.Source, r.Mode, r.Host, r.Port, r.Database)
 }
 
-// 配置器名称
-func (r *Redis) Theme() string {
+// 配置器标题
+func (r *Redis) Title() string {
 	return "Redis"
 }
 

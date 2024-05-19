@@ -24,8 +24,8 @@ func (m *Mongo) ToString() string {
 	return fmt.Sprintf("host=%s port=%d database=%s", m.Host, m.Port, m.Database)
 }
 
-// 配置器名称
-func (m *Mongo) Theme() string {
+// 配置器标题
+func (m *Mongo) Title() string {
 	return "Mongo"
 }
 

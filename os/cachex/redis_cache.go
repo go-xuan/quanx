@@ -13,12 +13,12 @@ type RedisClient struct {
 	client redis.UniversalClient
 }
 
-func (c *RedisClient) SET(ctx context.Context, k string, v any, expiration time.Duration) {
-	c.client.Set(ctx, k, v, expiration)
+func (c *RedisClient) SET(ctx context.Context, key string, value any, expiration time.Duration) {
+	c.client.Set(ctx, key, value, expiration)
 }
 
-func (c *RedisClient) GET(ctx context.Context, k string) (string, error) {
-	return c.client.Get(ctx, k).Result()
+func (c *RedisClient) GET(ctx context.Context, key string) (string, error) {
+	return c.client.Get(ctx, key).Result()
 }
 
 func (c *RedisClient) DELETE(ctx context.Context, keys ...string) int64 {

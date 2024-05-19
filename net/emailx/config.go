@@ -26,8 +26,8 @@ func (e *Email) ToString() string {
 	return fmt.Sprintf("host=%s port=%d username=%s password=%s", e.Host, e.Port, e.Username, e.Password)
 }
 
-// 配置器名称
-func (*Email) Theme() string {
+// 配置器标题
+func (*Email) Title() string {
 	return "Email Server"
 }
 

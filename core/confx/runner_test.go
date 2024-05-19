@@ -8,7 +8,7 @@ import (
 
 type Test struct{}
 
-func (t Test) Theme() string {
+func (t Test) Title() string {
 	return "test show theme"
 }
 
@@ -25,7 +25,7 @@ func TestConfigurator(t *testing.T) {
 	var config = &Test{}
 	var engine = core.GetEngine()
 	engine.AddConfigurator(config)
-	fmt.Println(config.Theme())
+	fmt.Println(config.Title())
 	if err := config.Run(); err != nil {
 		return
 	}

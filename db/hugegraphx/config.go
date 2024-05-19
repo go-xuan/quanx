@@ -42,8 +42,8 @@ func (h *Hugegraph) ToString() string {
 	return fmt.Sprintf("host=%s port=%d graph=%s", h.Host, h.Port, h.Graph)
 }
 
-// 配置器名称
-func (*Hugegraph) Theme() string {
+// 配置器标题
+func (*Hugegraph) Title() string {
 	return "Hugegraph"
 }
 
