@@ -3,7 +3,6 @@ package logx
 import (
 	"bytes"
 	"fmt"
-	"github.com/go-xuan/quanx/os/fmtx"
 	"os"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/core/ginx"
+	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
