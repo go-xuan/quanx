@@ -14,10 +14,10 @@ type QueueScheduler struct {
 
 // 对列任务
 type QueueTask struct {
-	name string       // 任务名
-	fn   func() error // 当前任务
-	prev *QueueTask   // 指向上·一个任务
-	next *QueueTask   // 指向下一个任务
+	name string     // 任务名
+	fn   func()     // 当前任务
+	prev *QueueTask // 指向上·一个任务
+	next *QueueTask // 指向下一个任务
 }
 
 func (t *QueueTask) HasNext() bool {
@@ -36,13 +36,11 @@ func Queue() *QueueScheduler {
 }
 
 // 执行
-func (q *QueueScheduler) Execute() (err error) {
+func (q *QueueScheduler) Execute() {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 	for q.Head != nil {
-		if err = q.Head.fn(); err != nil {
-			break
-		}
+		q.Head.fn()
 		delete(q.Tasks, q.Head.name)
 		q.Head = q.Head.next
 	}
@@ -50,18 +48,17 @@ func (q *QueueScheduler) Execute() (err error) {
 		q.Head = nil
 		q.Tail = nil
 	}
-	return
 }
 
 // 新增（默认尾插）
-func (q *QueueScheduler) Add(name string, fn func() error) {
+func (q *QueueScheduler) Add(name string, fn func()) {
 	if name != "" && fn != nil {
 		q.AddTail(name, fn)
 	}
 }
 
 // 尾插（当前新增任务添加到队列末尾）
-func (q *QueueScheduler) AddTail(name string, fn func() error) {
+func (q *QueueScheduler) AddTail(name string, fn func()) {
 	if name != "" && fn != nil {
 		q.mutex.Lock()
 		defer q.mutex.Unlock()
@@ -81,7 +78,7 @@ func (q *QueueScheduler) AddTail(name string, fn func() error) {
 }
 
 // 头插（当前新增任务添加到队列首位）
-func (q *QueueScheduler) AddHead(name string, task func() error) {
+func (q *QueueScheduler) AddHead(name string, task func()) {
 	if name != "" && task != nil {
 		q.mutex.Lock()
 		defer q.mutex.Unlock()
@@ -101,7 +98,7 @@ func (q *QueueScheduler) AddHead(name string, task func() error) {
 }
 
 // 后插队(当前新增任务添加到after任务之后)
-func (q *QueueScheduler) AddAfter(name string, task func() error, after string) {
+func (q *QueueScheduler) AddAfter(name string, task func(), after string) {
 	if name != "" && task != nil {
 		q.mutex.Lock()
 		defer q.mutex.Unlock()
@@ -124,7 +121,7 @@ func (q *QueueScheduler) AddAfter(name string, task func() error, after string) 
 }
 
 // 前插队(当前新增任务添加到before任务之后)
-func (q *QueueScheduler) AddBefore(name string, task func() error, before string) {
+func (q *QueueScheduler) AddBefore(name string, task func(), before string) {
 	if name != "" && task != nil {
 		q.mutex.Lock()
 		defer q.mutex.Unlock()

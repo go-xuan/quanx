@@ -7,7 +7,7 @@ type Configurator interface {
 	Run() error      // 配置器运行
 }
 
-// 配置文件读取
+// 配置文件读取器
 type Reader struct {
 	FilePath    string `json:"filePath" yaml:"filePath"`       // 本地配置文件路径
 	NacosGroup  string `json:"nacosGroup" yaml:"nacosGroup"`   // nacos配置Group

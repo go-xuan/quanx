@@ -6,9 +6,7 @@ import (
 )
 
 func TestEngineRun(t *testing.T) {
-	var newEngine = GetEngine(
-		Lightweight, // 轻量化
-	)
+	var newEngine = GetEngine(NonGin)
 
 	// 添加初始化方法
 	newEngine.AddCustomFunc(

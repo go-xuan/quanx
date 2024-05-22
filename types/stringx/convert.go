@@ -6,25 +6,25 @@ import (
 
 func ToInt(s string) int {
 	if value, err := strconv.Atoi(s); err != nil {
-		return value
-	} else {
 		return 0
+	} else {
+		return value
 	}
 }
 
 func ToInt64(s string) int64 {
 	if value, err := strconv.ParseInt(s, 10, 64); err != nil {
-		return value
-	} else {
 		return 0
+	} else {
+		return value
 	}
 }
 
 func ToFloat64(s string) float64 {
 	if value, err := strconv.ParseFloat(s, 64); err != nil {
-		return value
-	} else {
 		return 0
+	} else {
+		return value
 	}
 }
 

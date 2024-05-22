@@ -26,6 +26,7 @@ const (
 	PanicLevel = "panic"
 )
 
+// 日志输出类型
 const (
 	ConsoleOutput = "console"
 	FileOutput    = "file"

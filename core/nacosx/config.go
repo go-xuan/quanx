@@ -31,11 +31,11 @@ type Nacos struct {
 	Username  string `yaml:"username" json:"username" default:"nacos"`    // 用户名
 	Password  string `yaml:"password" json:"password" default:"nacos"`    // 密码
 	NameSpace string `yaml:"nameSpace" json:"nameSpace" default:"public"` // 命名空间
-	Mode      int    `yaml:"mode" json:"mode" default:"2"`                // 模式（0-仅用配置中心；1-仅用服务发现；2-配置中心和服务发现都用）
+	Mode      int    `yaml:"mode" json:"mode" default:"2"`                // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 }
 
 // 配置信息格式化
-func (n *Nacos) ToString() string {
+func (n *Nacos) Info() string {
 	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%d",
 		n.AddressUrl(), n.Username, n.Password, n.NameSpace, n.Mode)
 }
@@ -73,7 +73,7 @@ func (n *Nacos) Run() (err error) {
 			}
 		}
 	}
-	log.Info("Nacos Connect Successful: ", n.ToString())
+	log.Info("Nacos Connect Successful: ", n.Info())
 	return
 }
 
@@ -102,21 +102,22 @@ func (n *Nacos) ClientConfig() *constant.ClientConfig {
 }
 
 // nacos服务中间件配置
-func (n *Nacos) ServerConfigs() (serverConfigs []constant.ServerConfig) {
+func (n *Nacos) ServerConfigs() []constant.ServerConfig {
 	var adds = strings.Split(n.Address, ",")
 	if len(adds) == 0 {
 		log.Error("the address of nacos cannot be empty")
-		return
+		return nil
 	}
+	var configs []constant.ServerConfig
 	for _, addStr := range adds {
 		host, port, _ := strings.Cut(addStr, ":")
-		serverConfigs = append(serverConfigs, constant.ServerConfig{
+		configs = append(configs, constant.ServerConfig{
 			ContextPath: "/nacos",
 			IpAddr:      host,
 			Port:        uint64(stringx.ToInt64(port)),
 		})
 	}
-	return
+	return configs
 }
 
 func (n *Nacos) ClientParam() vo.NacosClientParam {
@@ -129,7 +130,8 @@ func (n *Nacos) ClientParam() vo.NacosClientParam {
 // 初始化Nacos配置中心客户端
 func (n *Nacos) ConfigClient(param vo.NacosClientParam) (client config_client.IConfigClient, err error) {
 	if client, err = clients.NewConfigClient(param); err != nil {
-		log.Error("Nacos Config Client Init Failed: ", n.ToString(), err)
+		log.Error("Nacos Config Client Init Failed: ", n.Info())
+		log.Error(err)
 		return
 	}
 	return
@@ -138,7 +140,7 @@ func (n *Nacos) ConfigClient(param vo.NacosClientParam) (client config_client.IC
 // 初始化Nacos服务发现客户端
 func (n *Nacos) NamingClient(param vo.NacosClientParam) (client naming_client.INamingClient, err error) {
 	if client, err = clients.NewNamingClient(param); err != nil {
-		log.Error("Nacos Naming Client Init Failed: ", n.ToString(), err)
+		log.Error("Nacos Naming Client Init Failed: ", n.Info(), err)
 		return
 	}
 	return

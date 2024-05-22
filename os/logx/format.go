@@ -13,12 +13,14 @@ import (
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
+const TimeFormat = "2006-01-02 15:04:05.999"
+
 type LogFormatter struct {
 	timeFormat string
 }
 
 func DefaultFormatter() *LogFormatter {
-	return &LogFormatter{"2006-01-02 15:04:05.999"}
+	return &LogFormatter{TimeFormat}
 }
 
 // 日志格式化,用以实现logrus.Formatter接口
