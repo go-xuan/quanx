@@ -42,6 +42,7 @@ type LogConfig struct {
 	Dir      string `json:"dir" yaml:"dir" default:"resource/log"`                    // 日志保存文件夹
 	Level    string `json:"level" yaml:"level" default:"info"`                        // 日志级别
 	TimeFmt  string `json:"timeFmt" yaml:"timeFmt" default:"2006-01-02 15:04:05.999"` // 时间格式化
+	UseColor bool   `json:"useColor" yaml:"useColor" default:"false"`                 // 使用颜色
 	Output   string `json:"output" yaml:"output" default:"default"`                   // 日志输出
 	Caller   bool   `json:"caller" yaml:"caller" default:"false"`                     // Flag for whether to caller
 	MaxSize  int    `json:"maxSize" yaml:"maxSize" default:"100"`                     // 日志大小(单位：mb)
@@ -50,7 +51,7 @@ type LogConfig struct {
 }
 
 // 配置信息格式化
-func (l *LogConfig) ToString() string {
+func (l *LogConfig) Info() string {
 	return fmt.Sprintf("logPath=%s level=%s output=%s maxSize=%d maxAge=%d backups=%d",
 		l.LogPath(), l.Level, l.Output, l.MaxSize, l.MaxAge, l.Backups)
 }
@@ -77,10 +78,9 @@ func (l *LogConfig) Run() error {
 	var writer, formatter = l.LogWriter(), l.Formatter()
 	logrus.AddHook(NewHook(writer, formatter))
 	logrus.SetFormatter(formatter)
-	//logger.SetOutput(writer)
 	logrus.SetLevel(l.GetLevel())
 	logrus.SetReportCaller(l.Caller)
-	logrus.Info("Log Init Successful: ", l.ToString())
+	logrus.Info("Log Init Successful: ", l.Info())
 	return nil
 }
 
@@ -89,7 +89,7 @@ func (l *LogConfig) LogPath() string {
 }
 
 func (l *LogConfig) Formatter() *LogFormatter {
-	return &LogFormatter{l.TimeFmt}
+	return &LogFormatter{l.TimeFmt, l.UseColor}
 }
 
 func (l *LogConfig) LogWriter() io.Writer {

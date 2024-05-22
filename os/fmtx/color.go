@@ -21,3 +21,10 @@ func (c Color) String(s string) string {
 	}
 	return s
 }
+
+func (c Color) Bytes(s string) []byte {
+	if Black <= c && c <= Grey {
+		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", uint8(c), s))
+	}
+	return []byte(s)
+}

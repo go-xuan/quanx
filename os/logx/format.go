@@ -3,6 +3,7 @@ package logx
 import (
 	"bytes"
 	"fmt"
+	"github.com/go-xuan/quanx/os/fmtx"
 	"os"
 	"time"
 
@@ -17,10 +18,11 @@ const TimeFormat = "2006-01-02 15:04:05.999"
 
 type LogFormatter struct {
 	timeFormat string
+	useColor   bool
 }
 
 func DefaultFormatter() *LogFormatter {
-	return &LogFormatter{TimeFormat}
+	return &LogFormatter{TimeFormat, false}
 }
 
 // 日志格式化,用以实现logrus.Formatter接口
@@ -33,7 +35,24 @@ func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		b.WriteString(fmt.Sprintf(", %s:%+v", key, value))
 	}
 	b.WriteString("\n")
-	return b.Bytes(), nil
+	if f.useColor {
+		return Color(entry.Level).Bytes(b.String()), nil
+	} else {
+		return b.Bytes(), nil
+	}
+}
+
+func Color(level logrus.Level) fmtx.Color {
+	switch level {
+	case logrus.InfoLevel:
+		return fmtx.Green
+	case logrus.WarnLevel:
+		return fmtx.Yellow
+	case logrus.ErrorLevel:
+		return fmtx.Red
+	default:
+		return 0
+	}
 }
 
 // gin请求日志中间件

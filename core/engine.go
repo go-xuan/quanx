@@ -1,6 +1,7 @@
 package core
 
 import (
+	"os"
 	"path/filepath"
 	"strconv"
 
@@ -82,6 +83,7 @@ func GetEngine(modes ...Flag) *Engine {
 		gin.SetMode(gin.ReleaseMode)
 		engine.SetMode(modes...)
 	}
+	log.SetOutput(os.Stdout)
 	log.SetFormatter(logx.DefaultFormatter())
 	if engine.flag[UseQueue] {
 		queue := taskx.Queue()
