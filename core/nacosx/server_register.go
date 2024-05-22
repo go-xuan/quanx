@@ -8,12 +8,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// 服务注册
+// 服务实例
 type ServerInstance struct {
+	Group string `yaml:"group"` // 实例分组
 	Name  string `yaml:"name"`  // 实例名称
 	Host  string `yaml:"host"`  // 服务实例host
 	Port  int    `yaml:"port"`  // 实例端口
-	Group string `yaml:"group"` // 实例分组
 }
 
 func (s *ServerInstance) ToString() string {

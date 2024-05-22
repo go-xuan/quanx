@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/core/serverx"
 	"github.com/go-xuan/quanx/os/cachex"
 	logx2 "github.com/go-xuan/quanx/os/logx"
 	"path/filepath"
@@ -103,6 +104,11 @@ func (s *Server) HttpUrl() string {
 	return fmt.Sprintf(`http://%s:%d/%s`, s.Host, s.Port, strings.TrimPrefix(s.Prefix, "/"))
 }
 
+// 服务地址
+func (s *Server) Instance() serverx.Instance {
+	return serverx.Instance{Name: s.Name, Host: s.Host, Port: s.Port}
+}
+
 // 服务运行
 func (e *Engine) RUN() {
 	// 加载配置
@@ -140,14 +146,9 @@ func (e *Engine) loadingConfig() {
 			e.RunConfigurator(config.Nacos, true)
 			if config.Nacos.EnableNaming() {
 				// 注册nacos服务Nacos
-				nacosx.RegisterInstance(
-					&nacosx.ServerInstance{
-						Name:  config.Server.Name,
-						Host:  config.Server.Host,
-						Port:  config.Server.Port,
-						Group: config.Nacos.NameSpace,
-					},
-				)
+				if err := config.Nacos.Register(config.Server.Instance()); err != nil {
+					panic(err)
+				}
 			}
 		}
 		// 完成服务配置加载

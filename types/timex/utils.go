@@ -3,8 +3,6 @@ package timex
 import (
 	"strings"
 	"time"
-
-	"github.com/go-xuan/quanx/types/anyx"
 )
 
 type Unit uint
@@ -32,18 +30,28 @@ const (
 
 // 时间转字符
 func Format(time time.Time, format ...string) string {
-	return time.Format(anyx.Default(TimeFmt, format...))
+	var layout = TimeFmt
+	if len(format) > 0 {
+		layout = format[0]
+	}
+	return time.Format(layout)
 }
 
 // 字符转时间
 func ToTime(timeStr string) time.Time {
-	var format = anyx.If(strings.Contains(timeStr, "-") && len(timeStr) == 10, DateFmt, TimeFmt)
-	return TimeParse(timeStr, format)
+	if len(timeStr) == 10 && timeStr[4:5] == "-" {
+		return TimeParse(timeStr, DateFmt)
+	} else {
+		return TimeParse(timeStr, TimeFmt)
+	}
 }
 
 // 时间格式化
 func TimeParse(timeStr string, format ...string) time.Time {
-	var layout = anyx.Default(TimeFmt, format...)
+	var layout = TimeFmt
+	if len(format) > 0 {
+		layout = format[0]
+	}
 	if parseTime, err := time.ParseInLocation(layout, timeStr, time.Local); err != nil {
 		return time.Unix(0, 0)
 	} else {

@@ -22,14 +22,14 @@ func Sequence() *SeqManager {
 }
 
 // 创建序列
-func (m *SeqManager) Create(name string, start int64, incr int64) {
+func (m *SeqManager) Create(name string, start int, incr int) {
 	var seq = &sequence{new(sync.RWMutex), name, start, incr, start}
 	m.m[name] = seq
 	m.l = append(m.l, seq)
 }
 
 // 获取序列当前值
-func (m *SeqManager) CurrVal(name string) int64 {
+func (m *SeqManager) CurrVal(name string) int {
 	if seq, ok := m.m[name]; ok {
 		return seq.curr()
 	} else {
@@ -39,7 +39,7 @@ func (m *SeqManager) CurrVal(name string) int64 {
 }
 
 // 获取序列下值
-func (m *SeqManager) NextVal(name string) int64 {
+func (m *SeqManager) NextVal(name string) int {
 	if seq, ok := m.m[name]; ok {
 		return seq.next()
 	} else {
@@ -49,7 +49,7 @@ func (m *SeqManager) NextVal(name string) int64 {
 }
 
 // 获取序列当前值
-func (m *SeqManager) NextBatch(name string, n int64) int64 {
+func (m *SeqManager) NextBatch(name string, n int) int {
 	if seq, ok := m.m[name]; ok {
 		var next = seq.next()
 		seq.set(next + (n-1)*seq.increment)
@@ -61,7 +61,7 @@ func (m *SeqManager) NextBatch(name string, n int64) int64 {
 }
 
 // 设置序列当前值
-func (m *SeqManager) Set(name string, value int64) {
+func (m *SeqManager) Set(name string, value int) {
 	if seq, ok := m.m[name]; ok {
 		seq.set(value)
 	} else {
@@ -81,18 +81,18 @@ func (m *SeqManager) Reset(name string) {
 type sequence struct {
 	*sync.RWMutex
 	name      string // 序列名
-	start     int64  // 开始值
-	increment int64  // 递增值
-	val       int64  // 序列号
+	start     int    // 开始值
+	increment int    // 递增值
+	val       int    // 序列号
 }
 
-func (seq *sequence) curr() int64 {
+func (seq *sequence) curr() int {
 	seq.RLock()
 	defer seq.RUnlock()
 	return seq.val
 }
 
-func (seq *sequence) next() int64 {
+func (seq *sequence) next() int {
 	seq.Lock()
 	defer seq.Unlock()
 	seq.val += seq.increment
@@ -105,7 +105,7 @@ func (seq *sequence) reset() {
 	seq.val = seq.start
 }
 
-func (seq *sequence) set(v int64) {
+func (seq *sequence) set(v int) {
 	seq.Lock()
 	defer seq.Unlock()
 	if v < seq.start {

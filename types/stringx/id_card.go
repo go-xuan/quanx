@@ -3,8 +3,6 @@ package stringx
 import (
 	"strconv"
 	"time"
-
-	"github.com/go-xuan/quanx/types/timex"
 )
 
 var weight = [17]int{7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2}
@@ -86,7 +84,7 @@ func checkBirthday(idCard string) bool {
 		}
 	}
 	if month == 2 {
-		if timex.IsLeapYear(year) && day > 29 {
+		if isLeapYear(year) && day > 29 {
 			return false
 		} else if day > 28 {
 			return false
@@ -115,4 +113,15 @@ func checkProvince(idCard string) bool {
 // 校验最后一位验证码是否正确
 func checkLastCode(idCard string) bool {
 	return GetIdCardLastCode(idCard) == idCard[17]
+}
+
+// 是否闰年
+func isLeapYear(year int) bool {
+	if year <= 0 {
+		return false
+	}
+	if (year%4 == 0 && year%100 != 0) || year%400 == 0 {
+		return true
+	}
+	return false
 }

@@ -2,6 +2,8 @@ module github.com/go-xuan/quanx
 
 go 1.22
 
+replace github.com/go-xuan/quanx v1.0.0 => ../../quanx
+
 require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/gin-gonic/gin v1.10.0

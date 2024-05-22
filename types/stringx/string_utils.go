@@ -2,16 +2,13 @@ package stringx
 
 import (
 	"strings"
-
-	"github.com/go-xuan/quanx/types/anyx"
 )
 
 // 获取起始字符首次出现和结尾字符末次出现的下标
 func Between(s, start, end string) (from, to int) {
 	if start == end {
 		indices := AllIndex(s, start, 2)
-		from, to = indices[0], indices[1]
-		return
+		return indices[0], indices[1]
 	}
 	from, to = -1, -1
 	var l, m, n = len(s), len(start), len(end)
@@ -49,25 +46,26 @@ func Between(s, start, end string) (from, to int) {
 // 获取子串下标
 // position：表示获取位置，默认position=1即正序第1处，position=-1即倒序第1处
 func Index(s, sep string, position ...int) int {
-	l, m, n := len(s), len(sep), 0
-	if m > l {
-		return -1
-	}
-	x := anyx.Default(1, position...)
-	for i := 0; i <= l-m; i++ {
-		if x > 0 {
-			if s[i] == sep[0] && s[i:i+m] == sep {
-				n++
-				if x == n {
-					return i
+	if l, m := len(s), len(sep); l >= m {
+		var x, y = 1, 0 // x：目标获取位置，y：sep出现次数计数
+		if len(position) > 0 {
+			x = position[0]
+		}
+		for i := 0; i <= l-m; i++ {
+			if x > 0 {
+				if s[i] == sep[0] && s[i:i+m] == sep {
+					y++
+					if x == y {
+						return i
+					}
 				}
-			}
-		} else {
-			j := l - i
-			if s[j-1] == sep[m-1] && s[j-m:j] == sep {
-				n--
-				if x == n {
-					return j - m
+			} else {
+				j := l - i
+				if s[j-1] == sep[m-1] && s[j-m:j] == sep {
+					y--
+					if x == y {
+						return j - m
+					}
 				}
 			}
 		}
@@ -75,7 +73,7 @@ func Index(s, sep string, position ...int) int {
 	return -1
 }
 
-// 获取所有下标
+// 获取所有下标,x：
 func AllIndex(s, sep string, x int) []int {
 	var indices = make([]int, x)
 	for i := 0; i < x; i++ {
@@ -207,7 +205,7 @@ func Cut(s, sep string, position ...int) (string, string) {
 // 插入字符串
 func Insert(s, insert string, position ...int) string {
 	if len(position) > 0 {
-		if i := position[0]; position[0] > 0 && position[0] < len(s) {
+		if i := position[0]; i > 0 && i < len(s) {
 			return s[:i] + insert + s[i:]
 		}
 	}
@@ -225,7 +223,11 @@ func Fill(s, fill string, length int, right ...bool) string {
 	for i := 0; i < fillLen; i++ {
 		fillStr.WriteString(string(fill[i%addLen]))
 	}
-	return anyx.If(len(right) > 0 && right[0], s+fillStr.String(), fillStr.String()+s)
+	if len(right) > 0 && right[0] {
+		return s + fillStr.String()
+	} else {
+		return fillStr.String() + s
+	}
 }
 
 // 转下划线
