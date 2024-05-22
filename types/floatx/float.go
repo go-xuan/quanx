@@ -44,6 +44,6 @@ func Max(a, b, c float64) float64 {
 	return c
 }
 
-func ToString(f float64) string {
+func String(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }

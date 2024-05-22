@@ -38,7 +38,7 @@ type Hugegraph struct {
 }
 
 // 配置信息格式化
-func (h *Hugegraph) ToString() string {
+func (h *Hugegraph) Info() string {
 	return fmt.Sprintf("host=%s port=%d graph=%s", h.Host, h.Port, h.Graph)
 }
 
@@ -59,12 +59,11 @@ func (*Hugegraph) Reader() *confx.Reader {
 // 配置器运行
 func (h *Hugegraph) Run() error {
 	if h.Host != "" && handler == nil {
-		var toString = h.ToString()
 		if h.Ping() {
 			handler = &Handler{Config: h, GremlinUrl: h.GremlinUrl(), SchemaUrl: h.SchemaUrl()}
-			log.Info("Hugegraph Connect Successful: ", toString)
+			log.Info("Hugegraph Connect Successful: ", h.Info())
 		} else {
-			log.Error("Hugegraph Connect Failed: ", toString)
+			log.Error("Hugegraph Connect Failed: ", h.Info())
 		}
 	}
 	return nil

@@ -8,7 +8,7 @@ import (
 )
 
 func SqlFormat(sql string) string {
-	return Format(sql).ToString()
+	return Format(sql).String()
 }
 
 func Format(sql string, space ...int) *SQL {

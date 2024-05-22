@@ -55,7 +55,7 @@ func NewConfig(group, dataId string, listen ...bool) *Config {
 }
 
 // 配置信息格式化
-func (c *Config) ToString() string {
+func (c *Config) Info() string {
 	return fmt.Sprintf("group=%s dataId=%s", c.Group, c.DataId)
 }
 
@@ -73,17 +73,17 @@ func (c *Config) Loading(v any) (err error) {
 	}
 	var param = c.ToConfigParam()
 	// 读取Nacos配置
-	var toString = c.ToString()
+	var info = c.Info()
 	var content string
 	if content, err = ReadConfigContent(c.Group, c.DataId); err != nil {
-		log.Error("Read Nacos Config Content Failed: ", toString, err)
+		log.Error("Read Nacos Config Content Failed: ", info, err)
 		return
 	}
 	if err = marshalx.NewCase(c.DataId).Unmarshal([]byte(content), v); err != nil {
-		log.Error("Loading Nacos Config Failed: ", toString, err)
+		log.Error("Loading Nacos Config Failed: ", info, err)
 		return
 	}
-	log.Info("Loading Nacos Config Successful: ", toString)
+	log.Info("Loading Nacos Config Successful: ", info)
 	if c.Listen {
 		// 设置Nacos配置监听
 		GetNacosConfigMonitor().Set(c.Group, c.DataId, content)
@@ -93,10 +93,10 @@ func (c *Config) Loading(v any) (err error) {
 			GetNacosConfigMonitor().Set(group, dataId, data)
 		}
 		if err = This().ConfigClient.ListenConfig(param); err != nil {
-			log.Error("Listen Nacos Config Failed: ", toString, err)
+			log.Error("Listen Nacos Config Failed: ", info, err)
 			return
 		}
-		log.Info("Listen Nacos Config Successful: ", toString)
+		log.Info("Listen Nacos Config Successful: ", info)
 	}
 	return
 }

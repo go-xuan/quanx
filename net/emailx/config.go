@@ -22,7 +22,7 @@ func (e *Email) newDialer() *gomail.Dialer {
 }
 
 // 配置信息格式化
-func (e *Email) ToString() string {
+func (e *Email) Info() string {
 	return fmt.Sprintf("host=%s port=%d username=%s password=%s", e.Host, e.Port, e.Username, e.Password)
 }
 
@@ -43,6 +43,6 @@ func (*Email) Reader() *confx.Reader {
 // 配置器运行
 func (e *Email) Run() error {
 	handler = &Handler{Config: e, Dialer: e.newDialer()}
-	log.Info("Email Server Init Successful: ", e.ToString())
+	log.Info("Email Server Init Successful: ", e.Info())
 	return nil
 }

@@ -17,7 +17,7 @@ type Elastic struct {
 }
 
 // 配置信息格式化
-func (e *Elastic) ToString() string {
+func (e *Elastic) Info() string {
 	return fmt.Sprintf("host=%s port=%d", e.Host, e.Port)
 }
 
@@ -38,14 +38,14 @@ func (*Elastic) Reader() *confx.Reader {
 // 配置器运行
 func (e *Elastic) Run() (err error) {
 	if e.Host != "" {
-		var url, toString = e.Url(), e.ToString()
+		var url = e.Url()
 		var client *elastic.Client
 		if client, err = e.NewClient(url); err != nil {
-			log.Error("Elastic Search Connect Failed: ", toString, err)
+			log.Error("Elastic Search Connect Failed: ", e.Info(), err)
 			return
 		}
 		handler = &Handler{Config: e, Url: url, Client: client}
-		log.Info("Elastic Search Connect Successful: ", toString)
+		log.Info("Elastic Search Connect Successful: ", e.Info())
 	}
 	return
 }

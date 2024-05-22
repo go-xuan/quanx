@@ -25,7 +25,7 @@ type SQL struct {
 }
 
 // sql输出
-func (s *SQL) ToString() string {
+func (s *SQL) String() string {
 	var sql = strings.Builder{}
 	sql.WriteString(s.SelectSql())
 	sql.WriteString(s.FromSql())
@@ -337,7 +337,7 @@ func (s *SQL) FromSql() string {
 	sql.WriteString(NewLine)
 	sql.WriteString(s.Align(FROM))
 	sql.WriteString(Blank)
-	sql.WriteString(s.From.toString())
+	sql.WriteString(s.From.String())
 	for _, join := range s.Joins {
 		sql.WriteString(NewLine)
 		if join.Type != Empty {
@@ -348,7 +348,7 @@ func (s *SQL) FromSql() string {
 			sql.WriteString(s.Align(JOIN))
 		}
 		sql.WriteString(Blank)
-		sql.WriteString(join.Table.toString())
+		sql.WriteString(join.Table.String())
 		sql.WriteString(NewLine)
 		sql.WriteString(s.Align(ON))
 		sql.WriteString(Blank)
@@ -440,9 +440,9 @@ type Table struct {
 	Alias  string
 }
 
-func (f *Table) toString() string {
+func (f *Table) String() string {
 	if f.Select != nil {
-		return LeftBracket + f.Select.ToString() + RightBracket + Blank + f.Alias
+		return LeftBracket + f.Select.String() + RightBracket + Blank + f.Alias
 	} else {
 		return f.Name + Blank + f.Alias
 	}

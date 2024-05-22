@@ -58,7 +58,7 @@ func (c *Cache) Run() (err error) {
 		handler.Multi = true
 	}
 	handler.ClientMap[c.Source] = client
-	log.Info("Cache Init Successful: ", c.ToString())
+	log.Info("Cache Init Successful: ", c.Info())
 	return
 }
 
@@ -101,13 +101,13 @@ func (m MultiCache) Run() error {
 		if i == 0 || c.Source == constx.DefaultKey {
 			handler.Client = client
 		}
-		log.Info("Cache Init Successful: ", c.ToString())
+		log.Info("Cache Init Successful: ", c.Info())
 	}
 	return nil
 }
 
 // 配置信息格式化
-func (c *Cache) ToString() string {
+func (c *Cache) Info() string {
 	return fmt.Sprintf("type=%s source=%s prefix=%s marshal=%s", c.Type, c.Source, c.Prefix, c.Marshal)
 }
 

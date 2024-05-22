@@ -24,5 +24,5 @@ having t1.aaa > 1 and (t2.bbb <=1 or t3.ccc = 0)
 order by t1.aaa ASC, t2.bbb DESC, t3.ccc ASC
 limit 10 offset 20
 `
-	fmt.Println(Format(sql).ToString())
+	fmt.Println(Format(sql).String())
 }

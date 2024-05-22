@@ -40,10 +40,6 @@ func Max(a, b, c int) int {
 	return c
 }
 
-func ToString(i int) string {
+func String(i int) string {
 	return strconv.Itoa(i)
-}
-
-func ToString64(i int64) string {
-	return strconv.FormatInt(i, 10)
 }

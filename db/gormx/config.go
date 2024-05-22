@@ -71,9 +71,8 @@ func (c MultiDatabase) Run() (err error) {
 				return
 			}
 			var db *gorm.DB
-			var toString = d.ToString()
 			if db, err = d.NewGormDB(); err != nil {
-				log.Error("Database Connect Failed: ", toString, err)
+				log.Error("Database Connect Failed: ", d.Info(), err)
 				return err
 			}
 			handler.DBMap[d.Source] = db
@@ -82,7 +81,7 @@ func (c MultiDatabase) Run() (err error) {
 				handler.DB = db
 				handler.Config = d
 			}
-			log.Info("Database Connect Successful: ", toString)
+			log.Info("Database Connect Successful: ", d.Info())
 		}
 	}
 	if len(handler.ConfigMap) == 0 {
@@ -92,7 +91,7 @@ func (c MultiDatabase) Run() (err error) {
 }
 
 // 配置信息格式化
-func (d *Database) ToString() string {
+func (d *Database) Info() string {
 	return fmt.Sprintf("source=%s type=%s host=%s port=%d database=%s debug=%v",
 		d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
 }
@@ -118,9 +117,8 @@ func (d *Database) Run() (err error) {
 			return
 		}
 		var db *gorm.DB
-		var toString = d.ToString()
 		if db, err = d.NewGormDB(); err != nil {
-			log.Error("Database Connect Failed: ", toString, err)
+			log.Error("Database Connect Failed: ", d.Info(), err)
 			return
 		}
 
@@ -138,7 +136,7 @@ func (d *Database) Run() (err error) {
 		handler.DBMap[d.Source] = db
 		handler.ConfigMap[d.Source] = d
 
-		log.Info("Database Connect Successful: ", toString)
+		log.Info("Database Connect Successful: ", d.Info())
 		return
 	}
 	log.Info("Database Connect Failed! reason: database.yaml is empty or the value of enable is false")

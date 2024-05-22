@@ -16,7 +16,7 @@ type ServerInstance struct {
 	Port  int    `yaml:"port"`  // 实例端口
 }
 
-func (s *ServerInstance) ToString() string {
+func (s *ServerInstance) Info() string {
 	return fmt.Sprintf("group=%s name=%s", s.Group, s.Name)
 }
 
@@ -26,7 +26,6 @@ func RegisterInstance(server *ServerInstance) {
 		log.Error("Nacos Naming Client Not Initialized")
 		return
 	}
-	var toString = server.ToString()
 	if _, err := This().NamingClient.RegisterInstance(vo.RegisterInstanceParam{
 		Ip:          server.Host,
 		Port:        uint64(server.Port),
@@ -38,9 +37,9 @@ func RegisterInstance(server *ServerInstance) {
 		Ephemeral:   true,
 		Metadata:    nil,
 	}); err != nil {
-		log.Error("Nacos Server Register Failed: ", toString, err)
+		log.Error("Nacos Server Register Failed: ", server.Info(), err)
 	} else {
-		log.Info("Nacos Server Register Successful: ", toString)
+		log.Info("Nacos Server Register Successful: ", server.Info())
 	}
 }
 

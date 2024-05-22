@@ -66,10 +66,9 @@ func (conf MultiRedis) Run() error {
 	}
 	for i, r := range conf {
 		if r.Enable {
-			var toString = r.ToString()
 			var client = r.NewRedisClient()
 			if ok, err := Ping(*client); !ok && err != nil {
-				log.Error("Redis Connect Failed: ", toString)
+				log.Error("Redis Connect Failed: ", r.Info())
 				return err
 			}
 			handler.clientMap[r.Source] = client
@@ -78,7 +77,7 @@ func (conf MultiRedis) Run() error {
 				handler.Client = client
 				handler.Config = r
 			}
-			log.Info("Redis Connect Successful: ", toString)
+			log.Info("Redis Connect Successful: ", r.Info())
 		}
 	}
 	if len(handler.ConfigMap) == 0 {
@@ -88,7 +87,7 @@ func (conf MultiRedis) Run() error {
 }
 
 // 配置信息格式化
-func (r *Redis) ToString() string {
+func (r *Redis) Info() string {
 	return fmt.Sprintf("source=%s mode=%d host=%s port=%d database=%d",
 		r.Source, r.Mode, r.Host, r.Port, r.Database)
 }
@@ -113,9 +112,9 @@ func (r *Redis) Run() (err error) {
 		if err = anyx.SetDefaultValue(r); err != nil {
 			return
 		}
-		var client, toString, ok = r.NewRedisClient(), r.ToString(), false
+		var client, ok = r.NewRedisClient(), false
 		if ok, err = Ping(*client); !ok && err != nil {
-			log.Error("Redis Connect Failed: ", toString, err)
+			log.Error("Redis Connect Failed: ", r.Info(), err)
 			return
 		}
 		if handler == nil {
@@ -131,7 +130,7 @@ func (r *Redis) Run() (err error) {
 		}
 		handler.clientMap[r.Source] = client
 		handler.ConfigMap[r.Source] = r
-		log.Info("Redis Connect Successful: ", toString)
+		log.Info("Redis Connect Successful: ", r.Info())
 		return
 	}
 	log.Error(`Redis Connect Failed! reason: redis.yaml is empty or the value of "enable" is false`)
@@ -167,7 +166,7 @@ func (r *Redis) NewRedisClient() *redis.UniversalClient {
 			PoolSize: r.PoolSize,
 		})
 	default:
-		log.Warn("Mode Is Invalid: ", r.ToString())
+		log.Warn("Mode Is Invalid: ", r.Info())
 		return nil
 	}
 	return &client

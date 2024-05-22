@@ -28,7 +28,7 @@ type Minio struct {
 }
 
 // 配置信息格式化
-func (m *Minio) ToString() string {
+func (m *Minio) Info() string {
 	return fmt.Sprintf("host=%s port=%d accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
 }
 
@@ -49,13 +49,12 @@ func (*Minio) Reader() *confx.Reader {
 // 配置器运行
 func (m *Minio) Run() (err error) {
 	var client *minio.Client
-	var toString = m.ToString()
 	if client, err = m.NewClient(); err != nil {
-		log.Error("Minio Connect Failed: ", toString, err)
+		log.Error("Minio Connect Failed: ", m.Info(), err)
 		return
 	}
 	handler = &Handler{Config: m, Client: client}
-	log.Info("Minio Connect Successful: ", toString)
+	log.Info("Minio Connect Successful: ", m.Info())
 	return
 }
 
