@@ -16,17 +16,17 @@ import (
 
 const TimeFormat = "2006-01-02 15:04:05.999"
 
-type LogFormatter struct {
+type Formatter struct {
 	timeFormat string
 	useColor   bool
 }
 
-func DefaultFormatter() *LogFormatter {
-	return &LogFormatter{TimeFormat, false}
+func DefaultFormatter() *Formatter {
+	return &Formatter{TimeFormat, false}
 }
 
 // 日志格式化,用以实现logrus.Formatter接口
-func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	host, _ := os.Hostname()
 	var b = bytes.Buffer{}
 	b.WriteString(fmt.Sprintf("[%-23s][%-6s][%s]", time.Now().Format(f.timeFormat), entry.Level.String(), host))

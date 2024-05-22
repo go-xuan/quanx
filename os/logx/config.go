@@ -38,16 +38,16 @@ func New(app string) *LogConfig {
 
 // 日志配置
 type LogConfig struct {
-	FileName string `json:"fileName" yaml:"fileName" default:"app.log"`               // 日志文件名
-	Dir      string `json:"dir" yaml:"dir" default:"resource/log"`                    // 日志保存文件夹
-	Level    string `json:"level" yaml:"level" default:"info"`                        // 日志级别
-	TimeFmt  string `json:"timeFmt" yaml:"timeFmt" default:"2006-01-02 15:04:05.999"` // 时间格式化
-	UseColor bool   `json:"useColor" yaml:"useColor" default:"false"`                 // 使用颜色
-	Output   string `json:"output" yaml:"output" default:"default"`                   // 日志输出
-	Caller   bool   `json:"caller" yaml:"caller" default:"false"`                     // Flag for whether to caller
-	MaxSize  int    `json:"maxSize" yaml:"maxSize" default:"100"`                     // 日志大小(单位：mb)
-	MaxAge   int    `json:"maxAge" yaml:"maxAge" default:"1"`                         // 日志保留天数(单位：天)
-	Backups  int    `json:"backups" yaml:"backups" default:"10"`                      // 日志备份数
+	FileName   string `json:"fileName" yaml:"fileName" default:"app.log"`                     // 日志文件名
+	Dir        string `json:"dir" yaml:"dir" default:"resource/log"`                          // 日志保存文件夹
+	Level      string `json:"level" yaml:"level" default:"info"`                              // 日志级别
+	TimeFormat string `json:"timeFormat" yaml:"timeFormat" default:"2006-01-02 15:04:05.999"` // 时间格式化
+	UseColor   bool   `json:"useColor" yaml:"useColor" default:"false"`                       // 使用颜色
+	Output     string `json:"output" yaml:"output" default:"default"`                         // 日志输出
+	Caller     bool   `json:"caller" yaml:"caller" default:"false"`                           // Flag for whether to caller
+	MaxSize    int    `json:"maxSize" yaml:"maxSize" default:"100"`                           // 日志大小(单位：mb)
+	MaxAge     int    `json:"maxAge" yaml:"maxAge" default:"1"`                               // 日志保留天数(单位：天)
+	Backups    int    `json:"backups" yaml:"backups" default:"10"`                            // 日志备份数
 }
 
 // 配置信息格式化
@@ -75,7 +75,7 @@ func (l *LogConfig) Run() error {
 		return err
 	}
 	filex.CreateDir(l.Dir)
-	var writer, formatter = l.LogWriter(), l.Formatter()
+	var writer, formatter = l.Writer(), l.Formatter()
 	logrus.AddHook(NewHook(writer, formatter))
 	logrus.SetFormatter(formatter)
 	logrus.SetLevel(l.GetLevel())
@@ -88,11 +88,11 @@ func (l *LogConfig) LogPath() string {
 	return filepath.Join(l.Dir, l.FileName)
 }
 
-func (l *LogConfig) Formatter() *LogFormatter {
-	return &LogFormatter{l.TimeFmt, l.UseColor}
+func (l *LogConfig) Formatter() *Formatter {
+	return &Formatter{l.TimeFormat, l.UseColor}
 }
 
-func (l *LogConfig) LogWriter() io.Writer {
+func (l *LogConfig) Writer() io.Writer {
 	switch l.Output {
 	case ConsoleOutput:
 		return os.Stdout
