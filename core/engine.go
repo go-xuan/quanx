@@ -1,7 +1,6 @@
 package core
 
 import (
-	"os"
 	"path/filepath"
 	"strconv"
 
@@ -23,11 +22,11 @@ import (
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
-// 服务启动标识
-type Flag int
+// 服务启动模式
+type Mode int
 
 const (
-	NonGin        Flag = iota // 非gin项目
+	NonGin        Mode = iota // 非gin项目
 	EnableNacos               // 启用nacos
 	MultiDatabase             // 开启多数据源
 	MultiRedis                // 开启多redis源
@@ -48,8 +47,8 @@ var engine *Engine
 
 // 服务配置器
 type Engine struct {
-	flag           map[Flag]bool                  // 服务运行标识
-	config         *Config                        // 服务配置数据，使用 loadingConfig()将配置文件加载到此
+	mode           map[Mode]bool                  // 服务运行模式
+	config         *Config                        // 服务配置数据，使用 loadingServerConfig()将配置文件加载到此
 	configDir      string                         // 服务配置文件夹, 使用 SetConfigDir()设置配置文件读取路径
 	configurators  []confx.Configurator           // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
 	customFuncs    []func()                       // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
@@ -69,7 +68,7 @@ func GetServer() *Server {
 }
 
 // 初始化Engine
-func GetEngine(modes ...Flag) *Engine {
+func GetEngine(modes ...Mode) *Engine {
 	if engine == nil {
 		engine = &Engine{
 			config:         &Config{},
@@ -78,20 +77,20 @@ func GetEngine(modes ...Flag) *Engine {
 			configurators:  make([]confx.Configurator, 0),
 			ginMiddlewares: make([]gin.HandlerFunc, 0),
 			gormTables:     make(map[string][]gormx.Tabler[any]),
-			flag:           make(map[Flag]bool),
+			mode:           make(map[Mode]bool),
 		}
 		gin.SetMode(gin.ReleaseMode)
 		engine.SetMode(modes...)
 	}
-	log.SetOutput(os.Stdout)
+	log.SetOutput(logx.DefaultWriter())
 	log.SetFormatter(logx.DefaultFormatter())
-	if engine.flag[UseQueue] {
+	if engine.mode[UseQueue] {
 		queue := taskx.Queue()
-		queue.Add(LoadingConfig, engine.loadingConfig)       // 加载配置文件
-		queue.Add(InitServerBasic, engine.InitServerBasic)   // 初始化服务基础组件（log/nacos/gorm/redis/cache）
-		queue.Add(RunConfigurators, engine.runConfigurators) // 运行自定义配置器
-		queue.Add(RunCustomFuncs, engine.runCustomFunc)      // 运行自定义函数
-		queue.Add(StartServer, engine.startServer)           // 服务启动
+		queue.Add(LoadingConfig, engine.loadingServerConfig) // 1.加载服务配置文件
+		queue.Add(InitServerBasic, engine.initServerBasic)   // 2.初始化服务基础组件（log/nacos/gorm/redis/cache）
+		queue.Add(RunConfigurators, engine.runConfigurators) // 3.运行自定义配置器
+		queue.Add(RunCustomFuncs, engine.runCustomFuncs)     // 4.运行自定义函数
+		queue.Add(StartServer, engine.startServer)           // 5.服务启动
 		engine.initQueue = queue
 	}
 	return engine
@@ -99,23 +98,23 @@ func GetEngine(modes ...Flag) *Engine {
 
 // 服务运行
 func (e *Engine) RUN() {
-	if engine.flag[UseQueue] {
+	if engine.mode[UseQueue] {
 		// 任务队列方式启动
 		engine.initQueue.Execute()
 	} else {
-		// 默认启动
-		syncx.OnceDo(e.loadingConfig)    // 加载配置文件
-		syncx.OnceDo(e.InitServerBasic)  // 初始化服务基础组件（log/nacos/gorm/redis/cache）
-		syncx.OnceDo(e.runConfigurators) // 运行自定义配置器
-		syncx.OnceDo(e.runCustomFunc)    // 运行自定义函数
-		syncx.OnceDo(e.startServer)      // 服务启动
+		// 默认方式启动
+		syncx.OnceDo(e.loadingServerConfig) // 1.加载服务配置文件
+		syncx.OnceDo(e.initServerBasic)     // 2.初始化服务基础组件（log/nacos/gorm/redis/cache）
+		syncx.OnceDo(e.runConfigurators)    // 3.运行自定义配置器
+		syncx.OnceDo(e.runCustomFuncs)      // 4.运行自定义函数
+		syncx.OnceDo(e.startServer)         // 5.服务启动
 	}
 }
 
-// 加载服务配置
-func (e *Engine) loadingConfig() {
+// 加载服务配置文件
+func (e *Engine) loadingServerConfig() {
 	var config = &Config{Server: &Server{}}
-	if !e.flag[NonGin] {
+	if !e.mode[NonGin] {
 		var path = e.GetConfigPath(constx.DefaultServerConfig)
 		if err := marshalx.UnmarshalFromFile(path, config); err != nil {
 			log.Errorf("Loading %s Failed", path)
@@ -127,7 +126,7 @@ func (e *Engine) loadingConfig() {
 		}
 	}
 	// 从nacos加载配置
-	if e.flag[EnableNacos] && config.Nacos != nil {
+	if e.mode[EnableNacos] && config.Nacos != nil {
 		e.RunConfigurator(config.Nacos, true)
 		if config.Nacos.EnableNaming() {
 			// 注册nacos服务Nacos
@@ -139,14 +138,14 @@ func (e *Engine) loadingConfig() {
 	e.config = config
 }
 
-// 构建框架基础（log/nacos/gorm/redis）
-func (e *Engine) InitServerBasic() {
+// 初始化服务基础组件（log/nacos/gorm/redis）
+func (e *Engine) initServerBasic() {
 	// 初始化日志
 	var serverName = stringx.IfZero(e.config.Server.Name, "app")
 	e.RunConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
 
 	// 初始化数据库连接
-	if e.flag[MultiDatabase] {
+	if e.mode[MultiDatabase] {
 		e.config.Database = anyx.IfZero(e.config.Database, &gormx.MultiDatabase{})
 		e.RunConfigurator(e.config.Database)
 	} else {
@@ -154,6 +153,7 @@ func (e *Engine) InitServerBasic() {
 		e.RunConfigurator(database)
 		e.config.Database = &gormx.MultiDatabase{database}
 	}
+
 	// 初始化表结构
 	if gormx.Initialized() {
 		for source := range gormx.This().DBMap {
@@ -167,7 +167,7 @@ func (e *Engine) InitServerBasic() {
 	}
 
 	// 初始化redis连接
-	if e.flag[MultiRedis] {
+	if e.mode[MultiRedis] {
 		e.config.Redis = anyx.IfZero(e.config.Redis, &redisx.MultiRedis{})
 		e.RunConfigurator(e.config.Redis)
 	} else {
@@ -178,13 +178,52 @@ func (e *Engine) InitServerBasic() {
 
 	// 初始化缓存
 	if redisx.Initialized() {
-		if e.flag[MultiCache] {
+		if e.mode[MultiCache] {
 			e.config.Cache = anyx.IfZero(e.config.Cache, &cachex.MultiCache{})
 			e.RunConfigurator(e.config.Cache)
 		} else {
 			var cache = &cachex.Cache{}
 			e.RunConfigurator(cache, true)
 			e.config.Cache = &cachex.MultiCache{cache}
+		}
+	}
+}
+
+// 运行自定义配置器
+func (e *Engine) runConfigurators() {
+	for _, config := range e.configurators {
+		e.RunConfigurator(config)
+	}
+}
+
+// 运行自定义函数
+func (e *Engine) runCustomFuncs() {
+	for _, customFunc := range e.customFuncs {
+		customFunc()
+	}
+}
+
+// 服务启动
+func (e *Engine) startServer() {
+	if !e.mode[NonGin] {
+		defer PanicRecover()
+		if e.config.Server.Debug {
+			gin.SetMode(gin.DebugMode)
+		}
+		if e.ginEngine == nil {
+			e.ginEngine = gin.New()
+		}
+		e.ginEngine.Use(gin.Recovery(), logx.GinRequestLog)
+		e.ginEngine.Use(e.ginMiddlewares...)
+		_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
+		// 注册服务根路由，并执行路由注册函数
+		var group = e.ginEngine.Group(e.config.Server.Prefix)
+		e.InitGinLoader(group)
+		var port = ":" + strconv.Itoa(e.config.Server.Port)
+		log.Info("API接口请求地址: http://" + e.config.Server.Host + port)
+		if err := e.ginEngine.Run(port); err != nil {
+			log.Error("gin-Engine run failed ")
+			panic(err)
 		}
 	}
 }
@@ -196,13 +235,6 @@ func (e *Engine) AddCustomFunc(funcs ...func()) {
 	}
 }
 
-// 执行自定义函数
-func (e *Engine) runCustomFunc() {
-	for _, customFunc := range e.customFuncs {
-		customFunc()
-	}
-}
-
 // 新增自定义配置器
 func (e *Engine) AddConfigurator(configurators ...confx.Configurator) {
 	if len(configurators) > 0 {
@@ -210,18 +242,11 @@ func (e *Engine) AddConfigurator(configurators ...confx.Configurator) {
 	}
 }
 
-// 运行自定义配置器
-func (e *Engine) runConfigurators() {
-	for _, config := range e.configurators {
-		e.RunConfigurator(config)
-	}
-}
-
 // 运行配置器
 func (e *Engine) RunConfigurator(configurator confx.Configurator, must ...bool) {
 	var ok = anyx.Default(false, must...)
 	if reader := configurator.Reader(); reader != nil {
-		if e.flag[EnableNacos] {
+		if e.mode[EnableNacos] {
 			reader.NacosGroup = e.config.Server.Name
 			if err := nacosx.NewConfig(reader.NacosGroup, reader.NacosDataId, reader.Listen).Loading(configurator); err == nil {
 				ok = true
@@ -262,36 +287,11 @@ func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	})
 }
 
-// 服务启动
-func (e *Engine) startServer() {
-	if !e.flag[NonGin] {
-		defer PanicRecover()
-		if e.config.Server.Debug {
-			gin.SetMode(gin.DebugMode)
-		}
-		if e.ginEngine == nil {
-			e.ginEngine = gin.New()
-		}
-		e.ginEngine.Use(gin.Recovery(), logx.GinRequestLog)
-		e.ginEngine.Use(e.ginMiddlewares...)
-		_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
-		// 注册服务根路由，并执行路由注册函数
-		var group = e.ginEngine.Group(e.config.Server.Prefix)
-		e.InitGinLoader(group)
-		var port = ":" + strconv.Itoa(e.config.Server.Port)
-		log.Info("API接口请求地址: http://" + e.config.Server.Host + port)
-		if err := e.ginEngine.Run(port); err != nil {
-			log.Error("gin-Engine run failed ")
-			panic(err)
-		}
-	}
-}
-
 // 设置模式
-func (e *Engine) SetMode(flags ...Flag) {
+func (e *Engine) SetMode(flags ...Mode) {
 	if len(flags) > 0 {
 		for _, flag := range flags {
-			e.flag[flag] = true
+			e.mode[flag] = true
 		}
 	}
 }
@@ -343,13 +343,21 @@ func (e *Engine) InitGinLoader(group *gin.RouterGroup) {
 			loader(group)
 		}
 	} else {
-		log.Warn("engine.ginLoaders is empty ")
+		log.Warn("gin router is empty")
 	}
 }
 
-// 添加需要初始化的 gormx.Tabler 模型
 func (e *Engine) AddQueueTask(name string, task func()) {
-	e.initQueue.AddBefore(name, task, StartServer)
+	if e.mode[UseQueue] {
+		if name == "" {
+			log.Error(`Add Queue Task Failed, Cause: the name cannot be empty`)
+			return
+		}
+		e.initQueue.AddBefore(name, task, StartServer)
+		log.Info(`Add Queue Task Successful, task name:`, name)
+	} else {
+		log.Error(`Add Queue Task Failed, Cause: UseQueue mode not set`)
+	}
 }
 
 // 服务保活

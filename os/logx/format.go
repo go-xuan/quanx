@@ -14,32 +14,36 @@ import (
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
-const TimeFormat = "2006-01-02 15:04:05.999"
+func DefaultFormatter() logrus.Formatter {
+	host, _ := os.Hostname()
+	return &LogFormatter{timeFormat: TimeFormat, host: host, Output: ConsoleOutput, useColor: true}
+}
 
-type Formatter struct {
+type LogFormatter struct {
 	timeFormat string
+	host       string
+	Output     string
 	useColor   bool
 }
 
-func DefaultFormatter() *Formatter {
-	return &Formatter{TimeFormat, false}
-}
-
 // 日志格式化,用以实现logrus.Formatter接口
-func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
-	host, _ := os.Hostname()
+func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	var b = bytes.Buffer{}
-	b.WriteString(fmt.Sprintf("[%-23s][%-6s][%s]", time.Now().Format(f.timeFormat), entry.Level.String(), host))
+	b.WriteString(fmt.Sprintf("[%-23s][%-5s][%s] ", time.Now().Format(f.timeFormat), entry.Level.String(), f.host))
 	b.WriteString(entry.Message)
 	for key, value := range entry.Data {
 		b.WriteString(fmt.Sprintf(", %s:%+v", key, value))
 	}
 	b.WriteString("\n")
-	if f.useColor {
+	if f.UserColor() {
 		return Color(entry.Level).Bytes(b.String()), nil
 	} else {
 		return b.Bytes(), nil
 	}
+}
+
+func (f *LogFormatter) UserColor() bool {
+	return (f.Output == ConsoleOutput || f.Output == DefaultOutput) && f.useColor
 }
 
 func Color(level logrus.Level) fmtx.Color {

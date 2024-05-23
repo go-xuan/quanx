@@ -24,12 +24,13 @@ const (
 	ErrorLevel = "error"
 	FatalLevel = "fatal"
 	PanicLevel = "panic"
-)
-
-// 日志输出类型
-const (
-	ConsoleOutput = "console"
-	FileOutput    = "file"
+	// 默认日志格式化
+	TimeFormat = "2006-01-02 15:04:05.999"
+	// 日志输出类型
+	DefaultOutput    = "default"
+	ConsoleOutput    = "console"
+	FileOutput       = "file"
+	LumberjackOutput = "lumberjack"
 )
 
 func New(app string) *LogConfig {
@@ -43,7 +44,7 @@ type LogConfig struct {
 	Level      string `json:"level" yaml:"level" default:"info"`                              // 日志级别
 	TimeFormat string `json:"timeFormat" yaml:"timeFormat" default:"2006-01-02 15:04:05.999"` // 时间格式化
 	UseColor   bool   `json:"useColor" yaml:"useColor" default:"false"`                       // 使用颜色
-	Output     string `json:"output" yaml:"output" default:"default"`                         // 日志输出
+	Output     string `json:"output" yaml:"output" default:"console"`                         // 日志输出
 	Caller     bool   `json:"caller" yaml:"caller" default:"false"`                           // Flag for whether to caller
 	MaxSize    int    `json:"maxSize" yaml:"maxSize" default:"100"`                           // 日志大小(单位：mb)
 	MaxAge     int    `json:"maxAge" yaml:"maxAge" default:"1"`                               // 日志保留天数(单位：天)
@@ -88,17 +89,18 @@ func (l *LogConfig) LogPath() string {
 	return filepath.Join(l.Dir, l.FileName)
 }
 
-func (l *LogConfig) Formatter() *Formatter {
-	return &Formatter{l.TimeFormat, l.UseColor}
+func (l *LogConfig) Formatter() logrus.Formatter {
+	host, _ := os.Hostname()
+	return &LogFormatter{timeFormat: l.TimeFormat, host: host, Output: l.Output, useColor: l.UseColor}
 }
 
 func (l *LogConfig) Writer() io.Writer {
 	switch l.Output {
 	case ConsoleOutput:
-		return os.Stdout
+		return &ConsoleWriter{std: os.Stdout}
 	case FileOutput:
 		return &FileWriter{path: l.LogPath()}
-	default:
+	case LumberjackOutput:
 		return &lumberjack.Logger{
 			Filename:   l.LogPath(),
 			MaxSize:    intx.IfZero(l.MaxSize, 100),
@@ -106,6 +108,8 @@ func (l *LogConfig) Writer() io.Writer {
 			MaxBackups: intx.IfZero(l.Backups, 10),
 			Compress:   true,
 		}
+	default:
+		return DefaultWriter()
 	}
 }
 
