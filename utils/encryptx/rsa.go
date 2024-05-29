@@ -8,7 +8,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/go-xuan/quanx/file/filex"
+	"github.com/go-xuan/quanx/os/file/filex"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 	publicKeyPem  = "rsa-public.pem"
 )
 
-var rsaX *Rsa
+var _rsa *Rsa
 
 type Rsa struct {
 	privateKey  *rsa.PrivateKey // rsa私钥
@@ -26,18 +26,18 @@ type Rsa struct {
 }
 
 type RsaData struct {
-	path  string // 证书存放路径
-	bytes []byte // 证书秘钥文本
+	path  string // 秘钥存放路径
+	bytes []byte // 秘钥
 }
 
 func RSA() *Rsa {
-	if rsaX == nil {
+	if _rsa == nil {
 		var err error
-		if rsaX, err = newRSA(defaultDir); err != nil {
+		if _rsa, err = newRSA(defaultDir); err != nil {
 			return nil
 		}
 	}
-	return rsaX
+	return _rsa
 }
 
 // 公钥加密
@@ -84,12 +84,11 @@ func newRSA(dir string) (r *Rsa, err error) {
 			return
 		}
 	}
-	r = &Rsa{
+	return &Rsa{
 		privateKey:  privateKey,
 		privateData: &RsaData{priPath, priBytes},
 		publicData:  &RsaData{pubPath, pubBytes},
-	}
-	return
+	}, nil
 }
 
 // pem解码
@@ -152,12 +151,12 @@ func RsaEncrypt(plaintext []byte, pemPath string) (ciphertext []byte, err error)
 }
 
 // RSA解密
-func RsaDecrypt(plaintext []byte, pemPath string) (ciphertext []byte, err error) {
+func RsaDecrypt(ciphertext []byte, pemPath string) (plaintext []byte, err error) {
 	var key *rsa.PrivateKey
 	if key, err = x509.ParsePKCS1PrivateKey(PemDecode(pemPath)); err != nil {
 		return
 	}
-	if ciphertext, err = rsa.DecryptPKCS1v15(rand.Reader, key, plaintext); err != nil {
+	if plaintext, err = rsa.DecryptPKCS1v15(rand.Reader, key, ciphertext); err != nil {
 		return
 	}
 	return
@@ -176,12 +175,12 @@ func RsaEncryptPKIX(plaintext []byte, pemPath string) (ciphertext []byte, err er
 }
 
 // RSA解密(PKIX)
-func RsaDecryptPKIX(plaintext []byte, pemPath string) (ciphertext []byte, err error) {
+func RsaDecryptPKIX(ciphertext []byte, pemPath string) (plaintext []byte, err error) {
 	var key any
 	if key, err = x509.ParsePKCS8PrivateKey(PemDecode(pemPath)); err != nil {
 		return
 	}
-	if ciphertext, err = rsa.DecryptPKCS1v15(rand.Reader, key.(*rsa.PrivateKey), plaintext); err != nil {
+	if plaintext, err = rsa.DecryptPKCS1v15(rand.Reader, key.(*rsa.PrivateKey), ciphertext); err != nil {
 		return
 	}
 	return

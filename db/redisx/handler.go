@@ -5,7 +5,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/app/constx"
 )
 
 var handler *Handler

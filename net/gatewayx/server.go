@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-xuan/quanx/core/confx"
-	"github.com/go-xuan/quanx/core/ginx"
-	"github.com/go-xuan/quanx/core/nacosx"
+	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/ginx"
+	"github.com/go-xuan/quanx/app/nacosx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 

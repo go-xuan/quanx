@@ -9,8 +9,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/core/confx"
+	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/constx"
 	"github.com/go-xuan/quanx/types/anyx"
 )
 

@@ -5,8 +5,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/core/confx"
+	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/constx"
 	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
@@ -52,7 +52,7 @@ func (c *Cache) Run() (err error) {
 		handler = &Handler{
 			Multi:     false,
 			Client:    client,
-			ClientMap: make(map[string]*CacheClient),
+			ClientMap: make(map[string]Client),
 		}
 	} else {
 		handler.Multi = true
@@ -89,7 +89,7 @@ func (m MultiCache) Run() error {
 	if handler == nil {
 		handler = &Handler{
 			Multi:     true,
-			ClientMap: make(map[string]*CacheClient),
+			ClientMap: make(map[string]Client),
 		}
 	} else {
 		handler.Multi = true
@@ -111,17 +111,17 @@ func (c *Cache) Info() string {
 	return fmt.Sprintf("type=%s source=%s prefix=%s marshal=%s", c.Type, c.Source, c.Prefix, c.Marshal)
 }
 
-func (c *Cache) CacheClient() *CacheClient {
+func (c *Cache) CacheClient() Client {
 	if c.Type == CacheTypeRedis {
-		return &CacheClient{
+		return &RedisClient{
 			cache:     c,
-			client:    &RedisClient{redisx.Client(c.Source)},
+			client:    redisx.Client(c.Source),
 			unmarshal: marshalx.NewCase(c.Marshal).Unmarshal,
 		}
 	} else {
-		return &CacheClient{
+		return &LocalClient{
 			cache:     c,
-			client:    &LocalClient{localCache},
+			client:    NewLocalCache(),
 			unmarshal: marshalx.NewCase(c.Marshal).Unmarshal,
 		}
 	}

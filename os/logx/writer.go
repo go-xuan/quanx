@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/go-xuan/quanx/file/filex"
+	"github.com/go-xuan/quanx/os/file/filex"
 )
 
 func DefaultWriter() io.Writer {

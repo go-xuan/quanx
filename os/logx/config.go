@@ -10,8 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/go-xuan/quanx/core/confx"
-	"github.com/go-xuan/quanx/file/filex"
+	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/os/file/filex"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/intx"
 )

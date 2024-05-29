@@ -1,15 +1,15 @@
 package cachex
 
 import (
-	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/app/constx"
 )
 
 var handler *Handler
 
 type Handler struct {
 	Multi     bool // 是否多缓存
-	Client    *CacheClient
-	ClientMap map[string]*CacheClient
+	Client    Client
+	ClientMap map[string]Client
 }
 
 func This() *Handler {
@@ -23,11 +23,11 @@ func Initialized() bool {
 	return handler != nil
 }
 
-func GetClient(source ...string) *CacheClient {
+func GetClient(source ...string) Client {
 	return This().GetClient(source...)
 }
 
-func (h *Handler) GetClient(source ...string) *CacheClient {
+func (h *Handler) GetClient(source ...string) Client {
 	if len(source) > 0 && source[0] != constx.DefaultKey {
 		if client, ok := h.ClientMap[source[0]]; ok {
 			return client

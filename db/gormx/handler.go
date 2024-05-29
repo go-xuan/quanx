@@ -4,7 +4,7 @@ import (
 	"gorm.io/gorm"
 	"reflect"
 
-	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/app/constx"
 )
 
 var handler *Handler

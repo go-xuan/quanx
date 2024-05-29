@@ -1,4 +1,4 @@
-package core
+package app
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestEngineRun(t *testing.T) {
-	var newEngine = GetEngine(NonGin)
+	var newEngine = NewEngine(NonGin)
 
 	// 添加初始化方法
 	newEngine.AddCustomFunc(

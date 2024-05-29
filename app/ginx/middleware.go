@@ -2,11 +2,11 @@ package ginx
 
 import (
 	"errors"
-	cachex2 "github.com/go-xuan/quanx/os/cachex"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/go-xuan/quanx/net/respx"
+	"github.com/go-xuan/quanx/os/cachex"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/encryptx"
@@ -24,11 +24,11 @@ const (
 )
 
 // token 缓存
-var cacheClient *cachex2.CacheClient
+var cacheClient cachex.Client
 
-func AuthCache() *cachex2.CacheClient {
+func AuthCache() cachex.Client {
 	if cacheClient == nil {
-		cacheClient = cachex2.GetClient(UserCacheName)
+		cacheClient = cachex.GetClient(UserCacheName)
 	}
 	return cacheClient
 }
@@ -105,7 +105,7 @@ func authenticateToken(ctx *gin.Context) error {
 	} else {
 		if user, err := ParseUserFromToken(token); err != nil || user == nil {
 			return errors.New("token is invalid")
-		} else if !AuthCache().Exists(ctx.Request.Context(), user.Account) {
+		} else if exist := AuthCache().EXIST(ctx.Request.Context(), user.Account); !exist {
 			return errors.New("token is expired")
 		} else {
 			SetUser(ctx, user)
@@ -119,17 +119,15 @@ func authenticateCookie(ctx *gin.Context) error {
 	if cookie, err := ctx.Cookie(Cookie); err != nil {
 		return errors.New("cookie is required")
 	} else {
-		var account string
+		var account, token string
 		if account, err = encryptx.RSA().Decrypt(cookie); err == nil {
-			if exist := AuthCache().Exists(ctx.Request.Context(), account); !exist {
+			if exist := AuthCache().EXIST(ctx.Request.Context(), account); !exist {
 				return errors.New("cookie is expired")
-			} else {
-				if token := AuthCache().GetString(ctx.Request.Context(), account); token != "" {
-					var user = &User{}
-					if user, err = ParseUserFromToken(token); err == nil {
-						SetUser(ctx, user)
-						return nil
-					}
+			} else if token = AuthCache().GET(ctx.Request.Context(), account); token != "" {
+				var user = &User{}
+				if user, err = ParseUserFromToken(token); err == nil {
+					SetUser(ctx, user)
+					return nil
 				}
 			}
 		}

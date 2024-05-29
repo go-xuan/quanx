@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
 
-	"github.com/go-xuan/quanx/core/confx"
+	"github.com/go-xuan/quanx/app/confx"
 )
 
 // 邮件服务器配置

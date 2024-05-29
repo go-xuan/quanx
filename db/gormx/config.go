@@ -12,8 +12,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 
-	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/core/confx"
+	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/constx"
 	"github.com/go-xuan/quanx/types/anyx"
 )
 

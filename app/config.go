@@ -1,16 +1,21 @@
-package core
+package app
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/go-xuan/quanx/core/nacosx"
-	"github.com/go-xuan/quanx/core/serverx"
+	"github.com/go-xuan/quanx/app/nacosx"
+	"github.com/go-xuan/quanx/app/serverx"
 	"github.com/go-xuan/quanx/db/gormx"
 	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/os/cachex"
 	"github.com/go-xuan/quanx/os/logx"
 )
+
+// 获取服务配置
+func GetServer() *Server {
+	return GetEngine().config.Server
+}
 
 // 服务配置
 type Config struct {

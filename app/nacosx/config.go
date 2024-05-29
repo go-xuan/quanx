@@ -2,6 +2,7 @@ package nacosx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/app/constx"
 	"path/filepath"
 	"strings"
 
@@ -13,9 +14,8 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/vo"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/core/confx"
-	"github.com/go-xuan/quanx/core/serverx"
+	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/serverx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 

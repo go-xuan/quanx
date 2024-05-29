@@ -8,9 +8,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/go-xuan/quanx/os/file/filex"
 	"github.com/minio/minio-go/v7"
-
-	"github.com/go-xuan/quanx/file/filex"
 )
 
 var handler *Handler

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/app/constx"
 )
 
 // 设置默认值

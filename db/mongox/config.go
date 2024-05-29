@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/go-xuan/quanx/core/confx"
+	"github.com/go-xuan/quanx/app/confx"
 )
 
 type Mongo struct {

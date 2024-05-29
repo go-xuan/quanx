@@ -1,7 +1,7 @@
 package respx
 
 import (
-	"github.com/go-xuan/quanx/common/modelx"
+	"github.com/go-xuan/quanx/app/modelx"
 )
 
 // 分页结果
