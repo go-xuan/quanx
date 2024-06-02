@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-xuan/quanx/app/confx"
 	"github.com/go-xuan/quanx/app/constx"
-	"github.com/go-xuan/quanx/db/redisx"
+	"github.com/go-xuan/quanx/server/redisx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"

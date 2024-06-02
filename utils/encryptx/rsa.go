@@ -5,10 +5,9 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"github.com/go-xuan/quanx/os/filex"
 	"os"
 	"path"
-
-	"github.com/go-xuan/quanx/os/file/filex"
 )
 
 const (

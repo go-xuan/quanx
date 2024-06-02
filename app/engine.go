@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/go-xuan/quanx/app/constx"
 	"path/filepath"
 	"strconv"
 
@@ -9,14 +8,15 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/constx"
 	"github.com/go-xuan/quanx/app/nacosx"
-	"github.com/go-xuan/quanx/db/gormx"
-	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/net/ipx"
 	"github.com/go-xuan/quanx/os/cachex"
 	"github.com/go-xuan/quanx/os/logx"
 	"github.com/go-xuan/quanx/os/syncx"
 	"github.com/go-xuan/quanx/os/taskx"
+	"github.com/go-xuan/quanx/server/gormx"
+	"github.com/go-xuan/quanx/server/redisx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"

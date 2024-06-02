@@ -3,13 +3,13 @@ package marshalx
 import (
 	"encoding/json"
 	"errors"
+	"github.com/go-xuan/quanx/os/filex"
 	"os"
 
 	"github.com/BurntSushi/toml"
 	"github.com/vmihailenco/msgpack"
 	"gopkg.in/yaml.v3"
 
-	"github.com/go-xuan/quanx/os/file/filex"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 

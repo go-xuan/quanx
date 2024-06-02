@@ -11,7 +11,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/go-xuan/quanx/app/confx"
-	"github.com/go-xuan/quanx/os/file/filex"
+	"github.com/go-xuan/quanx/os/filex"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/intx"
 )

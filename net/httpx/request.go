@@ -3,18 +3,21 @@ package httpx
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
 type Request struct {
 	method string
 	url    string
+	params map[string]string
 	header map[string]string
 	body   any
 	form   url.Values
@@ -45,6 +48,11 @@ func (r *Request) Url(url string) *Request {
 
 func (r *Request) Method(method string) *Request {
 	r.method = method
+	return r
+}
+
+func (r *Request) Param(params map[string]string) *Request {
+	r.params = params
 	return r
 }
 
@@ -101,6 +109,24 @@ func (r *Request) DoHttpsProxy(proxyUrl, crt string) (res []byte, err error) {
 }
 
 func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
+	if r.url == "" {
+		err = errorx.New("url is empty")
+		return
+	}
+	if r.params != nil {
+		var url = strings.Builder{}
+		url.WriteString(r.url)
+		if !strings.HasSuffix(r.url, "?") {
+			url.WriteString("?")
+		}
+		for k, v := range r.params {
+			url.WriteString(k)
+			url.WriteString("=")
+			url.WriteString(v)
+		}
+		r.url = url.String()
+	}
+	fmt.Println(r.url)
 	var body io.Reader
 	if r.form != nil {
 		r.method = POST

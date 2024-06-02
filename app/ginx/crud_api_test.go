@@ -1,9 +1,10 @@
 package ginx
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/go-xuan/quanx/db/gormx"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/quanx/server/gormx"
 )
 
 func TestCrudApiRouter(t *testing.T) {

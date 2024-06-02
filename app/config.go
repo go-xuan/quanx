@@ -6,10 +6,10 @@ import (
 
 	"github.com/go-xuan/quanx/app/nacosx"
 	"github.com/go-xuan/quanx/app/serverx"
-	"github.com/go-xuan/quanx/db/gormx"
-	"github.com/go-xuan/quanx/db/redisx"
 	"github.com/go-xuan/quanx/os/cachex"
 	"github.com/go-xuan/quanx/os/logx"
+	"github.com/go-xuan/quanx/server/gormx"
+	"github.com/go-xuan/quanx/server/redisx"
 )
 
 // 获取服务配置
