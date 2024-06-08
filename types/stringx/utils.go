@@ -10,7 +10,6 @@ func Between(s, start, end string) (from, to int) {
 		indices := AllIndex(s, start, 2)
 		return indices[0], indices[1]
 	}
-	from, to = -1, -1
 	var l, m, n = len(s), len(start), len(end)
 	if m > l || n > l {
 		return
@@ -26,7 +25,8 @@ func Between(s, start, end string) (from, to int) {
 				}
 				i = i + m - 1
 			}
-		} else if s[i] == end[0] {
+		}
+		if s[i] == end[0] {
 			if s[i:i+n] == end {
 				y++
 				if y == x || x == 1 {
@@ -228,6 +228,20 @@ func Fill(s, fill string, length int, right ...bool) string {
 	} else {
 		return fillStr.String() + s
 	}
+}
+
+// 解析url参数为map
+func ParseUrlParams(constraint string) map[string]string {
+	if strings.Contains(constraint, "=") {
+		var params = make(map[string]string)
+		kvs := strings.Split(constraint, "&")
+		for _, kv := range kvs {
+			k, v := Cut(kv, "=")
+			params[k] = v
+		}
+		return params
+	}
+	return nil
 }
 
 // 转下划线

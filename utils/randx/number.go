@@ -23,25 +23,25 @@ func Float64() float64 {
 
 // 随机整数
 func IntRange(min, max int) int {
-	if min == max {
-		return min
+	if min != max {
+		return NewRand().Intn(1+max-min) + min
 	}
-	return NewRand().Intn(1+max-min) + min
+	return min
 }
 
 // 随机整数
 func Int64Range(min, max int64) int64 {
-	if min == max {
-		return min
+	if min != max {
+		return NewRand().Int63n(1+max-min) + min
 	}
-	return NewRand().Int63n(1+max-min) + min
+	return min
 }
 
 // 随机浮点数
 func Float64Range(min, max float64, prec int) float64 {
-	if min == max {
-		return min
+	if min != max {
+		float := NewRand().Float64()*(max-min) + min
+		return floatx.Ground(float, prec)
 	}
-	float := NewRand().Float64()*(max-min) + min
-	return floatx.Ground(float, prec)
+	return min
 }

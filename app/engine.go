@@ -35,7 +35,7 @@ const (
 	Running                   // 正在运行中
 )
 
-// Init Queue Function Name
+// Init Queue Function Department
 const (
 	LoadingConfig    = "loading_config"    // 加载配置文件
 	InitServerBasic  = "init_server_basic" // 初始化服务基础组件（log/nacos/gorm/redis/cache）
