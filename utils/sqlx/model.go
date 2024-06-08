@@ -315,7 +315,7 @@ func (s *SQL) SelectSql() string {
 	for i, field := range s.Fields {
 		if i > 0 {
 			sql.WriteString(Comma)
-			if aliasNum > 3 {
+			if aliasNum > 0 {
 				sql.WriteString(NewLine)
 				sql.WriteString(s.NewLineSpace(space))
 			} else {
@@ -323,7 +323,12 @@ func (s *SQL) SelectSql() string {
 			}
 		}
 		if field.Alias != Empty {
-			sql.WriteString(fmt.Sprintf("%"+strconv.Itoa(-fieldLength-1)+"s", field.Name))
+			if aliasNum > 0 {
+				sql.WriteString(fmt.Sprintf("%"+strconv.Itoa(-fieldLength-1)+"s", field.Name))
+			} else {
+				sql.WriteString(field.Name)
+				sql.WriteString(Blank)
+			}
 			sql.WriteString(field.Alias)
 		} else {
 			sql.WriteString(field.Name)
