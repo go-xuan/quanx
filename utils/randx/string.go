@@ -23,21 +23,21 @@ func String(length ...int) string {
 	return string(bytes)
 }
 
-// 生成随机密码
-func Password(strength int, length ...int) string {
+// 根据with生成字符串，可用于生成不同强度的密码
+func StringWith(with int, length ...int) string {
 	var l = IntRange(8, 16)
 	if len(length) > 0 && length[0] > 0 {
 		l = length[0]
 	}
 	bytes := make([]byte, l)
 	var temp = numbers
-	if strength&WithLowerLetter > 0 {
+	if with&WithLowerLetter > 0 {
 		temp += lowerLetters
 	}
-	if strength&WithUpperLetter > 0 {
+	if with&WithUpperLetter > 0 {
 		temp += upperLetters
 	}
-	if strength&WithSpecial > 0 {
+	if with&WithSpecial > 0 {
 		temp += special
 	}
 	for i := 0; i < l; i++ {
