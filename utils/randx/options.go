@@ -8,35 +8,30 @@ import (
 	"github.com/go-xuan/quanx/types/timex"
 )
 
-// 随机数据生成类型
-type RandType uint
-
 const (
-	StringType    RandType = iota // 字符串
-	IntType                       // 纯数字
-	FloatType                     // 纯浮点
-	SequenceType                  // 序列
-	IntStringType                 // 数字字符，可拼接前后缀
-	TimeType                      // 时间
-	DateType                      // 日期
-	UuidType                      // uuid
-	PhoneType                     // 手机号
-	NameType                      // 姓名
-	IdCardType                    // 身份证
-	PlateNoType                   // 车牌号
-	EmailType                     // 邮箱
-	IPType                        // ip地址
-	ProvinceType                  // 省
-	CityType                      // 市
-	PasswordType                  // 密码
-	EnumType                      // 枚举
-	DatabaseType                  // 数据库取值
+	IntType       = "int"        // 数字
+	FloatType     = "float"      // 浮点数
+	SequenceType  = "sequence"   // 数字编号
+	TimeType      = "time"       // 时间
+	DateType      = "date"       // 日期
+	UuidType      = "uuid"       // uuid
+	PhoneType     = "phone"      // 手机号
+	NameType      = "name"       // 姓名
+	IdCardType    = "id_card"    // 身份证
+	PlateNoType   = "plate_no"   // 车牌号
+	EmailType     = "email"      // 邮箱
+	IPType        = "ip"         // ip地址
+	ProvinceType  = "province"   // 省
+	CityType      = "city"       // 市
+	PasswordType  = "password"   // 密码
+	EnumType      = "enum"       // 枚举
+	OtherEnumType = "other_enum" // 其他枚举
 )
 
 // 随机生成
 type Options struct {
-	Type    RandType // 数据类型
-	Param   *Param   // 约束条件参数,格式为"key=value&key=value&..."
+	Type    string   // 数据类型
+	Param   *Param   // 约束条件参数
 	Default string   // 默认值
 	Offset  int      // 偏移量
 	Enums   []string // 枚举
@@ -139,15 +134,13 @@ func (o *Options) randString() (result string) {
 		return City()
 	case PasswordType:
 		return o.Param.Password()
-	case IntStringType:
-		return stringx.ParseInt(o.Param.Int())
 	case DateType:
-		return o.Param.TimeString(timex.DateFmt)
+		return o.Param.TimeFmt(timex.DateFmt)
 	case TimeType:
-		return o.Param.TimeString()
+		return o.Param.TimeFmt()
 	case EnumType:
-		return o.Param.Enum()
-	case DatabaseType:
+		return Enum(o.Param.Enums)
+	case OtherEnumType:
 		return Enum(append(o.Enums, o.Param.Enums...))
 	default:
 		return String(o.Param.Length)
@@ -191,16 +184,14 @@ func NewParam(constraint string) *Param {
 }
 
 func (c *Param) Password() string {
-	var level int
 	switch c.Level {
 	case 2:
-		level = MediumPwd
+		return Password(WithNumber|WithLowerLetter|WithUpperLetter, c.Length)
 	case 3:
-		level = HardPwd
+		return Password(WithNumber|WithLowerLetter|WithUpperLetter|WithSpecial, c.Length)
 	default:
-		level = SimplePwd
+		return Password(WithNumber, c.Length)
 	}
-	return Password(c.Length, level)
 }
 
 func (c *Param) Int() int {
@@ -241,7 +232,7 @@ func (c *Param) Time() time.Time {
 	return TimeRange(start, start)
 }
 
-func (c *Param) TimeString(layouts ...string) string {
+func (c *Param) TimeFmt(layouts ...string) string {
 	end := time.Now()
 	if c.Max != "" {
 		end = timex.ToTime(c.Max)

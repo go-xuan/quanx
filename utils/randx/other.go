@@ -16,6 +16,11 @@ func Split(str, sep string) string {
 	return list[IntRange(0, len(list)-1)]
 }
 
+// 选择字节
+func SelectByte(str string) byte {
+	return str[IntRange(0, len(str)-1)]
+}
+
 // 枚举
 func Enum(enums []string) string {
 	return enums[IntRange(0, len(enums)-1)]
