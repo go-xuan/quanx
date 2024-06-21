@@ -241,7 +241,7 @@ init: false                   # bool 是否初始化表结构以及数据
 
 如果想要连接多个数据库，需要在启动时开启多数据源：
 
-```
+```go
 func main() {
 	var engine = app.NewEngine(
 		app.MultiDatabase, // 开启多数据源
@@ -251,7 +251,7 @@ func main() {
 
 同时更新conf/database.yaml配置文件内容为：
 
-```
+```yaml
 - name: default
   enable: true
   type: 
@@ -291,7 +291,7 @@ mode: 0                       # int 模式（0-单机；1-集群），默认单�
 
 如果需要连接多个redis数据源，需要在启动时开启多数据源：
 
-```
+```go
 func main() {
 	var engine = app.NewEngine(
 		app.MultiRedis, // 开启多redis数据源
@@ -301,7 +301,7 @@ func main() {
 
 更新conf/redis.yaml配置文件内容为：
 
-```
+```yaml
 - name: default
   enable: 
   host: 
@@ -335,7 +335,7 @@ key3:
 
 对应结构体：
 
-```
+```go
 // 此配置需要实现Configurator配置器接口
 type demo struct {
 	Key1 int      `json:"key1" yaml:"key1"`
@@ -371,7 +371,7 @@ func (d demo) Run() error {
 
 当服务启动时不启用nacos，并且配置项对应结构实现Configurator接口时，Reader()方法返回的Reader.FilePath不为空。
 
-```
+```go
 func main() {
 	// 初始化服务启动引擎
 	// 启动参数不加app.EnableNacos即表示不使用nacos
@@ -390,7 +390,7 @@ func (d demo) Reader() *confx.Reader {
 
 当服务启动启用nacos，并且配置项对应结构实现Configurator接口时，Reader()方法返回的Reader.NacosDataId不为空。
 
-```
+```go
 func main() {
 	// 初始化服务启动引擎
 	var engine = app.NewEngine(
