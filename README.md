@@ -189,7 +189,139 @@ func (c config) Run() error {
 
 ## 服务配置
 
-支持yaml、json、toml、properties等各种配置类型的配置文件；每一项配置都需要在go中使用struct声明，并实现Configurator配置器接口。
+支持yaml、json、toml、properties等各种配置类型的配置文件。
+
+### 服务配置
+
+quanx框架本身已实现了一些常规配置项的读取和初始化，开发者仅需要在项目代码中添加必要配置文件（默认yaml格式）即可。
+
+#### 应用配置
+
+配置文件路径：conf/config.yaml，此配置必须添加。
+
+```yaml
+server:
+  name: demo                  # 应用名
+  port: 8080                  # 服务端口
+  prefix: /demo               # 服务api前缀
+  debug: true                 # 开启debug模式
+```
+
+#### nacos配置
+
+配置文件路径：conf/nacos.yaml，不使用nacos可不添加。
+
+```yaml
+address: "127.0.0.1:8848"     # string nacos服务地址,多个以英文逗号分割
+username: "nacos"             # string 用户名
+password: "nacos"             # string 密码
+nameSpace: "demo"             # string 命名空间
+mode: 2                       # int 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
+```
+
+#### 数据库配置
+
+配置文件路径：conf/database.yaml，默认单数据库。
+
+```yaml
+source: "default"             # string 数据源名称
+enable: false                 # bool 是否启用
+type: "mysql"                 # string 数据库类型(mysql/postgres)
+host: "127.0.0.1"             # string host
+port: 5432                    # int 端口
+username: "root"              # string 用户名
+password: "root"              # string 密码
+database: ""                  # string 数据库名
+schema: ""                    # string 模式名（postgres）
+debug: false                  # bool 开启debug
+init: false                   # bool 是否初始化表结构以及数据
+```
+
+##### 多数据源
+
+如果想要连接多个数据库，需要在启动时开启多数据源：
+
+```
+func main() {
+	var engine = app.NewEngine(
+		app.MultiDatabase, // 开启多数据源
+	)
+}
+```
+
+同时更新conf/database.yaml配置文件内容为：
+
+```
+- name: default
+  enable: true
+  type: 
+  host: 
+  port: 
+  username: 
+  password: 
+  database: 
+  debug: 
+- name: db1
+  enable: 
+  type: 
+  host: 
+  port: 
+  username: 
+  password: 
+  database: 
+  debug: true
+......
+```
+
+#### redis配置
+
+配置文件路径：conf/redis.yaml，默认单redis数据库。
+
+```yaml
+source: "default"             # string 数据源名称
+enable: false                 # bool 是否启用
+host: "127.0.0.1"             # string host
+port: 6379                    # int 端口
+password: ""                  # string 密码
+database: 0                   # int 数据库
+mode: 0                       # int 模式（0-单机；1-集群），默认单机模式
+```
+
+##### 多redis源
+
+如果需要连接多个redis数据源，需要在启动时开启多数据源：
+
+```
+func main() {
+	var engine = app.NewEngine(
+		app.MultiRedis, // 开启多redis数据源
+	)
+}
+```
+
+更新conf/redis.yaml配置文件内容为：
+
+```
+- name: default
+  enable: 
+  host: 
+  port: 
+  password: 
+  database: 
+  mode: 0
+- name: redis_db1
+  enable: 
+  host: 
+  port: 
+  password: 
+  database: 
+  mode: 0
+......
+```
+
+#### 自定义配置
+
+每一项配置都需要在go代码中使用struct进行声明，而且结构体并实现Configurator配置器接口。
 
 demo.yaml：
 
@@ -233,131 +365,11 @@ func (d demo) Run() error {
 }
 ```
 
-### 服务配置
 
-quanx框架本身已实现了一些常规配置项的读取和初始化，开发者仅需要在项目代码中添加必要配置文件（默认yaml格式）即可。、
 
-#### config.yaml
+##### 本地配置
 
-应用基础配置，必须添加
-
-```yaml
-server:
-  name: demo                  # 应用名
-  port: 8080                  # 服务端口
-  prefix: /demo               # 服务api前缀
-  debug: true                 # 开启debug模式
-```
-
-#### nacos.yaml
-
-nacos配置，不使用nacos可不添加
-
-```yaml
-address: "127.0.0.1:8848"     # string nacos服务地址,多个以英文逗号分割
-username: "nacos"             # string 用户名
-password: "nacos"             # string 密码
-nameSpace: "demo"             # string 命名空间
-mode: 2                       # int 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
-```
-
-#### database.yaml
-
-数据库配置，不使用数据库可不添加，默认使用单数据库
-
-```yaml
-source: "default"             # string 数据源名称
-enable: false                 # bool 是否启用
-type: "mysql"                 # string 数据库类型(mysql/postgres)
-host: "127.0.0.1"             # string host
-port: 5432                    # int 端口
-username: "root"              # string 用户名
-password: "root"              # string 密码
-database: ""                  # string 数据库名
-schema: ""                    # string 模式名（postgres）
-debug: false                  # bool 开启debug
-init: false                   # bool 是否初始化表结构以及数据
-```
-
-默认使用单数据库，如果想要连接多个数据库，需要在启动时开启多数据源：
-
-```
-func main() {
-	var engine = app.NewEngine(
-		app.MultiDatabase, // 开启多数据源
-	)
-}
-```
-
-然后更新database.yaml配置文件内容为：
-
-```
-- name: default
-  enable: true
-  type: 
-  host: 
-  port: 
-  username: 
-  password: 
-  database: 
-  debug: 
-- name: db1
-  enable: 
-  type: 
-  host: 
-  port: 
-  username: 
-  password: 
-  database: 
-  debug: true
-```
-
-#### redis.yaml
-
-```yaml
-source: "default"             # string 数据源名称
-enable: false                 # bool 是否启用
-host: "127.0.0.1"             # string host
-port: 6379                    # int 端口
-password: ""                  # string 密码
-database: 0                   # int 数据库
-mode: 0                       # int 模式（0-单机；1-集群），默认单机模式
-```
-
-默认使用redis数据库，如果需要连接多个redis库，需要在启动时开启多数据源：
-
-```
-func main() {
-	var engine = app.NewEngine(
-		app.MultiRedis, // 开启多redis数据源
-	)
-}
-```
-
-然后更新redis.yaml配置文件内容为：
-
-```
-- name: default
-  enable: 
-  host: 
-  port: 
-  password: 
-  database: 
-  mode: 0
-- name: redis_db1
-  enable: 
-  host: 
-  port: 
-  password: 
-  database: 
-  mode: 0
-```
-
-### 自定义配置
-
-#### 本地配置
-
-当服务启动时不启用nacos，并且配置项对应结构实现Configurator接口时，Reader()方法返回的Reader.FilePath不为空
+当服务启动时不启用nacos，并且配置项对应结构实现Configurator接口时，Reader()方法返回的Reader.FilePath不为空。
 
 ```
 func main() {
@@ -374,9 +386,9 @@ func (d demo) Reader() *confx.Reader {
 
 ```
 
-#### Nacos配置
+##### Nacos配置
 
-当服务启动启用nacos，并且配置项对应结构实现Configurator接口时，Reader()方法返回的Reader.NacosDataId不为空
+当服务启动启用nacos，并且配置项对应结构实现Configurator接口时，Reader()方法返回的Reader.NacosDataId不为空。
 
 ```
 func main() {
