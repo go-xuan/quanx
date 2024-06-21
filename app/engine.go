@@ -48,16 +48,16 @@ var engine *Engine
 
 // 服务配置器
 type Engine struct {
-	mode           map[Mode]bool                  // 服务运行模式
-	config         *Config                        // 服务配置数据，使用 loadingAppConfig()将配置文件加载到此
-	configDir      string                         // 服务配置文件夹, 使用 SetConfigDir()设置配置文件读取路径
-	ginEngine      *gin.Engine                    // gin框架引擎实例
-	ginRouters     []func(*gin.RouterGroup)       // gin路由的预加载方法，使用 AddGinRouter()添加自行实现的路由注册方法
-	ginMiddlewares []gin.HandlerFunc              // gin中间件的预加载方法，使用 AddGinRouter()添加gin中间件
-	customFuncs    []func()                       // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
-	configurators  []confx.Configurator           // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
-	gormTables     map[string][]gormx.Tabler[any] // gorm表结构对象，使用 AddTable() / AddSourceTable() 添加至表结构初始化任务列表，需要实现 gormx.Tabler 接口
-	queue          *taskx.QueueScheduler          // Engine启动时的队列任务
+	mode           map[Mode]bool             // 服务运行模式
+	config         *Config                   // 服务配置数据，使用 loadingAppConfig()将配置文件加载到此
+	configDir      string                    // 服务配置文件夹, 使用 SetConfigDir()设置配置文件读取路径
+	ginEngine      *gin.Engine               // gin框架引擎实例
+	ginRouters     []func(*gin.RouterGroup)  // gin路由的预加载方法，使用 AddGinRouter()添加自行实现的路由注册方法
+	ginMiddlewares []gin.HandlerFunc         // gin中间件的预加载方法，使用 AddGinRouter()添加gin中间件
+	customFuncs    []func()                  // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
+	configurators  []confx.Configurator      // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
+	gormTables     map[string][]gormx.Tabler // gorm表结构对象，使用 AddTable() / AddSourceTable() 添加至表结构初始化任务列表，需要实现 gormx.Tabler 接口
+	queue          *taskx.QueueScheduler     // Engine启动时的队列任务
 }
 
 // 获取当前Engine
@@ -82,7 +82,7 @@ func NewEngine(modes ...Mode) *Engine {
 			customFuncs:    make([]func(), 0),
 			configurators:  make([]confx.Configurator, 0),
 			ginMiddlewares: make([]gin.HandlerFunc, 0),
-			gormTables:     make(map[string][]gormx.Tabler[any]),
+			gormTables:     make(map[string][]gormx.Tabler),
 			mode:           make(map[Mode]bool),
 		}
 		gin.SetMode(gin.ReleaseMode)
@@ -328,12 +328,12 @@ func (e *Engine) GetConfigPath(path string) string {
 }
 
 // 添加需要初始化的 gormx.Tabler 模型
-func (e *Engine) AddTable(dst ...gormx.Tabler[any]) {
+func (e *Engine) AddTable(dst ...gormx.Tabler) {
 	e.AddSourceTable(constx.DefaultKey, dst...)
 }
 
 // 添加需要某个数据源的gormx.Table模型
-func (e *Engine) AddSourceTable(source string, dst ...gormx.Tabler[any]) {
+func (e *Engine) AddSourceTable(source string, dst ...gormx.Tabler) {
 	e.checkRunning()
 	if len(dst) > 0 {
 		e.gormTables[source] = append(e.gormTables[source], dst...)

@@ -76,7 +76,7 @@ func ContentReplace(filePath string, replaces map[string]string) (err error) {
 
 // 写入文件
 func WriteFile(filePath, content string, mode ...int) (err error) {
-	CreateDirNotExist(filePath)
+	CreateIfNotExist(filePath)
 	var flag = anyx.Default(Overwrite, mode...)
 	var file *os.File
 	if file, err = os.OpenFile(filePath, flag, 0644); err != nil {
@@ -118,7 +118,7 @@ func WriteJson(filePath string, v any) (err error) {
 	if bytes, err = json.MarshalIndent(v, "", "	"); err != nil {
 		return
 	}
-	CreateDirNotExist(filePath)
+	CreateIfNotExist(filePath)
 	var file *os.File
 	if file, err = os.OpenFile(filePath, Overwrite, 0644); err != nil {
 		return
@@ -136,7 +136,7 @@ func WriteJson(filePath string, v any) (err error) {
 
 // 写入csv文件
 func WriteCSV(filePath string, data [][]string) (err error) {
-	CreateDirNotExist(filePath)
+	CreateIfNotExist(filePath)
 	var file *os.File
 	if file, err = os.OpenFile(filePath, Overwrite, 0644); err != nil {
 		return
@@ -187,32 +187,35 @@ func FileScan(dir string, suffix string) (files []*File, err error) {
 	return
 }
 
-// 显示当前目录
-func Pwd() string {
-	_, fileStr, _, _ := runtime.Caller(1)
-	dir, _ := filepath.Split(fileStr)
-	return dir
+// 获取绝对路径
+func Pwd(path ...string) (pwd string) {
+	if len(path) == 0 {
+		_, file, _, _ := runtime.Caller(1)
+		pwd, _ = filepath.Split(file)
+	} else {
+		pwd, _ = filepath.Abs(path[0])
+	}
+	return
 }
 
 // 拆分为文件路径和文件名
-func SplitPath(path string) (dir string, fileName string) {
-	if path == "" {
-		return
-	}
-	if stringx.ContainsAny(path, "/", "\\") {
-		dir, fileName = filepath.Split(path)
-	} else {
-		dir, fileName = "", path
+func SplitPath(path string) (dir, file string) {
+	if path != "" {
+		if stringx.ContainsAny(path, "/", "\\") {
+			dir, file = filepath.Split(path)
+		} else {
+			file = path
+		}
 	}
 	return
 }
 
 // 判断是否文件夹
 func IsDir(path string) bool {
-	if s, err := os.Stat(path); err != nil {
+	if fileInfo, err := os.Stat(path); err != nil {
 		return false
 	} else {
-		return s.IsDir()
+		return fileInfo.IsDir()
 	}
 }
 
@@ -235,16 +238,15 @@ func Create(path string) (err error) {
 }
 
 // 创建文件
-func CreateDirNotExist(filePath string) {
-	dir, _ := filepath.Split(filePath)
-	if !Exists(dir) {
-		CreateDir(dir)
-	}
+func CreateIfNotExist(path string) {
+	dir, _ := filepath.Split(path)
+	CreateDir(dir)
+	_ = Create(path)
 }
 
 // 创建文件夹
 func CreateDir(dir string) {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
+	if !Exists(dir) {
 		// 先创建文件夹
 		_ = os.MkdirAll(dir, os.ModePerm)
 		// 再修改权限

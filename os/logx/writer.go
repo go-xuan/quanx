@@ -26,7 +26,7 @@ type FileWriter struct {
 }
 
 func (w *FileWriter) Write(bytes []byte) (n int, err error) {
-	filex.CreateDirNotExist(w.path)
+	filex.CreateIfNotExist(w.path)
 	var file *os.File
 	if file, err = os.OpenFile(w.path, filex.AppendOnly, 0666); err != nil {
 		return

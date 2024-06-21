@@ -18,8 +18,8 @@ type Handler struct {
 	DBMap     map[string]*gorm.DB
 }
 
-func DB(name ...string) *gorm.DB {
-	return This().GetDB(name...)
+func DB(source ...string) *gorm.DB {
+	return This().GetDB(source...)
 }
 
 func This() *Handler {

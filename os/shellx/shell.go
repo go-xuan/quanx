@@ -2,28 +2,29 @@ package shellx
 
 import (
 	"bytes"
-	"fmt"
 	"os/exec"
 )
 
-// 执行shell命令
-func ExecCommand(cmd string, dir ...string) (out string, err error) {
-	var buffer bytes.Buffer
-	command := exec.Command("/bin/bash", "-c", cmd)
-	// 设置执行路径
-	if len(dir) > 0 {
-		command.Dir = dir[0]
-	} else {
-		command.Dir = "./"
-	}
+// ExecCommand 执行命令（path指定执行目录,缺省则在当前目录执行）
+func ExecCommand(command string, path ...string) (string, error) {
+	var stdout, stderr = &bytes.Buffer{}, &bytes.Buffer{}
+	cmd := exec.Command("/bin/bash", "-c", command)
 	// 设置接收
-	command.Stdout = &buffer
-	// 执行命令
-	if err = command.Run(); err != nil {
-		return
+	cmd.Stdout, cmd.Stderr = stdout, stderr
+	// 设置执行路径
+	if len(path) > 0 {
+		cmd.Dir = path[0]
+	} else {
+		cmd.Dir = "./"
 	}
-	out = buffer.String()
-	// 打印输出结果
-	fmt.Println(out)
-	return
+	// 执行命令
+	if err := cmd.Run(); err != nil {
+		return stderr.String(), err
+	} else {
+		return stdout.String(), nil
+	}
+}
+
+func Pwd(path string) string {
+
 }

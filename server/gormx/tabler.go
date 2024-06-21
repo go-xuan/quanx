@@ -1,13 +1,13 @@
 package gormx
 
-type Tabler[T any] interface {
+type Tabler interface {
 	TableName() string    // 表名
 	TableComment() string // 表注释
 	InitData() any        // 表初始数据
 }
 
 // 初始化表结构（基于接口实现）
-func (h *Handler) InitGormTable(source string, dst ...Tabler[any]) (err error) {
+func (h *Handler) InitGormTable(source string, dst ...Tabler) (err error) {
 	var db, conf = h.DBMap[source], h.ConfigMap[source]
 	if db != nil && conf != nil && len(dst) > 0 {
 		if conf.Debug {
