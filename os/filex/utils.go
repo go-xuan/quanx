@@ -221,7 +221,7 @@ func IsDir(path string) bool {
 
 // 判断所给路径文件或文件夹是否存在
 func Exists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
 		return false
 	}
 	return true
@@ -252,6 +252,23 @@ func CreateDir(dir string) {
 		// 再修改权限
 		_ = os.Chmod(dir, os.ModePerm)
 	}
+}
+
+// isEmptyDir 检查给定的目录是否为空
+func isEmptyDir(dir string) bool {
+	var err error
+	var f *os.File
+	defer f.Close()
+	if f, err = os.Open(dir); err != nil {
+		return false
+	}
+	// 读取目录内容
+	var names []string
+	if names, err = f.Readdirnames(0); err != nil {
+		return false
+	}
+	// 如果目录内容为空，则目录为空
+	return len(names) == 0
 }
 
 // 获取后缀

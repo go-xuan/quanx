@@ -1,26 +1,35 @@
 package ipx
 
 import (
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
 )
 
+func GetLocalIP() string {
+	if addrs, err := net.InterfaceAddrs(); err == nil {
+		for _, address := range addrs {
+			if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+				if ip := ipNet.IP.To4(); ip != nil {
+					return ip.String()
+				}
+			}
+		}
+	}
+	return ""
+}
+
 // 获取当前机器IP
 func GetWLANIP() string {
-	netInterfaces, err := net.Interfaces()
-	if err != nil {
-		fmt.Println("net.Interfaces error:", err.Error())
-		return ""
-	}
-	for _, netInterface := range netInterfaces {
-		if (netInterface.Flags&net.FlagUp) != 0 && netInterface.Name == "WLAN" {
-			addrs, _ := netInterface.Addrs()
-			for _, address := range addrs {
-				if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
-					if ipNet.IP.To4() != nil {
-						return ipNet.IP.String()
+	if netInterfaces, err := net.Interfaces(); err == nil {
+		for _, netInterface := range netInterfaces {
+			if (netInterface.Flags&net.FlagUp) != 0 && netInterface.Name == "WLAN" {
+				addrs, _ := netInterface.Addrs()
+				for _, address := range addrs {
+					if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+						if ip := ipNet.IP.To4(); ip != nil {
+							return ip.String()
+						}
 					}
 				}
 			}
