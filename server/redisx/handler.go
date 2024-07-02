@@ -21,7 +21,7 @@ type Handler struct {
 
 func This() *Handler {
 	if !Initialized() {
-		panic("The redis handler has not been initialized, please check the relevant config")
+		panic("the redis handler has not been initialized, please check the relevant config")
 	}
 	return handler
 }

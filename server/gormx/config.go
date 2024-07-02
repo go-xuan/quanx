@@ -53,7 +53,7 @@ func (MultiDatabase) Reader() *confx.Reader {
 // 配置器运行
 func (c MultiDatabase) Run() (err error) {
 	if len(c) == 0 {
-		log.Error("Database Connect Failed! Reason: database.yaml Not Found")
+		log.Error("Database Connect Failed! reason: [database.yaml] Not Found")
 		return
 	}
 	if handler == nil {
@@ -85,7 +85,7 @@ func (c MultiDatabase) Run() (err error) {
 		}
 	}
 	if len(handler.ConfigMap) == 0 {
-		log.Error("Database Connect Failed! reason: database.yaml is empty or all enable values are false")
+		log.Error("Database Connect Failed! reason: [database.yaml] is empty or no enabled database configured")
 	}
 	return
 }

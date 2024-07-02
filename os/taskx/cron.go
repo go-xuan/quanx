@@ -50,7 +50,7 @@ func (s *CronScheduler) Stop() {
 func (s *CronScheduler) Add(name string, spec string, task func()) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	// 定时任务如果已存在则先移除再新增
+	// 如果已存在同名任务则先移除再新增
 	if entry, ok := s.tasks[name]; ok {
 		s.cron.Remove(entry.ID)
 	}

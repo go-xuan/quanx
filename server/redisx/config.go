@@ -49,12 +49,11 @@ func (MultiRedis) Reader() *confx.Reader {
 }
 
 // 配置器运行
-func (conf MultiRedis) Run() error {
+func (conf MultiRedis) Run() (err error) {
 	if len(conf) == 0 {
-		log.Error("Redis Connect Failed! Reason: redis.yaml Not Found")
-		return nil
+		log.Error("Redis Connect Failed! reason: [redis.yaml] not found")
+		return
 	}
-
 	if handler == nil {
 		handler = &Handler{
 			Multi:     true,
@@ -66,10 +65,14 @@ func (conf MultiRedis) Run() error {
 	}
 	for i, r := range conf {
 		if r.Enable {
+			if err = anyx.SetDefaultValue(r); err != nil {
+				return
+			}
 			var client = r.NewRedisClient()
-			if ok, err := Ping(*client); !ok && err != nil {
+			var ok bool
+			if ok, err = Ping(*client); !ok && err != nil {
 				log.Error("Redis Connect Failed: ", r.Info())
-				return err
+				return
 			}
 			handler.clientMap[r.Source] = client
 			handler.ConfigMap[r.Source] = r
@@ -81,9 +84,9 @@ func (conf MultiRedis) Run() error {
 		}
 	}
 	if len(handler.ConfigMap) == 0 {
-		log.Error("Redis Connect Failed! reason: redis.yaml is empty or all enable values are false")
+		log.Error("Redis Connect Failed! reason: [redis.yaml] is empty or no enabled redis configured")
 	}
-	return nil
+	return
 }
 
 // 配置信息格式化

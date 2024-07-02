@@ -5,6 +5,7 @@ import "strings"
 type Desensitize uint
 
 const mask = "*"
+
 const (
 	Phone Desensitize = iota
 	Name

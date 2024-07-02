@@ -16,7 +16,7 @@ type QueueScheduler struct {
 type QueueTask struct {
 	name string     // 任务名
 	fn   func()     // 当前任务
-	prev *QueueTask // 指向上·一个任务
+	prev *QueueTask // 指向上一个任务
 	next *QueueTask // 指向下一个任务
 }
 

@@ -13,7 +13,7 @@ type Handler struct {
 
 func This() *Handler {
 	if handler == nil {
-		panic("The mail handler has not been initialized, please check the relevant config")
+		panic("the mail handler has not been initialized, please check the relevant config")
 	}
 	return handler
 }
@@ -38,7 +38,7 @@ type Send struct {
 // 构建邮件
 func (s *Send) newMessage() *gomail.Message {
 	msg := gomail.NewMessage()
-	msg.SetHeader("ID", s.From)
+	msg.SetHeader("From", s.From)
 	msg.SetHeader("To", s.To...)
 	msg.SetHeader("Cc", s.Cc...)
 	msg.SetHeader("Subject", s.Title)

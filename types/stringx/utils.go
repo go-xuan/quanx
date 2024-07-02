@@ -320,7 +320,7 @@ func TextSimilarity(source, target string) float64 {
 			if source[i-1] != target[j-1] {
 				cost = 1
 			}
-			matrix[i][j] = MinOfThree(matrix[i-1][j]+1, matrix[i][j-1]+1, matrix[i-1][j-1]+cost)
+			matrix[i][j] = minInThree(matrix[i-1][j]+1, matrix[i][j-1]+1, matrix[i-1][j-1]+cost)
 		}
 	}
 
@@ -332,7 +332,7 @@ func TextSimilarity(source, target string) float64 {
 	return 1.0 - float64(distance)/maxLen
 }
 
-func MinOfThree(a, b, c int) int {
+func minInThree(a, b, c int) int {
 	if a <= b && a <= c {
 		return a
 	} else if b <= a && b <= c {

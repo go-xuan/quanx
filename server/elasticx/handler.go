@@ -20,7 +20,7 @@ type Handler struct {
 
 func This() *Handler {
 	if handler == nil {
-		panic("The elastic handler has not been initialized, please check the relevant config")
+		panic("the elastic handler has not been initialized, please check the relevant config")
 	}
 	return handler
 }

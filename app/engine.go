@@ -172,7 +172,7 @@ func (e *Engine) initAppBasic() {
 		for source := range gormx.This().DBMap {
 			if dst, ok := e.gormTables[source]; ok {
 				if err := gormx.This().InitGormTable(source, dst...); err != nil {
-					log.Error("Create Table Failed")
+					log.Error("Init Table Struct And Data Failed")
 					panic(err)
 				}
 			}

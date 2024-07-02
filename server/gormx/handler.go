@@ -24,7 +24,7 @@ func DB(source ...string) *gorm.DB {
 
 func This() *Handler {
 	if !Initialized() {
-		panic("The gorm handler has not been initialized, please check the relevant config")
+		panic("the gorm handler has not been initialized, please check the relevant config")
 	}
 	return handler
 }

@@ -93,6 +93,46 @@ func WriteFile(filePath, content string, mode ...int) (err error) {
 	return
 }
 
+// 文件拆分
+func WriteSplit(filePath string, size int) (paths []string, err error) {
+	var file *os.File
+	defer file.Close()
+	if file, err = os.OpenFile(filePath, os.O_RDONLY, 0666); err != nil {
+		return
+	}
+	dir, filename, suffix := Analyse(filePath)
+	dir = filepath.Join(dir, filename)
+	reader := bufio.NewReader(file)
+	count, index := 1, 1
+	var bf = strings.Builder{}
+	for {
+		if index < size {
+			var line []byte
+			if line, _, err = reader.ReadLine(); err == io.EOF {
+				path := filepath.Join(dir, "split_"+strconv.Itoa(count)+suffix)
+				if err = WriteFile(path, bf.String()); err != nil {
+					return
+				}
+				paths = append(paths, path)
+				break
+			}
+			bf.WriteString("\n")
+			bf.Write(line)
+		} else {
+			index = 1
+			path := filepath.Join(dir, "split_"+strconv.Itoa(count)+suffix)
+			if err = WriteFile(path, bf.String()); err != nil {
+				return
+			}
+			paths = append(paths, path)
+			bf.Reset()
+			count++
+		}
+		index++
+	}
+	return
+}
+
 // 数组按行写入文件
 func WriteFileLine(filePath string, content []string, mode ...int) (err error) {
 	var flag = anyx.Default(Overwrite, mode...)
@@ -245,8 +285,12 @@ func CreateIfNotExist(path string) {
 }
 
 // 创建文件夹
-func CreateDir(dir string) {
-	if !Exists(dir) {
+func CreateDir(path string) {
+	if !Exists(path) {
+		dir, file := filepath.Split(path)
+		if stringx.Index(file, ".") == -1 {
+			dir = filepath.Join(dir, file)
+		}
 		// 先创建文件夹
 		_ = os.MkdirAll(dir, os.ModePerm)
 		// 再修改权限
@@ -269,6 +313,13 @@ func isEmptyDir(dir string) bool {
 	}
 	// 如果目录内容为空，则目录为空
 	return len(names) == 0
+}
+
+func Analyse(path string) (dir, filename, suffix string) {
+	dir, filename = filepath.Split(path)
+	suffix = Suffix(filename)
+	filename = strings.TrimSuffix(filename, suffix)
+	return
 }
 
 // 获取后缀

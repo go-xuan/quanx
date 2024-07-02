@@ -14,7 +14,7 @@ type Handler struct {
 
 func This() *Handler {
 	if !Initialized() {
-		panic("The cache handler has not been initialized, please check the relevant config")
+		panic("the cache handler has not been initialized, please check the relevant config")
 	}
 	return handler
 }

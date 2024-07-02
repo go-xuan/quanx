@@ -112,18 +112,22 @@ func (c *Cache) Info() string {
 }
 
 func (c *Cache) CacheClient() Client {
-	if c.Type == CacheTypeRedis {
+	switch c.Type {
+	case CacheTypeRedis:
 		return &RedisClient{
 			cache:     c,
 			client:    redisx.Client(c.Source),
 			unmarshal: marshalx.NewCase(c.Marshal).Unmarshal,
 		}
-	} else {
+	case CacheTypeLocal:
 		return &LocalClient{
 			cache:     c,
 			client:    NewLocalCache(),
 			unmarshal: marshalx.NewCase(c.Marshal).Unmarshal,
 		}
+	default:
+		log.Error("cache client not support type: ", c.Type)
+		return nil
 	}
 }
 
