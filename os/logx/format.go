@@ -35,14 +35,14 @@ func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		b.WriteString(fmt.Sprintf(", %s:%+v", key, value))
 	}
 	b.WriteString("\n")
-	if f.UserColor() {
+	if f.UseColor() {
 		return Color(entry.Level).Bytes(b.String()), nil
 	} else {
 		return b.Bytes(), nil
 	}
 }
 
-func (f *LogFormatter) UserColor() bool {
+func (f *LogFormatter) UseColor() bool {
 	return (f.Output == ConsoleOutput || f.Output == DefaultOutput) && f.useColor
 }
 

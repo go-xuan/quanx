@@ -2,11 +2,10 @@ package elasticx
 
 import (
 	"context"
+	"github.com/go-xuan/quanx/os/execx"
 
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/go-xuan/quanx/types/slicex"
 )
 
 var handler *Handler
@@ -59,7 +58,7 @@ func (h *Handler) DeleteIndex(ctx context.Context, index string) (ok bool, err e
 
 // 批量索引
 func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (ok bool, err error) {
-	if err = slicex.ExecInBatches(len(indices), 100, func(x int, y int) (err error) {
+	if err = execx.UseBatches(len(indices), 100, func(x int, y int) (err error) {
 		var resp *elastic.IndicesDeleteResponse
 		if resp, err = h.Client.DeleteIndex(indices[x:y]...).Do(ctx); err != nil {
 			panic(err)

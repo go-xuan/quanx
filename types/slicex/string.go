@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// 字符串是否包含
+// 字符串分割
 func Split(str string, sep string) []string {
 	slice := strings.Split(str, sep)
 	for i, s := range slice {

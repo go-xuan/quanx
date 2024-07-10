@@ -47,7 +47,7 @@ func (c *Cache) Run() (err error) {
 	if err = anyx.SetDefaultValue(c); err != nil {
 		return
 	}
-	var client = c.CacheClient()
+	var client = c.InitClient()
 	if handler == nil {
 		handler = &Handler{
 			Multi:     false,
@@ -66,7 +66,7 @@ func Default() *Cache {
 	return &Cache{
 		Source:  constx.DefaultKey,
 		Prefix:  "cache",
-		Marshal: marshalx.Json,
+		Marshal: "json",
 	}
 }
 
@@ -96,7 +96,7 @@ func (m MultiCache) Run() error {
 	}
 	multi := anyx.IfZero(m, MultiCache{Default()})
 	for i, c := range multi {
-		var client = c.CacheClient()
+		var client = c.InitClient()
 		handler.ClientMap[c.Source] = client
 		if i == 0 || c.Source == constx.DefaultKey {
 			handler.Client = client
@@ -111,19 +111,20 @@ func (c *Cache) Info() string {
 	return fmt.Sprintf("type=%s source=%s prefix=%s marshal=%s", c.Type, c.Source, c.Prefix, c.Marshal)
 }
 
-func (c *Cache) CacheClient() Client {
+// 根据缓存配置初始化缓存客户端
+func (c *Cache) InitClient() Client {
 	switch c.Type {
 	case CacheTypeRedis:
 		return &RedisClient{
-			cache:     c,
-			client:    redisx.Client(c.Source),
-			unmarshal: marshalx.NewCase(c.Marshal).Unmarshal,
+			cache:   c,
+			client:  redisx.Client(c.Source),
+			convert: marshalx.NewCase(c.Marshal),
 		}
 	case CacheTypeLocal:
 		return &LocalClient{
-			cache:     c,
-			client:    NewLocalCache(),
-			unmarshal: marshalx.NewCase(c.Marshal).Unmarshal,
+			cache:   c,
+			client:  NewLocalCache(),
+			convert: marshalx.NewCase(c.Marshal),
 		}
 	default:
 		log.Error("cache client not support type: ", c.Type)

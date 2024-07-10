@@ -2,7 +2,7 @@ package slicex
 
 import "reflect"
 
-// 切片分组
+// 切片映射（根据字段名）
 func SliceToMapByField[T any](slice []T, field string) map[string]T {
 	if slice == nil || len(slice) == 0 {
 		return nil
@@ -16,7 +16,7 @@ func SliceToMapByField[T any](slice []T, field string) map[string]T {
 	return result
 }
 
-// 切片转map
+// 切片映射（根据字段所在位置）
 func SliceToMapByIndex[T any](slice []T, index int) map[string]T {
 	if slice == nil || len(slice) == 0 {
 		return nil
@@ -30,7 +30,7 @@ func SliceToMapByIndex[T any](slice []T, index int) map[string]T {
 	return result
 }
 
-// 切片根据字段名分组
+// 切片分组（根据字段名）
 func SliceGroupByName[T any](slice []T, field string) map[string][]T {
 	if slice == nil || len(slice) == 0 {
 		return nil
@@ -47,7 +47,7 @@ func SliceGroupByName[T any](slice []T, field string) map[string][]T {
 	return result
 }
 
-// 切片根据字段下标分组
+// 切片分组（根据字段所在位置）
 func SliceGroupByIndex[T any](slice []T, index int) map[string][]T {
 	if slice == nil || len(slice) == 0 {
 		return nil
@@ -64,7 +64,7 @@ func SliceGroupByIndex[T any](slice []T, index int) map[string][]T {
 	return result
 }
 
-// 指针切片根据字段名分组
+// 指针切片分组（根据字段名）
 func PtrSliceGroupByField[T any](PtrSlice []*T, field string) map[string][]*T {
 	if PtrSlice == nil || len(PtrSlice) == 0 {
 		return nil
@@ -81,7 +81,7 @@ func PtrSliceGroupByField[T any](PtrSlice []*T, field string) map[string][]*T {
 	return result
 }
 
-// 指针切片根据字段下标分组
+// 指针切片分组（根据字段所在位置）
 func PtrSliceGroupByIndex[T any](PtrSlice []*T, index int) map[string][]*T {
 	if PtrSlice == nil || len(PtrSlice) == 0 {
 		return nil

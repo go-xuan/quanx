@@ -13,7 +13,7 @@ type Error struct {
 	stack  Stack
 }
 
-// 报错信息
+// 报错信息（用以实现error接口）
 func (err *Error) Error() string {
 	if err.source == nil {
 		return err.msg

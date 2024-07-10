@@ -2,40 +2,62 @@ package cachex
 
 import (
 	"context"
+	"github.com/go-xuan/quanx/os/execx"
+	"github.com/go-xuan/quanx/utils/marshalx"
 	"time"
 
 	"github.com/patrickmn/go-cache"
 	"github.com/redis/go-redis/v9"
-
-	"github.com/go-xuan/quanx/types/slicex"
 )
 
 type Client interface {
-	SET(ctx context.Context, key string, value any, expiration time.Duration)
-	GET(ctx context.Context, key string) string
-	DELETE(ctx context.Context, keys ...string) int64
-	EXIST(ctx context.Context, keys ...string) bool
+	Set(ctx context.Context, key string, value any, expiration time.Duration) error
+	Get(ctx context.Context, key string, value any)
+	GetString(ctx context.Context, key string) string
+	Delete(ctx context.Context, keys ...string) int64
+	Exist(ctx context.Context, keys ...string) bool
 }
 
 // 本地缓存客户端
 type LocalClient struct {
-	cache     *Cache
-	client    *cache.Cache
-	unmarshal func([]byte, any) error
+	cache   *Cache
+	client  *cache.Cache
+	convert *marshalx.Case
 }
 
-func (c *LocalClient) SET(ctx context.Context, key string, value any, d time.Duration) {
-	c.client.Set(c.cache.GetKey(key), value, d)
+func (c *LocalClient) Set(ctx context.Context, key string, value any, d time.Duration) (err error) {
+	switch value.(type) {
+	case string:
+		c.client.Set(c.cache.GetKey(key), value, d)
+	default:
+		var bytes []byte
+		if bytes, err = c.convert.Marshal(value); err != nil {
+			return
+		}
+		c.client.Set(c.cache.GetKey(key), string(bytes), d)
+	}
+	return
 }
 
-func (c *LocalClient) GET(ctx context.Context, key string) string {
+func (c *LocalClient) Get(ctx context.Context, key string, value any) {
+	if v, ok := c.client.Get(c.cache.GetKey(key)); ok {
+		switch value.(type) {
+		case string:
+			value = v.(string)
+		default:
+			_ = c.convert.Unmarshal([]byte(v.(string)), value)
+		}
+	}
+}
+
+func (c *LocalClient) GetString(ctx context.Context, key string) string {
 	if v, ok := c.client.Get(c.cache.GetKey(key)); ok {
 		return v.(string)
 	}
 	return ""
 }
 
-func (c *LocalClient) DELETE(ctx context.Context, keys ...string) int64 {
+func (c *LocalClient) Delete(ctx context.Context, keys ...string) int64 {
 	if len(keys) > 0 {
 		for _, key := range keys {
 			c.client.Delete(c.cache.GetKey(key))
@@ -45,7 +67,7 @@ func (c *LocalClient) DELETE(ctx context.Context, keys ...string) int64 {
 	return 0
 }
 
-func (c *LocalClient) EXIST(ctx context.Context, keys ...string) bool {
+func (c *LocalClient) Exist(ctx context.Context, keys ...string) bool {
 	if len(keys) > 0 {
 		for _, k := range keys {
 			if _, ok := c.client.Get(c.cache.GetKey(k)); !ok {
@@ -59,27 +81,40 @@ func (c *LocalClient) EXIST(ctx context.Context, keys ...string) bool {
 
 // redis缓存客户端
 type RedisClient struct {
-	cache     *Cache
-	client    redis.UniversalClient
-	unmarshal func([]byte, any) error
+	cache   *Cache
+	client  redis.UniversalClient
+	convert *marshalx.Case
 }
 
-func (c *RedisClient) SET(ctx context.Context, key string, value any, expiration time.Duration) {
-	c.client.Set(ctx, c.cache.GetKey(key), value, expiration)
+func (c *RedisClient) Set(ctx context.Context, key string, value any, expiration time.Duration) (err error) {
+	var bytes []byte
+	if bytes, err = c.convert.Marshal(value); err != nil {
+		return
+	}
+	if err = c.client.Set(ctx, c.cache.GetKey(key), bytes, expiration).Err(); err != nil {
+		return
+	}
+	return
 }
 
-func (c *RedisClient) GET(ctx context.Context, key string) string {
+func (c *RedisClient) Get(ctx context.Context, key string, value any) {
+	if bytes, err := c.client.Get(ctx, c.cache.GetKey(key)).Bytes(); err == nil {
+		_ = c.convert.Unmarshal(bytes, value)
+	}
+}
+
+func (c *RedisClient) GetString(ctx context.Context, key string) string {
 	if value, err := c.client.Get(ctx, c.cache.GetKey(key)).Result(); err == nil {
 		return value
 	}
 	return ""
 }
 
-func (c *RedisClient) DELETE(ctx context.Context, keys ...string) int64 {
+func (c *RedisClient) Delete(ctx context.Context, keys ...string) int64 {
 	var total int64
 	var err error
 	if l := len(keys); l > 100 {
-		if err = slicex.ExecInBatches(l, 100, func(x int, y int) (err error) {
+		if err = execx.UseBatches(l, 100, func(x int, y int) (err error) {
 			var n int64
 			if n, err = c.client.Del(ctx, c.cache.GetKeys(keys[x:y])...).Result(); err != nil {
 				return
@@ -97,11 +132,11 @@ func (c *RedisClient) DELETE(ctx context.Context, keys ...string) int64 {
 	return 0
 }
 
-func (c *RedisClient) EXIST(ctx context.Context, keys ...string) bool {
+func (c *RedisClient) Exist(ctx context.Context, keys ...string) bool {
 	var total int64
 	var err error
 	if l := len(keys); l > 100 {
-		if err = slicex.ExecInBatches(l, 100, func(x int, y int) (err error) {
+		if err = execx.UseBatches(l, 100, func(x int, y int) (err error) {
 			var n int64
 			if n, err = c.client.Exists(ctx, c.cache.GetKeys(keys[x:y])...).Result(); err != nil {
 				return

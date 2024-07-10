@@ -15,10 +15,10 @@ const (
 	Proxy      = "Proxy"
 	Https      = "HTTPS"
 	HttpsProxy = "httpsProxy"
-	GET        = "GET"
+	GET        = "Get"
 	POST       = "POST"
 	PUT        = "PUT"
-	DELETE     = "DELETE"
+	DELETE     = "Delete"
 )
 
 var client *Client

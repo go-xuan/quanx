@@ -105,7 +105,7 @@ func authenticateToken(ctx *gin.Context) error {
 	} else {
 		if user, err := ParseUserFromToken(token); err != nil || user == nil {
 			return errors.New("token is invalid")
-		} else if exist := AuthCache().EXIST(ctx.Request.Context(), user.Account); !exist {
+		} else if exist := AuthCache().Exist(ctx.Request.Context(), user.Account); !exist {
 			return errors.New("token is expired")
 		} else {
 			SetUser(ctx, user)
@@ -121,9 +121,9 @@ func authenticateCookie(ctx *gin.Context) error {
 	} else {
 		var account, token string
 		if account, err = encryptx.RSA().Decrypt(cookie); err == nil {
-			if exist := AuthCache().EXIST(ctx.Request.Context(), account); !exist {
+			if exist := AuthCache().Exist(ctx.Request.Context(), account); !exist {
 				return errors.New("cookie is expired")
-			} else if token = AuthCache().GET(ctx.Request.Context(), account); token != "" {
+			} else if token = AuthCache().GetString(ctx.Request.Context(), account); token != "" {
 				var user = &User{}
 				if user, err = ParseUserFromToken(token); err == nil {
 					SetUser(ctx, user)
