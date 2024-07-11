@@ -10,25 +10,25 @@ type Captcha interface {
 	Verify(ctx context.Context, id, answer string) bool            // 校验验证码
 }
 
-var clickCaptchaImpl *goCaptchaImpl
-var ordinaryCaptchaImpl *base64CaptchaImpl
+var iGoCaptcha *goCaptchaImpl
+var iBase64Captcha *base64CaptchaImpl
 
 // 点击式验证码
-func ClickCaptcha() Captcha {
-	if clickCaptchaImpl == nil {
+func GoCaptcha() Captcha {
+	if iGoCaptcha == nil {
 		syncx.OnceDo(func() {
-			clickCaptchaImpl = newGoCaptcha()
+			iGoCaptcha = newGoCaptcha()
 		})
 	}
-	return clickCaptchaImpl
+	return iGoCaptcha
 }
 
 // 普通验证码
-func OrdinaryCaptcha() Captcha {
-	if ordinaryCaptchaImpl == nil {
+func Base64Captcha() Captcha {
+	if iBase64Captcha == nil {
 		syncx.OnceDo(func() {
-			ordinaryCaptchaImpl = newBase64Captcha()
+			iBase64Captcha = newBase64Captcha()
 		})
 	}
-	return ordinaryCaptchaImpl
+	return iBase64Captcha
 }

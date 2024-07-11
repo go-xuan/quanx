@@ -26,33 +26,22 @@ type LocalClient struct {
 }
 
 func (c *LocalClient) Set(ctx context.Context, key string, value any, d time.Duration) (err error) {
-	switch value.(type) {
-	case string:
-		c.client.Set(c.cache.GetKey(key), value, d)
-	default:
-		var bytes []byte
-		if bytes, err = c.convert.Marshal(value); err != nil {
-			return
-		}
-		c.client.Set(c.cache.GetKey(key), string(bytes), d)
+	var bytes []byte
+	if bytes, err = c.convert.Marshal(value); err != nil {
+		return
 	}
+	c.client.Set(c.cache.GetKey(key), string(bytes), d)
 	return
 }
 
 func (c *LocalClient) Get(ctx context.Context, key string, value any) {
-	if v, ok := c.client.Get(c.cache.GetKey(key)); ok {
-		switch value.(type) {
-		case string:
-			value = v.(string)
-		default:
-			_ = c.convert.Unmarshal([]byte(v.(string)), value)
-		}
-	}
+	result := c.GetString(ctx, key)
+	_ = c.convert.Unmarshal([]byte(result), value)
 }
 
 func (c *LocalClient) GetString(ctx context.Context, key string) string {
-	if v, ok := c.client.Get(c.cache.GetKey(key)); ok {
-		return v.(string)
+	if result, ok := c.client.Get(c.cache.GetKey(key)); ok {
+		return result.(string)
 	}
 	return ""
 }
@@ -98,14 +87,13 @@ func (c *RedisClient) Set(ctx context.Context, key string, value any, expiration
 }
 
 func (c *RedisClient) Get(ctx context.Context, key string, value any) {
-	if bytes, err := c.client.Get(ctx, c.cache.GetKey(key)).Bytes(); err == nil {
-		_ = c.convert.Unmarshal(bytes, value)
-	}
+	result := c.GetString(ctx, key)
+	_ = c.convert.Unmarshal([]byte(result), value)
 }
 
 func (c *RedisClient) GetString(ctx context.Context, key string) string {
-	if value, err := c.client.Get(ctx, c.cache.GetKey(key)).Result(); err == nil {
-		return value
+	if result, err := c.client.Get(ctx, c.cache.GetKey(key)).Result(); err == nil {
+		return result
 	}
 	return ""
 }

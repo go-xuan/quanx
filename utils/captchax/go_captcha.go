@@ -30,11 +30,7 @@ func (impl *goCaptchaImpl) New(ctx context.Context) (key, image, thumb string, e
 	if dots, image, thumb, key, err = impl.capt.Generate(); err != nil {
 		return
 	}
-	var dotsCache []byte
-	if dotsCache, err = json.Marshal(dots); err != nil {
-		return
-	}
-	if err = impl.cache.Set(ctx, key, dotsCache, time.Minute*2); err != nil {
+	if err = impl.cache.Set(ctx, key, dots, time.Minute*2); err != nil {
 		return
 	}
 	return
@@ -46,19 +42,22 @@ func (impl *goCaptchaImpl) Verify(ctx context.Context, key, answer string) bool 
 	if err := json.Unmarshal([]byte(dotsCache), &dots); err != nil {
 		return false
 	}
-	var check, points = false, strings.Split(answer, ",")
+	var ok, points = false, strings.Split(answer, ",")
 	if (len(dots) * 2) == len(points) {
 		for i, dot := range dots {
 			x, _ := strconv.ParseFloat(points[i*2], 64)
 			y, _ := strconv.ParseFloat(points[i*2+1], 64)
 			// 校验点的位置,在原有的区域上添加额外边距进行扩张计算区域,不推荐设置过大的padding
 			// 例如：文本的宽和高为30，校验范围x为10-40，y为15-45，此时扩充5像素后校验范围宽和高为40，则校验范围x为5-45，位置y为10-50
-			if check = captcha.CheckPointDistWithPadding(int64(x), int64(y), int64(dot.Dx), int64(dot.Dy), int64(dot.Width), int64(dot.Height), 5); !check {
+			if ok = captcha.CheckPointDistWithPadding(int64(x), int64(y), int64(dot.Dx), int64(dot.Dy), int64(dot.Width), int64(dot.Height), 5); !ok {
 				break
 			}
 		}
 	}
-	return check
+	if ok {
+		impl.cache.Delete(ctx, key)
+	}
+	return ok
 }
 
 func getGoCaptcha() *captcha.Captcha {
