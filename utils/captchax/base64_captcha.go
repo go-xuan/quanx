@@ -23,7 +23,7 @@ func newBase64Captcha() *base64CaptchaImpl {
 				Source:          "abcdefghjkmnpqrstuvwxyz23456789",
 			},
 			&base64CaptchaStore{
-				cache:    cachex.GetClient("captcha"),
+				cache:    cachex.GetClient(),
 				duration: 2 * time.Minute,
 			},
 		),

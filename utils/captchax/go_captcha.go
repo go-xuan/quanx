@@ -16,7 +16,7 @@ import (
 func newGoCaptcha() *goCaptchaImpl {
 	return &goCaptchaImpl{
 		capt:  getGoCaptcha(),
-		cache: cachex.GetClient("captcha"),
+		cache: cachex.GetClient(),
 	}
 }
 

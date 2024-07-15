@@ -86,6 +86,7 @@ func (s *CronScheduler) Remove(name string) {
 	defer s.mutex.Unlock()
 	if entry, ok := s.tasks[name]; ok {
 		s.cron.Remove(entry.ID)
+		delete(s.tasks, name)
 	}
 }
 
