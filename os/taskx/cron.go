@@ -9,21 +9,21 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-// 定时任务调度器
+// CronScheduler 定时任务调度器
 type CronScheduler struct {
 	mutex *sync.Mutex
 	cron  *cron.Cron
 	tasks map[string]*CronTask
 }
 
-// 定时任务
+// CronTask 定时任务
 type CronTask struct {
 	name string
 	spec string
 	*cron.Entry
 }
 
-// 定时任务调度器
+// Corn 定时任务调度器
 func Corn() *CronScheduler {
 	//初始化一个定时任务调度程序
 	return &CronScheduler{
@@ -37,12 +37,12 @@ func Corn() *CronScheduler {
 	}
 }
 
-// 开始执行定时任务
+// Start 开始执行定时任务
 func (s *CronScheduler) Start() {
 	s.cron.Start()
 }
 
-// 停止执行定时任务
+// Stop 停止执行定时任务
 func (s *CronScheduler) Stop() {
 	s.cron.Stop()
 }

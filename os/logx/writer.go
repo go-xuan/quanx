@@ -11,7 +11,7 @@ func DefaultWriter() io.Writer {
 	return &ConsoleWriter{std: os.Stdout}
 }
 
-// 控制台输出
+// ConsoleWriter 控制台输出
 type ConsoleWriter struct {
 	std io.Writer
 }
@@ -20,7 +20,7 @@ func (w *ConsoleWriter) Write(bytes []byte) (n int, err error) {
 	return w.std.Write(bytes)
 }
 
-// 文件输出
+// FileWriter 文件输出
 type FileWriter struct {
 	path string
 }

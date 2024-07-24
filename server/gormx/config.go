@@ -17,7 +17,7 @@ import (
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
-// 数据源配置
+// MultiDatabase 数据源配置
 type MultiDatabase []*Database
 
 type Database struct {
@@ -36,12 +36,12 @@ type Database struct {
 	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
 }
 
-// 配置器标题
+// Title 配置器标题
 func (MultiDatabase) Title() string {
 	return "Database"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (MultiDatabase) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "database.yaml",
@@ -50,7 +50,7 @@ func (MultiDatabase) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (c MultiDatabase) Run() (err error) {
 	if len(c) == 0 {
 		log.Error("Database Connect Failed! reason: [database.yaml] Not Found")
@@ -90,18 +90,18 @@ func (c MultiDatabase) Run() (err error) {
 	return
 }
 
-// 配置信息格式化
+// Info 配置信息格式化
 func (d *Database) Info() string {
 	return fmt.Sprintf("source=%s type=%s host=%s port=%d database=%s debug=%v",
 		d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
 }
 
-// 配置器标题
+// Title 配置器标题
 func (d *Database) Title() string {
 	return "Database"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (d *Database) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "database.yaml",
@@ -110,7 +110,7 @@ func (d *Database) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (d *Database) Run() (err error) {
 	if d.Enable {
 		if err = anyx.SetDefaultValue(d); err != nil {
@@ -143,7 +143,7 @@ func (d *Database) Run() (err error) {
 	return
 }
 
-// 创建数据库连接
+// NewGormDB 创建数据库连接
 func (d *Database) NewGormDB() (gormDB *gorm.DB, err error) {
 	if gormDB, err = d.GetGormDB(); err != nil {
 		return
@@ -168,7 +168,7 @@ const (
 	Postgres = "postgres"
 )
 
-// 生成表备注
+// CommentTableSql 生成表备注
 func (d *Database) CommentTableSql(table, comment string) string {
 	switch strings.ToLower(d.Type) {
 	case Mysql:
@@ -179,7 +179,7 @@ func (d *Database) CommentTableSql(table, comment string) string {
 	return ""
 }
 
-// 根据dsn生成gormDB
+// GetGormDB 根据dsn生成gormDB
 func (d *Database) GetGormDB() (gormDb *gorm.DB, err error) {
 	var dial gorm.Dialector
 	switch strings.ToLower(d.Type) {

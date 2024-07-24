@@ -12,12 +12,12 @@ import (
 	"github.com/go-xuan/quanx/server/redisx"
 )
 
-// 获取服务配置
+// GetServer 获取服务配置
 func GetServer() *Server {
 	return GetEngine().config.Server
 }
 
-// 服务配置
+// Config 服务配置
 type Config struct {
 	Server   *Server              `yaml:"server"`   // 服务配置
 	Log      *logx.LogConfig      `yaml:"log"`      // 日志配置
@@ -27,7 +27,7 @@ type Config struct {
 	Cache    *cachex.MultiCache   `yaml:"cache"`    // 缓存配置
 }
 
-// 服务配置
+// Server 服务配置
 type Server struct {
 	Name   string `yaml:"name"`                     // 服务名
 	Host   string `yaml:"host" default:"127.0.0.1"` // 服务host
@@ -36,12 +36,12 @@ type Server struct {
 	Debug  bool   `yaml:"debug" default:"false"`    // 是否调试环境
 }
 
-// 服务地址
+// HttpUrl 服务地址
 func (s *Server) HttpUrl() string {
 	return fmt.Sprintf(`http://%s:%d/%s`, s.Host, s.Port, strings.TrimPrefix(s.Prefix, "/"))
 }
 
-// 服务实例
+// Instance 服务实例
 func (s *Server) Instance() serverx.Instance {
 	return serverx.Instance{Name: s.Name, Host: s.Host, Port: s.Port}
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
-// 随机字符串
+// String 随机字符串
 func String(length ...int) string {
 	var l = IntRange(5, 10)
 	if len(length) > 0 && length[0] > 0 {
@@ -23,7 +23,7 @@ func String(length ...int) string {
 	return string(bytes)
 }
 
-// 根据with生成字符串，可用于生成不同强度的密码
+// StringWith 根据with生成字符串，可用于生成不同强度的密码
 func StringWith(with int, length ...int) string {
 	var l = IntRange(8, 16)
 	if len(length) > 0 && length[0] > 0 {
@@ -50,7 +50,7 @@ func StringWith(with int, length ...int) string {
 	return string(bytes)
 }
 
-// 随机长度数字码
+// NumberCode 随机长度数字码
 func NumberCode(length int) string {
 	bytes := make([]byte, length)
 	for i := 0; i < length; i++ {
@@ -60,12 +60,12 @@ func NumberCode(length int) string {
 	return string(bytes)
 }
 
-// 随机uuid
+// UUID 随机uuid
 func UUID() string {
 	return uuid.NewString()
 }
 
-// 随机姓名
+// Name 随机姓名
 func Name() string {
 	sb := strings.Builder{}
 	sb.WriteString(Split(surname, ","))
@@ -74,7 +74,7 @@ func Name() string {
 	return sb.String()
 }
 
-// 随机手机号
+// Phone 随机手机号
 func Phone() string {
 	bytes := make([]byte, 11)
 	bytes[0] = '1'
@@ -86,7 +86,7 @@ func Phone() string {
 	return string(bytes)
 }
 
-// 随机身份证,湖北省内
+// IdCard 随机身份证,湖北省内
 func IdCard() string {
 	sb := strings.Builder{}
 	sb.WriteString(Split(hubeiProvinceCode, ","))
@@ -97,7 +97,7 @@ func IdCard() string {
 	return sb.String()
 }
 
-// 随机车牌号
+// PlateNo 随机车牌号
 func PlateNo() string {
 	sb := strings.Builder{}
 	sb.WriteString(Split(provinceSimple, ","))
@@ -114,7 +114,7 @@ func PlateNo() string {
 	return sb.String()
 }
 
-// 随机邮箱号
+// Email 随机邮箱号
 func Email() string {
 	sb := strings.Builder{}
 	x, y := IntRange(5, 10), IntRange(2, 5)

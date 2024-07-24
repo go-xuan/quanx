@@ -7,15 +7,15 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// jwt秘钥
+// SecretKey jwt秘钥
 var SecretKey []byte
 
-// 初始化jwt秘钥
+// SetSecretKey 初始化jwt秘钥
 func SetSecretKey(key []byte) {
 	SecretKey = key
 }
 
-// 用户token参数
+// User 用户token参数
 type User struct {
 	Id         int64  `json:"id"`         // 用户ID
 	Account    string `json:"account"`    // 用户账号
@@ -26,7 +26,7 @@ type User struct {
 	ExpireTime int64  `json:"expireTime"` // 过期时间
 }
 
-// 获取用户ID
+// GetUserId 获取用户ID
 func GetUserId(context *gin.Context) (userId int64) {
 	var err error
 	var userData = make(map[string]any)
@@ -37,7 +37,7 @@ func GetUserId(context *gin.Context) (userId int64) {
 	return
 }
 
-// 生成token
+// NewToken 生成token
 func NewToken(user *User) (token string, err error) {
 	var bytes []byte
 	if bytes, err = json.Marshal(user); err != nil {
@@ -53,7 +53,7 @@ func NewToken(user *User) (token string, err error) {
 	return
 }
 
-// 解析token
+// ParseUserFromToken 解析token
 func ParseUserFromToken(token string) (user *User, err error) {
 	var userData = make(map[string]any)
 	if userData, err = parseToken(token); err != nil {

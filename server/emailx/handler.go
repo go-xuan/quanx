@@ -18,7 +18,7 @@ func This() *Handler {
 	return handler
 }
 
-// 发送邮件
+// SendMail 发送邮件
 func (h *Handler) SendMail(send *Send) error {
 	if err := h.Dialer.DialAndSend(send.newMessage()); err != nil {
 		return err
@@ -26,7 +26,7 @@ func (h *Handler) SendMail(send *Send) error {
 	return nil
 }
 
-// 邮件服务器发送配置
+// Send 邮件服务器发送配置
 type Send struct {
 	From    string   `json:"from"`    // 发件人
 	To      []string `json:"to"`      // 收件人

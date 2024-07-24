@@ -11,12 +11,12 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// 文件响应
+// File 文件响应
 func File(ctx *gin.Context, filePath string) {
 	ctx.File(filePath)
 }
 
-// 返回Excel二进制文件流
+// BuildExcelByData 返回Excel二进制文件流
 func BuildExcelByData(ctx *gin.Context, model any, data any, excelName string) {
 	var xlsxFile = xlsx.NewFile()
 	sheet, err := xlsxFile.AddSheet("Sheet1")
@@ -51,7 +51,7 @@ func BuildExcelByData(ctx *gin.Context, model any, data any, excelName string) {
 	return
 }
 
-// 导出表头
+// Header 导出表头
 type Header struct {
 	Key  string
 	Name string
@@ -70,7 +70,7 @@ func ExcelHeaders(model any) (result []*Header) {
 	return
 }
 
-// Excel二进制文件流响应
+// BuildExcelByFile Excel二进制文件流响应
 func BuildExcelByFile(ctx *gin.Context, filePath string) {
 	if xlsxFile, err := xlsx.OpenFile(filePath); err != nil {
 		Exception(ctx, ExportErr, err)

@@ -16,17 +16,17 @@ type Elastic struct {
 	Index []string `yaml:"index" json:"index"` // 索引
 }
 
-// 配置信息格式化
+// Info 配置信息格式化
 func (e *Elastic) Info() string {
 	return fmt.Sprintf("host=%s port=%d", e.Host, e.Port)
 }
 
-// 配置器标题
+// Title 配置器标题
 func (*Elastic) Title() string {
 	return "ElasticSearch"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (*Elastic) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "elastic.yaml",
@@ -35,7 +35,7 @@ func (*Elastic) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (e *Elastic) Run() (err error) {
 	if e.Host != "" {
 		var url = e.Url()

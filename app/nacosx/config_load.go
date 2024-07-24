@@ -13,10 +13,10 @@ import (
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
-// 配置项
+// Configs 配置项
 type Configs []*Config
 
-// 批量加载nacos配置
+// Loading 批量加载nacos配置
 func (list Configs) Loading(v any) (err error) {
 	for _, conf := range list {
 		if err = conf.Loading(v); err != nil {
@@ -26,7 +26,7 @@ func (list Configs) Loading(v any) (err error) {
 	return
 }
 
-// 根据配置名获取配置
+// Get 根据配置名获取配置
 func (list Configs) Get(dataId string) (target *Config) {
 	for _, conf := range list {
 		if conf.DataId == dataId {
@@ -44,7 +44,7 @@ type Config struct {
 	Listen bool          `yaml:"listen"` // 是否启用监听
 }
 
-// 初始化
+// NewConfig 初始化
 func NewConfig(group, dataId string, listen ...bool) *Config {
 	return &Config{
 		Group:  group,
@@ -54,17 +54,17 @@ func NewConfig(group, dataId string, listen ...bool) *Config {
 	}
 }
 
-// 配置信息格式化
+// Info 配置信息格式化
 func (c *Config) Info() string {
 	return fmt.Sprintf("group=%s dataId=%s", c.Group, c.DataId)
 }
 
-// 转化配置项
+// ToConfigParam 转化配置项
 func (c *Config) ToConfigParam() vo.ConfigParam {
 	return vo.ConfigParam{Group: c.Group, DataId: c.DataId, Type: c.Type}
 }
 
-// 加载nacos配置
+// Loading 加载nacos配置
 func (c *Config) Loading(v any) (err error) {
 	valueRef := reflect.ValueOf(v)
 	// 修改值必须是指针类型否则不可行

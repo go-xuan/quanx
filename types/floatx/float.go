@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-// 计算百分率
+// Ratio 计算百分率
 func Ratio(numerator, denominator, prec int) float64 {
 	if denominator > 0 {
 		ratio := float64(numerator) * 100 / float64(denominator)
@@ -14,7 +14,7 @@ func Ratio(numerator, denominator, prec int) float64 {
 	return 0
 }
 
-// 四舍五入
+// Ground 四舍五入
 func Ground(target float64, prec int) float64 {
 	if target == 0 {
 		return target
@@ -24,7 +24,7 @@ func Ground(target float64, prec int) float64 {
 	}
 }
 
-// 三数取小
+// Min 三数取小
 func Min(a, b, c float64) float64 {
 	if a <= b && a <= c {
 		return a
@@ -34,7 +34,7 @@ func Min(a, b, c float64) float64 {
 	return c
 }
 
-// 三数取大
+// Max 三数取大
 func Max(a, b, c float64) float64 {
 	if a >= b && a >= c {
 		return a

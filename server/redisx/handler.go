@@ -10,7 +10,7 @@ import (
 
 var handler *Handler
 
-// redis控制器
+// Handler redis控制器
 type Handler struct {
 	Multi     bool // 是否多redis数据库
 	Client    *redis.UniversalClient

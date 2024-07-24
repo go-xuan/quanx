@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// 字符串分割
+// Split 字符串分割
 func Split(str string, sep string) []string {
 	slice := strings.Split(str, sep)
 	for i, s := range slice {
@@ -14,7 +14,7 @@ func Split(str string, sep string) []string {
 	return slice
 }
 
-// 字符串是否包含
+// Contains 字符串是否包含
 func Contains(slice []string, str string) bool {
 	for _, item := range slice {
 		if item == str {
@@ -24,7 +24,7 @@ func Contains(slice []string, str string) bool {
 	return false
 }
 
-// 数组是否包含
+// ContainsAny 数组是否包含
 func ContainsAny(slice []string, args ...string) bool {
 	if args != nil && len(args) > 0 {
 		set := make(map[string]struct{})
@@ -40,7 +40,7 @@ func ContainsAny(slice []string, args ...string) bool {
 	return false
 }
 
-// 数组是否包含
+// ContainsAll 数组是否包含
 func ContainsAll(slice []string, args []string) (string, bool) {
 	if args != nil && len(args) > 0 {
 		set := make(map[string]struct{})
@@ -56,7 +56,7 @@ func ContainsAll(slice []string, args []string) (string, bool) {
 	return "", true
 }
 
-// 合并并去重
+// Distinct 合并并去重
 func Distinct(slices ...[]string) (result []string) {
 	set := make(map[string]struct{})
 	for _, slice := range slices {
@@ -70,7 +70,7 @@ func Distinct(slices ...[]string) (result []string) {
 	return result
 }
 
-// 取交集
+// RetainAll 取交集
 func RetainAll(slices ...[]string) (result []string) {
 	set := make(map[string]int)
 	for _, slice := range slices {
@@ -86,7 +86,7 @@ func RetainAll(slices ...[]string) (result []string) {
 	return result
 }
 
-// 移除
+// Exclude 移除
 func Exclude(target []string, exclude []string) (result []string) {
 	set := make(map[string]struct{})
 	for _, item := range exclude {
@@ -100,12 +100,12 @@ func Exclude(target []string, exclude []string) (result []string) {
 	return result
 }
 
-// 数组正序
+// SortAsc 数组正序
 func SortAsc(slice []string) {
 	sort.Sort(sort.StringSlice(slice))
 }
 
-// 数组倒叙
+// SortDesc 数组倒叙
 func SortDesc(slice []string) {
 	sort.Sort(sort.Reverse(sort.StringSlice(slice)))
 }

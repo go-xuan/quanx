@@ -8,7 +8,7 @@ import (
 
 var handler *Handler
 
-// hugegraph处理器
+// Handler hugegraph处理器
 type Handler struct {
 	Config     *Hugegraph // hugegraph配置
 	GremlinUrl string     // Gremlin查询接口URL
@@ -38,7 +38,7 @@ func (h *Handler) IndexlabelsUrl() string {
 	return h.SchemaUrl + Indexlabels
 }
 
-// gremlin查询API-get请求
+// GremlinGet gremlin查询API-get请求
 func GremlinGet[T any](result T, gremlin string) (requestId string, err error) {
 	var bytes []byte
 	if bytes, err = httpx.Get().Url(This().GremlinUrl + `?gremlin=` + gremlin).Do(); err != nil {
@@ -58,7 +58,7 @@ func GremlinGet[T any](result T, gremlin string) (requestId string, err error) {
 	return
 }
 
-// gremlin查询API-Post请求
+// GremlinPost gremlin查询API-Post请求
 func GremlinPost[T any](result T, gremlin string) (requestId string, err error) {
 	var bindings, aliases any // 构建绑定参数和图别名
 	_ = json.Unmarshal([]byte(`{}`), &bindings)
@@ -81,7 +81,7 @@ func GremlinPost[T any](result T, gremlin string) (requestId string, err error) 
 	return
 }
 
-// 查询顶点
+// QueryVertexs 查询顶点
 func QueryVertexs[T any](gremlin string) (data Vertexs[T], requestId string, err error) {
 	if requestId, err = GremlinPost(data, gremlin); err != nil {
 		return
@@ -89,7 +89,7 @@ func QueryVertexs[T any](gremlin string) (data Vertexs[T], requestId string, err
 	return
 }
 
-// 查询边
+// QueryEdges 查询边
 func QueryEdges[T any](gremlin string) (data Edges[T], requestId string, err error) {
 	if requestId, err = GremlinPost(data, gremlin); err != nil {
 		return
@@ -97,7 +97,7 @@ func QueryEdges[T any](gremlin string) (data Edges[T], requestId string, err err
 	return
 }
 
-// 查询path()
+// QueryPaths 查询path()
 func QueryPaths[T any](gremlin string) (data Paths[T], requestId string, err error) {
 	if requestId, err = GremlinPost(data, gremlin); err != nil {
 		return
@@ -105,7 +105,7 @@ func QueryPaths[T any](gremlin string) (data Paths[T], requestId string, err err
 	return
 }
 
-// 调用hugegraph的POST接口，返回属性值
+// QueryValues 调用hugegraph的POST接口，返回属性值
 func QueryValues(gremlin string) (data []string, err error) {
 	if _, err = GremlinPost(data, gremlin); err != nil {
 		return

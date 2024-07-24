@@ -24,9 +24,9 @@ const (
 	ErrorLevel = "error"
 	FatalLevel = "fatal"
 	PanicLevel = "panic"
-	// 默认日志格式化
+
 	TimeFormat = "2006-01-02 15:04:05.999"
-	// 日志输出类型
+
 	DefaultOutput    = "default"
 	ConsoleOutput    = "console"
 	FileOutput       = "file"
@@ -37,7 +37,7 @@ func New(app string) *LogConfig {
 	return &LogConfig{FileName: app + ".log"}
 }
 
-// 日志配置
+// LogConfig 日志配置
 type LogConfig struct {
 	FileName   string `json:"fileName" yaml:"fileName" default:"app.log"`                     // 日志文件名
 	Dir        string `json:"dir" yaml:"dir" default:"resource/log"`                          // 日志保存文件夹
@@ -51,18 +51,18 @@ type LogConfig struct {
 	Backups    int    `json:"backups" yaml:"backups" default:"10"`                            // 日志备份数
 }
 
-// 配置信息格式化
+// Info 配置信息格式化
 func (l *LogConfig) Info() string {
 	return fmt.Sprintf("logPath=%s level=%s output=%s maxSize=%d maxAge=%d backups=%d",
 		l.LogPath(), l.Level, l.Output, l.MaxSize, l.MaxAge, l.Backups)
 }
 
-// 配置器标题
+// Title 配置器标题
 func (*LogConfig) Title() string {
 	return "Log"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (*LogConfig) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "log.yaml",
@@ -70,7 +70,7 @@ func (*LogConfig) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (l *LogConfig) Run() error {
 	if err := anyx.SetDefaultValue(l); err != nil {
 		return err
@@ -113,7 +113,7 @@ func (l *LogConfig) Writer() io.Writer {
 	}
 }
 
-// 日志级别映射，默认debug
+// GetLevel 日志级别映射，默认debug
 func (l *LogConfig) GetLevel() logrus.Level {
 	switch strings.ToLower(l.Level) {
 	case TraceLevel:

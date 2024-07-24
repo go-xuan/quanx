@@ -39,7 +39,7 @@ func RSA() *Rsa {
 	return _rsa
 }
 
-// 公钥加密
+// Encrypt 公钥加密
 func (m *Rsa) Encrypt(plaintext string) (ciphertext string, err error) {
 	var bytes []byte
 	if bytes, err = rsa.EncryptPKCS1v15(rand.Reader, &m.privateKey.PublicKey, []byte(plaintext)); err != nil {
@@ -49,7 +49,7 @@ func (m *Rsa) Encrypt(plaintext string) (ciphertext string, err error) {
 	return
 }
 
-// 私钥解密
+// Decrypt 私钥解密
 func (m *Rsa) Decrypt(ciphertext string) (plaintext string, err error) {
 	var base64 = DecodeBase64(ciphertext, true)
 	var bytes []byte
@@ -90,7 +90,7 @@ func newRSA(dir string) (r *Rsa, err error) {
 	}, nil
 }
 
-// pem解码
+// PemDecode pem解码
 func PemDecode(pemPath string) []byte {
 	if data, err := os.ReadFile(pemPath); err == nil {
 		if block, _ := pem.Decode(data); block != nil {
@@ -100,7 +100,7 @@ func PemDecode(pemPath string) []byte {
 	return nil
 }
 
-// 生成RAS私钥
+// NewRSAPrivateKey 生成RAS私钥
 func NewRSAPrivateKey(pemPath string) (key *rsa.PrivateKey, derBytes []byte, err error) {
 	// 生成RSA密钥对
 	key = &rsa.PrivateKey{}
@@ -121,7 +121,7 @@ func NewRSAPrivateKey(pemPath string) (key *rsa.PrivateKey, derBytes []byte, err
 	return
 }
 
-// 根据RSA私钥生成公钥
+// NewRSAPublicKey 根据RSA私钥生成公钥
 func NewRSAPublicKey(pemPath string, key *rsa.PublicKey) (derBytes []byte, err error) {
 	//  将公钥对象序列化为DER编码格式
 	derBytes = x509.MarshalPKCS1PublicKey(key)
@@ -137,7 +137,7 @@ func NewRSAPublicKey(pemPath string, key *rsa.PublicKey) (derBytes []byte, err e
 	return
 }
 
-// RSA加密
+// RsaEncrypt RSA加密
 func RsaEncrypt(plaintext []byte, pemPath string) (ciphertext []byte, err error) {
 	var key *rsa.PublicKey
 	if key, err = x509.ParsePKCS1PublicKey(PemDecode(pemPath)); err != nil {
@@ -149,7 +149,7 @@ func RsaEncrypt(plaintext []byte, pemPath string) (ciphertext []byte, err error)
 	return
 }
 
-// RSA解密
+// RsaDecrypt RSA解密
 func RsaDecrypt(ciphertext []byte, pemPath string) (plaintext []byte, err error) {
 	var key *rsa.PrivateKey
 	if key, err = x509.ParsePKCS1PrivateKey(PemDecode(pemPath)); err != nil {
@@ -161,7 +161,7 @@ func RsaDecrypt(ciphertext []byte, pemPath string) (plaintext []byte, err error)
 	return
 }
 
-// RSA加密(PKIX)
+// RsaEncryptPKIX RSA加密(PKIX)
 func RsaEncryptPKIX(plaintext []byte, pemPath string) (ciphertext []byte, err error) {
 	var key any
 	if key, err = x509.ParsePKIXPublicKey(PemDecode(pemPath)); err != nil {
@@ -173,7 +173,7 @@ func RsaEncryptPKIX(plaintext []byte, pemPath string) (ciphertext []byte, err er
 	return
 }
 
-// RSA解密(PKIX)
+// RsaDecryptPKIX RSA解密(PKIX)
 func RsaDecryptPKIX(ciphertext []byte, pemPath string) (plaintext []byte, err error) {
 	var key any
 	if key, err = x509.ParsePKCS8PrivateKey(PemDecode(pemPath)); err != nil {

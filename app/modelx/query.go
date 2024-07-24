@@ -17,7 +17,7 @@ type File struct {
 	File *multipart.FileHeader `form:"file"`
 }
 
-// 分页参数
+// Query 分页参数
 type Query struct {
 	Keyword string `json:"keyword"` // 关键字
 	Order   Orders `json:"order"`   // 排序参数
@@ -25,20 +25,20 @@ type Query struct {
 	Page
 }
 
-// 时间范围
+// TimeRange 时间范围
 type TimeRange struct {
 	StartTime string `json:"startTime"` // 开始时间
 	EndTime   string `json:"endTime"`   // 结束时间
 }
 
-// 排序
+// Orders 排序
 type Orders []*Order
 type Order struct {
 	Column string `json:"column"` // 排序字段
 	Type   string `json:"type"`   // 排序方式(asc/desc)
 }
 
-// 计算分页数量
+// GetOrderBySql 计算分页数量
 func (orders Orders) GetOrderBySql() (orderBy string) {
 	if orders != nil && len(orders) > 0 {
 		s := strings.Builder{}

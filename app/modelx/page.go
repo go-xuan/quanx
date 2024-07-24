@@ -5,13 +5,13 @@ import (
 	"strings"
 )
 
-// 分页参数
+// Page 分页参数
 type Page struct {
 	PageNo   int64 `json:"pageNo"`   // 分页页码
 	PageSize int64 `json:"pageSize"` // 分页大小
 }
 
-// 计算分页数量
+// PageTotal 计算分页数量
 func (page *Page) PageTotal(total int64) int64 {
 	if total != 0 && page.PageSize != 0 {
 		if total%page.PageSize > 0 {
@@ -24,7 +24,7 @@ func (page *Page) PageTotal(total int64) int64 {
 	}
 }
 
-// 计算offset
+// Offset 计算offset
 func (page *Page) Offset() int64 {
 	if page.PageNo != 0 && page.PageSize != 0 {
 		return (page.PageNo - 1) * page.PageSize
@@ -33,7 +33,7 @@ func (page *Page) Offset() int64 {
 	}
 }
 
-// 获取PG分页SQL
+// PgPageSql 获取PG分页SQL
 func (page *Page) PgPageSql() string {
 	pageSql := strings.Builder{}
 	if page != nil && page.PageNo != 0 {
@@ -45,7 +45,7 @@ func (page *Page) PgPageSql() string {
 	return pageSql.String()
 }
 
-// 获取Mysql分页SQL
+// MysqlPageSql 获取Mysql分页SQL
 func (page *Page) MysqlPageSql() string {
 	pageSql := strings.Builder{}
 	if page != nil && page.PageNo != 0 {

@@ -21,7 +21,7 @@ func PropertiesMarshal(v any) (out []byte, err error) {
 	return
 }
 
-// 读取properties文件到指针
+// PropertiesUnmarshal 读取properties文件到指针
 func PropertiesUnmarshal(bytes []byte, v any) (err error) {
 	valueRef := reflect.ValueOf(v)
 	if valueRef.Type().Kind() != reflect.Ptr {

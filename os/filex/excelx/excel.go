@@ -23,7 +23,7 @@ type SheetInfo struct {
 	EndRow    int    `json:"endRow"`
 }
 
-// 表头映射
+// Header 表头映射
 type Header struct {
 	Key  string
 	Name string
@@ -47,7 +47,7 @@ func DefaultStyle() *xlsx.Style {
 	}
 }
 
-// 通过反射获取excel标签
+// GetHeadersByReflect 通过反射获取excel标签
 func GetHeadersByReflect(v any) []*Header {
 	var result []*Header
 	var typeRef = reflect.TypeOf(v)
@@ -80,7 +80,7 @@ func GetSheet(filePath string, sheetName string) (*xlsx.Sheet, error) {
 	}
 }
 
-// 在目标sheet页中，根据【具有合并单元格的行】进行横向拆分
+// ExcelSplit 在目标sheet页中，根据【具有合并单元格的行】进行横向拆分
 // 取合【并单元格的值】作为拆分出的新sheet名
 // excelPath:目标excel
 // sheetName:目标sheet页,默认取第一个sheet页
@@ -137,7 +137,7 @@ func ExcelSplit(excelPath, sheetName string) (newExcelPath string, err error) {
 	return
 }
 
-// excelPath:目标excel
+// ExcelReader excelPath:目标excel
 // sheetName:目标sheet页,默认取第一个sheet页
 func ExcelReader(excelPath, sheetName string, mapping map[string]string) (data []map[string]string, err error) {
 	// 读取目标sheet
@@ -171,7 +171,7 @@ func ExcelReader(excelPath, sheetName string, mapping map[string]string) (data [
 	return
 }
 
-// excelPath:目标excel
+// ExcelReaderAny excelPath:目标excel
 // sheetName:目标sheet页,默认取第一个sheet页
 func ExcelReaderAny[T any](excelPath, sheetName string, obj T) (data []*T, err error) {
 	// 读取目标sheet
@@ -209,7 +209,7 @@ func ExcelReaderAny[T any](excelPath, sheetName string, obj T) (data []*T, err e
 	return
 }
 
-// 将数据写入excel
+// ExcelWriter 将数据写入excel
 func ExcelWriter(excelPath string, obj any, data any) (err error) {
 	var xlsxFile = xlsx.NewFile()
 	var sheet *xlsx.Sheet

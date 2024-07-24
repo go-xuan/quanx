@@ -17,6 +17,7 @@ var provinceCodes = []string{
 	"71", "81", "91",
 }
 
+// GetIdCardLastCode 获生成身份证最后一位校验码
 // 十七位计算公式：IdCardLastCodes[Sum(x*y)%11]
 // x:表示第i位置上的身份证号码数字值
 // y:表示第i位置上的加权因子
@@ -32,7 +33,7 @@ func GetIdCardLastCode(idCard string) byte {
 	return IdCardLastCodes[sum%11]
 }
 
-// 根据身份证获取性别
+// GetIdCardGender 根据身份证获取性别
 func GetIdCardGender(idCard string) string {
 	if len(idCard) == 18 {
 		sexSymbol, _ := strconv.Atoi(idCard[16:17])
@@ -45,7 +46,7 @@ func GetIdCardGender(idCard string) string {
 	return "未知"
 }
 
-// 根据身份证获取年龄
+// GetIdCardAge 根据身份证获取年龄
 func GetIdCardAge(idCard string) (age int) {
 	year, _ := strconv.Atoi(idCard[6:10])
 	month, _ := strconv.Atoi(idCard[10:12])
@@ -58,7 +59,7 @@ func GetIdCardAge(idCard string) (age int) {
 	return
 }
 
-// 校验身份证
+// CheckIdCard 校验身份证
 func CheckIdCard(idCard string) bool {
 	length := len(idCard)
 	if length != 15 && length != 18 {

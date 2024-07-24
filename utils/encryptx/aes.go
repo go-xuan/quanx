@@ -49,13 +49,13 @@ func NewAes(secretKey ...string) (*Aes, error) {
 	}
 }
 
-// 加密模式
+// Mode 加密模式
 func (a *Aes) Mode(m mode) *Aes {
 	a.mode = m
 	return a
 }
 
-// 加密
+// Encrypt 加密
 func (a *Aes) Encrypt(plaintext []byte) []byte {
 	switch a.mode {
 	case CBC:
@@ -68,7 +68,7 @@ func (a *Aes) Encrypt(plaintext []byte) []byte {
 	return nil
 }
 
-// 解密
+// Decrypt 解密
 func (a *Aes) Decrypt(ciphertext []byte) []byte {
 	switch a.mode {
 	case CBC:
@@ -81,42 +81,42 @@ func (a *Aes) Decrypt(ciphertext []byte) []byte {
 	return nil
 }
 
-// CBC加密
+// EncryptCBC CBC加密
 func (a *Aes) EncryptCBC(plaintext []byte) []byte {
 	var ciphertext []byte
 	cipher.NewCBCEncrypter(a.block, a.iv).CryptBlocks(ciphertext, plaintext)
 	return ciphertext
 }
 
-// CBC解密
+// DecryptCBC CBC解密
 func (a *Aes) DecryptCBC(ciphertext []byte) []byte {
 	var plaintext []byte
 	cipher.NewCBCDecrypter(a.block, a.iv).CryptBlocks(plaintext, ciphertext)
 	return plaintext
 }
 
-// CBC加密
+// EncryptCFB CBC加密
 func (a *Aes) EncryptCFB(plaintext []byte) []byte {
 	var ciphertext []byte
 	cipher.NewCFBEncrypter(a.block, a.iv).XORKeyStream(ciphertext, plaintext)
 	return ciphertext
 }
 
-// CBC解密
+// DecryptCFB CBC解密
 func (a *Aes) DecryptCFB(ciphertext []byte) []byte {
 	var plaintext []byte
 	cipher.NewCFBDecrypter(a.block, a.iv).XORKeyStream(plaintext, ciphertext)
 	return plaintext
 }
 
-// ECB加密
+// EncryptECB ECB加密
 func (a *Aes) EncryptECB(plaintext []byte) []byte {
 	var ciphertext []byte
 	a.block.Encrypt(ciphertext, plaintext)
 	return ciphertext
 }
 
-// ECB解密
+// DecryptECB ECB解密
 func (a *Aes) DecryptECB(ciphertext []byte) []byte {
 	var plaintext []byte
 	a.block.Encrypt(plaintext, ciphertext)

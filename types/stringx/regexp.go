@@ -15,7 +15,7 @@ const (
 	TimeRegex     = `^\d{2}:\d{2}:\d{2}$`                                // 时间格式
 )
 
-// 正则判断
+// RegMatch 正则判断
 func RegMatch(target, pattern string) bool {
 	matched, _ := regexp.MatchString(pattern, target)
 	return matched

@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-// 任务处理调度器
+// QueueScheduler 队列任务处理调度器
 type QueueScheduler struct {
 	mutex *sync.Mutex
 	Head  *QueueTask            // 首个任务
@@ -12,7 +12,7 @@ type QueueScheduler struct {
 	Tasks map[string]*QueueTask // 所有任务
 }
 
-// 对列任务
+// QueueTask 队列任务
 type QueueTask struct {
 	name string     // 任务名
 	fn   func()     // 当前任务
@@ -35,7 +35,7 @@ func Queue() *QueueScheduler {
 	}
 }
 
-// 执行
+// Execute 执行队列任务
 func (q *QueueScheduler) Execute() {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
@@ -50,14 +50,14 @@ func (q *QueueScheduler) Execute() {
 	}
 }
 
-// 新增（默认尾插）
+// Add 新增队列任务（默认尾插）
 func (q *QueueScheduler) Add(name string, fn func()) {
 	if name != "" && fn != nil {
 		q.AddTail(name, fn)
 	}
 }
 
-// 尾插（当前新增任务添加到队列末尾）
+// AddTail 尾插（当前新增任务添加到队列末尾）
 func (q *QueueScheduler) AddTail(name string, fn func()) {
 	if name != "" && fn != nil {
 		q.mutex.Lock()
@@ -77,7 +77,7 @@ func (q *QueueScheduler) AddTail(name string, fn func()) {
 	}
 }
 
-// 头插（当前新增任务添加到队列首位）
+// AddHead 头插（当前新增任务添加到队列首位）
 func (q *QueueScheduler) AddHead(name string, task func()) {
 	if name != "" && task != nil {
 		q.mutex.Lock()
@@ -97,7 +97,7 @@ func (q *QueueScheduler) AddHead(name string, task func()) {
 	}
 }
 
-// 后插队(当前新增任务添加到after任务之后)
+// AddAfter 后插队(当前新增任务添加到after任务之后)
 func (q *QueueScheduler) AddAfter(name string, task func(), after string) {
 	if name != "" && task != nil {
 		q.mutex.Lock()
@@ -120,7 +120,7 @@ func (q *QueueScheduler) AddAfter(name string, task func(), after string) {
 	}
 }
 
-// 前插队(当前新增任务添加到before任务之后)
+// AddBefore 前插队(当前新增任务添加到before任务之后)
 func (q *QueueScheduler) AddBefore(name string, task func(), before string) {
 	if name != "" && task != nil {
 		q.mutex.Lock()
@@ -143,7 +143,6 @@ func (q *QueueScheduler) AddBefore(name string, task func(), before string) {
 	}
 }
 
-// 移除任务
 func (q *QueueScheduler) Remove(name string) {
 	if name != "" {
 		q.mutex.Lock()
@@ -164,7 +163,7 @@ func (q *QueueScheduler) Remove(name string) {
 	}
 }
 
-// 清除所有任务
+// Clear 清除所有队列任务
 func (q *QueueScheduler) Clear() {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()

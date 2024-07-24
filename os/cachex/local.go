@@ -23,12 +23,12 @@ type LocalCache struct {
 	File       string `json:"file" yaml:"file"`                          // 缓存加载文件
 }
 
-// 配置信息格式化
+// Title 配置信息格式化
 func (*LocalCache) Title() string {
 	return "Local Cache"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (*LocalCache) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "local_cache.yaml",
@@ -37,7 +37,7 @@ func (*LocalCache) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (conf *LocalCache) Run() error {
 	localCache = cache.New(time.Duration(conf.Expiration), time.Duration(conf.Interval))
 	if conf.File != "" {

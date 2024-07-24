@@ -27,17 +27,17 @@ type Minio struct {
 	Expire       int64  `yaml:"expire" json:"expire"`             // 下载链接有效时长(分钟)
 }
 
-// 配置信息格式化
+// Info 配置信息格式化
 func (m *Minio) Info() string {
 	return fmt.Sprintf("host=%s port=%d accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
 }
 
-// 配置器标题
+// Title 配置器标题
 func (*Minio) Title() string {
 	return "Minio"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (*Minio) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "minio.yaml",
@@ -46,7 +46,7 @@ func (*Minio) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (m *Minio) Run() (err error) {
 	var client *minio.Client
 	if client, err = m.NewClient(); err != nil {
@@ -58,12 +58,12 @@ func (m *Minio) Run() (err error) {
 	return
 }
 
-// 配置信息格式化
+// Endpoint 配置信息格式化
 func (m *Minio) Endpoint() string {
 	return fmt.Sprintf("%s:%d", m.Host, m.Port)
 }
 
-// 初始化minio客户端
+// NewClient 初始化minio客户端
 func (m *Minio) NewClient() (client *minio.Client, err error) {
 	if client, err = minio.New(m.Endpoint(), &minio.Options{
 		Creds:  credentials.NewStaticV4(m.AccessId, m.AccessSecret, m.SessionToken),

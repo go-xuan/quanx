@@ -6,7 +6,7 @@ import (
 	"runtime"
 )
 
-// 通用error
+// Error 通用error
 type Error struct {
 	source error
 	msg    string
@@ -22,10 +22,10 @@ func (err *Error) Error() string {
 	}
 }
 
-// 解包装
+// Unwrap 解包装
 func (err *Error) Unwrap() error { return err.source }
 
-// fmt打印实现
+// Format fmt打印实现
 func (err *Error) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
@@ -91,7 +91,7 @@ func GetMessage(v any) string {
 
 type Stack []uintptr
 
-// fmt打印实现
+// Format fmt打印实现
 func (s *Stack) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'v':

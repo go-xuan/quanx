@@ -29,13 +29,13 @@ var powerLevelMap = map[string]*PowerLevel{
 	"零": {0, false},
 }
 
-// 位数级别
+// PowerLevel 位数级别
 type PowerLevel struct {
 	pow     int  // 量级
 	isLarge bool // 是否大数额
 }
 
-// 中文数字转阿拉伯数字
+// ConvertChinese2Arab 中文数字转阿拉伯数字
 // 0 <= result < 10^12
 func ConvertChinese2Arab(input string) int {
 	var result int
@@ -81,7 +81,7 @@ func ConvertChinese2Arab(input string) int {
 	return result
 }
 
-// 阿拉伯转中文
+// ConvertArabToChinese 阿拉伯转中文
 // 0 <= input < 10^12
 func ConvertArabToChinese(input int) string {
 	var result string

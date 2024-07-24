@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// 分批次执行
+// UseBatches 分批次执行
 func UseBatches(total, limit int, f func(int, int) error) error {
 	var start = 0
 	if start < total {
@@ -23,7 +23,7 @@ func UseBatches(total, limit int, f func(int, int) error) error {
 	return nil
 }
 
-// 重试执行
+// Retry 重试执行
 func Retry(times, count int, interval time.Duration, f func() error) error {
 	if times > 0 {
 		time.Sleep(interval)

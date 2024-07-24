@@ -21,14 +21,14 @@ func Sequence() *SeqManager {
 	return seqManager
 }
 
-// 创建序列
+// Create 创建序列
 func (m *SeqManager) Create(name string, start int, incr int) {
 	var seq = &sequence{new(sync.RWMutex), name, start, incr, start}
 	m.m[name] = seq
 	m.l = append(m.l, seq)
 }
 
-// 获取序列当前值
+// CurrVal 获取序列当前值
 func (m *SeqManager) CurrVal(name string) int {
 	if seq, ok := m.m[name]; ok {
 		return seq.curr()
@@ -38,7 +38,7 @@ func (m *SeqManager) CurrVal(name string) int {
 	}
 }
 
-// 获取序列下值
+// NextVal 获取序列下值
 func (m *SeqManager) NextVal(name string) int {
 	if seq, ok := m.m[name]; ok {
 		return seq.next()
@@ -48,7 +48,7 @@ func (m *SeqManager) NextVal(name string) int {
 	}
 }
 
-// 获取序列当前值
+// NextBatch 获取序列当前值
 func (m *SeqManager) NextBatch(name string, n int) int {
 	if seq, ok := m.m[name]; ok {
 		var next = seq.next()
@@ -60,7 +60,7 @@ func (m *SeqManager) NextBatch(name string, n int) int {
 	}
 }
 
-// 设置序列当前值
+// Set 设置序列当前值
 func (m *SeqManager) Set(name string, value int) {
 	if seq, ok := m.m[name]; ok {
 		seq.set(value)
@@ -69,7 +69,7 @@ func (m *SeqManager) Set(name string, value int) {
 	}
 }
 
-// 序列重置
+// Reset 序列重置
 func (m *SeqManager) Reset(name string) {
 	if seq, ok := m.m[name]; ok {
 		seq.reset()

@@ -13,7 +13,7 @@ type Captcha interface {
 var iGoCaptcha *goCaptchaImpl
 var iBase64Captcha *base64CaptchaImpl
 
-// 点击式验证码
+// GoCaptcha 点击式验证码
 func GoCaptcha() Captcha {
 	if iGoCaptcha == nil {
 		syncx.OnceDo(func() {
@@ -23,7 +23,7 @@ func GoCaptcha() Captcha {
 	return iGoCaptcha
 }
 
-// 普通验证码
+// Base64Captcha 普通验证码
 func Base64Captcha() Captcha {
 	if iBase64Captcha == nil {
 		syncx.OnceDo(func() {

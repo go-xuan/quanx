@@ -13,21 +13,21 @@ func Trie() *TrieTree {
 	return tireTree
 }
 
-// Trie树
+// TrieTree Trie树
 type TrieTree struct {
 	root    *TrieNode      // 前缀树
 	replace string         // 替换符
 	level   map[string]int // 敏感度
 }
 
-// Trie树节点
+// TrieNode Trie树节点
 type TrieNode struct {
 	children map[string]*TrieNode // 子节点
 	end      bool                 // 单词词尾
 	terminal bool                 // 树枝末端
 }
 
-// 创建前缀树
+// NewTrieTree 创建前缀树
 func NewTrieTree() *TrieTree {
 	return &TrieTree{
 		root:    NewTrieNode(),
@@ -36,7 +36,7 @@ func NewTrieTree() *TrieTree {
 	}
 }
 
-// 创建前缀树节点
+// NewTrieNode 创建前缀树节点
 func NewTrieNode() *TrieNode {
 	return &TrieNode{
 		children: make(map[string]*TrieNode),
@@ -45,7 +45,7 @@ func NewTrieNode() *TrieNode {
 	}
 }
 
-// 添加敏感词
+// AddWordMap 添加敏感词
 func (t *TrieTree) AddWordMap(words map[string]int) {
 	if len(words) > 0 {
 		for word, level := range words {
@@ -54,7 +54,7 @@ func (t *TrieTree) AddWordMap(words map[string]int) {
 	}
 }
 
-// 添加敏感词
+// AddWords 添加敏感词
 func (t *TrieTree) AddWords(words []string) {
 	if len(words) > 0 {
 		for _, word := range words {
@@ -63,7 +63,7 @@ func (t *TrieTree) AddWords(words []string) {
 	}
 }
 
-// 添加敏感词
+// AddWord 添加敏感词
 func (t *TrieTree) AddWord(word string, level ...int) {
 	if len(level) > 0 {
 		t.level[word] = level[0]
@@ -80,12 +80,12 @@ func (t *TrieTree) AddWord(word string, level ...int) {
 	node.end = true
 }
 
-// 更新敏感度
+// UpdateWordLevel 更新敏感度
 func (t *TrieTree) UpdateWordLevel(word string, level int) {
 	t.level[word] = level
 }
 
-// 敏感词脱敏
+// Desensitize 敏感词脱敏
 func (t *TrieTree) Desensitize(text string) string {
 	texts := strings.Split(text, "")
 	var sb strings.Builder
@@ -120,7 +120,7 @@ func (t *TrieTree) Desensitize(text string) string {
 	return sb.String()
 }
 
-// 判断时候含有敏感词
+// HasSensitive 判断时候含有敏感词
 func (t *TrieTree) HasSensitive(text string) (has bool, level int) {
 	texts := strings.Split(text, "")
 	var node, start = t.root, 0

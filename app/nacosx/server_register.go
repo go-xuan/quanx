@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// 服务实例
+// ServerInstance 服务实例
 type ServerInstance struct {
 	Group string `yaml:"group"` // 实例分组
 	Name  string `yaml:"name"`  // 实例名称
@@ -20,7 +20,7 @@ func (s *ServerInstance) Info() string {
 	return fmt.Sprintf("group=%s name=%s", s.Group, s.Name)
 }
 
-// 注册Nacos服务实例
+// RegisterInstance 注册Nacos服务实例
 func RegisterInstance(server *ServerInstance) {
 	if This().NamingClient == nil {
 		log.Error("Nacos Naming Client Not Initialized")
@@ -43,7 +43,7 @@ func RegisterInstance(server *ServerInstance) {
 	}
 }
 
-// 随机获取一个健康的服务实例
+// SelectOneHealthyInstance 随机获取一个健康的服务实例
 func SelectOneHealthyInstance(serviceName, groupName string) (addr string, err error) {
 	var server *model.Instance
 	if server, err = This().NamingClient.SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
@@ -55,7 +55,7 @@ func SelectOneHealthyInstance(serviceName, groupName string) (addr string, err e
 	return
 }
 
-// 获取所有健康服务实例
+// SelectInstances 获取所有健康服务实例
 func SelectInstances(serviceName, groupName string) (addrs []string, err error) {
 	var servers []model.Instance
 	if servers, err = This().NamingClient.SelectInstances(vo.SelectInstancesParam{

@@ -18,7 +18,7 @@ const (
 	CacheTypeLocal = "local"
 )
 
-// 缓存配置
+// MultiCache 缓存配置
 type MultiCache []*Cache
 
 type Cache struct {
@@ -28,12 +28,12 @@ type Cache struct {
 	Marshal string `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
 }
 
-// 配置器标题
+// Title 配置器标题
 func (c *Cache) Title() string {
 	return "Cache"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (c *Cache) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "cache.yaml",
@@ -42,7 +42,7 @@ func (c *Cache) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (c *Cache) Run() (err error) {
 	if err = anyx.SetDefaultValue(c); err != nil {
 		return
@@ -70,12 +70,12 @@ func Default() *Cache {
 	}
 }
 
-// 配置信息格式化
+// Title 配置信息格式化
 func (MultiCache) Title() string {
 	return "Cache"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (MultiCache) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "cache.yaml",
@@ -84,7 +84,7 @@ func (MultiCache) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (m MultiCache) Run() error {
 	if handler == nil {
 		handler = &Handler{
@@ -106,12 +106,12 @@ func (m MultiCache) Run() error {
 	return nil
 }
 
-// 配置信息格式化
+// Info 配置信息格式化
 func (c *Cache) Info() string {
 	return fmt.Sprintf("type=%s source=%s prefix=%s marshal=%s", c.Type, c.Source, c.Prefix, c.Marshal)
 }
 
-// 根据缓存配置初始化缓存客户端
+// InitClient 根据缓存配置初始化缓存客户端
 func (c *Cache) InitClient() Client {
 	switch c.Type {
 	case CacheTypeRedis:

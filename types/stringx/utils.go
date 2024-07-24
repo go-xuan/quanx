@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-// 获取起始字符首次出现和结尾字符末次出现的下标
+// Between 获取起始字符首次出现和结尾字符末次出现的下标
 func Between(s, start, end string) (from, to int) {
 	if start == end {
 		indices := AllIndex(s, start, 2)
@@ -43,7 +43,7 @@ func Between(s, start, end string) (from, to int) {
 	return
 }
 
-// 获取子串下标
+// Index 获取子串下标
 // position：表示获取位置，默认position=1即正序第1处，position=-1即倒序第1处
 func Index(s, sep string, position ...int) int {
 	if l, m := len(s), len(sep); l >= m {
@@ -73,7 +73,7 @@ func Index(s, sep string, position ...int) int {
 	return -1
 }
 
-// 获取所有下标,x：
+// AllIndex 获取所有下标,x：
 func AllIndex(s, sep string, x int) []int {
 	var indices = make([]int, x)
 	for i := 0; i < x; i++ {
@@ -92,7 +92,7 @@ func AllIndex(s, sep string, x int) []int {
 	return indices
 }
 
-// 添加前缀
+// AddPrefix 添加前缀
 func AddPrefix(s, prefix string) string {
 	if strings.HasPrefix(s, prefix) {
 		return s
@@ -100,7 +100,7 @@ func AddPrefix(s, prefix string) string {
 	return prefix + s
 }
 
-// 添加前缀
+// AddSuffix 添加前缀
 func AddSuffix(s, suffix string) string {
 	if strings.HasSuffix(s, suffix) {
 		return s
@@ -108,7 +108,7 @@ func AddSuffix(s, suffix string) string {
 	return s + suffix
 }
 
-// 字符串是否包含
+// Contains 字符串是否包含
 func Contains(s string, seps ...string) (string, int) {
 	var hit, index = "", -1
 	for _, sep := range seps {
@@ -123,7 +123,7 @@ func Contains(s string, seps ...string) (string, int) {
 	return hit, index
 }
 
-// 字符串是否包含
+// ContainsAny 字符串是否包含
 func ContainsAny(s string, seps ...string) bool {
 	for _, sep := range seps {
 		if Index(s, sep) >= 0 {
@@ -133,7 +133,7 @@ func ContainsAny(s string, seps ...string) bool {
 	return false
 }
 
-// 字符串是否包含
+// ContainsBoth 字符串是否包含
 func ContainsBoth(s string, seps ...string) bool {
 	for _, sep := range seps {
 		if Index(s, sep) == -1 {
@@ -143,7 +143,7 @@ func ContainsBoth(s string, seps ...string) bool {
 	return true
 }
 
-// 是否有空
+// HasEmpty 是否有空
 func HasEmpty(s ...string) bool {
 	for _, item := range s {
 		if item == "" {
@@ -153,7 +153,7 @@ func HasEmpty(s ...string) bool {
 	return false
 }
 
-// 不等时取默认值
+// IfNot 不等时取默认值
 func IfNot(s, v, def string) string {
 	if s != v {
 		return def
@@ -162,7 +162,7 @@ func IfNot(s, v, def string) string {
 	}
 }
 
-// 为空时取默认值
+// IfZero 为空时取默认值
 func IfZero(s, def string) string {
 	if s == "" {
 		return def
@@ -171,7 +171,7 @@ func IfZero(s, def string) string {
 	}
 }
 
-// 反转
+// Reverse 反转
 func Reverse(s string) string {
 	runes := []rune(s)
 	for from, to := 0, len(runes)-1; from < to; from, to = from+1, to-1 {
@@ -180,7 +180,7 @@ func Reverse(s string) string {
 	return string(runes)
 }
 
-// 字符串截取
+// SubString 字符串截取
 func SubString(s string, start, end int) string {
 	var r = []rune(s)
 	length := len(r)
@@ -193,7 +193,7 @@ func SubString(s string, start, end int) string {
 	return string(r[start:end])
 }
 
-// 分割字符串（reverse=true从右往左）
+// Cut 分割字符串（reverse=true从右往左）
 // position：表示分割位置，默认position=1即正序第1处，position=-1即倒序第1处
 func Cut(s, sep string, position ...int) (string, string) {
 	if i := Index(s, sep, position...); i >= 0 {
@@ -202,7 +202,7 @@ func Cut(s, sep string, position ...int) (string, string) {
 	return s, ""
 }
 
-// 插入字符串
+// Insert 插入字符串
 func Insert(s, insert string, position ...int) string {
 	if len(position) > 0 {
 		if i := position[0]; i > 0 && i < len(s) {
@@ -212,7 +212,7 @@ func Insert(s, insert string, position ...int) string {
 	return s + insert
 }
 
-// 字符以固定长度填充（默认填充左边）
+// Fill 字符以固定长度填充（默认填充左边）
 func Fill(s, fill string, length int, right ...bool) string {
 	strLen, addLen := len(s), len(fill)
 	fillLen := length - strLen
@@ -230,7 +230,7 @@ func Fill(s, fill string, length int, right ...bool) string {
 	}
 }
 
-// 解析url参数为map
+// ParseUrlParams 解析url参数为map
 func ParseUrlParams(constraint string) map[string]string {
 	if strings.Contains(constraint, "=") {
 		var params = make(map[string]string)
@@ -244,7 +244,7 @@ func ParseUrlParams(constraint string) map[string]string {
 	return nil
 }
 
-// 转下划线
+// ToSnake 转下划线
 func ToSnake(s string) string {
 	data := make([]byte, 0, len(s)*2)
 	j := false
@@ -262,13 +262,13 @@ func ToSnake(s string) string {
 	return strings.ToLower(string(data[:]))
 }
 
-// 转小驼峰
+// ToLowerCamel 转小驼峰
 func ToLowerCamel(s string) string {
 	ucc := ToUpperCamel(s)
 	return strings.ToLower(string(ucc[0])) + ucc[1:]
 }
 
-// 转大驼峰
+// ToUpperCamel 转大驼峰
 func ToUpperCamel(s string) string {
 	s = strings.ToLower(s)
 	data := make([]byte, 0, len(s))
@@ -298,7 +298,7 @@ func ToUpperCamel(s string) string {
 	return string(data[:])
 }
 
-// 文本相似度计算
+// TextSimilarity 文本相似度计算
 func TextSimilarity(source, target string) float64 {
 	sLen, tLen := len(source), len(target)
 	if (sLen == 0 && tLen == 0) || source == target {

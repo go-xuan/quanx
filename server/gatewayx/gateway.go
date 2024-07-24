@@ -31,7 +31,7 @@ func (s *Servers) Run() error {
 	return nil
 }
 
-// 微服务网关配置
+// Server 微服务网关配置
 type Server struct {
 	Name   string   `yaml:"name" json:"name"`     // 微服务名称
 	Group  string   `yaml:"group" json:"group"`   // 微服务分组
@@ -41,7 +41,7 @@ type Server struct {
 	Ignore []string `yaml:"ignore" json:"ignore"` // 忽略鉴权(白名单)
 }
 
-// 获取微服务addr
+// GetServerProxyAddr 获取微服务addr
 func GetServerProxyAddr(group, dataId, url string) (addr string, auth string, err error) {
 	if err = ListenConfigChanged(group, dataId); err != nil {
 		err = errors.New("监听微服务网关配置失败 ：" + err.Error())
@@ -71,7 +71,7 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, auth string, er
 
 }
 
-// 校验nacos配置
+// ListenConfigChanged 校验nacos配置
 func ListenConfigChanged(group, dataId string) error {
 	if data, ok := nacosx.GetNacosConfigMonitor().Get(group, dataId); ok {
 		// 将当前最新的content数据同步到servers
@@ -84,7 +84,7 @@ func ListenConfigChanged(group, dataId string) error {
 	return nil
 }
 
-// URL匹配
+// MatchUrl URL匹配
 func MatchUrl(uri, rule string) bool {
 	if rule == "*" || rule == "/*" {
 		return true

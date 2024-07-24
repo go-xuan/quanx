@@ -28,7 +28,7 @@ const (
 	Year
 )
 
-// 时间转字符
+// Format 时间转字符
 func Format(time time.Time, format ...string) string {
 	var layout = TimeFmt
 	if len(format) > 0 {
@@ -37,7 +37,7 @@ func Format(time time.Time, format ...string) string {
 	return time.Format(layout)
 }
 
-// 字符转时间
+// ToTime 字符转时间
 func ToTime(timeStr string) time.Time {
 	if len(timeStr) == 10 && timeStr[4:5] == "-" {
 		return TimeParse(timeStr, DateFmt)
@@ -46,7 +46,7 @@ func ToTime(timeStr string) time.Time {
 	}
 }
 
-// 时间格式化
+// TimeParse 时间格式化
 func TimeParse(timeStr string, format ...string) time.Time {
 	var layout = TimeFmt
 	if len(format) > 0 {
@@ -59,44 +59,44 @@ func TimeParse(timeStr string, format ...string) time.Time {
 	}
 }
 
-// 时间戳(秒级)转字符
+// SecondFormat 时间戳(秒级)转字符
 func SecondFormat(second int64, format string) string {
 	return time.Unix(second, 0).Format(format)
 }
 
-// 当前时间字符串
+// NowString 当前时间字符串
 func NowString() string {
 	return time.Now().Format(TimeFmt)
 }
 
-// 今天
+// TodayStr 今天
 func TodayStr() string {
 	return time.Now().Format(DateFmt)
 }
 
-// 今天开始时间
+// TodayStart 今天开始时间
 func TodayStart() time.Time {
 	return DayStart(time.Now())
 }
 
-// 当天开始时间（yyyy-mm-dd 00:00:00）
+// DayStart 当天开始时间（yyyy-mm-dd 00:00:00）
 func DayStart(t time.Time) time.Time {
 	y, m, d := t.Date()
 	return time.Date(y, m, d, 0, 0, 0, 0, time.Local)
 }
 
-// 当天结束时间（yyyy-mm-dd 23:59:59）
+// DayEnd 当天结束时间（yyyy-mm-dd 23:59:59）
 func DayEnd(t time.Time) time.Time {
 	y, m, d := t.Date()
 	return time.Date(y, m, d, 23, 59, 59, 0, time.Local)
 }
 
-// 昨天
+// YesterdayStr 昨天
 func YesterdayStr() string {
 	return time.Now().AddDate(0, 0, -1).Format(DateFmt)
 }
 
-// 是否闰年
+// IsLeapYear 是否闰年
 func IsLeapYear(year int) bool {
 	if year <= 0 {
 		return false
@@ -107,7 +107,7 @@ func IsLeapYear(year int) bool {
 	return false
 }
 
-// 获取生肖
+// ShengXiao 获取生肖
 func ShengXiao(year int) string {
 	for {
 		if year < 4 {
@@ -119,7 +119,7 @@ func ShengXiao(year int) string {
 	return strings.Split(AllShengXiao, ",")[(year-4)%12]
 }
 
-// 间隔时间
+// TimeDiff 间隔时间
 func TimeDiff(start, end time.Time, unit Unit) int64 {
 	switch unit {
 	case Year:
@@ -145,12 +145,12 @@ func TimeDiff(start, end time.Time, unit Unit) int64 {
 	}
 }
 
-// 间隔天数
+// DayInterval 间隔天数
 func DayInterval(start, end time.Time) int {
 	return int((end.Unix() - start.Unix()) / 86400)
 }
 
-// 间隔月份数
+// MonthInterval 间隔月份数
 func MonthInterval(start, end time.Time) int {
 	y1, m1, d1 := start.Date()
 	y2, m2, d2 := end.Date()
@@ -161,12 +161,12 @@ func MonthInterval(start, end time.Time) int {
 	return diff
 }
 
-// 间隔年数
+// YearInterval 间隔年数
 func YearInterval(start, end time.Time) int {
 	return end.Year() - start.Year()
 }
 
-// 时间切片
+// TimeSlice 时间切片
 func TimeSlice(start, end time.Time, unit Unit) []string {
 	var slice []string
 	if unit == Day {
@@ -183,7 +183,7 @@ func TimeSlice(start, end time.Time, unit Unit) []string {
 	return slice
 }
 
-// 获取特定范围内起止时间(当天/本周/本月/本年)
+// TimeRange 获取特定范围内起止时间(当天/本周/本月/本年)
 func TimeRange(t time.Time, unit Unit) (start, end time.Time) {
 	switch unit {
 	case Year:

@@ -19,7 +19,7 @@ func GetLocalIP() string {
 	return ""
 }
 
-// 获取当前机器IP
+// GetWLANIP 获取当前机器IP
 func GetWLANIP() string {
 	if netInterfaces, err := net.Interfaces(); err == nil {
 		for _, netInterface := range netInterfaces {
@@ -38,7 +38,7 @@ func GetWLANIP() string {
 	return ""
 }
 
-// 检测IP是否存在
+// CheckIpExist 检测IP是否存在
 func CheckIpExist(rules []string, ip string) bool {
 	if len(rules) > 0 && ip != "" {
 		for _, rule := range rules {
@@ -69,7 +69,7 @@ func CheckIpExist(rules []string, ip string) bool {
 	return false
 }
 
-// 将IP以最后一个.拆分
+// SplitIpByLastPoint 将IP以最后一个.拆分
 func SplitIpByLastPoint(ip string) (string, int) {
 	if strings.Contains(ip, `.`) {
 		i := strings.LastIndex(ip, ".")

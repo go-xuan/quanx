@@ -77,14 +77,14 @@ func MSGPACK() *Case {
 	return msgpackCase
 }
 
-// 序列化方案
+// Case 序列化方案
 type Case struct {
 	Name      string
 	Marshal   func(any) ([]byte, error)
 	Unmarshal func([]byte, any) error
 }
 
-// 类型识别
+// TypeIdentify 类型识别
 func TypeIdentify(name string) string {
 	if stringx.ContainsAny(name, ".", "\\", "/") {
 		return filex.Suffix(name)
@@ -92,7 +92,7 @@ func TypeIdentify(name string) string {
 	return name
 }
 
-// 读取配置文件到指针
+// UnmarshalFromFile 读取配置文件到指针
 func UnmarshalFromFile(path string, v any) (err error) {
 	if !filex.Exists(path) {
 		return errors.New("the file not exist : " + path)
@@ -107,7 +107,7 @@ func UnmarshalFromFile(path string, v any) (err error) {
 	return
 }
 
-// 将任意对象序列化成指定结构体对象
+// MarshalToStruct 将任意对象序列化成指定结构体对象
 func MarshalToStruct[T any](v any, filename string) (t T, err error) {
 	var newCase = NewCase(filename)
 	var bytes []byte

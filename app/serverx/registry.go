@@ -9,7 +9,7 @@ type Registry interface {
 	GetInstance(name string) (*Instance, error)    // 随机获取一个服务实例
 }
 
-// 服务实例
+// Instance 服务实例
 type Instance struct {
 	Name string `yaml:"name"` // 实例名称,唯一标识
 	Host string `yaml:"host"` // 服务实例host

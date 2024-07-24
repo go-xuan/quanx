@@ -114,17 +114,17 @@ func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 		return
 	}
 	if r.params != nil {
-		var url = strings.Builder{}
-		url.WriteString(r.url)
+		var urlBuilder = strings.Builder{}
+		urlBuilder.WriteString(r.url)
 		if !strings.HasSuffix(r.url, "?") {
-			url.WriteString("?")
+			urlBuilder.WriteString("?")
 		}
 		for k, v := range r.params {
-			url.WriteString(k)
-			url.WriteString("=")
-			url.WriteString(v)
+			urlBuilder.WriteString(k)
+			urlBuilder.WriteString("=")
+			urlBuilder.WriteString(v)
 		}
-		r.url = url.String()
+		r.url = urlBuilder.String()
 	}
 	fmt.Println(r.url)
 	var body io.Reader
@@ -156,7 +156,7 @@ func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 	return io.ReadAll(reader)
 }
 
-// map转为Url
+// MapToUrl map转为Url
 func MapToUrl(params map[string]any) (s string) {
 	sb := strings.Builder{}
 	for k, v := range params {

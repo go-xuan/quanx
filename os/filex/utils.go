@@ -34,7 +34,7 @@ const (
 	OnlyFile   = "file"
 )
 
-// 读取文件内容
+// ReadFile 读取文件内容
 func ReadFile(filePath string) (bytes []byte, err error) {
 	if bytes, err = os.ReadFile(filePath); err != nil {
 		return
@@ -42,7 +42,7 @@ func ReadFile(filePath string) (bytes []byte, err error) {
 	return
 }
 
-// 按行读取
+// ReadFileLine 按行读取
 func ReadFileLine(filePath string) (lines []string, err error) {
 	var file *os.File
 	if file, err = os.OpenFile(filePath, os.O_RDONLY, 0666); err != nil {
@@ -61,7 +61,7 @@ func ReadFileLine(filePath string) (lines []string, err error) {
 	return
 }
 
-// 更新文件
+// ContentReplace 更新文件
 func ContentReplace(filePath string, replaces map[string]string) (err error) {
 	var bytes []byte
 	if bytes, err = os.ReadFile(filePath); err != nil {
@@ -74,7 +74,7 @@ func ContentReplace(filePath string, replaces map[string]string) (err error) {
 	return WriteFile(filePath, content)
 }
 
-// 写入文件
+// WriteFile 写入文件
 func WriteFile(filePath, content string, mode ...int) (err error) {
 	CreateIfNotExist(filePath)
 	var flag = anyx.Default(Overwrite, mode...)
@@ -93,7 +93,7 @@ func WriteFile(filePath, content string, mode ...int) (err error) {
 	return
 }
 
-// 文件拆分
+// WriteSplit 文件拆分
 func WriteSplit(filePath string, size int) (paths []string, err error) {
 	var file *os.File
 	defer file.Close()
@@ -133,7 +133,7 @@ func WriteSplit(filePath string, size int) (paths []string, err error) {
 	return
 }
 
-// 数组按行写入文件
+// WriteFileLine 数组按行写入文件
 func WriteFileLine(filePath string, content []string, mode ...int) (err error) {
 	var flag = anyx.Default(Overwrite, mode...)
 	var file *os.File
@@ -152,7 +152,7 @@ func WriteFileLine(filePath string, content []string, mode ...int) (err error) {
 	return
 }
 
-// 写入json文件
+// WriteJson 写入json文件
 func WriteJson(filePath string, v any) (err error) {
 	var bytes []byte
 	if bytes, err = json.MarshalIndent(v, "", "	"); err != nil {
@@ -174,7 +174,7 @@ func WriteJson(filePath string, v any) (err error) {
 	return
 }
 
-// 写入csv文件
+// WriteCSV 写入csv文件
 func WriteCSV(filePath string, data [][]string) (err error) {
 	CreateIfNotExist(filePath)
 	var file *os.File
@@ -197,7 +197,7 @@ type File struct {
 	Info os.FileInfo
 }
 
-// 获取目录下所有文件路径
+// FileScan 获取目录下所有文件路径
 func FileScan(dir string, suffix string) (files []*File, err error) {
 	if err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -227,7 +227,7 @@ func FileScan(dir string, suffix string) (files []*File, err error) {
 	return
 }
 
-// 获取绝对路径
+// Pwd 获取绝对路径
 func Pwd(path ...string) (pwd string) {
 	if len(path) == 0 {
 		_, file, _, _ := runtime.Caller(1)
@@ -238,7 +238,7 @@ func Pwd(path ...string) (pwd string) {
 	return
 }
 
-// 拆分为文件路径和文件名
+// SplitPath 拆分为文件路径和文件名
 func SplitPath(path string) (dir, file string) {
 	if path != "" {
 		if stringx.ContainsAny(path, "/", "\\") {
@@ -250,7 +250,7 @@ func SplitPath(path string) (dir, file string) {
 	return
 }
 
-// 判断是否文件夹
+// IsDir 判断是否文件夹
 func IsDir(path string) bool {
 	if fileInfo, err := os.Stat(path); err != nil {
 		return false
@@ -259,7 +259,7 @@ func IsDir(path string) bool {
 	}
 }
 
-// 判断所给路径文件或文件夹是否存在
+// Exists 判断所给路径文件或文件夹是否存在
 func Exists(path string) bool {
 	if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
 		return false
@@ -267,7 +267,7 @@ func Exists(path string) bool {
 	return true
 }
 
-// 创建文件
+// Create 创建文件
 func Create(path string) (err error) {
 	var f *os.File
 	if f, err = os.Create(path); err != nil {
@@ -277,14 +277,14 @@ func Create(path string) (err error) {
 	return
 }
 
-// 创建文件
+// CreateIfNotExist 创建文件
 func CreateIfNotExist(path string) {
 	dir, _ := filepath.Split(path)
 	CreateDir(dir)
 	_ = Create(path)
 }
 
-// 创建文件夹
+// CreateDir 创建文件夹
 func CreateDir(path string) {
 	if !Exists(path) {
 		dir, file := filepath.Split(path)
@@ -322,7 +322,7 @@ func Analyse(path string) (dir, filename, suffix string) {
 	return
 }
 
-// 获取后缀
+// Suffix 获取后缀
 func Suffix(path string) string {
 	if path != "" {
 		for i := len(path) - 1; i >= 0; i-- {
@@ -334,13 +334,13 @@ func Suffix(path string) string {
 	return ""
 }
 
-// 获取文件名(不带后缀)
+// FileName 获取文件名(不带后缀)
 func FileName(path string) string {
 	var fullName = filepath.Base(path)
 	return strings.TrimSuffix(fullName, filepath.Ext(fullName))
 }
 
-// 强制打开文件
+// MustOpen 强制打开文件
 func MustOpen(filePath string, fileName string) (file *os.File, err error) {
 	var fileAbsPath string
 	if fileAbsPath, err = filepath.Abs(filepath.Join(filePath, fileName)); err != nil {
@@ -360,7 +360,7 @@ func MustOpen(filePath string, fileName string) (file *os.File, err error) {
 	return
 }
 
-// 打开文件
+// Open 打开文件
 func Open(name string, flag int, perm os.FileMode) (*os.File, error) {
 	if f, err := os.OpenFile(name, flag, perm); err != nil {
 		return nil, err
@@ -369,13 +369,13 @@ func Open(name string, flag int, perm os.FileMode) (*os.File, error) {
 	}
 }
 
-// 检查是否有权限
+// CheckPermission 检查是否有权限
 func CheckPermission(src string) bool {
 	_, err := os.Stat(src)
 	return os.IsPermission(err)
 }
 
-// 不存在即创建
+// CreateIsNotExist 不存在即创建
 func CreateIsNotExist(src string) error {
 	_, err := os.Stat(src)
 	if notExist := os.IsNotExist(err); notExist == true {
@@ -392,7 +392,7 @@ func CreateIsNotExist(src string) error {
 	return nil
 }
 
-// 通过url获取文件字节
+// GetFileBytesByUrl 通过url获取文件字节
 func GetFileBytesByUrl(fileUrl string) (bytes []byte, err error) {
 	var tr = &http.Transport{
 		IdleConnTimeout:       time.Second * 2048,

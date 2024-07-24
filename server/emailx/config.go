@@ -9,7 +9,7 @@ import (
 	"github.com/go-xuan/quanx/app/confx"
 )
 
-// 邮件服务器配置
+// Email 邮件服务器配置
 type Email struct {
 	Host     string `json:"host" yaml:"host"`         // 邮件发送服务器地址
 	Port     int    `json:"port" yaml:"port"`         // 邮件发送服务器端口
@@ -21,17 +21,17 @@ func (e *Email) newDialer() *gomail.Dialer {
 	return gomail.NewDialer(e.Host, e.Port, e.Username, e.Password)
 }
 
-// 配置信息格式化
+// Info 配置信息格式化
 func (e *Email) Info() string {
 	return fmt.Sprintf("host=%s port=%d username=%s password=%s", e.Host, e.Port, e.Username, e.Password)
 }
 
-// 配置器标题
+// Title 配置器标题
 func (*Email) Title() string {
 	return "Email Server"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (*Email) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "mail.yaml",
@@ -40,7 +40,7 @@ func (*Email) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (e *Email) Run() error {
 	handler = &Handler{Config: e, Dialer: e.newDialer()}
 	log.Info("Email Server Init Successful: ", e.Info())

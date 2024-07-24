@@ -10,7 +10,7 @@ import (
 
 var handler *Handler
 
-// elastic处理器
+// Handler elastic处理器
 type Handler struct {
 	Config *Elastic
 	Url    string
@@ -24,7 +24,7 @@ func This() *Handler {
 	return handler
 }
 
-// 查询所有索引
+// AllIndices 查询所有索引
 func (h *Handler) AllIndices(ctx context.Context) (indices []string, err error) {
 	var resp elastic.CatIndicesResponse
 	if resp, err = h.Client.CatIndices().Do(ctx); err != nil {
@@ -36,7 +36,7 @@ func (h *Handler) AllIndices(ctx context.Context) (indices []string, err error) 
 	return
 }
 
-// 创建索引
+// CreateIndex 创建索引
 func (h *Handler) CreateIndex(ctx context.Context, index string) (ok bool, err error) {
 	var resp *elastic.IndicesDeleteResponse
 	if resp, err = h.Client.DeleteIndex(index).Do(ctx); err != nil {
@@ -46,7 +46,7 @@ func (h *Handler) CreateIndex(ctx context.Context, index string) (ok bool, err e
 	return
 }
 
-// 删除索引
+// DeleteIndex 删除索引
 func (h *Handler) DeleteIndex(ctx context.Context, index string) (ok bool, err error) {
 	var resp *elastic.IndicesDeleteResponse
 	if resp, err = h.Client.DeleteIndex(index).Do(ctx); err != nil {
@@ -56,7 +56,7 @@ func (h *Handler) DeleteIndex(ctx context.Context, index string) (ok bool, err e
 	return
 }
 
-// 批量索引
+// DeleteIndices 批量索引
 func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (ok bool, err error) {
 	if err = execx.UseBatches(len(indices), 100, func(x int, y int) (err error) {
 		var resp *elastic.IndicesDeleteResponse
@@ -106,7 +106,7 @@ func (h *Handler) Search(ctx context.Context, index string, query elastic.Query)
 	return h.Client.Search().Index(index).Query(query).Do(ctx)
 }
 
-// 获取索引中全部文档ID，sortField字段必须支持排序
+// AllDocId 获取索引中全部文档ID，sortField字段必须支持排序
 func (h *Handler) AllDocId(ctx context.Context, index string, query elastic.Query, sortField string) (ids []string, err error) {
 	var total, offset int64
 	var sortValue float64

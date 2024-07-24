@@ -22,7 +22,7 @@ import (
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
-// 服务启动模式
+// Mode 服务启动模式
 type Mode uint
 
 const (
@@ -46,7 +46,7 @@ const (
 
 var engine *Engine
 
-// 服务配置器
+// Engine 服务配置器
 type Engine struct {
 	mode           map[Mode]bool             // 服务运行模式
 	config         *Config                   // 服务配置数据，使用 loadingAppConfig()将配置文件加载到此
@@ -60,7 +60,7 @@ type Engine struct {
 	queue          *taskx.QueueScheduler     // Engine启动时的队列任务
 }
 
-// 获取当前Engine
+// GetEngine 获取当前Engine
 func GetEngine() *Engine {
 	if engine == nil {
 		engine = DefaultEngine()
@@ -68,12 +68,12 @@ func GetEngine() *Engine {
 	return engine
 }
 
-// 默认Engine
+// DefaultEngine 默认Engine
 func DefaultEngine() *Engine {
 	return NewEngine(EnableNacos)
 }
 
-// 初始化Engine
+// NewEngine 初始化Engine
 func NewEngine(modes ...Mode) *Engine {
 	if engine == nil {
 		engine = &Engine{
@@ -102,7 +102,7 @@ func NewEngine(modes ...Mode) *Engine {
 	return engine
 }
 
-// 服务运行
+// RUN 服务运行
 func (e *Engine) RUN() {
 	if engine.mode[UseQueue] { // 任务队列方式启动
 		engine.queue.Execute()
@@ -244,7 +244,7 @@ func (e *Engine) startServer() {
 	}
 }
 
-// 添加自定义函数
+// AddCustomFunc 添加自定义函数
 func (e *Engine) AddCustomFunc(funcs ...func()) {
 	e.checkRunning()
 	if len(funcs) > 0 {
@@ -252,7 +252,7 @@ func (e *Engine) AddCustomFunc(funcs ...func()) {
 	}
 }
 
-// 新增自定义配置器
+// AddConfigurator 新增自定义配置器
 func (e *Engine) AddConfigurator(configurators ...confx.Configurator) {
 	e.checkRunning()
 	if len(configurators) > 0 {
@@ -260,7 +260,7 @@ func (e *Engine) AddConfigurator(configurators ...confx.Configurator) {
 	}
 }
 
-// 运行配置器
+// RunConfigurator 运行配置器
 func (e *Engine) RunConfigurator(configurator confx.Configurator, must ...bool) {
 	e.checkRunning()
 	var mustRun = anyx.Default(false, must...)
@@ -281,14 +281,14 @@ func (e *Engine) RunConfigurator(configurator confx.Configurator, must ...bool) 
 	}
 }
 
-// 初始化本地配置项（立即加载）
+// LoadingLocalConfig 初始化本地配置项（立即加载）
 func (e *Engine) LoadingLocalConfig(v any, path string) {
 	if err := marshalx.UnmarshalFromFile(path, v); err != nil {
 		panic(err)
 	}
 }
 
-// 初始化Nacos配置项（以自定义函数的形式延迟加载）
+// LoadingNacosConfig 初始化Nacos配置项（以自定义函数的形式延迟加载）
 func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() {
 		if nacosx.This().ConfigClient == nil {
@@ -302,7 +302,7 @@ func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	})
 }
 
-// 设置模式
+// SetMode 设置模式
 func (e *Engine) SetMode(flags ...Mode) {
 	e.checkRunning()
 	if len(flags) > 0 {
@@ -312,13 +312,13 @@ func (e *Engine) SetMode(flags ...Mode) {
 	}
 }
 
-// 设置配置文件
+// SetConfigDir 设置配置文件
 func (e *Engine) SetConfigDir(dir string) {
 	e.checkRunning()
 	e.configDir = dir
 }
 
-// 设置配置文件
+// GetConfigPath 设置配置文件
 func (e *Engine) GetConfigPath(path string) string {
 	if e.configDir != "" {
 		return filepath.Join(e.configDir, path)
@@ -327,12 +327,12 @@ func (e *Engine) GetConfigPath(path string) string {
 	}
 }
 
-// 添加需要初始化的 gormx.Tabler 模型
+// AddTable 添加需要初始化的 gormx.Tabler 模型
 func (e *Engine) AddTable(dst ...gormx.Tabler) {
 	e.AddSourceTable(constx.DefaultKey, dst...)
 }
 
-// 添加需要某个数据源的gormx.Table模型
+// AddSourceTable 添加需要某个数据源的gormx.Table模型
 func (e *Engine) AddSourceTable(source string, dst ...gormx.Tabler) {
 	e.checkRunning()
 	if len(dst) > 0 {
@@ -340,7 +340,7 @@ func (e *Engine) AddSourceTable(source string, dst ...gormx.Tabler) {
 	}
 }
 
-// 添加gin中间件
+// AddGinMiddleware 添加gin中间件
 func (e *Engine) AddGinMiddleware(middleware ...gin.HandlerFunc) {
 	e.checkRunning()
 	if len(middleware) > 0 {
@@ -348,7 +348,7 @@ func (e *Engine) AddGinMiddleware(middleware ...gin.HandlerFunc) {
 	}
 }
 
-// 添加gin的路由加载函数
+// AddGinRouter 添加gin的路由加载函数
 func (e *Engine) AddGinRouter(router ...func(*gin.RouterGroup)) {
 	e.checkRunning()
 	if len(router) > 0 {
@@ -356,7 +356,7 @@ func (e *Engine) AddGinRouter(router ...func(*gin.RouterGroup)) {
 	}
 }
 
-// 执行gin的路由加载函数
+// InitGinLoader 执行gin的路由加载函数
 func (e *Engine) InitGinLoader(group *gin.RouterGroup) {
 	if len(e.ginRouters) > 0 {
 		for _, loader := range e.ginRouters {
@@ -379,7 +379,7 @@ func (e *Engine) AddQueueTask(name string, task func()) {
 	return
 }
 
-// 服务保活
+// PanicRecover 服务保活
 func PanicRecover() {
 	if err := recover(); err != nil {
 		log.Error("server run panic: ", err)

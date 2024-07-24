@@ -2,7 +2,7 @@ package intx
 
 import "strconv"
 
-// 为空时取默认值
+// IfZero 为空时取默认值
 func IfZero(s, def int) int {
 	if s == 0 {
 		return def
@@ -11,7 +11,7 @@ func IfZero(s, def int) int {
 	}
 }
 
-// 不等时取默认值
+// IfNot 不等时取默认值
 func IfNot(s, v, def int) int {
 	if s != v {
 		return def
@@ -20,7 +20,7 @@ func IfNot(s, v, def int) int {
 	}
 }
 
-// 三数取小
+// Min 三数取小
 func Min(a, b, c int) int {
 	if a <= b && a <= c {
 		return a
@@ -30,7 +30,7 @@ func Min(a, b, c int) int {
 	return c
 }
 
-// 三数取大
+// Max 三数取大
 func Max(a, b, c int) int {
 	if a >= b && a >= c {
 		return a

@@ -19,7 +19,7 @@ const (
 	Cluster           // 集群
 )
 
-// redis连接配置
+// MultiRedis redis连接配置
 type MultiRedis []*Redis
 
 type Redis struct {
@@ -34,12 +34,12 @@ type Redis struct {
 	PoolSize int    `json:"poolSize" yaml:"poolSize"`               // 池大小
 }
 
-// 配置信息格式化
+// Title 配置信息格式化
 func (MultiRedis) Title() string {
 	return "Redis"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (MultiRedis) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "redis.yaml",
@@ -48,7 +48,7 @@ func (MultiRedis) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (conf MultiRedis) Run() (err error) {
 	if len(conf) == 0 {
 		log.Error("Redis Connect Failed! reason: [redis.yaml] not found")
@@ -89,18 +89,18 @@ func (conf MultiRedis) Run() (err error) {
 	return
 }
 
-// 配置信息格式化
+// Info 配置信息格式化
 func (r *Redis) Info() string {
 	return fmt.Sprintf("source=%s mode=%d host=%s port=%d database=%d",
 		r.Source, r.Mode, r.Host, r.Port, r.Database)
 }
 
-// 配置器标题
+// Title 配置器标题
 func (r *Redis) Title() string {
 	return "Redis"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (*Redis) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "redis.yaml",
@@ -109,7 +109,7 @@ func (*Redis) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (r *Redis) Run() (err error) {
 	if r.Enable {
 		if err = anyx.SetDefaultValue(r); err != nil {
@@ -140,12 +140,12 @@ func (r *Redis) Run() (err error) {
 	return
 }
 
-// 配置信息格式化
+// Address 配置信息格式化
 func (r *Redis) Address() string {
 	return fmt.Sprintf("%s:%d", r.Host, r.Port)
 }
 
-// 初始化redis客户端
+// NewRedisClient 初始化redis客户端
 // UniversalClient并不是一个客户端，而是对单节点客户端/集群客户端/哨兵客户端的包装。根据不同的选项，客户端的类型如下：
 // 1、如果指定了MasterName选项，则返回FailoverClient哨兵客户端。
 // 2、如果Addrs是2个以上的地址，则返回ClusterClient集群客户端。

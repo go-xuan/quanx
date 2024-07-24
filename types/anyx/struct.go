@@ -9,7 +9,7 @@ import (
 	"github.com/go-xuan/quanx/app/constx"
 )
 
-// 设置默认值
+// SetDefaultValue 设置默认值
 func SetDefaultValue(v any) error {
 	valueRef := reflect.ValueOf(v)
 	if valueRef.Type().Kind() != reflect.Ptr {

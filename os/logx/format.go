@@ -26,7 +26,7 @@ type LogFormatter struct {
 	useColor   bool
 }
 
-// 日志格式化,用以实现logrus.Formatter接口
+// Format 日志格式化,用以实现logrus.Formatter接口
 func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	var b = bytes.Buffer{}
 	b.WriteString(fmt.Sprintf("[%-23s][%-5s][%s] ", time.Now().Format(f.timeFormat), entry.Level.String(), f.host))
@@ -59,7 +59,7 @@ func Color(level logrus.Level) fmtx.Color {
 	}
 }
 
-// gin请求日志中间件
+// GinRequestLog gin请求日志中间件
 func GinRequestLog(ctx *gin.Context) {
 	start := time.Now()
 	// 处理请求

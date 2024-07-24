@@ -1,6 +1,6 @@
 package hugegraphx
 
-// post接口请求参数
+// Param post接口请求参数
 type Param struct {
 	Gremlin  string `json:"gremlin" `  // gremlin执行语句
 	Bindings any    `json:"bindings" ` // 绑定参数
@@ -8,14 +8,14 @@ type Param struct {
 	Aliases  any    `json:"aliases" `  // 别名
 }
 
-// post接口返回结果
+// ApiResp post接口返回结果
 type ApiResp[T any] struct {
 	RequestId string    `json:"requestId"` // 请求ID
 	Status    Status    `json:"status"`    // 返回状态
 	Result    Result[T] `json:"result"`    // 返回结果
 }
 
-// PING接口返回结果
+// PingResp PING接口返回结果
 type PingResp struct {
 	Versions *Versions `json:"versions"` // 请求ID
 }
@@ -27,20 +27,20 @@ type Versions struct {
 	Api     string `json:"api"`
 }
 
-// 返回结果
+// Result 返回结果
 type Result[T any] struct {
 	Data T   `json:"data"` // 结果体
 	Meta any `json:"meta"` // 元数据
 }
 
-// 返回状态
+// Status 返回状态
 type Status struct {
 	Message    string `json:"message"`    // 请求ID
 	Code       int64  `json:"code"`       // 状态码
 	Attributes any    `json:"attributes"` // 属性
 }
 
-// hugegraph查询【顶点】返回的data结果
+// Vertexs hugegraph查询【顶点】返回的data结果
 type Vertexs[T any] []*Vertex[T]
 type Vertex[T any] struct {
 	Id         string `json:"id"`         // 主键id
@@ -49,7 +49,7 @@ type Vertex[T any] struct {
 	Properties T      `json:"properties"` // 属性
 }
 
-// hugegraph查询【边】返回的data结果
+// Edges hugegraph查询【边】返回的data结果
 type Edges[T any] []*Edge[T]
 type Edge[T any] struct {
 	Id         string `json:"id"`         // ID
@@ -62,14 +62,14 @@ type Edge[T any] struct {
 	Properties T      `json:"properties"` // 属性
 }
 
-// hugegraph查询path()时返回的data结果
+// Paths hugegraph查询path()时返回的data结果
 type Paths[T any] []*Path[T]
 type Path[T any] struct {
 	Labels  any            `json:"labels"`
 	Objects PathObjects[T] `json:"objects"`
 }
 
-// path()查询结果的【路径】中节点对象，包含顶点和边
+// PathObjects path()查询结果的【路径】中节点对象，包含顶点和边
 type PathObjects[T any] []*PathObject[T]
 type PathObject[T any] struct {
 	Id         string `json:"id"`         // ID
@@ -82,14 +82,14 @@ type PathObject[T any] struct {
 	Properties T      `json:"properties"` // 对象属性
 }
 
-// 新增属性参数
+// PropertyAdd 新增属性参数
 type PropertyAdd struct {
 	Name        string `json:"name"`        // 属性名称
 	DataType    string `json:"data_type"`   // 属性类型
 	Cardinality string `json:"cardinality"` // 属性类型基数
 }
 
-// 新增顶点参数
+// VertexAdd 新增顶点参数
 type VertexAdd struct {
 	Name             string            `json:"name"`               // 顶点名称
 	IdStrategy       string            `json:"id_strategy"`        // 主键策略
@@ -102,7 +102,7 @@ type VertexAdd struct {
 	UserData         map[string]string `json:"user_data"`          // 顶点风格配置
 }
 
-// 新增边参数
+// EdgeAdd 新增边参数
 type EdgeAdd struct {
 	Name             string            `json:"name"`               // 边名称
 	SourceLabel      string            `json:"source_label"`       // 源顶点类型
@@ -116,7 +116,7 @@ type EdgeAdd struct {
 	UserData         map[string]string `json:"user_data"`          // 边风格配置
 }
 
-// 索引新增参数
+// IndexAdd 索引新增参数
 type IndexAdd struct {
 	Name      string   `json:"name"`       // 索引名称
 	BaseType  string   `json:"base_type"`  // 模型类型
@@ -125,7 +125,7 @@ type IndexAdd struct {
 	Fields    []string `json:"fields"`     // 属性列表
 }
 
-// hugegraph-api-append请求接口参数
+// PropertiesAppend hugegraph-api-append请求接口参数
 type PropertiesAppend struct {
 	Name         string            `json:"name"`          // 名称
 	Properties   []string          `json:"properties"`    // 属性列表

@@ -28,7 +28,7 @@ const (
 	randTypeOtherEnum = "other_enum" // 其他枚举
 )
 
-// 随机生成
+// Options 随机生成
 type Options struct {
 	Type    string   // 数据类型
 	Param   *Param   // 约束条件参数
@@ -37,7 +37,7 @@ type Options struct {
 	Enums   []string // 枚举
 }
 
-// 生成随机数
+// RandData 生成随机数
 func (o *Options) RandData() any {
 	switch o.Type {
 	case randTypeInt:
@@ -49,7 +49,7 @@ func (o *Options) RandData() any {
 	}
 }
 
-// 生成随机数
+// RandDataString 生成随机数
 func (o *Options) RandDataString() string {
 	switch o.Type {
 	case randTypeInt:
@@ -61,7 +61,7 @@ func (o *Options) RandDataString() string {
 	}
 }
 
-// 生成随机数字
+// RandInt 生成随机数字
 func (o *Options) RandInt() int {
 	if o.Default == "" {
 		return o.Param.Int()
@@ -70,7 +70,7 @@ func (o *Options) RandInt() int {
 	}
 }
 
-// 生成随机浮点数
+// RandFloat 生成随机浮点数
 func (o *Options) RandFloat() float64 {
 	if o.Default == "" {
 		return o.Param.Float()
@@ -79,7 +79,7 @@ func (o *Options) RandFloat() float64 {
 	}
 }
 
-// 生成随机字符串
+// RandString 生成随机字符串
 func (o *Options) RandString() (result string) {
 	if param, def := o.Param, o.Default; param != nil && def == "" {
 		if o.Type == randTypeSequence {
@@ -147,7 +147,7 @@ func (o *Options) randString() (result string) {
 	}
 }
 
-// 随机数生成参数
+// Param 随机数生成参数
 type Param struct {
 	Min    string   // 最小值
 	Max    string   // 最大值

@@ -18,7 +18,7 @@ type Client interface {
 	Exist(ctx context.Context, keys ...string) bool
 }
 
-// 本地缓存客户端
+// LocalClient 本地缓存客户端
 type LocalClient struct {
 	cache   *Cache
 	client  *cache.Cache
@@ -68,7 +68,7 @@ func (c *LocalClient) Exist(ctx context.Context, keys ...string) bool {
 	return false
 }
 
-// redis缓存客户端
+// RedisClient redis缓存客户端
 type RedisClient struct {
 	cache   *Cache
 	client  redis.UniversalClient

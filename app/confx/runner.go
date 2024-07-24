@@ -2,14 +2,14 @@ package confx
 
 import log "github.com/sirupsen/logrus"
 
-// 配置器
+// Configurator 配置器
 type Configurator interface {
 	Title() string   // 配置器标题
 	Reader() *Reader // 配置文件读取
 	Run() error      // 配置器运行
 }
 
-// 配置文件读取器
+// Reader 配置文件读取器
 type Reader struct {
 	FilePath    string `json:"filePath" yaml:"filePath"`       // 本地配置文件路径
 	NacosGroup  string `json:"nacosGroup" yaml:"nacosGroup"`   // nacos配置Group
@@ -17,7 +17,7 @@ type Reader struct {
 	Listen      bool   `json:"listen" yaml:"listen"`           // 是否监听
 }
 
-// 运行配置器
+// RunConfigurator 运行配置器
 func RunConfigurator(conf Configurator) {
 	if err := conf.Run(); err != nil {
 		log.Error(conf.Title(), " Run Failed!")

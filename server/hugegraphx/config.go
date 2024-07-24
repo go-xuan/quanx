@@ -30,24 +30,24 @@ const (
 	IndexTypeAll   = "SECONDARY,RANGE,SEARCH"                                                         // 索引类型
 )
 
-// hugegraph配置
+// Hugegraph hugegraph配置
 type Hugegraph struct {
 	Host  string `json:"host" yaml:"host" nacos:"hugegraph.host"`    // 主机
 	Port  int    `json:"port" yaml:"port" nacos:"hugegraph.port"`    // 端口
 	Graph string `json:"graph" yaml:"graph" nacos:"hugegraph.graph"` // 图名称
 }
 
-// 配置信息格式化
+// Info 配置信息格式化
 func (h *Hugegraph) Info() string {
 	return fmt.Sprintf("host=%s port=%d graph=%s", h.Host, h.Port, h.Graph)
 }
 
-// 配置器标题
+// Title 配置器标题
 func (*Hugegraph) Title() string {
 	return "Hugegraph"
 }
 
-// 配置文件读取
+// Reader 配置文件读取
 func (*Hugegraph) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "hugegraph.yaml",
@@ -56,7 +56,7 @@ func (*Hugegraph) Reader() *confx.Reader {
 	}
 }
 
-// 配置器运行
+// Run 配置器运行
 func (h *Hugegraph) Run() error {
 	if h.Host != "" && handler == nil {
 		if h.Ping() {
@@ -77,7 +77,7 @@ func (h *Hugegraph) SchemaUrl() string {
 	return fmt.Sprintf("http://%s:%d/graphs/%s/schema/", h.Host, h.Port, h.Graph)
 }
 
-// gremlin查询API-get请求
+// Ping gremlin查询API-get请求
 func (h *Hugegraph) Ping() bool {
 	if bytes, err := httpx.Get().Url(fmt.Sprintf("http://%s:%d/versions", h.Host, h.Port)).Do(); err != nil {
 		return false

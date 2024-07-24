@@ -1,6 +1,6 @@
 package treex
 
-// 树形结构
+// NodeList 树形结构
 type NodeList[T any] []*Node[T]
 type Node[T any] struct {
 	Id    string      `json:"id"`
@@ -9,7 +9,7 @@ type Node[T any] struct {
 	Child NodeList[T] `json:"child"`
 }
 
-// 数组转树形结构
+// Convert2Tree 数组转树形结构
 func (list NodeList[T]) Convert2Tree(rootId ...string) NodeList[T] {
 	var pid = "0"
 	if len(rootId) > 0 {

@@ -1,6 +1,6 @@
 package respx
 
-// 错误枚举
+// Enum 错误枚举
 type Enum struct {
 	Code int    `json:"code"` // 响应状态码
 	Msg  string `json:"msg"`  // 响应消息

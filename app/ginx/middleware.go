@@ -59,24 +59,24 @@ func SetCookie(ctx *gin.Context, username string, age ...int) {
 	}
 }
 
-// maxAge=-1即可移除cookie
+// RemoveCookie maxAge=-1即可移除cookie
 func RemoveCookie(ctx *gin.Context) {
 	ctx.SetCookie(Cookie, "", -1, "", "", false, true)
 }
 
-// 校验请求IP
+// CheckIP 校验请求IP
 func CheckIP(ctx *gin.Context) {
 	ctx.Set(IPKey, stringx.IfNot(ctx.ClientIP(), "::1", "localhost"))
 	ctx.Next()
 	return
 }
 
-// 当前请求IP
+// GetCorrectIP 当前请求IP
 func GetCorrectIP(ctx *gin.Context) string {
 	return ctx.GetString(IPKey)
 }
 
-// 开启鉴权
+// Auth 开启鉴权
 func Auth(ctx *gin.Context) {
 	if err := authenticate(ctx); err != nil {
 		ctx.Abort()

@@ -9,7 +9,7 @@ import (
 
 var handler *Handler
 
-// Gorm处理器
+// Handler Gorm处理器
 type Handler struct {
 	Multi     bool // 是否多数据源连接
 	Config    *Database
@@ -51,7 +51,7 @@ func (h *Handler) GetConfig(source ...string) *Database {
 	return h.Config
 }
 
-// 初始化表结构（基于反射）
+// InitTable 初始化表结构（基于反射）
 func (h *Handler) InitTable(source string, dst ...any) (err error) {
 	var db, conf = h.DBMap[source], h.ConfigMap[source]
 	if db != nil && conf != nil && len(dst) > 0 {

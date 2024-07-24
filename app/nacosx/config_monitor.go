@@ -9,7 +9,7 @@ import (
 
 var monitor *Monitor
 
-// 初始化nacos配置监听
+// GetNacosConfigMonitor 初始化nacos配置监听
 func GetNacosConfigMonitor() *Monitor {
 	if monitor == nil {
 		monitor = &Monitor{
@@ -20,14 +20,14 @@ func GetNacosConfigMonitor() *Monitor {
 	return monitor
 }
 
-// nacos配置监听
+// Monitor nacos配置监听
 type Monitor struct {
 	mu   sync.RWMutex           // 互斥锁
 	data map[string]*ConfigData // 配置数据
 	num  int                    // 配置数量
 }
 
-// 监听配置数据
+// ConfigData 监听配置数据
 type ConfigData struct {
 	group   string // 配置分组
 	dataId  string // 配置DataId
@@ -49,7 +49,7 @@ func getKey(group, dataId string) string {
 	return group + "_" + dataId
 }
 
-// 新增nacos配置监听
+// Set 新增nacos配置监听
 func (m *Monitor) Set(group, dataId, content string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -69,7 +69,7 @@ func (m *Monitor) Set(group, dataId, content string) {
 	return
 }
 
-// 获取nacos配置
+// Get 获取nacos配置
 func (m *Monitor) Get(group, dataId string) (data *ConfigData, exist bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

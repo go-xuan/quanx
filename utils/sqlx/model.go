@@ -276,7 +276,7 @@ func (s *SQL) extractLimit() *SQL {
 	return s
 }
 
-// 对齐
+// Align 对齐
 func (s *SQL) Align(in ...string) string {
 	if len(in) == 0 {
 		return strings.Repeat(Blank, s.Space)
@@ -287,7 +287,7 @@ func (s *SQL) Align(in ...string) string {
 	}
 }
 
-// 新行空格
+// NewLineSpace 新行空格
 func (s *SQL) NewLineSpace(n int) string {
 	return strings.Repeat(Blank, s.Space+n)
 }

@@ -40,7 +40,7 @@ func httpClient() *Client {
 	return client
 }
 
-// 切换客户端
+// SwitchClient 切换客户端
 func SwitchClient(modeAndParam ...string) *Client {
 	if len(modeAndParam) == 2 && modeAndParam[0] == Https {
 		client = newHttpsClient(modeAndParam[1])

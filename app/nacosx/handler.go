@@ -23,7 +23,7 @@ func This() *Handler {
 	return handler
 }
 
-// 获取配置文件类型
+// GetConfigType 获取配置文件类型
 func GetConfigType(dataId string) vo.ConfigType {
 	for i := len(dataId) - 1; i >= 0; i-- {
 		if dataId[i] == '.' {
@@ -33,7 +33,7 @@ func GetConfigType(dataId string) vo.ConfigType {
 	return ""
 }
 
-// 获取nacos配置文件内容
+// ReadConfigContent 获取nacos配置文件内容
 func ReadConfigContent(group, dataId string) (content string, err error) {
 	var param = vo.ConfigParam{Group: group, DataId: dataId, Type: GetConfigType(dataId)}
 	if content, err = This().ConfigClient.GetConfig(param); err != nil {
@@ -42,7 +42,7 @@ func ReadConfigContent(group, dataId string) (content string, err error) {
 	return
 }
 
-// 基于文件构建配置
+// BuildConfigFromFile 基于文件构建配置
 func (h *Handler) BuildConfigFromFile(path string) (err error) {
 	if err = marshalx.UnmarshalFromFile(path, h.Config); err != nil {
 		return
@@ -50,7 +50,7 @@ func (h *Handler) BuildConfigFromFile(path string) (err error) {
 	return
 }
 
-// 基于nacos构建配置
+// BuildConfigFromNacos 基于nacos构建配置
 func (h *Handler) BuildConfigFromNacos(group, dataId string) (err error) {
 	module := &Config{Group: group, DataId: dataId}
 	if err = module.Loading(h.Config); err != nil {
