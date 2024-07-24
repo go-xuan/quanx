@@ -88,8 +88,10 @@ func NewEngine(modes ...Mode) *Engine {
 		gin.SetMode(gin.ReleaseMode)
 		engine.SetMode(modes...)
 	}
+	// 设置默认日志输出
 	log.SetOutput(logx.DefaultWriter())
 	log.SetFormatter(logx.DefaultFormatter())
+	// 设置服务启动队列
 	if engine.mode[UseQueue] {
 		queue := taskx.Queue()
 		queue.Add(LoadingConfig, engine.loadingAppConfig)    // 1.加载服务配置文件
@@ -132,7 +134,6 @@ func (e *Engine) loadingAppConfig() {
 			log.Errorf("Loading %s Failed", path)
 			panic(err)
 		}
-
 		if config.Server.Host == "" {
 			config.Server.Host = ipx.GetWLANIP()
 		}
@@ -235,9 +236,8 @@ func (e *Engine) startServer() {
 		// 注册服务根路由，并执行路由注册函数
 		var group = e.ginEngine.Group(e.config.Server.Prefix)
 		e.InitGinLoader(group)
-		var port = ":" + strconv.Itoa(e.config.Server.Port)
-		log.Info("API接口请求地址: http://" + e.config.Server.Host + port)
-		if err := e.ginEngine.Run(port); err != nil {
+		log.Info("API接口请求地址: " + e.config.Server.HttpUrl())
+		if err := e.ginEngine.Run(":" + strconv.Itoa(e.config.Server.Port)); err != nil {
 			log.Error("gin-Engine run failed ")
 			panic(err)
 		}

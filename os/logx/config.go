@@ -33,18 +33,18 @@ const (
 	LumberjackOutput = "lumberjack"
 )
 
-func New(app string) *LogConfig {
-	return &LogConfig{FileName: app + ".log"}
+func New(app string) *Log {
+	return &Log{FileName: app + ".log"}
 }
 
-// LogConfig 日志配置
-type LogConfig struct {
+// Log 日志配置
+type Log struct {
 	FileName   string `json:"fileName" yaml:"fileName" default:"app.log"`                     // 日志文件名
 	Dir        string `json:"dir" yaml:"dir" default:"resource/log"`                          // 日志保存文件夹
 	Level      string `json:"level" yaml:"level" default:"info"`                              // 日志级别
 	TimeFormat string `json:"timeFormat" yaml:"timeFormat" default:"2006-01-02 15:04:05.999"` // 时间格式化
 	UseColor   bool   `json:"useColor" yaml:"useColor" default:"false"`                       // 使用颜色
-	Output     string `json:"output" yaml:"output" default:"console"`                         // 日志输出
+	Output     string `json:"output" yaml:"output" default:"default"`                         // 日志输出
 	Caller     bool   `json:"caller" yaml:"caller" default:"false"`                           // Flag for whether to caller
 	MaxSize    int    `json:"maxSize" yaml:"maxSize" default:"100"`                           // 日志大小(单位：mb)
 	MaxAge     int    `json:"maxAge" yaml:"maxAge" default:"1"`                               // 日志保留天数(单位：天)
@@ -52,18 +52,18 @@ type LogConfig struct {
 }
 
 // Info 配置信息格式化
-func (l *LogConfig) Info() string {
+func (l *Log) Info() string {
 	return fmt.Sprintf("logPath=%s level=%s output=%s maxSize=%d maxAge=%d backups=%d",
 		l.LogPath(), l.Level, l.Output, l.MaxSize, l.MaxAge, l.Backups)
 }
 
 // Title 配置器标题
-func (*LogConfig) Title() string {
+func (*Log) Title() string {
 	return "Log"
 }
 
 // Reader 配置文件读取
-func (*LogConfig) Reader() *confx.Reader {
+func (*Log) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "log.yaml",
 		NacosDataId: "log.yaml",
@@ -71,7 +71,7 @@ func (*LogConfig) Reader() *confx.Reader {
 }
 
 // Run 配置器运行
-func (l *LogConfig) Run() error {
+func (l *Log) Run() error {
 	if err := anyx.SetDefaultValue(l); err != nil {
 		return err
 	}
@@ -85,16 +85,16 @@ func (l *LogConfig) Run() error {
 	return nil
 }
 
-func (l *LogConfig) LogPath() string {
+func (l *Log) LogPath() string {
 	return filepath.Join(l.Dir, l.FileName)
 }
 
-func (l *LogConfig) Formatter() logrus.Formatter {
+func (l *Log) Formatter() logrus.Formatter {
 	host, _ := os.Hostname()
 	return &LogFormatter{timeFormat: l.TimeFormat, host: host, Output: l.Output, useColor: l.UseColor}
 }
 
-func (l *LogConfig) Writer() io.Writer {
+func (l *Log) Writer() io.Writer {
 	switch l.Output {
 	case ConsoleOutput:
 		return &ConsoleWriter{std: os.Stdout}
@@ -109,12 +109,12 @@ func (l *LogConfig) Writer() io.Writer {
 			Compress:   true,
 		}
 	default:
-		return DefaultWriter()
+		return &FileWriter{path: l.LogPath()}
 	}
 }
 
 // GetLevel 日志级别映射，默认debug
-func (l *LogConfig) GetLevel() logrus.Level {
+func (l *Log) GetLevel() logrus.Level {
 	switch strings.ToLower(l.Level) {
 	case TraceLevel:
 		return logrus.TraceLevel

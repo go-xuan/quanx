@@ -20,7 +20,7 @@ func GetServer() *Server {
 // Config 服务配置
 type Config struct {
 	Server   *Server              `yaml:"server"`   // 服务配置
-	Log      *logx.LogConfig      `yaml:"log"`      // 日志配置
+	Log      *logx.Log            `yaml:"log"`      // 日志配置
 	Nacos    *nacosx.Nacos        `yaml:"nacos"`    // nacos访问配置
 	Database *gormx.MultiDatabase `yaml:"database"` // 数据源配置
 	Redis    *redisx.MultiRedis   `yaml:"redis"`    // redis配置
