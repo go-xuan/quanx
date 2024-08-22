@@ -8,37 +8,36 @@ import (
 	"time"
 
 	"github.com/wenlng/go-captcha/captcha"
-
-	"github.com/go-xuan/quanx/os/cachex"
 )
 
-// 初始化
-func newGoCaptcha() *goCaptchaImpl {
-	return &goCaptchaImpl{
-		capt:  getGoCaptcha(),
-		cache: cachex.GetClient(),
+// NewClickCaptcha 初始化点击行为验证码
+func NewClickCaptcha() *ClickCaptcha {
+	return &ClickCaptcha{
+		capt:  getClickCaptcha(),
+		store: DefaultStore(),
 	}
 }
 
-type goCaptchaImpl struct {
+type ClickCaptcha struct {
 	capt  *captcha.Captcha
-	cache cachex.Client
+	store *CaptchaStore
 }
 
-func (impl *goCaptchaImpl) New(ctx context.Context) (key, image, thumb string, err error) {
+func (impl *ClickCaptcha) New(ctx context.Context) (key, image, thumb string, err error) {
 	var dots = make(map[int]captcha.CharDot)
 	if dots, image, thumb, key, err = impl.capt.Generate(); err != nil {
 		return
 	}
-	if err = impl.cache.Set(ctx, key, dots, time.Minute*2); err != nil {
+	expire := impl.store.expired
+	if err = impl.store.client.Set(ctx, key, dots, time.Duration(expire)*time.Second); err != nil {
 		return
 	}
 	return
 }
 
-func (impl *goCaptchaImpl) Verify(ctx context.Context, key, answer string) bool {
+func (impl *ClickCaptcha) Verify(ctx context.Context, key, answer string) bool {
 	var dots = make(map[int]captcha.CharDot)
-	dotsCache := impl.cache.GetString(ctx, key)
+	dotsCache := impl.store.client.GetString(ctx, key)
 	if err := json.Unmarshal([]byte(dotsCache), &dots); err != nil {
 		return false
 	}
@@ -55,12 +54,12 @@ func (impl *goCaptchaImpl) Verify(ctx context.Context, key, answer string) bool 
 		}
 	}
 	if ok {
-		impl.cache.Delete(ctx, key)
+		impl.store.client.Delete(ctx, key)
 	}
 	return ok
 }
 
-func getGoCaptcha() *captcha.Captcha {
+func getClickCaptcha() *captcha.Captcha {
 	capt := captcha.GetCaptcha()
 	// ========================主图配置============================
 	// 设置验证码主图的尺寸

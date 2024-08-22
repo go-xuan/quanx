@@ -1,34 +1,37 @@
 package captchax
 
 import (
+	"bytes"
 	"context"
-	"github.com/go-xuan/quanx/os/syncx"
+	"github.com/go-xuan/quanx/utils/randx"
+	"text/template"
 )
 
-type Captcha interface {
-	New(ctx context.Context) (id, image, answer string, err error) // 生成验证码
-	Verify(ctx context.Context, id, answer string) bool            // 校验验证码
+// ImageCaptchaService 图片验证码
+type ImageCaptchaService interface {
+	New(ctx context.Context) (id, image, captcha string, err error) // 生成验证码
+	Verify(ctx context.Context, id, captcha string) bool            // 校验验证码
 }
 
-var iGoCaptcha *goCaptchaImpl
-var iBase64Captcha *base64CaptchaImpl
-
-// GoCaptcha 点击式验证码
-func GoCaptcha() Captcha {
-	if iGoCaptcha == nil {
-		syncx.OnceDo(func() {
-			iGoCaptcha = newGoCaptcha()
-		})
-	}
-	return iGoCaptcha
+// CodeCaptchaService code验证码
+type CodeCaptchaService interface {
+	Send(ctx context.Context, receiver string) (captcha string, expired int, err error)
+	Verify(ctx context.Context, receiver, captcha string) bool
 }
 
-// Base64Captcha 普通验证码
-func Base64Captcha() Captcha {
-	if iBase64Captcha == nil {
-		syncx.OnceDo(func() {
-			iBase64Captcha = newBase64Captcha()
-		})
+func GetMessageByTemplate(text, captcha string) (content string, err error) {
+	// 根据模板生成消息体
+	var tmpl *template.Template
+	tmpl, err = template.New("message").Parse(text)
+	if err != nil {
+		return
 	}
-	return iBase64Captcha
+	captcha = randx.NumberCode(6)
+	var data = map[string]string{"captcha": captcha}
+	var buf bytes.Buffer
+	if err = tmpl.Execute(&buf, data); err != nil {
+		return
+	}
+	content = buf.String()
+	return
 }
