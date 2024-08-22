@@ -93,8 +93,8 @@ func WriteFile(filePath, content string, mode ...int) (err error) {
 	return
 }
 
-// WriteSplit 文件拆分
-func WriteSplit(filePath string, size int) (paths []string, err error) {
+// FileSplit 文件拆分
+func FileSplit(filePath string, size int) (paths []string, err error) {
 	var file *os.File
 	defer file.Close()
 	if file, err = os.OpenFile(filePath, os.O_RDONLY, 0666); err != nil {
@@ -315,10 +315,15 @@ func isEmptyDir(dir string) bool {
 	return len(names) == 0
 }
 
-func Analyse(path string) (dir, filename, suffix string) {
-	dir, filename = filepath.Split(path)
-	suffix = Suffix(filename)
-	filename = strings.TrimSuffix(filename, suffix)
+// Analyse 获取文件夹、文件名，文件后缀
+func Analyse(path string) (dir, name, suffix string) {
+	if dir, name = filepath.Split(path); name != "" {
+		for i := len(name) - 1; i >= 0; i-- {
+			if name[i] == '.' {
+				name, suffix = name[:i], name[i:]
+			}
+		}
+	}
 	return
 }
 

@@ -3,11 +3,10 @@ package httpx
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/go-xuan/quanx/os/errorx"
@@ -22,6 +21,7 @@ type Request struct {
 	body   any
 	form   url.Values
 	client *Client
+	debug  bool
 }
 
 func (r *Request) Https(crt string) *Request {
@@ -39,6 +39,10 @@ func Get() *Request {
 
 func Post() *Request {
 	return &Request{method: POST}
+}
+
+func Debug() *Request {
+	return &Request{debug: true}
 }
 
 func (r *Request) Url(url string) *Request {
@@ -114,34 +118,30 @@ func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 		return
 	}
 	if r.params != nil {
-		var urlBuilder = strings.Builder{}
-		urlBuilder.WriteString(r.url)
-		if !strings.HasSuffix(r.url, "?") {
-			urlBuilder.WriteString("?")
-		}
-		for k, v := range r.params {
-			urlBuilder.WriteString(k)
-			urlBuilder.WriteString("=")
-			urlBuilder.WriteString(v)
-		}
-		r.url = urlBuilder.String()
+		r.url = UrlAddParams(r.url, r.params)
 	}
-	fmt.Println(r.url)
+	if r.debug {
+		log.Println("url: ", r.url)
+	}
 	var body io.Reader
+	contentType := "application/json"
 	if r.form != nil {
 		r.method = POST
-		r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
+		contentType = "application/x-www-form-urlencoded"
 		body = strings.NewReader(r.form.Encode())
 	} else if r.body != nil {
-		r.SetHeader("Content-Type", "application/json")
 		marshal, _ := json.Marshal(r.body)
 		body = bytes.NewReader(marshal)
 	}
+
 	var req *http.Request
 	if req, err = http.NewRequest(r.method, r.url, body); err != nil {
 		return
 	}
 	if r.header != nil && len(r.header) > 0 {
+		if _, ok := r.header["Content-Type"]; !ok {
+			r.header["Content-Type"] = contentType
+		}
 		for key, val := range r.header {
 			req.Header.Set(key, val)
 		}
@@ -156,29 +156,13 @@ func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
 	return io.ReadAll(reader)
 }
 
-// MapToUrl map转为Url
-func MapToUrl(params map[string]any) (s string) {
+func UrlAddParams(url string, params map[string]string) string {
 	sb := strings.Builder{}
 	for k, v := range params {
 		sb.WriteString("&")
 		sb.WriteString(k)
 		sb.WriteString("=")
-		sb.WriteString(typeSwitcher(v))
+		sb.WriteString(v)
 	}
-	return sb.String()[1:]
-}
-
-func typeSwitcher(v any) string {
-	switch t := v.(type) {
-	case int:
-		return strconv.Itoa(t)
-	case string:
-		return t
-	case int64:
-		return strconv.FormatInt(t, 10)
-	case float64:
-		return strconv.FormatFloat(t, 'f', -1, 64)
-	default:
-		return ""
-	}
+	return url + "?" + sb.String()[1:]
 }

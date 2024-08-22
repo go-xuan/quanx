@@ -2,6 +2,7 @@ package ginx
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 
@@ -48,15 +49,15 @@ func GetUser(ctx *gin.Context) *User {
 	return nil
 }
 
-func SetCookie(ctx *gin.Context, username string, age ...int) {
+func SetCookie(ctx *gin.Context, username string, expire ...int) {
 	if cookie, err := encryptx.RSA().Encrypt(username); err != nil {
 		ctx.Abort()
-		respx.BuildError(ctx, err)
-		return
+		ctx.JSON(http.StatusInternalServerError, respx.ErrorCode.Response(err))
 	} else {
-		var maxAge = anyx.Default(3600, age...)
+		var maxAge = anyx.Default(3600, expire...)
 		ctx.SetCookie(Cookie, cookie, maxAge, "", "", false, true)
 	}
+	return
 }
 
 // RemoveCookie maxAge=-1即可移除cookie
@@ -80,7 +81,7 @@ func GetCorrectIP(ctx *gin.Context) string {
 func Auth(ctx *gin.Context) {
 	if err := authenticate(ctx); err != nil {
 		ctx.Abort()
-		respx.Exception(ctx, respx.AuthErr, err.Error())
+		respx.Forbidden(ctx, err)
 	} else {
 		ctx.Next()
 	}

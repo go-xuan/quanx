@@ -7,12 +7,16 @@ type Enum struct {
 }
 
 var (
-	Success     = Enum{Code: 10000, Msg: "success"}
-	Error       = Enum{Code: 10001, Msg: "error"}
-	AuthErr     = Enum{Code: 10401, Msg: "authentication failed"}
-	ParamErr    = Enum{Code: 10501, Msg: "request parameter error"}
-	RequiredErr = Enum{Code: 10502, Msg: "request parameter required"}
-	UploadErr   = Enum{Code: 10601, Msg: "upload failed"}
-	ImportErr   = Enum{Code: 10601, Msg: "import failed"}
-	ExportErr   = Enum{Code: 10602, Msg: "export failed"}
+	SuccessCode      = &Enum{Code: 10000, Msg: "Success"}
+	ErrorCode        = &Enum{Code: 10001, Msg: "error"}
+	AuthFailedCode   = &Enum{Code: 10401, Msg: "authentication failed"}
+	ParamErrorCode   = &Enum{Code: 10501, Msg: "request parameter error"}
+	RequiredCode     = &Enum{Code: 10502, Msg: "request parameter required"}
+	UploadFailedCode = &Enum{Code: 10601, Msg: "upload failed"}
+	ImportFailedCode = &Enum{Code: 10601, Msg: "import failed"}
+	ExportFailedCode = &Enum{Code: 10602, Msg: "export failed"}
 )
+
+func (e *Enum) Response(data any) *Response {
+	return &Response{Code: e.Code, Msg: e.Msg, Data: data}
+}

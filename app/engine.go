@@ -135,7 +135,7 @@ func (e *Engine) loadingAppConfig() {
 			panic(err)
 		}
 		if config.Server.Host == "" {
-			config.Server.Host = ipx.GetWLANIP()
+			config.Server.Host = ipx.GetLocalIP()
 		}
 	}
 	// 从nacos加载配置

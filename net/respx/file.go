@@ -21,7 +21,7 @@ func BuildExcelByData(ctx *gin.Context, model any, data any, excelName string) {
 	var xlsxFile = xlsx.NewFile()
 	sheet, err := xlsxFile.AddSheet("Sheet1")
 	if err != nil {
-		Exception(ctx, ExportErr, err)
+		Error(ctx, ExportFailedCode, err)
 		return
 	}
 	// 写入表头
@@ -45,7 +45,7 @@ func BuildExcelByData(ctx *gin.Context, model any, data any, excelName string) {
 	ctx.Writer.Header().Add("Content-Disposition", "attachment;filename*=utf-8''"+excelName)
 	ctx.Writer.Header().Add("Content-Transfer-Encoding", "binary")
 	if err = xlsxFile.Write(ctx.Writer); err != nil {
-		Exception(ctx, ExportErr, err)
+		Error(ctx, ExportFailedCode, err)
 		return
 	}
 	return
@@ -73,7 +73,7 @@ func ExcelHeaders(model any) (result []*Header) {
 // BuildExcelByFile Excel二进制文件流响应
 func BuildExcelByFile(ctx *gin.Context, filePath string) {
 	if xlsxFile, err := xlsx.OpenFile(filePath); err != nil {
-		Exception(ctx, ExportErr, err)
+		Error(ctx, ExportFailedCode, err)
 		return
 	} else {
 		var fileName = url.QueryEscape(filepath.Base(filePath))
@@ -81,7 +81,7 @@ func BuildExcelByFile(ctx *gin.Context, filePath string) {
 		ctx.Writer.Header().Add("Content-Disposition", "attachment;filename*=utf-8''"+fileName)
 		ctx.Writer.Header().Add("Content-Transfer-Encoding", "binary")
 		if err = xlsxFile.Write(ctx.Writer); err != nil {
-			Exception(ctx, ExportErr, err)
+			Error(ctx, ExportFailedCode, err)
 			return
 		}
 	}

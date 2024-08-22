@@ -15,7 +15,7 @@ const (
 	Proxy      = "Proxy"
 	Https      = "HTTPS"
 	HttpsProxy = "httpsProxy"
-	GET        = "Get"
+	GET        = "GET"
 	POST       = "POST"
 	PUT        = "PUT"
 	DELETE     = "Delete"
