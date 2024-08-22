@@ -13,14 +13,10 @@ type Handler struct {
 }
 
 func This() *Handler {
-	if !Initialized() {
+	if handler == nil {
 		panic("the cache handler has not been initialized, please check the relevant config")
 	}
 	return handler
-}
-
-func Initialized() bool {
-	return handler != nil
 }
 
 func GetClient(source ...string) Client {

@@ -12,7 +12,7 @@ import (
 
 type Client interface {
 	Set(ctx context.Context, key string, value any, expiration time.Duration) error
-	Get(ctx context.Context, key string, value any)
+	Get(ctx context.Context, key string, value any) bool
 	GetString(ctx context.Context, key string) string
 	Delete(ctx context.Context, keys ...string) int64
 	Exist(ctx context.Context, keys ...string) bool
@@ -34,9 +34,13 @@ func (c *LocalClient) Set(ctx context.Context, key string, value any, d time.Dur
 	return
 }
 
-func (c *LocalClient) Get(ctx context.Context, key string, value any) {
-	result := c.GetString(ctx, key)
-	_ = c.convert.Unmarshal([]byte(result), value)
+func (c *LocalClient) Get(ctx context.Context, key string, value any) bool {
+	if result := c.GetString(ctx, key); result != "" {
+		if err := c.convert.Unmarshal([]byte(result), value); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *LocalClient) GetString(ctx context.Context, key string) string {
@@ -86,9 +90,14 @@ func (c *RedisClient) Set(ctx context.Context, key string, value any, expiration
 	return
 }
 
-func (c *RedisClient) Get(ctx context.Context, key string, value any) {
-	result := c.GetString(ctx, key)
-	_ = c.convert.Unmarshal([]byte(result), value)
+func (c *RedisClient) Get(ctx context.Context, key string, value any) bool {
+	if result := c.GetString(ctx, key); result != "" {
+		if err := c.convert.Unmarshal([]byte(result), value); err == nil {
+			return true
+		}
+	}
+	return false
+
 }
 
 func (c *RedisClient) GetString(ctx context.Context, key string) string {
