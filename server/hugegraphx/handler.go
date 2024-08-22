@@ -2,7 +2,6 @@ package hugegraphx
 
 import (
 	"encoding/json"
-
 	"github.com/go-xuan/quanx/net/httpx"
 )
 
@@ -40,15 +39,16 @@ func (h *Handler) IndexlabelsUrl() string {
 
 // GremlinGet gremlin查询API-get请求
 func GremlinGet[T any](result T, gremlin string) (requestId string, err error) {
-	var bytes []byte
-	if bytes, err = httpx.Get().Url(This().GremlinUrl + `?gremlin=` + gremlin).Do(); err != nil {
+	var res *httpx.Response
+	if res, err = httpx.Get(This().GremlinUrl + `?gremlin=` + gremlin).Do(); err != nil {
 		return
 	}
 	var resp ApiResp[any]
-	if err = json.Unmarshal(bytes, &resp); err != nil {
+	if err = res.Unmarshal(&resp); err != nil {
 		return
 	}
 	requestId = resp.RequestId
+	var bytes []byte
 	if bytes, err = json.Marshal(resp.Result.Data); err != nil {
 		return
 	}
@@ -63,8 +63,8 @@ func GremlinPost[T any](result T, gremlin string) (requestId string, err error) 
 	var bindings, aliases any // 构建绑定参数和图别名
 	_ = json.Unmarshal([]byte(`{}`), &bindings)
 	_ = json.Unmarshal([]byte(`{"graph": "hugegraph","g": "__g_hugegraph"}`), &aliases)
-	var bytes []byte
-	if bytes, err = httpx.Post().Url(This().GremlinUrl).Body(Param{
+	var res *httpx.Response
+	if res, err = httpx.Post(This().GremlinUrl).Body(Param{
 		Gremlin:  gremlin,
 		Bindings: bindings,
 		Language: "gremlin-groovy",
@@ -73,7 +73,7 @@ func GremlinPost[T any](result T, gremlin string) (requestId string, err error) 
 		return
 	}
 	var resp ApiResp[T]
-	if err = json.Unmarshal(bytes, &resp); err != nil {
+	if err = res.Unmarshal(&resp); err != nil {
 		return
 	}
 	requestId = resp.RequestId

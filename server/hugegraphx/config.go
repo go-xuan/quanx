@@ -1,7 +1,6 @@
 package hugegraphx
 
 import (
-	"encoding/json"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -79,16 +78,16 @@ func (h *Hugegraph) SchemaUrl() string {
 
 // Ping gremlin查询API-get请求
 func (h *Hugegraph) Ping() bool {
-	if bytes, err := httpx.Get().Url(fmt.Sprintf("http://%s:%d/versions", h.Host, h.Port)).Do(); err != nil {
+	if res, err := httpx.Get(fmt.Sprintf("http://%s:%d/versions", h.Host, h.Port)).Do(); err != nil {
 		return false
-	} else {
+	} else if res.StatusOK() {
 		var resp = &PingResp{}
-		if err = json.Unmarshal(bytes, &resp); err != nil {
+		if err = res.Unmarshal(resp); err != nil {
 			return false
 		}
 		if resp.Versions != nil && resp.Versions.Version != "" {
 			return true
 		}
-		return false
 	}
+	return false
 }

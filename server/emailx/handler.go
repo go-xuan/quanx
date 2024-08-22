@@ -2,6 +2,7 @@ package emailx
 
 import (
 	"gopkg.in/gomail.v2"
+	"time"
 )
 
 var handler *Handler
@@ -19,8 +20,16 @@ func This() *Handler {
 }
 
 // SendMail 发送邮件
-func (h *Handler) SendMail(send *Send) error {
-	if err := h.Dialer.DialAndSend(send.newMessage()); err != nil {
+func (h *Handler) SendMail(send Send) error {
+	msg := gomail.NewMessage()
+	msg.SetHeader("From", h.Config.Username)
+	msg.SetHeader("To", send.To...)
+	msg.SetHeader("Cc", send.Cc...)
+	msg.SetHeader("Subject", send.Title)
+	msg.SetDateHeader("X-Date", time.Now())
+	msg.SetBody("text/plain", send.Content)
+	// 请注意 DialAndSend() 方法是一次性的，也就是连接邮件服务器，发送邮件，然后关闭连接
+	if err := h.Dialer.DialAndSend(msg); err != nil {
 		return err
 	}
 	return nil
@@ -28,20 +37,8 @@ func (h *Handler) SendMail(send *Send) error {
 
 // Send 邮件服务器发送配置
 type Send struct {
-	From    string   `json:"from"`    // 发件人
 	To      []string `json:"to"`      // 收件人
 	Cc      []string `json:"cc"`      // 抄送人
 	Title   string   `json:"title"`   // 标题
 	Content string   `json:"content"` // 内容
-}
-
-// 构建邮件
-func (s *Send) newMessage() *gomail.Message {
-	msg := gomail.NewMessage()
-	msg.SetHeader("From", s.From)
-	msg.SetHeader("To", s.To...)
-	msg.SetHeader("Cc", s.Cc...)
-	msg.SetHeader("Subject", s.Title)
-	msg.SetBody("text/plain", s.Content)
-	return msg
 }

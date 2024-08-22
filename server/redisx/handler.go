@@ -20,7 +20,7 @@ type Handler struct {
 }
 
 func This() *Handler {
-	if !Initialized() {
+	if handler == nil {
 		panic("the redis handler has not been initialized, please check the relevant config")
 	}
 	return handler
