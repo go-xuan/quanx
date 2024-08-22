@@ -11,47 +11,26 @@ import (
 )
 
 const (
-	Http       = "HTTP"
-	Proxy      = "Proxy"
-	Https      = "HTTPS"
-	HttpsProxy = "httpsProxy"
-	GET        = "GET"
-	POST       = "POST"
-	PUT        = "PUT"
-	DELETE     = "Delete"
+	Http = iota + 1
+	Proxy
+	https
+	httpsProxy
 )
 
 var client *Client
 
 type Client struct {
-	mode   string
+	mode   int
 	client *http.Client
 }
 
-func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	return c.client.Do(req)
-}
-
-// 默认只支持http
-func httpClient() *Client {
-	if client == nil {
-		client = newHttpClient()
-	}
-	return client
-}
-
-// SwitchClient 切换客户端
-func SwitchClient(modeAndParam ...string) *Client {
-	if len(modeAndParam) == 2 && modeAndParam[0] == Https {
-		client = newHttpsClient(modeAndParam[1])
-	} else if len(modeAndParam) == 2 && modeAndParam[0] == Proxy {
-		client = newHttpProxyClient(modeAndParam[1])
-	} else if len(modeAndParam) == 3 && modeAndParam[0] == HttpsProxy {
-		client = newHttpsProxyClient(modeAndParam[1], modeAndParam[2])
+// GetClient 获取http客户端
+func GetClient(strategy ...ClientStrategy) *Client {
+	if len(strategy) > 0 {
+		return strategy[0].Client()
 	} else {
-		client = newHttpClient()
+		return newHttpClient()
 	}
-	return client
 }
 
 func newHttpClient() *Client {
@@ -62,8 +41,8 @@ func newHttpClient() *Client {
 }
 
 func newHttpsClient(crt string) *Client {
-	if client == nil || client.mode != Https {
-		client = &Client{mode: Https, client: &http.Client{Transport: newTransport(crt)}}
+	if client == nil || client.mode != https {
+		client = &Client{mode: https, client: &http.Client{Transport: newTransport(crt)}}
 	}
 	return client
 }
@@ -80,12 +59,12 @@ func newHttpProxyClient(proxyUrl string) *Client {
 }
 
 func newHttpsProxyClient(proxyUrl string, crt string) *Client {
-	if client == nil || client.mode != HttpsProxy {
+	if client == nil || client.mode != httpsProxy {
 		var transport = newTransport(crt)
 		if proxyURL, err := url.Parse(proxyUrl); err == nil {
 			transport.Proxy = http.ProxyURL(proxyURL)
 		}
-		client = &Client{mode: HttpsProxy, client: &http.Client{Transport: transport}}
+		client = &Client{mode: httpsProxy, client: &http.Client{Transport: transport}}
 	}
 	return client
 }

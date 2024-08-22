@@ -3,85 +3,86 @@ package httpx
 import (
 	"bytes"
 	"encoding/json"
-	log "github.com/sirupsen/logrus"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
-	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/types/anyx"
+	log "github.com/sirupsen/logrus"
 )
 
 type Request struct {
-	method string
-	url    string
-	params map[string]string
-	header map[string]string
-	body   any
-	form   url.Values
-	client *Client
-	debug  bool
+	method  string
+	url     string
+	headers map[string]string
+	body    io.Reader
+	debug   bool
 }
 
-func (r *Request) Https(crt string) *Request {
-	r.client = newHttpsClient(crt)
+func Method(method string, url string) *Request {
+	return &Request{
+		method: method,
+		url:    url,
+	}
+}
+
+func Get(url string) *Request {
+	return &Request{
+		method: "GET",
+		url:    url,
+	}
+}
+
+func Post(url string) *Request {
+	return &Request{
+		method: "POST",
+		url:    url,
+	}
+}
+
+func (r *Request) Params(params map[string]string) *Request {
+	sb := strings.Builder{}
+	for k, v := range params {
+		sb.WriteString("&")
+		sb.WriteString(url.QueryEscape(k))
+		sb.WriteString("=")
+		sb.WriteString(url.QueryEscape(v))
+	}
+	r.url = r.url + "?" + sb.String()[1:]
 	return r
 }
 
-func Method(method ...string) *Request {
-	return &Request{method: anyx.Default(GET, method...)}
-}
-
-func Get() *Request {
-	return &Request{method: GET}
-}
-
-func Post() *Request {
-	return &Request{method: POST}
-}
-
-func Debug() *Request {
-	return &Request{debug: true}
-}
-
-func (r *Request) Url(url string) *Request {
-	r.url = url
-	return r
-}
-
-func (r *Request) Method(method string) *Request {
-	r.method = method
-	return r
-}
-
-func (r *Request) Param(params map[string]string) *Request {
-	r.params = params
-	return r
-}
-
-func (r *Request) Header(header map[string]string) *Request {
-	r.header = header
+func (r *Request) Debug() *Request {
+	r.debug = true
 	return r
 }
 
 func (r *Request) Body(body any) *Request {
-	r.body = body
+	marshal, _ := json.Marshal(body)
+	r.body = bytes.NewReader(marshal)
+	r.SetHeader("Content-Type", "application/json")
 	return r
 }
 
 func (r *Request) Form(form url.Values) *Request {
-	r.form = form
+	r.body = strings.NewReader(form.Encode())
+	r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
+	return r
+}
+
+func (r *Request) Headers(headers map[string]string) *Request {
+	r.headers = headers
 	return r
 }
 
 func (r *Request) SetHeader(key, value string) *Request {
-	if r.header != nil && len(r.header) > 0 {
-		r.header[key] = value
+	if r.headers != nil && len(r.headers) > 0 {
+		r.headers[key] = value
 	} else {
 		var header = make(map[string]string)
 		header[key] = value
-		r.header = header
+		r.headers = header
 	}
 	return r
 }
@@ -96,73 +97,64 @@ func (r *Request) Cookie(cookie string) *Request {
 	return r
 }
 
-func (r *Request) DoHttp() (res []byte, err error) {
-	return r.Do()
-}
-
-func (r *Request) DoProxy(proxyUrl string) (res []byte, err error) {
-	return r.Do(Proxy, proxyUrl)
-}
-
-func (r *Request) DoHttps(crt string) (res []byte, err error) {
-	return r.Do(Https, crt)
-}
-
-func (r *Request) DoHttpsProxy(proxyUrl, crt string) (res []byte, err error) {
-	return r.Do(HttpsProxy, proxyUrl, crt)
-}
-
-func (r *Request) Do(modeAndParam ...string) (res []byte, err error) {
+func (r *Request) do(strategy ClientStrategy) (res *Response, err error) {
 	if r.url == "" {
-		err = errorx.New("url is empty")
+		err = errors.New("url is empty")
 		return
-	}
-	if r.params != nil {
-		r.url = UrlAddParams(r.url, r.params)
-	}
-	if r.debug {
-		log.Println("url: ", r.url)
-	}
-	var body io.Reader
-	contentType := "application/json"
-	if r.form != nil {
-		r.method = POST
-		contentType = "application/x-www-form-urlencoded"
-		body = strings.NewReader(r.form.Encode())
-	} else if r.body != nil {
-		marshal, _ := json.Marshal(r.body)
-		body = bytes.NewReader(marshal)
 	}
 
 	var req *http.Request
-	if req, err = http.NewRequest(r.method, r.url, body); err != nil {
+	var resp *http.Response
+	if req, err = http.NewRequest(r.method, r.url, r.body); err != nil {
 		return
 	}
-	if r.header != nil && len(r.header) > 0 {
-		if _, ok := r.header["Content-Type"]; !ok {
-			r.header["Content-Type"] = contentType
+	if r.headers != nil && len(r.headers) > 0 {
+		if _, ok := r.headers["Content-Type"]; !ok {
+			r.headers["Content-Type"] = "application/json"
 		}
-		for key, val := range r.header {
+		for key, val := range r.headers {
 			req.Header.Set(key, val)
 		}
 	}
-	// 切换http客户端
-	var resp *http.Response
-	if resp, err = SwitchClient(modeAndParam...).Do(req); err != nil {
+	if resp, err = GetClient(strategy).client.Do(req); err != nil {
 		return
 	}
-	var reader = resp.Body
-	defer reader.Close()
-	return io.ReadAll(reader)
+	res = &Response{
+		code:    resp.StatusCode,
+		cookies: resp.Cookies(),
+	}
+	defer resp.Body.Close()
+	var body []byte
+	if body, err = io.ReadAll(resp.Body); err != nil {
+		return
+	}
+	res.body = body
+	if r.debug {
+		log.Printf("[debug] url: %s\n", r.url)
+		log.Printf("[debug] body: %s\n", string(body))
+	}
+	return
 }
 
-func UrlAddParams(url string, params map[string]string) string {
-	sb := strings.Builder{}
-	for k, v := range params {
-		sb.WriteString("&")
-		sb.WriteString(k)
-		sb.WriteString("=")
-		sb.WriteString(v)
-	}
-	return url + "?" + sb.String()[1:]
+func (r *Request) Do() (response *Response, err error) {
+	return r.do(&HttpClient{})
+}
+
+func (r *Request) DoProxy(proxyUrl string) (resp *Response, err error) {
+	return r.do(&ProxyClient{
+		Proxy: proxyUrl,
+	})
+}
+
+func (r *Request) DoHttps(crt string) (resp *Response, err error) {
+	return r.do(&HttpsClient{
+		Crt: crt,
+	})
+}
+
+func (r *Request) DoHttpsProxy(proxyUrl, crt string) (resp *Response, err error) {
+	return r.do(&HttpsProxyClient{
+		Proxy: proxyUrl,
+		Crt:   crt,
+	})
 }
