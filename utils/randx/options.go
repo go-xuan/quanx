@@ -223,11 +223,11 @@ func (c *Param) Float() float64 {
 func (c *Param) Time() time.Time {
 	end := time.Now()
 	if c.Max != "" {
-		end = timex.ToTime(c.Max)
+		end = timex.Parse(c.Max)
 	}
 	start := end.Add(time.Hour * -24 * 30)
 	if c.Min != "" {
-		start = timex.ToTime(c.Min)
+		start = timex.Parse(c.Min)
 	}
 	return TimeRange(start, start)
 }
@@ -235,11 +235,11 @@ func (c *Param) Time() time.Time {
 func (c *Param) TimeFmt(layouts ...string) string {
 	end := time.Now()
 	if c.Max != "" {
-		end = timex.ToTime(c.Max)
+		end = timex.Parse(c.Max)
 	}
 	start := end.Add(time.Hour * -24 * 30)
 	if c.Min != "" {
-		start = timex.ToTime(c.Min)
+		start = timex.Parse(c.Min)
 	}
 	var layout = timex.TimeFmt
 	if len(layouts) > 0 {

@@ -298,12 +298,11 @@ func CreateDir(path string) {
 	}
 }
 
-// isEmptyDir 检查给定的目录是否为空
-func isEmptyDir(dir string) bool {
-	var err error
-	var f *os.File
+// IsEmptyDir 检查给定的目录是否为空
+func IsEmptyDir(dir string) bool {
+	f, err := os.Open(dir)
 	defer f.Close()
-	if f, err = os.Open(dir); err != nil {
+	if err != nil {
 		return false
 	}
 	// 读取目录内容

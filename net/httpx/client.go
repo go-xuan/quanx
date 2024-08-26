@@ -10,18 +10,11 @@ import (
 	"time"
 )
 
-const (
-	Http = iota + 1
-	Proxy
-	https
-	httpsProxy
-)
-
 var client *Client
 
 type Client struct {
-	mode   int
-	client *http.Client
+	strategy int
+	client   *http.Client
 }
 
 // GetClient 获取http客户端
@@ -33,38 +26,45 @@ func GetClient(strategy ...ClientStrategy) *Client {
 	}
 }
 
+const (
+	httpStrategyCode = iota + 1
+	proxyStrategyCode
+	httpsStrategyCode
+	httpsProxyStrategyCode
+)
+
 func newHttpClient() *Client {
-	if client == nil || client.mode != Http {
-		client = &Client{mode: Http, client: &http.Client{Transport: newTransport()}}
+	if client == nil || client.strategy != httpStrategyCode {
+		client = &Client{strategy: httpStrategyCode, client: &http.Client{Transport: newTransport()}}
 	}
 	return client
 }
 
 func newHttpsClient(crt string) *Client {
-	if client == nil || client.mode != https {
-		client = &Client{mode: https, client: &http.Client{Transport: newTransport(crt)}}
+	if client == nil || client.strategy != httpsStrategyCode {
+		client = &Client{strategy: httpsStrategyCode, client: &http.Client{Transport: newTransport(crt)}}
 	}
 	return client
 }
 
 func newHttpProxyClient(proxyUrl string) *Client {
-	if client == nil || client.mode != Proxy {
+	if client == nil || client.strategy != proxyStrategyCode {
 		var transport = newTransport()
 		if proxyURL, err := url.Parse(proxyUrl); err == nil {
 			transport.Proxy = http.ProxyURL(proxyURL)
 		}
-		client = &Client{mode: Proxy, client: &http.Client{Transport: transport}}
+		client = &Client{strategy: proxyStrategyCode, client: &http.Client{Transport: transport}}
 	}
 	return client
 }
 
 func newHttpsProxyClient(proxyUrl string, crt string) *Client {
-	if client == nil || client.mode != httpsProxy {
+	if client == nil || client.strategy != httpsProxyStrategyCode {
 		var transport = newTransport(crt)
 		if proxyURL, err := url.Parse(proxyUrl); err == nil {
 			transport.Proxy = http.ProxyURL(proxyURL)
 		}
-		client = &Client{mode: httpsProxy, client: &http.Client{Transport: transport}}
+		client = &Client{strategy: httpsProxyStrategyCode, client: &http.Client{Transport: transport}}
 	}
 	return client
 }

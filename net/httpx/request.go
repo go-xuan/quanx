@@ -137,23 +137,23 @@ func (r *Request) do(strategy ClientStrategy) (res *Response, err error) {
 }
 
 func (r *Request) Do() (response *Response, err error) {
-	return r.do(&HttpClient{})
+	return r.do(&HttpClientStrategy{})
 }
 
 func (r *Request) DoProxy(proxyUrl string) (resp *Response, err error) {
-	return r.do(&ProxyClient{
+	return r.do(&ProxyClientStrategy{
 		Proxy: proxyUrl,
 	})
 }
 
 func (r *Request) DoHttps(crt string) (resp *Response, err error) {
-	return r.do(&HttpsClient{
+	return r.do(&HttpsClientStrategy{
 		Crt: crt,
 	})
 }
 
 func (r *Request) DoHttpsProxy(proxyUrl, crt string) (resp *Response, err error) {
-	return r.do(&HttpsProxyClient{
+	return r.do(&HttpsProxyClientStrategy{
 		Proxy: proxyUrl,
 		Crt:   crt,
 	})

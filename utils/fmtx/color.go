@@ -28,3 +28,22 @@ func (c Color) Bytes(s string) []byte {
 	}
 	return []byte(s)
 }
+
+func (c Color) Println(s string) {
+	fmt.Println(c.String(s))
+}
+
+func (c Color) Printf(s string, a ...any) {
+	fmt.Printf(c.String(s), a...)
+}
+
+func (c Color) PrintfV(s string, a ...any) {
+	if len(a) > 0 {
+		for _, v := range a {
+			v = c.String(fmt.Sprint(v))
+		}
+		fmt.Printf(s, a)
+	} else {
+		fmt.Print(s)
+	}
+}

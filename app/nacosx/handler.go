@@ -1,11 +1,11 @@
 package nacosx
 
 import (
+	"github.com/go-xuan/quanx/utils/marshalx"
+
 	"github.com/nacos-group/nacos-sdk-go/clients/config_client"
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/vo"
-
-	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
 var handler *Handler

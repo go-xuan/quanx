@@ -38,10 +38,12 @@ func (h *Handler) AllIndices(ctx context.Context) (indices []string, err error) 
 
 // CreateIndex 创建索引
 func (h *Handler) CreateIndex(ctx context.Context, index string) (ok bool, err error) {
-	var resp *elastic.IndicesDeleteResponse
-	if resp, err = h.Client.DeleteIndex(index).Do(ctx); err != nil {
+	var resp *elastic.IndicesCreateResult
+	if resp, err = h.Client.CreateIndex(index).Do(ctx); err != nil {
+		log.WithField("index", index).Error("create index failed: ", err)
 		return
 	}
+	log.WithField("index", index).Error("create index success")
 	ok = resp.Acknowledged
 	return
 }
@@ -50,8 +52,10 @@ func (h *Handler) CreateIndex(ctx context.Context, index string) (ok bool, err e
 func (h *Handler) DeleteIndex(ctx context.Context, index string) (ok bool, err error) {
 	var resp *elastic.IndicesDeleteResponse
 	if resp, err = h.Client.DeleteIndex(index).Do(ctx); err != nil {
+		log.WithField("index", index).Error("delete index failed: ", err)
 		return
 	}
+	log.WithField("index", index).Error("delete index success")
 	ok = resp.Acknowledged
 	return
 }
@@ -60,10 +64,13 @@ func (h *Handler) DeleteIndex(ctx context.Context, index string) (ok bool, err e
 func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (ok bool, err error) {
 	if err = execx.UseBatches(len(indices), 100, func(x int, y int) (err error) {
 		var resp *elastic.IndicesDeleteResponse
-		if resp, err = h.Client.DeleteIndex(indices[x:y]...).Do(ctx); err != nil {
-			panic(err)
+		deleteIndices := indices[x:y]
+		if resp, err = h.Client.DeleteIndex(deleteIndices...).Do(ctx); err != nil {
+			log.WithField("deleteIndices", deleteIndices).Error("delete indices failed: ", err)
+			return
 		}
-		log.Printf("delete indices[%d-%d] acknowledged：%v\n", x, y, resp.Acknowledged)
+		log.WithField("deleteIndices", deleteIndices).Error("delete indices success")
+		ok = resp.Acknowledged
 		return
 	}); err != nil {
 		return
@@ -74,27 +81,36 @@ func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (ok bool,
 func (h *Handler) Create(ctx context.Context, index, id string, body any) (err error) {
 	var resp *elastic.IndexResponse
 	if resp, err = h.Client.Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
+		log.WithField("index", index).WithField("id", id).
+			Error("create failed: ", err)
 		return
 	}
-	log.Printf("create success: id=%s index=%s type=%s\n", resp.Id, resp.Index, resp.Type)
+	log.WithField("index", resp.Index).WithField("id", resp.Id).
+		WithField("type", resp.Type).Info("create success")
 	return
 }
 
 func (h *Handler) Update(ctx context.Context, index, id string, body any) (err error) {
 	var resp *elastic.UpdateResponse
 	if resp, err = h.Client.Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
+		log.WithField("index", index).WithField("id", id).
+			Error("update failed: ", err)
 		return
 	}
-	log.Printf("update success: id=%s index=%s type=%s\n", resp.Id, resp.Index, resp.Type)
+	log.WithField("index", resp.Index).WithField("id", resp.Id).
+		WithField("type", resp.Type).Info("update success")
 	return
 }
 
 func (h *Handler) Delete(ctx context.Context, index, id string) (err error) {
 	var resp *elastic.DeleteResponse
 	if resp, err = h.Client.Delete().Index(index).Id(id).Do(ctx); err != nil {
+		log.WithField("index", index).WithField("id", id).
+			Error("delete failed: ", err)
 		return
 	}
-	log.Printf("delete success: %s\n", resp.Result)
+	log.WithField("index", resp.Index).WithField("id", resp.Id).
+		WithField("type", resp.Type).Info("delete success")
 	return
 }
 

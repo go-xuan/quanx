@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/go-xuan/quanx/app/nacosx"
-	"github.com/go-xuan/quanx/app/serverx"
 	"github.com/go-xuan/quanx/os/cachex"
 	"github.com/go-xuan/quanx/os/logx"
 	"github.com/go-xuan/quanx/server/gormx"
@@ -42,6 +41,6 @@ func (s *Server) HttpUrl() string {
 }
 
 // Instance 服务实例
-func (s *Server) Instance() serverx.Instance {
-	return serverx.Instance{Name: s.Name, Host: s.Host, Port: s.Port}
+func (s *Server) Instance() nacosx.ServerInstance {
+	return nacosx.ServerInstance{Name: s.Name, Host: s.Host, Port: s.Port}
 }

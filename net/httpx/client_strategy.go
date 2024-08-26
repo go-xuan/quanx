@@ -4,33 +4,33 @@ type ClientStrategy interface {
 	Client() *Client
 }
 
-type HttpClient struct{}
+type HttpClientStrategy struct{}
 
-func (c *HttpClient) Client() *Client {
+func (c *HttpClientStrategy) Client() *Client {
 	return newHttpClient()
 }
 
-type HttpsClient struct {
+type HttpsClientStrategy struct {
 	Crt string
 }
 
-func (c *HttpsClient) Client() *Client {
+func (c *HttpsClientStrategy) Client() *Client {
 	return newHttpsClient(c.Crt)
 }
 
-type ProxyClient struct {
+type ProxyClientStrategy struct {
 	Proxy string
 }
 
-func (c *ProxyClient) Client() *Client {
+func (c *ProxyClientStrategy) Client() *Client {
 	return newHttpProxyClient(c.Proxy)
 }
 
-type HttpsProxyClient struct {
+type HttpsProxyClientStrategy struct {
 	Proxy string
 	Crt   string
 }
 
-func (c *HttpsProxyClient) Client() *Client {
+func (c *HttpsProxyClientStrategy) Client() *Client {
 	return newHttpsProxyClient(c.Proxy, c.Crt)
 }

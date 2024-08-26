@@ -1,35 +1,36 @@
 package errorx
 
 /*
-错误码： 10-0000-00-0001
-错误码格式：[功能码#2][服务码#3][级别码#2][自定义码#1]
-功能码：标识所属功能，枚举类型，
+
+错误码： 0-0-000-000
+格式说明：[功能码#1][级别码#1][服务码#3][自定义码#3]
+标签码：标识所属功能，
 级别码：对应错误级别
-解释说明：错误码由4部分构成：
 */
 
-const (
-	LevelCodeNormal = "00" // 正常
-	LevelCodeIgnore = "01" // 忽略
-	LevelCodeError  = "02" // 报错
-	LevelCodePanic  = "03" // 恐慌
+type Enum struct {
+	Code string
+	Msg  string
+}
+
+// 标签码
+var (
+	ErrorTagSuccess = Enum{Code: "0", Msg: "成功"} // 正常
+	ErrorTagFailed  = Enum{Code: "1", Msg: "失败"}
+	ErrorTagConfig  = Enum{Code: "2", Msg: "服务配置错误"}
+	ErrorTagInit    = Enum{Code: "3", Msg: "服务初始化异常"}
+	ErrorTagRequest = Enum{Code: "5", Msg: "请求异常"}
+	ErrorTagHttp    = Enum{Code: "6", Msg: "外部请求异常"}
+	ErrorTagLock    = Enum{Code: "7", Msg: "锁异常"}
+	ErrorTagIO      = Enum{Code: "8", Msg: "IO异常"}
+	ErrorTagCache   = Enum{Code: "9", Msg: "缓存异常"}
+	ErrorTagDB      = Enum{Code: "0", Msg: "数据库异常"}
 )
 
-const (
-	FuncCodeNormal    = "00" // 正常
-	FuncCodeSystem    = "01" // 系统
-	FuncCodeRequest   = "02" // 服务请求
-	FuncCodeConfig    = "03" // 配置加载
-	FuncCodeInit      = "04" // 服务初始化
-	FuncCodeSerialize = "05" // 序列化
-	FuncCodeHttp      = "06" // http请求
-	FuncCodeIo        = "07" // IO操作
-	FuncCodeCache     = "08" // 缓存
-	FuncCodeDB        = "09" // 数据库
-	FuncCodeQuery     = "11" // 查询
-	FuncCodeCreate    = "12" // 新建
-	FuncCodeUpdate    = "13" // 更新
-	FuncCodeDelete    = "14" // 删除
-	FuncCodeUpload    = "15" // 上传
-	FuncCodeExport    = "16" // 导出
+// 错误级别码
+var (
+	LevelNormal = Enum{Code: "0", Msg: "正常"}
+	LevelIgnore = Enum{Code: "1", Msg: "忽略"}
+	LevelError  = Enum{Code: "2", Msg: "报错"}
+	LevelPanic  = Enum{Code: "3", Msg: "恐慌"}
 )

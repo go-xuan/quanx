@@ -1,6 +1,7 @@
 package timex
 
 import (
+	"github.com/go-xuan/quanx/types/anyx"
 	"strings"
 	"time"
 )
@@ -37,30 +38,29 @@ func Format(time time.Time, format ...string) string {
 	return time.Format(layout)
 }
 
-// ToTime 字符转时间
-func ToTime(timeStr string) time.Time {
-	if len(timeStr) == 10 && timeStr[4:5] == "-" {
-		return TimeParse(timeStr, DateFmt)
+// Parse 解析时间字符串
+func Parse(timeStr string) time.Time {
+	if timeStr == "" {
+		return time.Now()
+	} else if len(timeStr) == 10 && timeStr[4:5] == "-" {
+		return ParseFmt(timeStr, DateFmt)
 	} else {
-		return TimeParse(timeStr, TimeFmt)
+		return ParseFmt(timeStr, TimeFmt)
 	}
 }
 
-// TimeParse 时间格式化
-func TimeParse(timeStr string, format ...string) time.Time {
-	var layout = TimeFmt
-	if len(format) > 0 {
-		layout = format[0]
-	}
-	if parseTime, err := time.ParseInLocation(layout, timeStr, time.Local); err != nil {
+// ParseFmt 时间格式化
+func ParseFmt(timeStr string, format ...string) time.Time {
+	layout := anyx.Default(TimeFmt, format...)
+	if location, err := time.ParseInLocation(layout, timeStr, time.Local); err != nil {
 		return time.Unix(0, 0)
 	} else {
-		return parseTime
+		return location
 	}
 }
 
-// SecondFormat 时间戳(秒级)转字符
-func SecondFormat(second int64, format string) string {
+// UnixFmt 时间戳(秒级)转字符
+func UnixFmt(second int64, format string) string {
 	return time.Unix(second, 0).Format(format)
 }
 
@@ -74,26 +74,21 @@ func TodayStr() string {
 	return time.Now().Format(DateFmt)
 }
 
-// TodayStart 今天开始时间
-func TodayStart() time.Time {
-	return DayStart(time.Now())
+// YesterdayStr 昨天
+func YesterdayStr() string {
+	return time.Now().AddDate(0, 0, -1).Format(DateFmt)
 }
 
-// DayStart 当天开始时间（yyyy-mm-dd 00:00:00）
-func DayStart(t time.Time) time.Time {
+// DateStart 当天开始时间（yyyy-mm-dd 00:00:00）
+func DateStart(t time.Time) time.Time {
 	y, m, d := t.Date()
 	return time.Date(y, m, d, 0, 0, 0, 0, time.Local)
 }
 
-// DayEnd 当天结束时间（yyyy-mm-dd 23:59:59）
-func DayEnd(t time.Time) time.Time {
+// DateEnd 当天结束时间（yyyy-mm-dd 23:59:59）
+func DateEnd(t time.Time) time.Time {
 	y, m, d := t.Date()
 	return time.Date(y, m, d, 23, 59, 59, 0, time.Local)
-}
-
-// YesterdayStr 昨天
-func YesterdayStr() string {
-	return time.Now().AddDate(0, 0, -1).Format(DateFmt)
 }
 
 // IsLeapYear 是否闰年
@@ -187,16 +182,16 @@ func TimeSlice(start, end time.Time, unit Unit) []string {
 func TimeRange(t time.Time, unit Unit) (start, end time.Time) {
 	switch unit {
 	case Year:
-		start = DayStart(t.AddDate(0, 0, -t.YearDay()+1))
+		start = DateStart(t.AddDate(0, 0, -t.YearDay()+1))
 		end = start.AddDate(1, 0, 0).Add(-time.Second)
 	case Month:
-		start = DayStart(t.AddDate(0, 0, -t.Day()+1))
+		start = DateStart(t.AddDate(0, 0, -t.Day()+1))
 		end = start.AddDate(0, 1, 0).Add(-time.Second)
 	case Week:
-		start = DayStart(t.AddDate(0, 0, int(time.Monday-t.Weekday())))
+		start = DateStart(t.AddDate(0, 0, int(time.Monday-t.Weekday())))
 		end = start.AddDate(0, 0, 7).Add(-time.Second)
 	default:
-		start = DayStart(t)
+		start = DateStart(t)
 		end = start.AddDate(0, 0, 1).Add(-time.Second)
 	}
 	return

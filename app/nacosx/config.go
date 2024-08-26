@@ -2,21 +2,20 @@ package nacosx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/app/constx"
 	"path/filepath"
 	"strings"
 
+	"github.com/go-xuan/quanx/app/constx"
 	"github.com/nacos-group/nacos-sdk-go/clients"
 	"github.com/nacos-group/nacos-sdk-go/clients/config_client"
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/model"
 	"github.com/nacos-group/nacos-sdk-go/vo"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/app/confx"
-	"github.com/go-xuan/quanx/app/serverx"
 	"github.com/go-xuan/quanx/types/stringx"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -147,7 +146,7 @@ func (n *Nacos) NamingClient(param vo.NacosClientParam) (client naming_client.IN
 }
 
 // Register 初始化Nacos服务发现客户端
-func (n *Nacos) Register(server serverx.Instance) (err error) {
+func (n *Nacos) Register(server ServerInstance) (err error) {
 	var client naming_client.INamingClient
 	if client = This().NamingClient; client == nil {
 		if client, err = n.NamingClient(n.ClientParam()); err != nil {
@@ -172,7 +171,7 @@ func (n *Nacos) Register(server serverx.Instance) (err error) {
 	return
 }
 
-func (n *Nacos) Deregister(server serverx.Instance) (err error) {
+func (n *Nacos) Deregister(server ServerInstance) (err error) {
 	var client naming_client.INamingClient
 	if client = This().NamingClient; client == nil {
 		if client, err = n.NamingClient(n.ClientParam()); err != nil {
@@ -193,7 +192,7 @@ func (n *Nacos) Deregister(server serverx.Instance) (err error) {
 	return
 }
 
-func (n *Nacos) AllInstances(name string) (instances []*serverx.Instance, err error) {
+func (n *Nacos) AllInstances(name string) (instances []*ServerInstance, err error) {
 	var servers []model.Instance
 	if servers, err = This().NamingClient.SelectInstances(vo.SelectInstancesParam{
 		ServiceName: name,
@@ -203,7 +202,7 @@ func (n *Nacos) AllInstances(name string) (instances []*serverx.Instance, err er
 		return
 	}
 	for _, server := range servers {
-		instances = append(instances, &serverx.Instance{
+		instances = append(instances, &ServerInstance{
 			Name: server.ServiceName,
 			Host: server.Ip,
 			Port: int(server.Port),
@@ -212,7 +211,7 @@ func (n *Nacos) AllInstances(name string) (instances []*serverx.Instance, err er
 	return
 }
 
-func (n *Nacos) GetInstance(name string) (instance *serverx.Instance, err error) {
+func (n *Nacos) GetInstance(name string) (instance *ServerInstance, err error) {
 	var servers *model.Instance
 	if servers, err = This().NamingClient.SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
 		ServiceName: name,
@@ -220,7 +219,7 @@ func (n *Nacos) GetInstance(name string) (instance *serverx.Instance, err error)
 	}); err != nil {
 		return
 	}
-	instance = &serverx.Instance{
+	instance = &ServerInstance{
 		Name: servers.ServiceName,
 		Host: servers.Ip,
 		Port: int(servers.Port),
