@@ -1,13 +1,12 @@
 package gatewayx
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/go-xuan/quanx/app/confx"
-	"github.com/go-xuan/quanx/app/ginx"
 	"github.com/go-xuan/quanx/app/nacosx"
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
@@ -44,22 +43,21 @@ type Server struct {
 // GetServerProxyAddr 获取微服务addr
 func GetServerProxyAddr(group, dataId, url string) (addr string, auth string, err error) {
 	if err = ListenConfigChanged(group, dataId); err != nil {
-		err = errors.New("监听微服务网关配置失败 ：" + err.Error())
+		err = errorx.Wrap(err, "监听微服务网关配置失败")
 		return
 	}
 	for _, server := range *Gateway {
 		if MatchUrl(url, server.Router) {
-			auth = server.Auth
-			if auth != ginx.NoAuth && len(server.Ignore) > 0 {
+			if len(server.Ignore) > 0 {
 				for _, item := range server.Ignore {
 					if stringx.Index(url, strings.TrimSpace(item)) >= 0 {
-						auth = ginx.NoAuth
+						auth = server.Auth
 						break
 					}
 				}
 			}
 			if addr, err = nacosx.SelectOneHealthyInstance(server.Name, server.Group); err != nil {
-				err = errors.New("微服务实例未注册 ：" + err.Error())
+				err = errorx.Wrap(err, "微服务实例未注册")
 				return
 			}
 			addr = "http://" + addr + server.Prefix

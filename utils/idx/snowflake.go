@@ -30,8 +30,8 @@ var flake *Flake
 type Flake struct {
 	*sync.Mutex
 	WorkerId  int64 // 机器号,0~1023
-	TimeStamp int64 // 时间戳
 	Sequence  int64 // 序列号
+	TimeStamp int64 // 时间戳
 }
 
 func SnowFlake(id ...int64) *Flake {

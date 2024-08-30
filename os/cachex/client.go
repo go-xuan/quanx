@@ -2,16 +2,19 @@ package cachex
 
 import (
 	"context"
-	"github.com/go-xuan/quanx/os/execx"
-	"github.com/go-xuan/quanx/utils/marshalx"
 	"time"
 
 	"github.com/patrickmn/go-cache"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/execx"
+	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
 type Client interface {
 	Set(ctx context.Context, key string, value any, expiration time.Duration) error
+	Expire(ctx context.Context, key string, duration time.Duration) error
 	Get(ctx context.Context, key string, value any) bool
 	GetString(ctx context.Context, key string) string
 	Delete(ctx context.Context, keys ...string) int64
@@ -72,16 +75,24 @@ func (c *LocalClient) Exist(ctx context.Context, keys ...string) bool {
 	return false
 }
 
+func (c *LocalClient) Expire(ctx context.Context, key string, expiration time.Duration) error {
+	key = c.cache.GetKey(key)
+	if result, ok := c.client.Get(key); ok {
+		c.client.Set(key, result, expiration)
+	}
+	return errorx.New("")
+}
+
 // RedisClient redis缓存客户端
 type RedisClient struct {
 	cache   *Cache
 	client  redis.UniversalClient
-	convert *marshalx.Case
+	marshal *marshalx.Case
 }
 
 func (c *RedisClient) Set(ctx context.Context, key string, value any, expiration time.Duration) (err error) {
 	var bytes []byte
-	if bytes, err = c.convert.Marshal(value); err != nil {
+	if bytes, err = c.marshal.Marshal(value); err != nil {
 		return
 	}
 	if err = c.client.Set(ctx, c.cache.GetKey(key), bytes, expiration).Err(); err != nil {
@@ -92,7 +103,7 @@ func (c *RedisClient) Set(ctx context.Context, key string, value any, expiration
 
 func (c *RedisClient) Get(ctx context.Context, key string, value any) bool {
 	if result := c.GetString(ctx, key); result != "" {
-		if err := c.convert.Unmarshal([]byte(result), value); err == nil {
+		if err := c.marshal.Unmarshal([]byte(result), value); err == nil {
 			return true
 		}
 	}
@@ -149,4 +160,11 @@ func (c *RedisClient) Exist(ctx context.Context, keys ...string) bool {
 		}
 	}
 	return total > 0
+}
+
+func (c *RedisClient) Expire(ctx context.Context, key string, expiration time.Duration) error {
+	if err := c.client.Expire(ctx, c.cache.GetKey(key), expiration).Err(); err != nil {
+		return err
+	}
+	return nil
 }

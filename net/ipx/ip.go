@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// GetLocalIP 获取本地IP
 func GetLocalIP() string {
 	if addrs, err := net.InterfaceAddrs(); err == nil {
 		for _, address := range addrs {
@@ -19,7 +20,7 @@ func GetLocalIP() string {
 	return ""
 }
 
-// GetWLANIP 获取当前机器IP
+// GetWLANIP 获取当前机器的WLAN IP
 func GetWLANIP() string {
 	if netInterfaces, err := net.Interfaces(); err == nil {
 		for _, netInterface := range netInterfaces {
@@ -38,8 +39,8 @@ func GetWLANIP() string {
 	return ""
 }
 
-// CheckIpExist 检测IP是否存在
-func CheckIpExist(rules []string, ip string) bool {
+// CheckIpMatch 检测IP是否匹配规则
+func CheckIpMatch(rules []string, ip string) bool {
 	if len(rules) > 0 && ip != "" {
 		for _, rule := range rules {
 			if len(strings.Split(rule, `-`)) > 1 {

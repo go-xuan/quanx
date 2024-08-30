@@ -44,7 +44,7 @@ func (m *Model[T]) Create(ctx *gin.Context) {
 	var err error
 	var in T
 	if err = ctx.BindJSON(&in); err != nil {
-		respx.ParamError(ctx, err)
+		respx.Ctx(ctx).ParamError(err)
 		return
 	}
 	err = m.DB.Create(&in).Error
@@ -55,7 +55,7 @@ func (m *Model[T]) Update(ctx *gin.Context) {
 	var err error
 	var in T
 	if err = ctx.BindJSON(&in); err != nil {
-		respx.ParamError(ctx, err)
+		respx.Ctx(ctx).ParamError(err)
 		return
 	}
 	err = m.DB.Updates(&in).Error
@@ -66,7 +66,7 @@ func (m *Model[T]) Delete(ctx *gin.Context) {
 	var err error
 	var form modelx.Id[string]
 	if err = ctx.ShouldBindQuery(&form); err != nil {
-		respx.ParamError(ctx, err)
+		respx.Ctx(ctx).ParamError(err)
 		return
 	}
 	var t T
@@ -78,7 +78,7 @@ func (m *Model[T]) Detail(ctx *gin.Context) {
 	var err error
 	var form modelx.Id[string]
 	if err = ctx.ShouldBindQuery(&form); err != nil {
-		respx.ParamError(ctx, err)
+		respx.Ctx(ctx).ParamError(err)
 		return
 	}
 	var result T
@@ -90,18 +90,18 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 	var err error
 	var form modelx.File
 	if err = ctx.ShouldBind(&form); err != nil {
-		respx.ParamError(ctx, err)
+		respx.Ctx(ctx).ParamError(err)
 		return
 	}
 	var filePath = filepath.Join(constx.DefaultResourceDir, form.File.Filename)
 	if err = ctx.SaveUploadedFile(form.File, filePath); err != nil {
-		respx.ParamError(ctx, err)
+		respx.Ctx(ctx).ParamError(err)
 		return
 	}
 	var obj T
 	var data []*T
 	if data, err = excelx.ExcelReaderAny(filePath, "", obj); err != nil {
-		respx.Error(ctx, respx.ImportFailedCode, err)
+		respx.Ctx(ctx).EnumError(respx.ImportFailedEnum, err)
 		return
 	}
 	err = m.DB.Model(obj).Create(&data).Error
@@ -111,14 +111,13 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 func (m *Model[T]) Export(ctx *gin.Context) {
 	var result []*T
 	if err := m.DB.Find(&result).Error; err != nil {
-		respx.Error(ctx, respx.ImportFailedCode, err)
+		respx.Ctx(ctx).EnumError(respx.ImportFailedEnum, err)
 		return
 	}
 	var filePath = filepath.Join(constx.DefaultResourceDir, time.Now().Format(timex.TimestampFmt)+".xlsx")
 	var obj T
 	if err := excelx.ExcelWriter(filePath, obj, result); err != nil {
-		respx.Error(ctx, respx.ExportFailedCode, err)
-	} else {
-		respx.BuildExcelByFile(ctx, filePath)
+		respx.Ctx(ctx).EnumError(respx.ExportFailedEnum, err)
 	}
+	respx.Ctx(ctx).File(filePath)
 }

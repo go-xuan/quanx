@@ -6,7 +6,6 @@ import (
 	"encoding/csv"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,7 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/types/intx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
@@ -77,7 +77,7 @@ func ContentReplace(filePath string, replaces map[string]string) (err error) {
 // WriteFile 写入文件
 func WriteFile(filePath, content string, mode ...int) (err error) {
 	CreateIfNotExist(filePath)
-	var flag = anyx.Default(Overwrite, mode...)
+	var flag = intx.Default(Overwrite, mode...)
 	var file *os.File
 	if file, err = os.OpenFile(filePath, flag, 0644); err != nil {
 		return err
@@ -135,7 +135,7 @@ func FileSplit(filePath string, size int) (paths []string, err error) {
 
 // WriteFileLine 数组按行写入文件
 func WriteFileLine(filePath string, content []string, mode ...int) (err error) {
-	var flag = anyx.Default(Overwrite, mode...)
+	var flag = intx.Default(Overwrite, mode...)
 	var file *os.File
 	if file, err = os.OpenFile(filePath, flag, 0644); err != nil {
 		return
@@ -351,7 +351,7 @@ func MustOpen(filePath string, fileName string) (file *os.File, err error) {
 		return
 	}
 	if perm := CheckPermission(fileAbsPath); perm == true {
-		err = errors.New("file permission denied :" + fileAbsPath)
+		err = errorx.Errorf("file permission denied: %s", fileAbsPath)
 		return
 	}
 	if err = CreateIsNotExist(fileAbsPath); err != nil {

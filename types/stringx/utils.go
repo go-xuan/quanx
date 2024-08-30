@@ -153,6 +153,15 @@ func HasEmpty(s ...string) bool {
 	return false
 }
 
+// Default 用于函数中的不定参数取默认值
+func Default(def string, x ...string) string {
+	if len(x) == 0 {
+		return def
+	} else {
+		return x[0]
+	}
+}
+
 // IfNot 不等时取默认值
 func IfNot(s, v, def string) string {
 	if s != v {

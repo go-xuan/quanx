@@ -3,12 +3,12 @@ package httpx
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/go-xuan/quanx/os/errorx"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -97,15 +97,13 @@ func (r *Request) Cookie(cookie string) *Request {
 	return r
 }
 
-func (r *Request) do(strategy ClientStrategy) (res *Response, err error) {
+func (r *Request) do(strategy ClientStrategy) (resp *Response, err error) {
 	if r.url == "" {
-		err = errors.New("url is empty")
+		err = errorx.New("url is empty")
 		return
 	}
-
-	var req *http.Request
-	var resp *http.Response
-	if req, err = http.NewRequest(r.method, r.url, r.body); err != nil {
+	var httpRequest *http.Request
+	if httpRequest, err = http.NewRequest(r.method, r.url, r.body); err != nil {
 		return
 	}
 	if r.headers != nil && len(r.headers) > 0 {
@@ -113,22 +111,23 @@ func (r *Request) do(strategy ClientStrategy) (res *Response, err error) {
 			r.headers["Content-Type"] = "application/json"
 		}
 		for key, val := range r.headers {
-			req.Header.Set(key, val)
+			httpRequest.Header.Set(key, val)
 		}
 	}
-	if resp, err = GetClient(strategy).client.Do(req); err != nil {
+	var httpResponse *http.Response
+	if httpResponse, err = GetClient(strategy).client.Do(httpRequest); err != nil {
 		return
 	}
-	res = &Response{
-		code:    resp.StatusCode,
-		cookies: resp.Cookies(),
+	resp = &Response{
+		code:    httpResponse.StatusCode,
+		cookies: httpResponse.Cookies(),
 	}
-	defer resp.Body.Close()
+	defer httpResponse.Body.Close()
 	var body []byte
-	if body, err = io.ReadAll(resp.Body); err != nil {
+	if body, err = io.ReadAll(httpResponse.Body); err != nil {
 		return
 	}
-	res.body = body
+	resp.body = body
 	if r.debug {
 		log.Printf("[debug] url: %s\n", r.url)
 		log.Printf("[debug] body: %s\n", string(body))
@@ -136,23 +135,19 @@ func (r *Request) do(strategy ClientStrategy) (res *Response, err error) {
 	return
 }
 
-func (r *Request) Do() (response *Response, err error) {
+func (r *Request) Do() (*Response, error) {
 	return r.do(&HttpClientStrategy{})
 }
 
-func (r *Request) DoProxy(proxyUrl string) (resp *Response, err error) {
-	return r.do(&ProxyClientStrategy{
-		Proxy: proxyUrl,
-	})
+func (r *Request) DoProxy(proxyUrl string) (*Response, error) {
+	return r.do(&ProxyClientStrategy{Proxy: proxyUrl})
 }
 
-func (r *Request) DoHttps(crt string) (resp *Response, err error) {
-	return r.do(&HttpsClientStrategy{
-		Crt: crt,
-	})
+func (r *Request) DoHttps(crt string) (*Response, error) {
+	return r.do(&HttpsClientStrategy{Crt: crt})
 }
 
-func (r *Request) DoHttpsProxy(proxyUrl, crt string) (resp *Response, err error) {
+func (r *Request) DoHttpsProxy(proxyUrl, crt string) (*Response, error) {
 	return r.do(&HttpsProxyClientStrategy{
 		Proxy: proxyUrl,
 		Crt:   crt,

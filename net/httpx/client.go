@@ -3,6 +3,7 @@ package httpx
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -15,6 +16,25 @@ var client *Client
 type Client struct {
 	strategy int
 	client   *http.Client
+}
+
+func (c *Client) Do(httpRequest *http.Request) (resp *Response, err error) {
+	var httpResponse *http.Response
+	if httpResponse, err = c.client.Do(httpRequest); err != nil {
+		return
+	}
+	resp = &Response{
+		code:    httpResponse.StatusCode,
+		cookies: httpResponse.Cookies(),
+	}
+	defer httpResponse.Body.Close()
+	var body []byte
+	if body, err = io.ReadAll(httpResponse.Body); err != nil {
+		return
+	}
+	resp.body = body
+	return
+
 }
 
 // GetClient 获取http客户端

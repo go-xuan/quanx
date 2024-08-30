@@ -2,21 +2,30 @@ package intx
 
 import "strconv"
 
-// IfZero 为空时取默认值
-func IfZero(s, def int) int {
-	if s == 0 {
+// Default 用于函数中的不定参数取默认值
+func Default(def int, x ...int) int {
+	if len(x) == 0 {
 		return def
 	} else {
-		return s
+		return x[0]
+	}
+}
+
+// IfZero 为空时取默认值
+func IfZero(v, def int) int {
+	if v == 0 {
+		return def
+	} else {
+		return v
 	}
 }
 
 // IfNot 不等时取默认值
-func IfNot(s, v, def int) int {
-	if s != v {
+func IfNot(v, neq, def int) int {
+	if v != neq {
 		return def
 	} else {
-		return s
+		return v
 	}
 }
 

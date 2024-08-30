@@ -1,9 +1,10 @@
 package execx
 
 import (
-	"errors"
 	"fmt"
 	"time"
+
+	"github.com/go-xuan/quanx/os/errorx"
 )
 
 // UseBatches 分批次执行
@@ -36,5 +37,5 @@ func Retry(times, count int, interval time.Duration, f func() error) error {
 			return nil
 		}
 	}
-	return errors.New("重试失败")
+	return errorx.New("重试失败")
 }

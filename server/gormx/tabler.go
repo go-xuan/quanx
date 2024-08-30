@@ -12,8 +12,9 @@ func (h *Handler) InitGormTable(source string, dst ...Tabler) (err error) {
 	if db != nil && conf != nil && len(dst) > 0 {
 		if conf.Debug {
 			for _, table := range dst {
-				if db.Migrator().HasTable(table) {
-					if err = db.Migrator().AutoMigrate(table); err != nil {
+				migrator := db.Migrator()
+				if migrator.HasTable(table) {
+					if err = migrator.AutoMigrate(table); err != nil {
 						return
 					}
 					var count int64
@@ -28,7 +29,7 @@ func (h *Handler) InitGormTable(source string, dst ...Tabler) (err error) {
 						}
 					}
 				} else {
-					if err = db.Migrator().CreateTable(table); err != nil {
+					if err = migrator.CreateTable(table); err != nil {
 						return
 					}
 					// 添加表备注

@@ -118,7 +118,7 @@ func (c *Cache) InitClient() Client {
 		return &RedisClient{
 			cache:   c,
 			client:  redisx.Client(c.Source),
-			convert: marshalx.NewCase(c.Marshal),
+			marshal: marshalx.NewCase(c.Marshal),
 		}
 	case CacheTypeLocal:
 		return &LocalClient{

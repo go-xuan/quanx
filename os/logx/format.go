@@ -3,15 +3,11 @@ package logx
 import (
 	"bytes"
 	"fmt"
-	"github.com/go-xuan/quanx/utils/fmtx"
 	"os"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/quanx/utils/fmtx"
 	"github.com/sirupsen/logrus"
-
-	"github.com/go-xuan/quanx/app/ginx"
-	"github.com/go-xuan/quanx/types/stringx"
 )
 
 func DefaultFormatter() logrus.Formatter {
@@ -26,10 +22,14 @@ type LogFormatter struct {
 	useColor   bool
 }
 
+func (f *LogFormatter) UseColor() bool {
+	return (f.Output == ConsoleOutput || f.Output == DefaultOutput) && f.useColor
+}
+
 // Format 日志格式化,用以实现logrus.Formatter接口
 func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	var b = bytes.Buffer{}
-	b.WriteString(fmt.Sprintf("[%-23s][%-5s][%s] ", time.Now().Format(f.timeFormat), entry.Level.String(), f.host))
+	b.WriteString(fmt.Sprintf("[%-23s][%-5s][%s]", time.Now().Format(f.timeFormat), entry.Level.String(), f.host))
 	b.WriteString(entry.Message)
 	for key, value := range entry.Data {
 		b.WriteString(fmt.Sprintf(", %s:%+v", key, value))
@@ -40,10 +40,6 @@ func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	} else {
 		return b.Bytes(), nil
 	}
-}
-
-func (f *LogFormatter) UseColor() bool {
-	return (f.Output == ConsoleOutput || f.Output == DefaultOutput) && f.useColor
 }
 
 func Color(level logrus.Level) fmtx.Color {
@@ -57,25 +53,4 @@ func Color(level logrus.Level) fmtx.Color {
 	default:
 		return 0
 	}
-}
-
-// GinRequestLog gin请求日志中间件
-func GinRequestLog(ctx *gin.Context) {
-	start := time.Now()
-	// 处理请求
-	ctx.Next()
-	var ip string
-	if ipv, ok := ctx.Get(ginx.IPKey); ok {
-		ip = ipv.(string)
-	} else {
-		ip = stringx.IfNot(ctx.ClientIP(), "::1", "localhost")
-	}
-	// 日志格式
-	logrus.Infof("[%3d][%8dms][%15s][%6s][%s]",
-		ctx.Writer.Status(),
-		time.Now().Sub(start).Milliseconds(),
-		ip,
-		ctx.Request.Method,
-		ctx.Request.RequestURI,
-	)
 }

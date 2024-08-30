@@ -1,6 +1,8 @@
 package fmtx
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	Black Color = iota + 30
@@ -33,16 +35,16 @@ func (c Color) Println(s string) {
 	fmt.Println(c.String(s))
 }
 
-func (c Color) Printf(s string, a ...any) {
-	fmt.Printf(c.String(s), a...)
+func (c Color) Printf(s string, v ...any) {
+	fmt.Printf(c.String(s), v...)
 }
 
-func (c Color) PrintfV(s string, a ...any) {
-	if len(a) > 0 {
-		for _, v := range a {
-			v = c.String(fmt.Sprint(v))
+func (c Color) VPrintf(s string, v ...any) {
+	if len(v) > 0 {
+		for i, a := range v {
+			v[i] = c.String(fmt.Sprint(a))
 		}
-		fmt.Printf(s, a)
+		fmt.Printf(s, v...)
 	} else {
 		fmt.Print(s)
 	}

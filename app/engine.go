@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/go-xuan/quanx/app/ginx"
 	"path/filepath"
 	"strconv"
 
@@ -230,13 +231,13 @@ func (e *Engine) startServer() {
 		if e.ginEngine == nil {
 			e.ginEngine = gin.New()
 		}
-		e.ginEngine.Use(gin.Recovery(), logx.GinRequestLog)
+		e.ginEngine.Use(gin.Recovery(), ginx.RequestLogFmt)
 		e.ginEngine.Use(e.ginMiddlewares...)
 		_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
-		// 注册服务根路由，并执行路由注册函数
-		var group = e.ginEngine.Group(e.config.Server.Prefix)
+		// 注册服务根路由
+		group := e.ginEngine.Group(e.config.Server.ApiPrefix())
 		e.InitGinLoader(group)
-		log.Info("API接口请求地址: " + e.config.Server.HttpUrl())
+		log.Info("API接口请求地址: " + e.config.Server.ApiHost())
 		if err := e.ginEngine.Run(":" + strconv.Itoa(e.config.Server.Port)); err != nil {
 			log.Error("gin-Engine run failed ")
 			panic(err)

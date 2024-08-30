@@ -10,7 +10,7 @@ import (
 type Error struct {
 	source error
 	msg    string
-	stack  Stack
+	stack  stack
 }
 
 // 报错信息（用以实现error接口）
@@ -36,7 +36,7 @@ func (err *Error) Format(s fmt.State, verb rune) {
 	}
 }
 
-func New(v any) *Error {
+func New(v any) error {
 	var err = &Error{stack: getStack()}
 	switch e := v.(type) {
 	case error:
@@ -50,7 +50,7 @@ func New(v any) *Error {
 	return err
 }
 
-func Wrap(v any, msg string) *Error {
+func Wrap(v any, msg string) error {
 	var err = &Error{msg: msg}
 	switch e := v.(type) {
 	case *Error:
@@ -80,25 +80,15 @@ func Errorf(format string, a ...interface{}) error {
 	return &Error{msg: fmt.Sprintf(format, a...), stack: getStack()}
 }
 
-func GetMessage(v any) string {
-	switch i := v.(type) {
-	case error:
-		return i.Error()
-	default:
-		return fmt.Sprintf("%v", i)
-	}
-}
-
-type Stack []uintptr
+type stack []uintptr
 
 // Format fmt打印实现
-func (s *Stack) Format(f fmt.State, verb rune) {
+func (s *stack) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'v':
-		frames := runtime.CallersFrames(*s)
-		i := 1
+		i, frames := 1, runtime.CallersFrames(*s)
 		for {
-			if pc, more := frames.Next(); more {
+			if pc, more := frames.Next(); more && i <= 3 {
 				_, _ = fmt.Fprintf(f, "\n%d : %s >> %s:%d", i, pc.Func.Name(), pc.File, pc.Line)
 				i++
 			} else {

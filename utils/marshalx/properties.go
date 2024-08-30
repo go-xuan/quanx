@@ -1,11 +1,11 @@
 package marshalx
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/magiconair/properties"
 )
 
@@ -26,7 +26,7 @@ func PropertiesUnmarshal(bytes []byte, v any) (err error) {
 	valueRef := reflect.ValueOf(v)
 	if valueRef.Type().Kind() != reflect.Ptr {
 		// 对象必须是指针类型
-		return errors.New("the config must be pointer type")
+		return errorx.New("the config must be pointer type")
 	}
 	var pp *properties.Properties
 	if pp, err = properties.Load(bytes, properties.UTF8); err != nil {

@@ -2,14 +2,14 @@ package marshalx
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/go-xuan/quanx/os/filex"
 	"github.com/vmihailenco/msgpack"
 	"gopkg.in/yaml.v3"
 
+	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/filex"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
@@ -95,7 +95,7 @@ func TypeIdentify(name string) string {
 // UnmarshalFromFile 读取配置文件到指针
 func UnmarshalFromFile(path string, v any) (err error) {
 	if !filex.Exists(path) {
-		return errors.New("the file not exist : " + path)
+		return errorx.Errorf("the file not exist: %s", path)
 	}
 	var bytes []byte
 	if bytes, err = os.ReadFile(path); err != nil {

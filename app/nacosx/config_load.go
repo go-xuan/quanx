@@ -1,13 +1,13 @@
 package nacosx
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/nacos-group/nacos-sdk-go/vo"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/os/filex"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/utils/marshalx"
@@ -69,7 +69,7 @@ func (c *Config) Loading(v any) (err error) {
 	valueRef := reflect.ValueOf(v)
 	// 修改值必须是指针类型否则不可行
 	if valueRef.Type().Kind() != reflect.Ptr {
-		return errors.New("the input parameter is not a pointer type")
+		return errorx.New("the input parameter is not a pointer type")
 	}
 	var param = c.ToConfigParam()
 	// 读取Nacos配置
@@ -89,7 +89,11 @@ func (c *Config) Loading(v any) (err error) {
 		GetNacosConfigMonitor().Set(c.Group, c.DataId, content)
 		// 配置监听响应方法
 		param.OnChange = func(namespace, group, dataId, data string) {
-			log.Errorf("The config on nacos has changed!!!\n dataId=%s group=%s namespace=%s\nThe latest config content is :\n%s", dataId, group, namespace, data)
+			log.WithField("dataId", dataId).
+				WithField("group", group).
+				WithField("namespace", namespace).
+				WithField("content", content).
+				Error("The nacos config content has changed!!!")
 			GetNacosConfigMonitor().Set(group, dataId, data)
 		}
 		if err = This().ConfigClient.ListenConfig(param); err != nil {

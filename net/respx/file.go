@@ -3,7 +3,6 @@ package respx
 import (
 	"encoding/json"
 	"net/url"
-	"path/filepath"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
@@ -11,9 +10,23 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// File 文件响应
-func File(ctx *gin.Context, filePath string) {
-	ctx.File(filePath)
+// Header 导出表头
+type Header struct {
+	Key  string
+	Name string
+}
+
+func ExcelHeaders(model any) (result []*Header) {
+	typeRef := reflect.TypeOf(model)
+	for i := 0; i < typeRef.NumField(); i++ {
+		if typeRef.Field(i).Tag.Get("export") != "" {
+			result = append(result, &Header{
+				Key:  typeRef.Field(i).Tag.Get("json"),
+				Name: typeRef.Field(i).Tag.Get("export"),
+			})
+		}
+	}
+	return
 }
 
 // BuildExcelByData 返回Excel二进制文件流
@@ -21,7 +34,7 @@ func BuildExcelByData(ctx *gin.Context, model any, data any, excelName string) {
 	var xlsxFile = xlsx.NewFile()
 	sheet, err := xlsxFile.AddSheet("Sheet1")
 	if err != nil {
-		Error(ctx, ExportFailedCode, err)
+		Ctx(ctx).EnumError(ExportFailedEnum, err)
 		return
 	}
 	// 写入表头
@@ -45,45 +58,8 @@ func BuildExcelByData(ctx *gin.Context, model any, data any, excelName string) {
 	ctx.Writer.Header().Add("Content-Disposition", "attachment;filename*=utf-8''"+excelName)
 	ctx.Writer.Header().Add("Content-Transfer-Encoding", "binary")
 	if err = xlsxFile.Write(ctx.Writer); err != nil {
-		Error(ctx, ExportFailedCode, err)
+		Ctx(ctx).EnumError(ExportFailedEnum, err)
 		return
-	}
-	return
-}
-
-// Header 导出表头
-type Header struct {
-	Key  string
-	Name string
-}
-
-func ExcelHeaders(model any) (result []*Header) {
-	typeRef := reflect.TypeOf(model)
-	for i := 0; i < typeRef.NumField(); i++ {
-		if typeRef.Field(i).Tag.Get("export") != "" {
-			result = append(result, &Header{
-				Key:  typeRef.Field(i).Tag.Get("json"),
-				Name: typeRef.Field(i).Tag.Get("export"),
-			})
-		}
-	}
-	return
-}
-
-// BuildExcelByFile Excel二进制文件流响应
-func BuildExcelByFile(ctx *gin.Context, filePath string) {
-	if xlsxFile, err := xlsx.OpenFile(filePath); err != nil {
-		Error(ctx, ExportFailedCode, err)
-		return
-	} else {
-		var fileName = url.QueryEscape(filepath.Base(filePath))
-		ctx.Writer.Header().Add("Content-Type", "application/octet-stream")
-		ctx.Writer.Header().Add("Content-Disposition", "attachment;filename*=utf-8''"+fileName)
-		ctx.Writer.Header().Add("Content-Transfer-Encoding", "binary")
-		if err = xlsxFile.Write(ctx.Writer); err != nil {
-			Error(ctx, ExportFailedCode, err)
-			return
-		}
 	}
 	return
 }
