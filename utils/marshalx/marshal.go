@@ -87,24 +87,22 @@ type Case struct {
 // TypeIdentify 类型识别
 func TypeIdentify(name string) string {
 	if stringx.ContainsAny(name, ".", "\\", "/") {
-		return filex.Suffix(name)
+		return filex.GetSuffix(name)
 	}
 	return name
 }
 
 // UnmarshalFromFile 读取配置文件到指针
-func UnmarshalFromFile(path string, v any) (err error) {
+func UnmarshalFromFile(path string, v any) error {
 	if !filex.Exists(path) {
 		return errorx.Errorf("the file not exist: %s", path)
 	}
-	var bytes []byte
-	if bytes, err = os.ReadFile(path); err != nil {
-		return
+	if bytes, err := os.ReadFile(path); err != nil {
+		return errorx.Wrap(err, "read file failed")
+	} else if err = NewCase(path).Unmarshal(bytes, v); err != nil {
+		return errorx.Wrap(err, "unmarshal failed")
 	}
-	if err = NewCase(path).Unmarshal(bytes, v); err != nil {
-		return
-	}
-	return
+	return nil
 }
 
 // MarshalToStruct 将任意对象序列化成指定结构体对象

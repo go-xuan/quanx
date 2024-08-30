@@ -320,18 +320,40 @@ func Analyse(path string) (dir, name, suffix string) {
 		for i := len(name) - 1; i >= 0; i-- {
 			if name[i] == '.' {
 				name, suffix = name[:i], name[i:]
+				return
 			}
 		}
 	}
 	return
 }
 
-// Suffix 获取后缀
-func Suffix(path string) string {
+// SetSuffix 设置后缀
+func SetSuffix(path string, suffix string) string {
 	if path != "" {
+		var name = path
 		for i := len(path) - 1; i >= 0; i-- {
 			if path[i] == '.' {
-				return path[i+1:]
+				name = path[:i]
+			}
+			if path[i] == os.PathSeparator {
+				break
+			}
+		}
+		return name + stringx.AddPrefix(suffix, ".")
+	}
+	return ""
+}
+
+// GetSuffix 获取后缀
+func GetSuffix(path string, withPoint ...bool) string {
+	if path != "" {
+		var p = 1
+		if len(withPoint) > 0 && withPoint[0] {
+			p = 0
+		}
+		for i := len(path) - 1; i >= 0; i-- {
+			if path[i] == '.' {
+				return path[i+p:]
 			}
 		}
 	}
