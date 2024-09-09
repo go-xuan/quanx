@@ -35,22 +35,24 @@ const (
 )
 
 // ReadFile 读取文件内容
-func ReadFile(filePath string) (bytes []byte, err error) {
-	if bytes, err = os.ReadFile(filePath); err != nil {
-		return
+func ReadFile(path string) ([]byte, error) {
+	if bytes, err := os.ReadFile(path); err != nil {
+		return nil, errorx.Wrap(err, "os.ReadFile error")
+	} else {
+		return bytes, nil
 	}
-	return
 }
 
 // ReadFileLine 按行读取
-func ReadFileLine(filePath string) (lines []string, err error) {
-	var file *os.File
-	if file, err = os.OpenFile(filePath, os.O_RDONLY, 0666); err != nil {
-		return
+func ReadFileLine(filePath string) ([]string, error) {
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
+	if err != nil {
+		return nil, errorx.Wrap(err, "os.OpenFile error")
 	}
 	defer file.Close()
 	// 按行处理txt
 	reader := bufio.NewReader(file)
+	var lines []string
 	for {
 		var line []byte
 		if line, _, err = reader.ReadLine(); err == io.EOF {
@@ -58,60 +60,64 @@ func ReadFileLine(filePath string) (lines []string, err error) {
 		}
 		lines = append(lines, string(line))
 	}
-	return
+	return lines, nil
 }
 
 // ContentReplace 更新文件
-func ContentReplace(filePath string, replaces map[string]string) (err error) {
-	var bytes []byte
-	if bytes, err = os.ReadFile(filePath); err != nil {
-		return
+func ContentReplace(filePath string, replaces map[string]string) error {
+	bytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return errorx.Wrap(err, "os.ReadFile error")
 	}
 	content := string(bytes)
 	for k, v := range replaces {
 		content = strings.ReplaceAll(content, k, v)
 	}
-	return WriteFile(filePath, content)
+	if err = WriteFile(filePath, content); err != nil {
+		return errorx.Wrap(err, "WriteFile error")
+	}
+	return nil
 }
 
 // WriteFile 写入文件
-func WriteFile(filePath, content string, mode ...int) (err error) {
+func WriteFile(filePath, content string, mode ...int) error {
 	CreateIfNotExist(filePath)
 	var flag = intx.Default(Overwrite, mode...)
-	var file *os.File
-	if file, err = os.OpenFile(filePath, flag, 0644); err != nil {
-		return err
+	file, err := os.OpenFile(filePath, flag, 0644)
+	if err != nil {
+		return errorx.Wrap(err, "os.OpenFile error")
 	}
 	defer file.Close()
 	writer := bufio.NewWriter(file)
 	if _, err = writer.WriteString(content); err != nil {
-		return
+		return errorx.Wrap(err, "writer.WriteString error")
 	}
 	if err = writer.Flush(); err != nil {
-		return
+		return errorx.Wrap(err, "writer.Flush error")
 	}
-	return
+	return nil
 }
 
 // FileSplit 文件拆分
-func FileSplit(filePath string, size int) (paths []string, err error) {
-	var file *os.File
-	defer file.Close()
-	if file, err = os.OpenFile(filePath, os.O_RDONLY, 0666); err != nil {
-		return
+func FileSplit(filePath string, size int) ([]string, error) {
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
+	if err != nil {
+		return nil, errorx.Wrap(err, "os.OpenFile error")
 	}
+	defer file.Close()
 	dir, filename, suffix := Analyse(filePath)
 	dir = filepath.Join(dir, filename)
 	reader := bufio.NewReader(file)
 	count, index := 1, 1
 	var bf = strings.Builder{}
+	var paths []string
 	for {
 		if index < size {
 			var line []byte
 			if line, _, err = reader.ReadLine(); err == io.EOF {
 				path := filepath.Join(dir, "split_"+strconv.Itoa(count)+suffix)
 				if err = WriteFile(path, bf.String()); err != nil {
-					return
+					return nil, errorx.Wrap(err, "WriteFile error")
 				}
 				paths = append(paths, path)
 				break
@@ -122,7 +128,7 @@ func FileSplit(filePath string, size int) (paths []string, err error) {
 			index = 1
 			path := filepath.Join(dir, "split_"+strconv.Itoa(count)+suffix)
 			if err = WriteFile(path, bf.String()); err != nil {
-				return
+				return nil, errorx.Wrap(err, "WriteFile error")
 			}
 			paths = append(paths, path)
 			bf.Reset()
@@ -130,15 +136,15 @@ func FileSplit(filePath string, size int) (paths []string, err error) {
 		}
 		index++
 	}
-	return
+	return paths, nil
 }
 
 // WriteFileLine 数组按行写入文件
-func WriteFileLine(filePath string, content []string, mode ...int) (err error) {
+func WriteFileLine(filePath string, content []string, mode ...int) error {
 	var flag = intx.Default(Overwrite, mode...)
-	var file *os.File
-	if file, err = os.OpenFile(filePath, flag, 0644); err != nil {
-		return
+	file, err := os.OpenFile(filePath, flag, 0644)
+	if err != nil {
+		return errorx.Wrap(err, "os.OpenFile error")
 	}
 	defer file.Close()
 	writer := bufio.NewWriter(file)
@@ -147,49 +153,49 @@ func WriteFileLine(filePath string, content []string, mode ...int) (err error) {
 		_, _ = writer.WriteString("\n")
 	}
 	if err = writer.Flush(); err != nil {
-		return err
+		return errorx.Wrap(err, "writer.Flush error")
 	}
-	return
+	return nil
 }
 
 // WriteJson 写入json文件
-func WriteJson(filePath string, v any) (err error) {
-	var bytes []byte
-	if bytes, err = json.MarshalIndent(v, "", "	"); err != nil {
-		return
+func WriteJson(filePath string, v any) error {
+	bytes, err := json.MarshalIndent(v, "", "	")
+	if err != nil {
+		return errorx.Wrap(err, "json.MarshalIndent error")
 	}
 	CreateIfNotExist(filePath)
 	var file *os.File
 	if file, err = os.OpenFile(filePath, Overwrite, 0644); err != nil {
-		return
+		return errorx.Wrap(err, "os.OpenFile error")
 	}
 	defer file.Close()
 	writer := bufio.NewWriter(file)
 	if _, err = writer.Write(bytes); err != nil {
-		return
+		return errorx.Wrap(err, "writer.Write error")
 	}
 	if err = writer.Flush(); err != nil {
-		return
+		return errorx.Wrap(err, "writer.Flush error")
 	}
-	return
+	return nil
 }
 
 // WriteCSV 写入csv文件
-func WriteCSV(filePath string, data [][]string) (err error) {
+func WriteCSV(filePath string, data [][]string) error {
 	CreateIfNotExist(filePath)
-	var file *os.File
-	if file, err = os.OpenFile(filePath, Overwrite, 0644); err != nil {
-		return
+	file, err := os.OpenFile(filePath, Overwrite, 0644)
+	if err != nil {
+		return errorx.Wrap(err, "os.OpenFile error")
 	}
 	defer file.Close()
 	writer := csv.NewWriter(file)
 	writer.Comma = ','
 	writer.UseCRLF = true
 	if err = writer.WriteAll(data); err != nil {
-		return
+		return errorx.Wrap(err, "writer.WriteAll error")
 	}
 	writer.Flush()
-	return
+	return nil
 }
 
 type File struct {
@@ -198,8 +204,9 @@ type File struct {
 }
 
 // FileScan 获取目录下所有文件路径
-func FileScan(dir string, suffix string) (files []*File, err error) {
-	if err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+func FileScan(dir string, suffix string) ([]*File, error) {
+	var files []*File
+	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -224,30 +231,31 @@ func FileScan(dir string, suffix string) (files []*File, err error) {
 	}); err != nil {
 		os.Exit(1)
 	}
-	return
+	return files, nil
 }
 
 // Pwd 获取绝对路径
-func Pwd(path ...string) (pwd string) {
+func Pwd(path ...string) string {
 	if len(path) == 0 {
 		_, file, _, _ := runtime.Caller(1)
-		pwd, _ = filepath.Split(file)
+		pwd, _ := filepath.Split(file)
+		return pwd
 	} else {
-		pwd, _ = filepath.Abs(path[0])
+		pwd, _ := filepath.Abs(path[0])
+		return pwd
 	}
-	return
 }
 
 // SplitPath 拆分为文件路径和文件名
-func SplitPath(path string) (dir, file string) {
+func SplitPath(path string) (string, string) {
 	if path != "" {
 		if stringx.ContainsAny(path, "/", "\\") {
-			dir, file = filepath.Split(path)
+			return filepath.Split(path)
 		} else {
-			file = path
+			return "", path
 		}
 	}
-	return
+	return "", ""
 }
 
 // IsDir 判断是否文件夹
@@ -268,13 +276,13 @@ func Exists(path string) bool {
 }
 
 // Create 创建文件
-func Create(path string) (err error) {
-	var f *os.File
-	if f, err = os.Create(path); err != nil {
-		return
+func Create(path string) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return errorx.Wrap(err, "os.Create error")
 	}
-	defer f.Close()
-	return
+	defer file.Close()
+	return nil
 }
 
 // CreateIfNotExist 创建文件
@@ -419,7 +427,7 @@ func CreateIsNotExist(src string) error {
 }
 
 // GetFileBytesByUrl 通过url获取文件字节
-func GetFileBytesByUrl(fileUrl string) (bytes []byte, err error) {
+func GetFileBytesByUrl(fileUrl string) ([]byte, error) {
 	var tr = &http.Transport{
 		IdleConnTimeout:       time.Second * 2048,
 		ResponseHeaderTimeout: time.Second * 10,
@@ -430,16 +438,17 @@ func GetFileBytesByUrl(fileUrl string) (bytes []byte, err error) {
 		fileUrl = requestURI.String()
 	}
 	var client = &http.Client{Transport: tr}
-	var resp *http.Response
-	if resp, err = client.Get(fileUrl); err != nil {
-		return
+	resp, err := client.Get(fileUrl)
+	if err != nil {
+		return nil, errorx.Wrap(err, "http.Client.Get error")
 	}
 	var body = resp.Body
 	defer body.Close()
+	var bytes []byte
 	if bytes, err = io.ReadAll(body); err != nil {
-		return
+		return nil, errorx.Wrap(err, "http.Response.Body ReadAll error")
 	}
-	return
+	return bytes, nil
 }
 
 // 获取文件字节的二进制

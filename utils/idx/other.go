@@ -1,8 +1,9 @@
 package idx
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func UUID() string {

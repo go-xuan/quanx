@@ -43,7 +43,7 @@ func (m *Model[T]) List(ctx *gin.Context) {
 func (m *Model[T]) Create(ctx *gin.Context) {
 	var err error
 	var in T
-	if err = ctx.BindJSON(&in); err != nil {
+	if err = ctx.ShouldBindJSON(&in); err != nil {
 		respx.Ctx(ctx).ParamError(err)
 		return
 	}
@@ -54,7 +54,7 @@ func (m *Model[T]) Create(ctx *gin.Context) {
 func (m *Model[T]) Update(ctx *gin.Context) {
 	var err error
 	var in T
-	if err = ctx.BindJSON(&in); err != nil {
+	if err = ctx.ShouldBindJSON(&in); err != nil {
 		respx.Ctx(ctx).ParamError(err)
 		return
 	}

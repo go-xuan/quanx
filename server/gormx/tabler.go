@@ -1,5 +1,7 @@
 package gormx
 
+import "reflect"
+
 type Tabler interface {
 	TableName() string    // 表名
 	TableComment() string // 表注释
@@ -8,7 +10,7 @@ type Tabler interface {
 
 // InitGormTable 初始化表结构以及表数据（基于接口实现）
 func (h *Handler) InitGormTable(source string, dst ...Tabler) (err error) {
-	var db, conf = h.DBMap[source], h.ConfigMap[source]
+	var db, conf = h.gormMap[source], h.configMap[source]
 	if db != nil && conf != nil && len(dst) > 0 {
 		if conf.Debug {
 			for _, table := range dst {
@@ -40,6 +42,43 @@ func (h *Handler) InitGormTable(source string, dst ...Tabler) (err error) {
 					}
 					// 初始化表数据
 					if initData := table.InitData(); initData != nil {
+						if err = db.Create(initData).Error; err != nil {
+							return
+						}
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
+// InitTable 初始化表结构（基于反射）
+func (h *Handler) InitTable(source string, dst ...any) (err error) {
+	var db, conf = h.gormMap[source], h.configMap[source]
+	if db != nil && conf != nil && len(dst) > 0 {
+		if conf.Debug {
+			for _, model := range dst {
+				if db.Migrator().HasTable(model) {
+					if err = db.Migrator().AutoMigrate(model); err != nil {
+						return
+					}
+				} else {
+					if err = db.Migrator().CreateTable(model); err != nil {
+						return
+					}
+					// 添加表备注
+					var refValue = reflect.ValueOf(model)
+					if method := refValue.MethodByName("TableComment"); method.IsValid() {
+						tableName := refValue.MethodByName("TableName").Call([]reflect.Value{})[0].String()
+						comment := method.Call([]reflect.Value{})[0].String()
+						if err = db.Exec(conf.CommentTableSql(tableName, comment)).Error; err != nil {
+							return
+						}
+					}
+					// 初始化表数据
+					if method := refValue.MethodByName("InitData"); method.IsValid() {
+						initData := method.Call([]reflect.Value{})[0].Interface()
 						if err = db.Create(initData).Error; err != nil {
 							return
 						}

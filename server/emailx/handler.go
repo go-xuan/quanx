@@ -1,15 +1,16 @@
 package emailx
 
 import (
-	"gopkg.in/gomail.v2"
 	"time"
+
+	"gopkg.in/gomail.v2"
 )
 
 var handler *Handler
 
 type Handler struct {
-	Config *Email
-	Dialer *gomail.Dialer
+	config *Email
+	dialer *gomail.Dialer
 }
 
 func This() *Handler {
@@ -19,17 +20,21 @@ func This() *Handler {
 	return handler
 }
 
+func (h *Handler) GetConfig() *Email {
+	return h.config
+}
+
 // SendMail 发送邮件
 func (h *Handler) SendMail(send Send) error {
 	msg := gomail.NewMessage()
-	msg.SetHeader("From", h.Config.Username)
+	msg.SetHeader("From", h.config.Username)
 	msg.SetHeader("To", send.To...)
 	msg.SetHeader("Cc", send.Cc...)
 	msg.SetHeader("Subject", send.Title)
 	msg.SetDateHeader("X-Date", time.Now())
 	msg.SetBody("text/plain", send.Content)
 	// 请注意 DialAndSend() 方法是一次性的，也就是连接邮件服务器，发送邮件，然后关闭连接
-	if err := h.Dialer.DialAndSend(msg); err != nil {
+	if err := h.dialer.DialAndSend(msg); err != nil {
 		return err
 	}
 	return nil

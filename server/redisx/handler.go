@@ -12,11 +12,11 @@ var handler *Handler
 
 // Handler redis控制器
 type Handler struct {
-	Multi     bool // 是否多redis数据库
-	Client    *redis.UniversalClient
-	Config    *Redis
+	multi     bool // 是否多redis数据库
+	config    *Redis
+	configMap map[string]*Redis
+	client    *redis.UniversalClient
 	clientMap map[string]*redis.UniversalClient
-	ConfigMap map[string]*Redis
 }
 
 func This() *Handler {
@@ -24,6 +24,10 @@ func This() *Handler {
 		panic("the redis handler has not been initialized, please check the relevant config")
 	}
 	return handler
+}
+
+func Client(source ...string) redis.UniversalClient {
+	return This().GetClient(source...)
 }
 
 func Initialized() bool {
@@ -38,24 +42,20 @@ func Ping(client redis.UniversalClient) (bool, error) {
 	}
 }
 
-func Client(source ...string) redis.UniversalClient {
-	return This().GetClient(source...)
-}
-
 func (h *Handler) GetClient(source ...string) redis.UniversalClient {
 	if len(source) > 0 && source[0] != constx.DefaultKey {
 		if client, ok := h.clientMap[source[0]]; ok {
 			return *client
 		}
 	}
-	return *h.Client
+	return *h.client
 }
 
 func (h *Handler) GetConfig(source ...string) *Redis {
 	if len(source) > 0 && source[0] != constx.DefaultKey {
-		if conf, ok := h.ConfigMap[source[0]]; ok {
+		if conf, ok := h.configMap[source[0]]; ok {
 			return conf
 		}
 	}
-	return h.Config
+	return h.config
 }

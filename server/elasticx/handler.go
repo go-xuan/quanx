@@ -2,19 +2,19 @@ package elasticx
 
 import (
 	"context"
-	"github.com/go-xuan/quanx/os/execx"
 
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/os/execx"
 )
 
 var handler *Handler
 
 // Handler elastic处理器
 type Handler struct {
-	Config *Elastic
-	Url    string
-	Client *elastic.Client
+	config *Elastic
+	client *elastic.Client
 }
 
 func This() *Handler {
@@ -24,10 +24,18 @@ func This() *Handler {
 	return handler
 }
 
+func (h *Handler) GetConfig() *Elastic {
+	return h.config
+}
+
+func (h *Handler) GetClient() *elastic.Client {
+	return h.client
+}
+
 // AllIndices 查询所有索引
 func (h *Handler) AllIndices(ctx context.Context) (indices []string, err error) {
 	var resp elastic.CatIndicesResponse
-	if resp, err = h.Client.CatIndices().Do(ctx); err != nil {
+	if resp, err = h.client.CatIndices().Do(ctx); err != nil {
 		return
 	}
 	for _, row := range resp {
@@ -39,7 +47,7 @@ func (h *Handler) AllIndices(ctx context.Context) (indices []string, err error) 
 // CreateIndex 创建索引
 func (h *Handler) CreateIndex(ctx context.Context, index string) (ok bool, err error) {
 	var resp *elastic.IndicesCreateResult
-	if resp, err = h.Client.CreateIndex(index).Do(ctx); err != nil {
+	if resp, err = h.client.CreateIndex(index).Do(ctx); err != nil {
 		log.WithField("index", index).Error("create index failed: ", err)
 		return
 	}
@@ -51,7 +59,7 @@ func (h *Handler) CreateIndex(ctx context.Context, index string) (ok bool, err e
 // DeleteIndex 删除索引
 func (h *Handler) DeleteIndex(ctx context.Context, index string) (ok bool, err error) {
 	var resp *elastic.IndicesDeleteResponse
-	if resp, err = h.Client.DeleteIndex(index).Do(ctx); err != nil {
+	if resp, err = h.client.DeleteIndex(index).Do(ctx); err != nil {
 		log.WithField("index", index).Error("delete index failed: ", err)
 		return
 	}
@@ -62,10 +70,10 @@ func (h *Handler) DeleteIndex(ctx context.Context, index string) (ok bool, err e
 
 // DeleteIndices 批量索引
 func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (ok bool, err error) {
-	if err = execx.UseBatches(len(indices), 100, func(x int, y int) (err error) {
+	if err = execx.InBatches(len(indices), 100, func(x int, y int) (err error) {
 		var resp *elastic.IndicesDeleteResponse
 		deleteIndices := indices[x:y]
-		if resp, err = h.Client.DeleteIndex(deleteIndices...).Do(ctx); err != nil {
+		if resp, err = h.client.DeleteIndex(deleteIndices...).Do(ctx); err != nil {
 			log.WithField("deleteIndices", deleteIndices).Error("delete indices failed: ", err)
 			return
 		}
@@ -80,7 +88,7 @@ func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (ok bool,
 
 func (h *Handler) Create(ctx context.Context, index, id string, body any) (err error) {
 	var resp *elastic.IndexResponse
-	if resp, err = h.Client.Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
+	if resp, err = h.client.Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
 		log.WithField("index", index).WithField("id", id).
 			Error("create failed: ", err)
 		return
@@ -92,7 +100,7 @@ func (h *Handler) Create(ctx context.Context, index, id string, body any) (err e
 
 func (h *Handler) Update(ctx context.Context, index, id string, body any) (err error) {
 	var resp *elastic.UpdateResponse
-	if resp, err = h.Client.Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
+	if resp, err = h.client.Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
 		log.WithField("index", index).WithField("id", id).
 			Error("update failed: ", err)
 		return
@@ -104,7 +112,7 @@ func (h *Handler) Update(ctx context.Context, index, id string, body any) (err e
 
 func (h *Handler) Delete(ctx context.Context, index, id string) (err error) {
 	var resp *elastic.DeleteResponse
-	if resp, err = h.Client.Delete().Index(index).Id(id).Do(ctx); err != nil {
+	if resp, err = h.client.Delete().Index(index).Id(id).Do(ctx); err != nil {
 		log.WithField("index", index).WithField("id", id).
 			Error("delete failed: ", err)
 		return
@@ -115,11 +123,11 @@ func (h *Handler) Delete(ctx context.Context, index, id string) (err error) {
 }
 
 func (h *Handler) Get(ctx context.Context, index, id string) (result *elastic.GetResult, err error) {
-	return h.Client.Get().Index(index).Id(id).Do(ctx)
+	return h.client.Get().Index(index).Id(id).Do(ctx)
 }
 
 func (h *Handler) Search(ctx context.Context, index string, query elastic.Query) (result *elastic.SearchResult, err error) {
-	return h.Client.Search().Index(index).Query(query).Do(ctx)
+	return h.client.Search().Index(index).Query(query).Do(ctx)
 }
 
 // AllDocId 获取索引中全部文档ID，sortField字段必须支持排序
@@ -128,7 +136,7 @@ func (h *Handler) AllDocId(ctx context.Context, index string, query elastic.Quer
 	var sortValue float64
 	for total >= offset {
 		var server *elastic.SearchService
-		server = h.Client.Search().Index(index).
+		server = h.client.Search().Index(index).
 			Query(query).
 			TrackTotalHits(true).
 			Sort(sortField, true).

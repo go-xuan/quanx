@@ -45,7 +45,7 @@ func New(v any) error {
 	case string:
 		err.msg = e
 	default:
-		err.msg = fmt.Sprintf("%v", e)
+		err.msg = fmt.Sprint(e)
 	}
 	return err
 }

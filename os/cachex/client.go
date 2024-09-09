@@ -122,7 +122,7 @@ func (c *RedisClient) Delete(ctx context.Context, keys ...string) int64 {
 	var total int64
 	var err error
 	if l := len(keys); l > 100 {
-		if err = execx.UseBatches(l, 100, func(x int, y int) (err error) {
+		if err = execx.InBatches(l, 100, func(x int, y int) (err error) {
 			var n int64
 			if n, err = c.client.Del(ctx, c.cache.GetKeys(keys[x:y])...).Result(); err != nil {
 				return
@@ -144,7 +144,7 @@ func (c *RedisClient) Exist(ctx context.Context, keys ...string) bool {
 	var total int64
 	var err error
 	if l := len(keys); l > 100 {
-		if err = execx.UseBatches(l, 100, func(x int, y int) (err error) {
+		if err = execx.InBatches(l, 100, func(x int, y int) (err error) {
 			var n int64
 			if n, err = c.client.Exists(ctx, c.cache.GetKeys(keys[x:y])...).Result(); err != nil {
 				return

@@ -2,6 +2,7 @@ package captchax
 
 import (
 	"context"
+
 	"github.com/mojocn/base64Captcha"
 
 	"github.com/go-xuan/quanx/types/stringx"

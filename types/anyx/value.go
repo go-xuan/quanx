@@ -1,6 +1,7 @@
 package anyx
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -25,6 +26,8 @@ func ValueOf(v any) Value {
 		return BoolValue(value)
 	case string:
 		return StringValue(value)
+	default:
+		panic(fmt.Sprintf("unsupported value type: %T", value))
 	}
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-xuan/quanx/app/confx"
 	"github.com/go-xuan/quanx/app/constx"
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
@@ -49,44 +50,44 @@ func (MultiRedis) Reader() *confx.Reader {
 }
 
 // Run 配置器运行
-func (conf MultiRedis) Run() (err error) {
+func (conf MultiRedis) Run() error {
 	if len(conf) == 0 {
-		log.Error("Redis Connect Failed! reason: [redis.yaml] not found")
-		return
+		log.Error("redis not connected! reason: [redis.yaml] not found")
+		return nil
 	}
 	if handler == nil {
 		handler = &Handler{
-			Multi:     true,
+			multi:     true,
 			clientMap: make(map[string]*redis.UniversalClient),
-			ConfigMap: make(map[string]*Redis),
+			configMap: make(map[string]*Redis),
 		}
 	} else {
-		handler.Multi = true
+		handler.multi = true
 	}
 	for i, r := range conf {
 		if r.Enable {
-			if err = anyx.SetDefaultValue(r); err != nil {
-				return
+			if err := anyx.SetDefaultValue(r); err != nil {
+				return errorx.Wrap(err, "set-default-value error")
 			}
 			var client = r.NewRedisClient()
-			var ok bool
-			if ok, err = Ping(*client); !ok && err != nil {
-				log.Error("Redis Connect Failed: ", r.Info())
-				return
+			ok, err := Ping(*client)
+			if !ok && err != nil {
+				log.Error("redis connect failed: ", r.Info())
+				return errorx.Wrap(err, "redis client ping error")
 			}
 			handler.clientMap[r.Source] = client
-			handler.ConfigMap[r.Source] = r
+			handler.configMap[r.Source] = r
 			if i == 0 || r.Source == constx.DefaultKey {
-				handler.Client = client
-				handler.Config = r
+				handler.client = client
+				handler.config = r
 			}
-			log.Info("Redis Connect Successful: ", r.Info())
+			log.Info("redis connect successful: ", r.Info())
 		}
 	}
-	if len(handler.ConfigMap) == 0 {
-		log.Error("Redis Connect Failed! reason: [redis.yaml] is empty or no enabled redis configured")
+	if len(handler.configMap) == 0 {
+		log.Error("redis connect failed! reason: [redis.yaml] is empty or no enabled redis configured")
 	}
-	return
+	return nil
 }
 
 // Info 配置信息格式化
@@ -110,34 +111,35 @@ func (*Redis) Reader() *confx.Reader {
 }
 
 // Run 配置器运行
-func (r *Redis) Run() (err error) {
+func (r *Redis) Run() error {
 	if r.Enable {
-		if err = anyx.SetDefaultValue(r); err != nil {
-			return
+		if err := anyx.SetDefaultValue(r); err != nil {
+			return errorx.Wrap(err, "set-default-value error")
 		}
-		var client, ok = r.NewRedisClient(), false
-		if ok, err = Ping(*client); !ok && err != nil {
-			log.Error("Redis Connect Failed: ", r.Info(), err)
-			return
+		var client = r.NewRedisClient()
+		ok, err := Ping(*client)
+		if !ok && err != nil {
+			log.Error("redis connect failed: ", r.Info())
+			return errorx.Wrap(err, "redis client ping error")
 		}
 		if handler == nil {
 			handler = &Handler{
-				Multi:     false,
-				Client:    client,
-				Config:    r,
+				multi:     false,
+				config:    r,
+				configMap: make(map[string]*Redis),
+				client:    client,
 				clientMap: make(map[string]*redis.UniversalClient),
-				ConfigMap: make(map[string]*Redis),
 			}
 		} else {
-			handler.Multi = true
+			handler.multi = true
 		}
 		handler.clientMap[r.Source] = client
-		handler.ConfigMap[r.Source] = r
-		log.Info("Redis Connect Successful: ", r.Info())
-		return
+		handler.configMap[r.Source] = r
+		log.Info("redis connect successful: ", r.Info())
+		return nil
 	}
-	log.Error(`Redis Connect Failed! reason: redis.yaml is empty or the value of "enable" is false`)
-	return
+	log.Error(`redis connect failed! reason: redis.yaml is empty or the value of "enable" is false`)
+	return nil
 }
 
 // Address 配置信息格式化

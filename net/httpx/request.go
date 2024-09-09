@@ -8,8 +8,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/go-xuan/quanx/os/errorx"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/os/errorx"
 )
 
 type Request struct {
@@ -97,14 +98,13 @@ func (r *Request) Cookie(cookie string) *Request {
 	return r
 }
 
-func (r *Request) do(strategy ClientStrategy) (resp *Response, err error) {
+func (r *Request) do(strategy ClientStrategy) (*Response, error) {
 	if r.url == "" {
-		err = errorx.New("url is empty")
-		return
+		return nil, errorx.New("url is empty")
 	}
-	var httpRequest *http.Request
-	if httpRequest, err = http.NewRequest(r.method, r.url, r.body); err != nil {
-		return
+	httpRequest, err := http.NewRequest(r.method, r.url, r.body)
+	if err != nil {
+		return nil, errorx.Wrap(err, "http.NewRequest error")
 	}
 	if r.headers != nil && len(r.headers) > 0 {
 		if _, ok := r.headers["Content-Type"]; !ok {
@@ -116,23 +116,23 @@ func (r *Request) do(strategy ClientStrategy) (resp *Response, err error) {
 	}
 	var httpResponse *http.Response
 	if httpResponse, err = GetClient(strategy).client.Do(httpRequest); err != nil {
-		return
+		return nil, errorx.Wrap(err, "client.Do error")
 	}
-	resp = &Response{
+	resp := &Response{
 		code:    httpResponse.StatusCode,
 		cookies: httpResponse.Cookies(),
 	}
 	defer httpResponse.Body.Close()
 	var body []byte
 	if body, err = io.ReadAll(httpResponse.Body); err != nil {
-		return
+		return resp, errorx.Wrap(err, "http.Response.Body read error")
 	}
 	resp.body = body
 	if r.debug {
 		log.Printf("[debug] url: %s\n", r.url)
 		log.Printf("[debug] body: %s\n", string(body))
 	}
-	return
+	return resp, nil
 }
 
 func (r *Request) Do() (*Response, error) {

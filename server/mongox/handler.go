@@ -10,8 +10,16 @@ import (
 var handler *Handler
 
 type Handler struct {
-	Config *Mongo
-	Client *mongo.Client
+	config *Mongo
+	client *mongo.Client
+}
+
+func GetConfig() *Mongo {
+	return This().GetConfig()
+}
+
+func GetClient() *mongo.Client {
+	return This().GetClient()
 }
 
 func This() *Handler {
@@ -21,12 +29,20 @@ func This() *Handler {
 	return handler
 }
 
+func (h *Handler) GetConfig() *Mongo {
+	return h.config
+}
+
+func (h *Handler) GetClient() *mongo.Client {
+	return h.client
+}
+
 func (h *Handler) GetDatabaseNames(ctx context.Context) (dbs []string, err error) {
-	dbs, err = h.Client.ListDatabaseNames(ctx, bson.M{})
+	dbs, err = h.client.ListDatabaseNames(ctx, bson.M{})
 	return
 }
 
 func (h *Handler) GetCollection(collection string) (mc *mongo.Collection) {
-	mc = h.Client.Database(h.Config.Database).Collection(collection)
+	mc = h.client.Database(h.config.Database).Collection(collection)
 	return
 }

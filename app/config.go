@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+
 	"github.com/go-xuan/quanx/app/nacosx"
 	"github.com/go-xuan/quanx/os/cachex"
 	"github.com/go-xuan/quanx/os/logx"
@@ -17,12 +18,12 @@ func GetServer() *Server {
 
 // Config 服务配置
 type Config struct {
-	Server   *Server              `yaml:"server"`   // 服务配置
-	Log      *logx.Log            `yaml:"log"`      // 日志配置
-	Nacos    *nacosx.Nacos        `yaml:"nacos"`    // nacos访问配置
-	Database *gormx.MultiDatabase `yaml:"database"` // 数据源配置
-	Redis    *redisx.MultiRedis   `yaml:"redis"`    // redis配置
-	Cache    *cachex.MultiCache   `yaml:"cache"`    // 缓存配置
+	Server   *Server            `yaml:"server"`   // 服务配置
+	Log      *logx.Log          `yaml:"log"`      // 日志配置
+	Nacos    *nacosx.Nacos      `yaml:"nacos"`    // nacos访问配置
+	Database *gormx.MultiDB     `yaml:"database"` // 数据源配置
+	Redis    *redisx.MultiRedis `yaml:"redis"`    // redis配置
+	Cache    *cachex.MultiCache `yaml:"cache"`    // 缓存配置
 }
 
 // Server 服务配置

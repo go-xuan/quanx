@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/os/errorx"
 )
 
 type Mongo struct {
@@ -39,16 +40,15 @@ func (*Mongo) Reader() *confx.Reader {
 }
 
 // Run 配置器运行
-func (m *Mongo) Run() (err error) {
-	var client *mongo.Client
-	if client, err = m.NewClient(); err != nil {
+func (m *Mongo) Run() error {
+	if client, err := m.NewClient(); err != nil {
 		log.Error("Mongo Connect Failed: ", m.Info(), err)
-		return
+		return errorx.Wrap(err, "NewClient error")
+	} else {
+		handler = &Handler{config: m, client: client}
+		log.Info("Mongo Connect Successful: ", m.Info())
+		return nil
 	}
-	handler = &Handler{Config: m, Client: client}
-	log.Info("Mongo Connect Successful: ", m.Info())
-	return
-
 }
 
 func (m *Mongo) Uri() string {

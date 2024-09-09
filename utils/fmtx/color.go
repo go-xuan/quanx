@@ -39,7 +39,7 @@ func (c Color) Printf(s string, v ...any) {
 	fmt.Printf(c.String(s), v...)
 }
 
-func (c Color) VPrintf(s string, v ...any) {
+func (c Color) PrintfV(s string, v ...any) {
 	if len(v) > 0 {
 		for i, a := range v {
 			v[i] = c.String(fmt.Sprint(a))
@@ -47,5 +47,20 @@ func (c Color) VPrintf(s string, v ...any) {
 		fmt.Printf(s, v...)
 	} else {
 		fmt.Print(s)
+	}
+}
+
+func (c Color) Sprintf(s string, v ...any) string {
+	return fmt.Sprintf(c.String(s), v...)
+}
+
+func (c Color) SPrintfV(s string, v ...any) string {
+	if len(v) > 0 {
+		for i, a := range v {
+			v[i] = c.String(fmt.Sprint(a))
+		}
+		return fmt.Sprintf(s, v...)
+	} else {
+		return fmt.Sprint(s)
 	}
 }

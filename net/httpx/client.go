@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/go-xuan/quanx/os/errorx"
 )
 
 var client *Client
@@ -18,22 +20,22 @@ type Client struct {
 	client   *http.Client
 }
 
-func (c *Client) Do(httpRequest *http.Request) (resp *Response, err error) {
-	var httpResponse *http.Response
-	if httpResponse, err = c.client.Do(httpRequest); err != nil {
-		return
+func (c *Client) Do(httpRequest *http.Request) (*Response, error) {
+	httpResponse, err := c.client.Do(httpRequest)
+	if err != nil {
+		return nil, errorx.Wrap(err, "client.Do error")
 	}
-	resp = &Response{
+	resp := &Response{
 		code:    httpResponse.StatusCode,
 		cookies: httpResponse.Cookies(),
 	}
 	defer httpResponse.Body.Close()
 	var body []byte
 	if body, err = io.ReadAll(httpResponse.Body); err != nil {
-		return
+		return resp, errorx.Wrap(err, "http.Response.Body read error")
 	}
 	resp.body = body
-	return
+	return resp, nil
 
 }
 

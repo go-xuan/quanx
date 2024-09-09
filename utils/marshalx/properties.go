@@ -5,8 +5,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/magiconair/properties"
+
+	"github.com/go-xuan/quanx/os/errorx"
 )
 
 func PropertiesMarshal(v any) (out []byte, err error) {

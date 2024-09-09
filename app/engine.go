@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/go-xuan/quanx/app/ginx"
 	"path/filepath"
 	"strconv"
 
@@ -10,6 +9,7 @@ import (
 
 	"github.com/go-xuan/quanx/app/confx"
 	"github.com/go-xuan/quanx/app/constx"
+	"github.com/go-xuan/quanx/app/ginx"
 	"github.com/go-xuan/quanx/app/nacosx"
 	"github.com/go-xuan/quanx/net/ipx"
 	"github.com/go-xuan/quanx/os/cachex"
@@ -161,17 +161,17 @@ func (e *Engine) initAppBasic() {
 
 	// 初始化数据库连接
 	if e.mode[MultiDatabase] {
-		e.config.Database = anyx.IfZero(e.config.Database, &gormx.MultiDatabase{})
+		e.config.Database = anyx.IfZero(e.config.Database, &gormx.MultiDB{})
 		e.RunConfigurator(e.config.Database)
 	} else {
-		var database = &gormx.Database{}
-		e.RunConfigurator(database)
-		e.config.Database = &gormx.MultiDatabase{database}
+		var db = &gormx.DB{}
+		e.RunConfigurator(db)
+		e.config.Database = &gormx.MultiDB{db}
 	}
 
 	// 初始化表结构
 	if gormx.Initialized() {
-		for source := range gormx.This().DBMap {
+		for _, source := range gormx.This().Sources() {
 			if dst, ok := e.gormTables[source]; ok {
 				if err := gormx.This().InitGormTable(source, dst...); err != nil {
 					log.Error("Init Table Struct And Data Failed")

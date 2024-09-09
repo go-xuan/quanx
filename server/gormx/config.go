@@ -14,13 +14,15 @@ import (
 
 	"github.com/go-xuan/quanx/app/confx"
 	"github.com/go-xuan/quanx/app/constx"
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
-// MultiDatabase 数据源配置
-type MultiDatabase []*Database
+// MultiDB 数据源配置
+type MultiDB []*DB
 
-type Database struct {
+type DB struct {
 	Source          string `json:"source" yaml:"source" default:"default"`              // 数据源名称
 	Enable          bool   `json:"enable" yaml:"enable"`                                // 数据源启用
 	Type            string `json:"type" yaml:"type"`                                    // 数据库类型
@@ -37,12 +39,12 @@ type Database struct {
 }
 
 // Title 配置器标题
-func (MultiDatabase) Title() string {
-	return "Database"
+func (MultiDB) Title() string {
+	return "DB"
 }
 
 // Reader 配置文件读取
-func (MultiDatabase) Reader() *confx.Reader {
+func (MultiDB) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "database.yaml",
 		NacosDataId: "database.yaml",
@@ -51,58 +53,58 @@ func (MultiDatabase) Reader() *confx.Reader {
 }
 
 // Run 配置器运行
-func (c MultiDatabase) Run() (err error) {
-	if len(c) == 0 {
-		log.Error("Database Connect Failed! reason: [database.yaml] Not Found")
-		return
+func (m MultiDB) Run() error {
+	if len(m) == 0 {
+		log.Error("database not connected! reason: [database.yaml] Not Found")
+		return nil
 	}
 	if handler == nil {
 		handler = &Handler{
-			Multi:     true,
-			DBMap:     make(map[string]*gorm.DB),
-			ConfigMap: make(map[string]*Database),
+			multi:     true,
+			gormMap:   make(map[string]*gorm.DB),
+			configMap: make(map[string]*DB),
 		}
 	} else {
-		handler.Multi = true
+		handler.multi = true
 	}
-	for i, d := range c {
-		if d.Enable {
-			if err = anyx.SetDefaultValue(d); err != nil {
-				return
+	for i, db := range m {
+		if db.Enable {
+			if err := anyx.SetDefaultValue(db); err != nil {
+				return errorx.Wrap(err, "set-default-value error")
 			}
-			var db *gorm.DB
-			if db, err = d.NewGormDB(); err != nil {
-				log.Error("Database Connect Failed: ", d.Info(), err)
-				return err
+			gormDB, err := db.NewGormDB()
+			if err != nil {
+				log.Error("database connect failed: ", db.Info(), err)
+				return errorx.Wrap(err, "NewGormDB Failed")
 			}
-			handler.DBMap[d.Source] = db
-			handler.ConfigMap[d.Source] = d
-			if i == 0 || d.Source == constx.DefaultKey {
-				handler.DB = db
-				handler.Config = d
+			handler.gormMap[db.Source] = gormDB
+			handler.configMap[db.Source] = db
+			if i == 0 || db.Source == constx.DefaultKey {
+				handler.gormDB = gormDB
+				handler.config = db
 			}
-			log.Info("Database Connect Successful: ", d.Info())
+			log.Info("database connect successful: ", db.Info())
 		}
 	}
-	if len(handler.ConfigMap) == 0 {
-		log.Error("Database Connect Failed! reason: [database.yaml] is empty or no enabled database configured")
+	if len(handler.configMap) == 0 {
+		log.Error("database not connected! reason: [database.yaml] is empty or no enabled database configured")
 	}
-	return
+	return nil
 }
 
 // Info 配置信息格式化
-func (d *Database) Info() string {
-	return fmt.Sprintf("source=%s type=%s host=%s port=%d database=%s debug=%v",
+func (d *DB) Info() string {
+	return fmtx.Green.SPrintfV("source=%s type=%s host=%s port=%d database=%s debug=%v",
 		d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
 }
 
 // Title 配置器标题
-func (d *Database) Title() string {
-	return "Database"
+func (d *DB) Title() string {
+	return "DB"
 }
 
 // Reader 配置文件读取
-func (d *Database) Reader() *confx.Reader {
+func (d *DB) Reader() *confx.Reader {
 	return &confx.Reader{
 		FilePath:    "database.yaml",
 		NacosDataId: "database.yaml",
@@ -111,40 +113,40 @@ func (d *Database) Reader() *confx.Reader {
 }
 
 // Run 配置器运行
-func (d *Database) Run() (err error) {
+func (d *DB) Run() error {
 	if d.Enable {
-		if err = anyx.SetDefaultValue(d); err != nil {
-			return
+		if err := anyx.SetDefaultValue(d); err != nil {
+			return errorx.Wrap(err, "set-default-value error")
 		}
-		var db *gorm.DB
-		if db, err = d.NewGormDB(); err != nil {
-			log.Error("Database Connect Failed: ", d.Info(), err)
-			return
+		gormDB, err := d.NewGormDB()
+		if err != nil {
+			log.Error("database connect failed: ", d.Info(), err)
+			return errorx.Wrap(err, "NewGormDB Failed")
 		}
 
 		if handler == nil {
 			handler = &Handler{
-				Multi:     false,
-				DB:        db,
-				Config:    d,
-				DBMap:     map[string]*gorm.DB{},
-				ConfigMap: make(map[string]*Database),
+				multi:     false,
+				config:    d,
+				configMap: make(map[string]*DB),
+				gormDB:    gormDB,
+				gormMap:   map[string]*gorm.DB{},
 			}
 		} else {
-			handler.Multi = true
+			handler.multi = true
 		}
-		handler.DBMap[d.Source] = db
-		handler.ConfigMap[d.Source] = d
+		handler.gormMap[d.Source] = gormDB
+		handler.configMap[d.Source] = d
 
-		log.Info("Database Connect Successful: ", d.Info())
-		return
+		log.Info("database connect successful: ", d.Info())
+		return nil
 	}
-	log.Info("Database Connect Failed! reason: database.yaml is empty or the value of enable is false")
-	return
+	log.Info("database not connected! reason: database.yaml is empty or the value of enable is false")
+	return nil
 }
 
 // NewGormDB 创建数据库连接
-func (d *Database) NewGormDB() (gormDB *gorm.DB, err error) {
+func (d *DB) NewGormDB() (gormDB *gorm.DB, err error) {
 	if gormDB, err = d.GetGormDB(); err != nil {
 		return
 	}
@@ -169,7 +171,7 @@ const (
 )
 
 // CommentTableSql 生成表备注
-func (d *Database) CommentTableSql(table, comment string) string {
+func (d *DB) CommentTableSql(table, comment string) string {
 	switch strings.ToLower(d.Type) {
 	case Mysql:
 		return "alter table " + table + " comment = '" + comment + "'"
@@ -180,7 +182,7 @@ func (d *Database) CommentTableSql(table, comment string) string {
 }
 
 // GetGormDB 根据dsn生成gormDB
-func (d *Database) GetGormDB() (gormDb *gorm.DB, err error) {
+func (d *DB) GetGormDB() (gormDb *gorm.DB, err error) {
 	var dial gorm.Dialector
 	switch strings.ToLower(d.Type) {
 	case Mysql:

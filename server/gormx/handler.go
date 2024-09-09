@@ -2,7 +2,6 @@ package gormx
 
 import (
 	"gorm.io/gorm"
-	"reflect"
 
 	"github.com/go-xuan/quanx/app/constx"
 )
@@ -11,14 +10,18 @@ var handler *Handler
 
 // Handler Gorm处理器
 type Handler struct {
-	Multi     bool // 是否多数据源连接
-	Config    *Database
-	DB        *gorm.DB
-	ConfigMap map[string]*Database
-	DBMap     map[string]*gorm.DB
+	multi     bool // 是否多数据源连接
+	config    *DB
+	configMap map[string]*DB
+	gormDB    *gorm.DB
+	gormMap   map[string]*gorm.DB
 }
 
-func DB(source ...string) *gorm.DB {
+func GetConfig(source ...string) *DB {
+	return This().GetConfig(source...)
+}
+
+func GetDB(source ...string) *gorm.DB {
 	return This().GetDB(source...)
 }
 
@@ -35,55 +38,26 @@ func Initialized() bool {
 
 func (h *Handler) GetDB(source ...string) *gorm.DB {
 	if len(source) > 0 && source[0] != constx.DefaultKey {
-		if db, ok := h.DBMap[source[0]]; ok {
+		if db, ok := h.gormMap[source[0]]; ok {
 			return db
 		}
 	}
-	return h.DB
+	return h.gormDB
 }
 
-func (h *Handler) GetConfig(source ...string) *Database {
+func (h *Handler) GetConfig(source ...string) *DB {
 	if len(source) > 0 && source[0] != constx.DefaultKey {
-		if conf, ok := h.ConfigMap[source[0]]; ok {
+		if conf, ok := h.configMap[source[0]]; ok {
 			return conf
 		}
 	}
-	return h.Config
+	return h.config
 }
 
-// InitTable 初始化表结构（基于反射）
-func (h *Handler) InitTable(source string, dst ...any) (err error) {
-	var db, conf = h.DBMap[source], h.ConfigMap[source]
-	if db != nil && conf != nil && len(dst) > 0 {
-		if conf.Debug {
-			for _, model := range dst {
-				if db.Migrator().HasTable(model) {
-					if err = db.Migrator().AutoMigrate(model); err != nil {
-						return
-					}
-				} else {
-					if err = db.Migrator().CreateTable(model); err != nil {
-						return
-					}
-					// 添加表备注
-					var refValue = reflect.ValueOf(model)
-					if method := refValue.MethodByName("TableComment"); method.IsValid() {
-						tableName := refValue.MethodByName("TableName").Call([]reflect.Value{})[0].String()
-						comment := method.Call([]reflect.Value{})[0].String()
-						if err = db.Exec(conf.CommentTableSql(tableName, comment)).Error; err != nil {
-							return
-						}
-					}
-					// 初始化表数据
-					if method := refValue.MethodByName("InitData"); method.IsValid() {
-						initData := method.Call([]reflect.Value{})[0].Interface()
-						if err = db.Create(initData).Error; err != nil {
-							return
-						}
-					}
-				}
-			}
-		}
+func (h *Handler) Sources() []string {
+	var sources []string
+	for source := range h.configMap {
+		sources = append(sources, source)
 	}
-	return
+	return sources
 }

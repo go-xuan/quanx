@@ -1,7 +1,6 @@
 package gatewayx
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/go-xuan/quanx/app/confx"
@@ -41,11 +40,11 @@ type Server struct {
 }
 
 // GetServerProxyAddr 获取微服务addr
-func GetServerProxyAddr(group, dataId, url string) (addr string, auth string, err error) {
-	if err = ListenConfigChanged(group, dataId); err != nil {
-		err = errorx.Wrap(err, "监听微服务网关配置失败")
-		return
+func GetServerProxyAddr(group, dataId, url string) (string, string, error) {
+	if err := ListenConfigChanged(group, dataId); err != nil {
+		return "", "", errorx.Wrap(err, "监听微服务网关配置失败")
 	}
+	var auth string
 	for _, server := range *Gateway {
 		if MatchUrl(url, server.Router) {
 			if len(server.Ignore) > 0 {
@@ -56,16 +55,15 @@ func GetServerProxyAddr(group, dataId, url string) (addr string, auth string, er
 					}
 				}
 			}
-			if addr, err = nacosx.SelectOneHealthyInstance(server.Name, server.Group); err != nil {
-				err = errorx.Wrap(err, "微服务实例未注册")
-				return
+			if addr, err := nacosx.SelectOneHealthyInstance(server.Name, server.Group); err != nil {
+				return "", "", errorx.Wrap(err, "微服务实例未注册")
+			} else {
+				addr = "http://" + addr + server.Prefix
+				return addr, auth, nil
 			}
-			addr = "http://" + addr + server.Prefix
-			return
 		}
 	}
-	err = fmt.Errorf("未找到对应的网关路由配置，请检查微服务配置文件，或者确认请求接口[%s]是否正确", url)
-	return
+	return "", "", errorx.Errorf("未找到对应的网关路由配置，请检查微服务配置文件，或者确认请求接口[%s]是否正确", url)
 
 }
 
@@ -74,7 +72,7 @@ func ListenConfigChanged(group, dataId string) error {
 	if data, ok := nacosx.GetNacosConfigMonitor().Get(group, dataId); ok {
 		// 将当前最新的content数据同步到servers
 		if err := data.Unmarshal(Gateway); err != nil {
-			return err
+			return errorx.Wrap(err, "unmarshal error")
 		}
 		// 更新nacos监控中配置值
 		data.SetChanged(false)

@@ -3,13 +3,14 @@ package miniox
 import (
 	"bytes"
 	"context"
-	"github.com/go-xuan/quanx/os/filex"
 	"io"
 	"mime/multipart"
 	"net/url"
 	"time"
 
 	"github.com/minio/minio-go/v7"
+
+	"github.com/go-xuan/quanx/os/filex"
 )
 
 var handler *Handler
@@ -18,8 +19,8 @@ const Region = "cn-north-1"
 
 // Handler minio控制器
 type Handler struct {
-	Config *Minio        // minio配置
-	Client *minio.Client // minio客户端
+	config *Minio        // minio配置
+	client *minio.Client // minio客户端
 }
 
 func This() *Handler {
@@ -29,17 +30,25 @@ func This() *Handler {
 	return handler
 }
 
+func (h *Handler) GetConfig() *Minio {
+	return h.config
+}
+
+func (h *Handler) GetClient() *minio.Client {
+	return h.client
+}
+
 // CreateBucket 创建桶
 func (h *Handler) CreateBucket(ctx context.Context, bucketName string) (err error) {
 	var exist bool
-	if exist, err = h.Client.BucketExists(ctx, bucketName); err != nil {
+	if exist, err = h.client.BucketExists(ctx, bucketName); err != nil {
 		return
 	}
 	if !exist {
-		if err = h.Client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: Region}); err != nil {
+		if err = h.client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: Region}); err != nil {
 			return
 		}
-		if err = h.Client.SetBucketPolicy(ctx, bucketName, defaultBucketPolicy(bucketName)); err != nil {
+		if err = h.client.SetBucketPolicy(ctx, bucketName, defaultBucketPolicy(bucketName)); err != nil {
 			return
 		}
 	}
@@ -48,12 +57,12 @@ func (h *Handler) CreateBucket(ctx context.Context, bucketName string) (err erro
 
 // NewMinioPath 生成minio存储路径
 func (h *Handler) NewMinioPath(fileName string) string {
-	return h.Config.MinioPath(fileName)
+	return h.config.MinioPath(fileName)
 }
 
 // PutObject 上传文件
 func (h *Handler) PutObject(ctx context.Context, bucketName, minioPath string, reader io.Reader) (err error) {
-	if _, err = h.Client.PutObject(ctx, bucketName, minioPath, reader, -1, minio.PutObjectOptions{ContentType: "application/octet-stream"}); err != nil {
+	if _, err = h.client.PutObject(ctx, bucketName, minioPath, reader, -1, minio.PutObjectOptions{ContentType: "application/octet-stream"}); err != nil {
 		return
 	}
 	return
@@ -61,7 +70,7 @@ func (h *Handler) PutObject(ctx context.Context, bucketName, minioPath string, r
 
 // FGetObject 下载文件
 func (h *Handler) FGetObject(ctx context.Context, bucketName, minioPath, savePath string) (err error) {
-	if err = h.Client.FGetObject(ctx, bucketName, minioPath, savePath, minio.GetObjectOptions{}); err != nil {
+	if err = h.client.FGetObject(ctx, bucketName, minioPath, savePath, minio.GetObjectOptions{}); err != nil {
 		return
 	}
 	return
@@ -69,7 +78,7 @@ func (h *Handler) FGetObject(ctx context.Context, bucketName, minioPath, savePat
 
 // RemoveObject 删除文件
 func (h *Handler) RemoveObject(ctx context.Context, bucketName, minioPath string) (err error) {
-	if err = h.Client.RemoveObject(ctx, bucketName, minioPath, minio.RemoveObjectOptions{GovernanceBypass: true}); err != nil {
+	if err = h.client.RemoveObject(ctx, bucketName, minioPath, minio.RemoveObjectOptions{GovernanceBypass: true}); err != nil {
 		return
 	}
 	return
@@ -78,7 +87,7 @@ func (h *Handler) RemoveObject(ctx context.Context, bucketName, minioPath string
 // PresignedGetObject 下载链接
 func (h *Handler) PresignedGetObject(ctx context.Context, minioPath string) (minioUrl string, err error) {
 	var URL *url.URL
-	if URL, err = h.Client.PresignedGetObject(ctx, h.Config.BucketName, minioPath, h.GetExpireDuration(), nil); err != nil {
+	if URL, err = h.client.PresignedGetObject(ctx, h.config.BucketName, minioPath, h.GetExpireDuration(), nil); err != nil {
 		return
 	}
 	minioUrl = URL.String()
@@ -90,7 +99,7 @@ func (h *Handler) PresignedGetObjects(ctx context.Context, minioPaths []string) 
 	var expires = h.GetExpireDuration()
 	for _, minioPath := range minioPaths {
 		var URL *url.URL
-		if URL, err = h.Client.PresignedGetObject(ctx, h.Config.BucketName, minioPath, expires, nil); err == nil {
+		if URL, err = h.client.PresignedGetObject(ctx, h.config.BucketName, minioPath, expires, nil); err == nil {
 			minioUrls = append(minioUrls, URL.String())
 		}
 	}
@@ -113,7 +122,7 @@ func (h *Handler) UploadFileByUrl(ctx context.Context, bucketName string, fileNa
 // UploadFile 上传文件
 func (h *Handler) UploadFile(ctx context.Context, bucketName string, minioPath string, file *multipart.FileHeader) (err error) {
 	var exist bool
-	if exist, err = h.ObjectExist(ctx, h.Config.BucketName, minioPath); err != nil {
+	if exist, err = h.ObjectExist(ctx, h.config.BucketName, minioPath); err != nil {
 		return
 	}
 	if !exist {
@@ -132,7 +141,7 @@ func (h *Handler) UploadFile(ctx context.Context, bucketName string, minioPath s
 // ObjectExist 获取对象是否存在
 func (h *Handler) ObjectExist(ctx context.Context, bucketName string, minioPath string) (exist bool, err error) {
 	var objInfo minio.ObjectInfo
-	if objInfo, err = h.Client.StatObject(ctx, bucketName, minioPath, minio.StatObjectOptions{}); err != nil {
+	if objInfo, err = h.client.StatObject(ctx, bucketName, minioPath, minio.StatObjectOptions{}); err != nil {
 		return
 	}
 	exist = objInfo.Size > 0
@@ -151,5 +160,5 @@ func (h *Handler) RemoveObjectBatch(ctx context.Context, bucketName string, mini
 
 // GetExpireDuration 下载链接过期时间
 func (h *Handler) GetExpireDuration() time.Duration {
-	return time.Duration(h.Config.Expire) * time.Minute
+	return time.Duration(h.config.Expire) * time.Minute
 }

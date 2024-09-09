@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/timex"
 )
 
@@ -47,15 +48,15 @@ func (*Minio) Reader() *confx.Reader {
 }
 
 // Run 配置器运行
-func (m *Minio) Run() (err error) {
-	var client *minio.Client
-	if client, err = m.NewClient(); err != nil {
-		log.Error("Minio Connect Failed: ", m.Info(), err)
-		return
+func (m *Minio) Run() error {
+	if client, err := m.NewClient(); err != nil {
+		log.Error("minio connect failed: ", m.Info(), err)
+		return errorx.Wrap(err, "NewClient failed")
+	} else {
+		handler = &Handler{config: m, client: client}
+		log.Info("minio connect successful: ", m.Info())
+		return nil
 	}
-	handler = &Handler{Config: m, Client: client}
-	log.Info("Minio Connect Successful: ", m.Info())
-	return
 }
 
 // Endpoint 配置信息格式化

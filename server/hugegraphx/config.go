@@ -59,10 +59,10 @@ func (*Hugegraph) Reader() *confx.Reader {
 func (h *Hugegraph) Run() error {
 	if h.Host != "" && handler == nil {
 		if h.Ping() {
-			handler = &Handler{Config: h, GremlinUrl: h.GremlinUrl(), SchemaUrl: h.SchemaUrl()}
-			log.Info("Hugegraph Connect Successful: ", h.Info())
+			handler = &Handler{config: h, gremlinUrl: h.GremlinUrl(), schemaUrl: h.SchemaUrl()}
+			log.Info("hugegraph connect successful: ", h.Info())
 		} else {
-			log.Error("Hugegraph Connect Failed: ", h.Info())
+			log.Error("hugegraph connect failed: ", h.Info())
 		}
 	}
 	return nil

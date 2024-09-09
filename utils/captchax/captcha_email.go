@@ -2,6 +2,7 @@ package captchax
 
 import (
 	"context"
+
 	"github.com/go-xuan/quanx/server/emailx"
 	"github.com/go-xuan/quanx/utils/randx"
 )

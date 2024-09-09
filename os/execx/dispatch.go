@@ -7,8 +7,8 @@ import (
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
-// UseBatches 分批次执行
-func UseBatches(total, limit int, f func(int, int) error) error {
+// InBatches 分批次执行
+func InBatches(total, limit int, f func(int, int) error) error {
 	var start = 0
 	if start < total {
 		for start < total {

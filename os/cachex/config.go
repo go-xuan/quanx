@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-xuan/quanx/app/confx"
 	"github.com/go-xuan/quanx/app/constx"
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/server/redisx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
@@ -43,9 +44,9 @@ func (c *Cache) Reader() *confx.Reader {
 }
 
 // Run 配置器运行
-func (c *Cache) Run() (err error) {
-	if err = anyx.SetDefaultValue(c); err != nil {
-		return
+func (c *Cache) Run() error {
+	if err := anyx.SetDefaultValue(c); err != nil {
+		return errorx.Wrap(err, "set-default-value error")
 	}
 	var client = c.InitClient()
 	if handler == nil {
@@ -59,7 +60,7 @@ func (c *Cache) Run() (err error) {
 	}
 	handler.ClientMap[c.Source] = client
 	log.Info("Cache Init Successful: ", c.Info())
-	return
+	return nil
 }
 
 func Default() *Cache {
