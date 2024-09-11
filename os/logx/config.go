@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/os/filex"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/intx"
@@ -63,8 +63,8 @@ func (*Log) Title() string {
 }
 
 // Reader 配置文件读取
-func (*Log) Reader() *confx.Reader {
-	return &confx.Reader{
+func (*Log) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "log.yaml",
 		NacosDataId: "log.yaml",
 	}

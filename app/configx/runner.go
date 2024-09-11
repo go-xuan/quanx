@@ -1,4 +1,4 @@
-package confx
+package configx
 
 import log "github.com/sirupsen/logrus"
 

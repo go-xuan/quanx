@@ -11,7 +11,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/timex"
 )
@@ -39,8 +39,8 @@ func (*Minio) Title() string {
 }
 
 // Reader 配置文件读取
-func (*Minio) Reader() *confx.Reader {
-	return &confx.Reader{
+func (*Minio) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "minio.yaml",
 		NacosDataId: "minio.yaml",
 		Listen:      false,

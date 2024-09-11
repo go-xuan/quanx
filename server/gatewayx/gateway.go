@@ -3,7 +3,7 @@ package gatewayx
 import (
 	"strings"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/app/nacosx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/stringx"
@@ -17,8 +17,8 @@ func (s *Servers) Title() string {
 	return "gateway"
 }
 
-func (s *Servers) Reader() *confx.Reader {
-	return &confx.Reader{
+func (s *Servers) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "gateway.yaml",
 		NacosDataId: "gateway.yaml",
 		Listen:      true,

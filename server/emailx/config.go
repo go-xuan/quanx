@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 )
 
 // Email 邮件服务器配置
@@ -32,8 +32,8 @@ func (*Email) Title() string {
 }
 
 // Reader 配置文件读取
-func (*Email) Reader() *confx.Reader {
-	return &confx.Reader{
+func (*Email) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "mail.yaml",
 		NacosDataId: "mail.yaml",
 		Listen:      false,

@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/app/constx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/server/redisx"
@@ -35,8 +35,8 @@ func (c *Cache) Title() string {
 }
 
 // Reader 配置文件读取
-func (c *Cache) Reader() *confx.Reader {
-	return &confx.Reader{
+func (c *Cache) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "cache.yaml",
 		NacosDataId: "cache.yaml",
 		Listen:      false,
@@ -77,8 +77,8 @@ func (MultiCache) Title() string {
 }
 
 // Reader 配置文件读取
-func (MultiCache) Reader() *confx.Reader {
-	return &confx.Reader{
+func (MultiCache) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "cache.yaml",
 		NacosDataId: "cache.yaml",
 		Listen:      false,

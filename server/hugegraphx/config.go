@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/net/httpx"
 )
 
@@ -47,8 +47,8 @@ func (*Hugegraph) Title() string {
 }
 
 // Reader 配置文件读取
-func (*Hugegraph) Reader() *confx.Reader {
-	return &confx.Reader{
+func (*Hugegraph) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "hugegraph.yaml",
 		NacosDataId: "hugegraph.yaml",
 		Listen:      false,

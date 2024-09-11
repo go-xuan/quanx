@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/app/constx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/anyx"
@@ -44,8 +44,8 @@ func (MultiDB) Title() string {
 }
 
 // Reader 配置文件读取
-func (MultiDB) Reader() *confx.Reader {
-	return &confx.Reader{
+func (MultiDB) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "database.yaml",
 		NacosDataId: "database.yaml",
 		Listen:      false,
@@ -94,7 +94,7 @@ func (m MultiDB) Run() error {
 
 // Info 配置信息格式化
 func (d *DB) Info() string {
-	return fmtx.Green.SPrintfV("source=%s type=%s host=%s port=%d database=%s debug=%v",
+	return fmtx.Green.XSPrintf("source=%s type=%s host=%s port=%v database=%s debug=%v",
 		d.Source, d.Type, d.Host, d.Port, d.Database, d.Debug)
 }
 
@@ -104,8 +104,8 @@ func (d *DB) Title() string {
 }
 
 // Reader 配置文件读取
-func (d *DB) Reader() *confx.Reader {
-	return &confx.Reader{
+func (d *DB) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "database.yaml",
 		NacosDataId: "database.yaml",
 		Listen:      false,

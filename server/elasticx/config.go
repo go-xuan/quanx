@@ -7,7 +7,7 @@ import (
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
@@ -28,8 +28,8 @@ func (*Elastic) Title() string {
 }
 
 // Reader 配置文件读取
-func (*Elastic) Reader() *confx.Reader {
-	return &confx.Reader{
+func (*Elastic) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "elastic.yaml",
 		NacosDataId: "elastic.yaml",
 		Listen:      false,

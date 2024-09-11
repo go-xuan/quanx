@@ -9,7 +9,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/app/constx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/anyx"
@@ -41,8 +41,8 @@ func (MultiRedis) Title() string {
 }
 
 // Reader 配置文件读取
-func (MultiRedis) Reader() *confx.Reader {
-	return &confx.Reader{
+func (MultiRedis) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "redis.yaml",
 		NacosDataId: "redis.yaml",
 		Listen:      false,
@@ -102,8 +102,8 @@ func (r *Redis) Title() string {
 }
 
 // Reader 配置文件读取
-func (*Redis) Reader() *confx.Reader {
-	return &confx.Reader{
+func (*Redis) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "redis.yaml",
 		NacosDataId: "redis.yaml",
 		Listen:      false,

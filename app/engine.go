@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/app/constx"
 	"github.com/go-xuan/quanx/app/ginx"
 	"github.com/go-xuan/quanx/app/nacosx"
@@ -56,7 +56,7 @@ type Engine struct {
 	ginRouters     []func(*gin.RouterGroup)  // gin路由的预加载方法，使用 AddGinRouter()添加自行实现的路由注册方法
 	ginMiddlewares []gin.HandlerFunc         // gin中间件的预加载方法，使用 AddGinRouter()添加gin中间件
 	customFuncs    []func()                  // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
-	configurators  []confx.Configurator      // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
+	configurators  []configx.Configurator    // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
 	gormTables     map[string][]gormx.Tabler // gorm表结构对象，使用 AddTable() / AddSourceTable() 添加至表结构初始化任务列表，需要实现 gormx.Tabler 接口
 	queue          *taskx.QueueScheduler     // Engine启动时的队列任务
 }
@@ -81,7 +81,7 @@ func NewEngine(modes ...Mode) *Engine {
 			config:         &Config{},
 			configDir:      constx.DefaultConfDir,
 			customFuncs:    make([]func(), 0),
-			configurators:  make([]confx.Configurator, 0),
+			configurators:  make([]configx.Configurator, 0),
 			ginMiddlewares: make([]gin.HandlerFunc, 0),
 			gormTables:     make(map[string][]gormx.Tabler),
 			mode:           make(map[Mode]bool),
@@ -254,7 +254,7 @@ func (e *Engine) AddCustomFunc(funcs ...func()) {
 }
 
 // AddConfigurator 新增自定义配置器
-func (e *Engine) AddConfigurator(configurators ...confx.Configurator) {
+func (e *Engine) AddConfigurator(configurators ...configx.Configurator) {
 	e.checkRunning()
 	if len(configurators) > 0 {
 		e.configurators = append(e.configurators, configurators...)
@@ -262,7 +262,7 @@ func (e *Engine) AddConfigurator(configurators ...confx.Configurator) {
 }
 
 // RunConfigurator 运行配置器
-func (e *Engine) RunConfigurator(configurator confx.Configurator, must ...bool) {
+func (e *Engine) RunConfigurator(configurator configx.Configurator, must ...bool) {
 	e.checkRunning()
 	var mustRun = anyx.Default(false, must...)
 	if reader := configurator.Reader(); reader != nil {
@@ -278,7 +278,7 @@ func (e *Engine) RunConfigurator(configurator confx.Configurator, must ...bool) 
 		}
 	}
 	if mustRun {
-		confx.RunConfigurator(configurator)
+		configx.RunConfigurator(configurator)
 	}
 }
 

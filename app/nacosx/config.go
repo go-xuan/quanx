@@ -13,7 +13,7 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/model"
 	"github.com/nacos-group/nacos-sdk-go/vo"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/types/stringx"
 	log "github.com/sirupsen/logrus"
 )
@@ -45,7 +45,7 @@ func (n *Nacos) Title() string {
 }
 
 // Reader 配置文件读取
-func (*Nacos) Reader() *confx.Reader {
+func (*Nacos) Reader() *configx.Reader {
 	return nil
 }
 

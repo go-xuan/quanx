@@ -8,9 +8,9 @@ import (
 
 // Error 通用error
 type Error struct {
-	source error
-	msg    string
-	stack  stack
+	source error  // 源error
+	msg    string // 报错信息
+	stack  stack  // 调用栈
 }
 
 // 报错信息（用以实现error接口）
@@ -82,13 +82,13 @@ func Errorf(format string, a ...interface{}) error {
 
 type stack []uintptr
 
-// Format fmt打印实现
+// Format 打印调用栈信息（fmt实现）
 func (s *stack) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		i, frames := 1, runtime.CallersFrames(*s)
 		for {
-			if pc, more := frames.Next(); more && i <= 3 {
+			if pc, more := frames.Next(); more && i <= 5 {
 				_, _ = fmt.Fprintf(f, "\n%d : %s >> %s:%d", i, pc.Func.Name(), pc.File, pc.Line)
 				i++
 			} else {
@@ -98,15 +98,9 @@ func (s *stack) Format(f fmt.State, verb rune) {
 	}
 }
 
+// getStack 获取调用栈
 func getStack() []uintptr {
 	var pcs [32]uintptr
 	n := runtime.Callers(3, pcs[:])
 	return pcs[:n-1]
-}
-
-func Panic(err error) {
-	if err != nil {
-		panic(err)
-	}
-	return
 }

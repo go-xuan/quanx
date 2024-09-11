@@ -1,9 +1,10 @@
 package timex
 
 import (
-	"github.com/go-xuan/quanx/types/anyx"
 	"strings"
 	"time"
+
+	"github.com/go-xuan/quanx/types/anyx"
 )
 
 type Unit uint
@@ -112,6 +113,29 @@ func ShengXiao(year int) string {
 		}
 	}
 	return strings.Split(AllShengXiao, ",")[(year-4)%12]
+}
+
+// WeekdayCn 星期
+func WeekdayCn(t time.Time) string {
+	switch t.Weekday() {
+	case time.Sunday:
+		return "日"
+	case time.Monday:
+		return "一"
+	case time.Tuesday:
+		return "二"
+	case time.Wednesday:
+		return "三"
+	case time.Thursday:
+		return "四"
+	case time.Friday:
+		return "五"
+	case time.Saturday:
+		return "六"
+	default:
+		return t.Weekday().String()
+	}
+
 }
 
 // TimeDiff 间隔时间

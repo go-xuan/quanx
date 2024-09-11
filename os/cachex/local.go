@@ -5,7 +5,7 @@ import (
 
 	"github.com/patrickmn/go-cache"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 )
 
 var localCache *cache.Cache
@@ -29,8 +29,8 @@ func (*LocalCache) Title() string {
 }
 
 // Reader 配置文件读取
-func (*LocalCache) Reader() *confx.Reader {
-	return &confx.Reader{
+func (*LocalCache) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "local_cache.yaml",
 		NacosDataId: "local_cache.yaml",
 		Listen:      false,

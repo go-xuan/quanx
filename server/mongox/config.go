@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/go-xuan/quanx/app/confx"
+	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
@@ -31,8 +31,8 @@ func (m *Mongo) Title() string {
 }
 
 // Reader 配置文件读取
-func (*Mongo) Reader() *confx.Reader {
-	return &confx.Reader{
+func (*Mongo) Reader() *configx.Reader {
+	return &configx.Reader{
 		FilePath:    "mongo.yaml",
 		NacosDataId: "mongo.yaml",
 		Listen:      false,

@@ -1,9 +1,10 @@
-package confx
+package configx
 
 import (
 	"fmt"
-	"github.com/go-xuan/quanx/app"
 	"testing"
+
+	"github.com/go-xuan/quanx/app"
 )
 
 type Test struct{}
