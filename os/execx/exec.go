@@ -2,49 +2,38 @@ package execx
 
 import (
 	"bytes"
-	log "github.com/sirupsen/logrus"
+	"io"
 	"os/exec"
 	"runtime"
 )
 
-// ExecCommandAndLog 执行命令并记录日志
-func ExecCommandAndLog(cmd string, msg string) (out string, err error) {
+// ExecCommand 执行命令
+func ExecCommand(command string, in ...io.Reader) (string, error) {
 	if runtime.GOOS == `windows` {
-		return ExecWindowsCommandAndLog(cmd, msg)
+		return execCommandOnWindows(command, in...)
 	} else {
-		return ExecLinuxCommandAndLog(cmd, msg)
+		return execCommandOnLinux(command, in...)
 	}
 }
 
-// ExecLinuxCommandAndLog 执行linux命令并记录日志
-func ExecLinuxCommandAndLog(cmd string, msg string) (out string, err error) {
-	log.WithField(`cmd`, cmd).Info(msg)
-	if out, err = ExecCommandOnLinux(cmd); err != nil {
-		log.WithField(`cmd`, cmd).Error(err)
-		return
+func execCommandOnLinux(command string, in ...io.Reader) (string, error) {
+	cmd := exec.Command("/bin/bash", `-c`, command)
+	cmd.Dir = "./"
+	if len(in) > 0 {
+		cmd.Stdin = in[0]
 	}
-	return
+	return commandRun(cmd)
 }
 
-// ExecWindowsCommandAndLog 执行windows命令并记录日志
-func ExecWindowsCommandAndLog(cmd string, msg string) (out string, err error) {
-	log.WithField(`cmd`, cmd).Info(msg)
-	if out, err = ExecCommandOnWindows(cmd); err != nil {
-		log.WithField(`cmd`, cmd).Error(err)
-		return
+func execCommandOnWindows(command string, in ...io.Reader) (string, error) {
+	cmd := exec.Command("cmd", `/C`, command)
+	if len(in) > 0 {
+		cmd.Stdin = in[0]
 	}
-	return
+	return commandRun(cmd)
 }
 
-func ExecCommandOnLinux(command string) (string, error) {
-	return CommandRun(BuildCommand(`./`, `/bin/bash`, `-c`, command))
-}
-
-func ExecCommandOnWindows(command string) (string, error) {
-	return CommandRun(BuildCommand(``, `cmd`, `/C`, command))
-}
-
-func CommandRun(cmd *exec.Cmd) (string, error) {
+func commandRun(cmd *exec.Cmd) (string, error) {
 	// 设置接收
 	var stdout, stderr = &bytes.Buffer{}, &bytes.Buffer{}
 	cmd.Stdout, cmd.Stderr = stdout, stderr
@@ -54,10 +43,4 @@ func CommandRun(cmd *exec.Cmd) (string, error) {
 	} else {
 		return "\n" + stdout.String(), nil
 	}
-}
-
-func BuildCommand(dir string, name string, args ...string) *exec.Cmd {
-	cmd := exec.Command(name, args...)
-	cmd.Dir = dir
-	return cmd
 }

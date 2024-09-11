@@ -87,7 +87,7 @@ func (opt *boolOption) Name() string {
 }
 
 func (opt *boolOption) Usage() string {
-	return fmt.Sprintf("%s | default:true", opt.usage)
+	return fmt.Sprintf("%s | default:%v", opt.usage, opt.def)
 }
 
 func (opt *boolOption) Add(fs *flag.FlagSet) {

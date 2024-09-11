@@ -27,7 +27,8 @@ func (p *Parser) Help() {
 	fmt.Println("ALL OPTIONS：")
 	for _, name := range p.names {
 		fmt.Printf("options of [%s]:\n", fmtx.Green.String(name))
-		for _, option := range p.commands[name].options {
+		for _, optName := range p.commands[name].optNames {
+			option := p.commands[name].options[optName]
 			fmt.Printf("%-50s %s\n", fmtx.Yellow.String("-"+option.Name()), option.Usage())
 		}
 		fmt.Println()

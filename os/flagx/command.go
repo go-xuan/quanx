@@ -5,13 +5,15 @@ import (
 )
 
 type Command struct {
-	name    string
-	usage   string
-	options map[string]Option
+	name     string
+	usage    string
+	optNames []string
+	options  map[string]Option
 }
 
 func (cmd *Command) AddOption(options ...Option) *Command {
 	for _, option := range options {
+		cmd.optNames = append(cmd.optNames, option.Name())
 		cmd.options[option.Name()] = option
 	}
 	return cmd
@@ -42,18 +44,22 @@ func AddCommand(name, usage string, options ...Option) *Command {
 	}
 	if command, ok := parser.commands[name]; ok {
 		for _, option := range options {
+			command.optNames = append(command.optNames, option.Name())
 			command.options[option.Name()] = option
 		}
 		return command
 	} else {
 		var opts = make(map[string]Option)
+		var optNames []string
 		for _, option := range options {
+			optNames = append(optNames, option.Name())
 			opts[option.Name()] = option
 		}
 		command = &Command{
-			name:    name,
-			usage:   usage,
-			options: opts,
+			name:     name,
+			usage:    usage,
+			optNames: optNames,
+			options:  opts,
 		}
 		parser.commands[name] = command
 		parser.names = append(parser.names, name)
