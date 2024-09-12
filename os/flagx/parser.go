@@ -21,15 +21,15 @@ type Parser struct {
 func (p *Parser) Help() {
 	fmt.Println("ALL COMMANDS：")
 	for _, name := range p.names {
-		fmt.Printf("%-50s %s\n", fmtx.Green.String(name), p.commands[name].usage)
+		fmt.Printf("%-50s %s\n", fmtx.Cyan.String(name), p.commands[name].usage)
 	}
 	fmt.Println()
 	fmt.Println("ALL OPTIONS：")
 	for _, name := range p.names {
-		fmt.Printf("options of [%s]:\n", fmtx.Green.String(name))
+		fmt.Printf("options of [%s]:\n", fmtx.Cyan.String(name))
 		for _, optName := range p.commands[name].optNames {
 			option := p.commands[name].options[optName]
-			fmt.Printf("%-50s %s\n", fmtx.Yellow.String("-"+option.Name()), option.Usage())
+			fmt.Printf("%-50s %s\n", fmtx.Green.String("-"+option.Name()), option.Usage())
 		}
 		fmt.Println()
 	}
@@ -47,12 +47,12 @@ func Execute() error {
 				return errorx.Wrap(err, "failed to parse command args")
 			}
 			if handler, ok := parser.handlers[name]; ok {
-				fmt.Printf("current command is: %s(%s)\n", command.name, command.usage)
+				fmtx.Cyan.XPrintf("current command is: %s", command.name)
 				if err := handler(); err != nil {
 					return errorx.Wrap(err, command.name+" execute failed")
 				}
 			} else {
-				fmt.Printf("current command hasn't set the Executor：%s(%s)\n", command.name, command.usage)
+				fmtx.Red.XPrintf("current command hasn't set the Executor：%s", command.name)
 			}
 			return nil
 		} else if name == "-h" || name == "-help" {
