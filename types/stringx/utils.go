@@ -240,10 +240,10 @@ func Fill(s, fill string, length int, right ...bool) string {
 }
 
 // ParseUrlParams 解析url参数为map
-func ParseUrlParams(constraint string) map[string]string {
-	if strings.Contains(constraint, "=") {
+func ParseUrlParams(args string) map[string]string {
+	if strings.Contains(args, "=") {
 		var params = make(map[string]string)
-		kvs := strings.Split(constraint, "&")
+		kvs := strings.Split(args, "&")
 		for _, kv := range kvs {
 			k, v := Cut(kv, "=")
 			params[k] = v

@@ -44,15 +44,15 @@ func Execute() error {
 		var name = args[1]
 		if command, exist := parser.commands[name]; exist {
 			if err := command.FlagSet().Parse(args[2:]); err != nil {
-				return errorx.Wrap(err, "解析命令参数失败")
+				return errorx.Wrap(err, "failed to parse command args")
 			}
 			if handler, ok := parser.handlers[name]; ok {
-				fmt.Printf("当前执行命令：%s(%s)\n", command.name, command.usage)
+				fmt.Printf("current command is: %s(%s)\n", command.name, command.usage)
 				if err := handler(); err != nil {
-					return errorx.Wrap(err, "命令执行器Execute失败")
+					return errorx.Wrap(err, command.name+" execute failed")
 				}
 			} else {
-				fmt.Printf("当前执行命令暂未设置handler执行器：%s(%s)\n", command.name, command.usage)
+				fmt.Printf("current command hasn't set the Executor：%s(%s)\n", command.name, command.usage)
 			}
 			return nil
 		} else if name == "-h" || name == "-help" {

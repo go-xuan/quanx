@@ -9,23 +9,23 @@ import (
 )
 
 const (
-	randTypeInt       = "int"        // 数字
-	randTypeFloat     = "float"      // 浮点数
-	randTypeSequence  = "sequence"   // 数字编号
-	randTypeTime      = "time"       // 时间
-	randTypeDate      = "date"       // 日期
-	randTypeUUID      = "uuid"       // uuid
-	randTypePhone     = "phone"      // 手机号
-	randTypeName      = "name"       // 姓名
-	randTypeIdCard    = "id_card"    // 身份证
-	randTypePlateNo   = "plate_no"   // 车牌号
-	randTypeEmail     = "email"      // 邮箱
-	randTypeIP        = "ip"         // ip地址
-	randTypeProvince  = "province"   // 省
-	randTypeCity      = "city"       // 市
-	randTypePassword  = "password"   // 密码
-	randTypeEnum      = "enum"       // 枚举
-	randTypeOtherEnum = "other_enum" // 其他枚举
+	typeInt       = "int"        // 数字
+	typeFloat     = "float"      // 浮点数
+	typeSequence  = "sequence"   // 数字编号
+	typeTime      = "time"       // 时间
+	typeDate      = "date"       // 日期
+	typeUUID      = "uuid"       // uuid
+	typePhone     = "phone"      // 手机号
+	typeName      = "name"       // 姓名
+	typeIdCard    = "id_card"    // 身份证
+	typePlateNo   = "plate_no"   // 车牌号
+	typeEmail     = "email"      // 邮箱
+	typeIP        = "ip"         // ip地址
+	typeProvince  = "province"   // 省
+	typeCity      = "city"       // 市
+	typePassword  = "password"   // 密码
+	typeEnum      = "enum"       // 枚举
+	typeOtherEnum = "other_enum" // 其他枚举
 )
 
 // Options 随机生成
@@ -40,9 +40,9 @@ type Options struct {
 // RandData 生成随机数
 func (o *Options) RandData() any {
 	switch o.Type {
-	case randTypeInt:
+	case typeInt:
 		return o.RandInt()
-	case randTypeFloat:
+	case typeFloat:
 		return o.RandFloat()
 	default:
 		return o.RandString()
@@ -52,9 +52,9 @@ func (o *Options) RandData() any {
 // RandDataString 生成随机数
 func (o *Options) RandDataString() string {
 	switch o.Type {
-	case randTypeInt:
+	case typeInt:
 		return stringx.ParseInt(o.RandInt())
-	case randTypeFloat:
+	case typeFloat:
 		return stringx.ParseFloat64(o.RandFloat())
 	default:
 		return o.RandString()
@@ -82,7 +82,7 @@ func (o *Options) RandFloat() float64 {
 // RandString 生成随机字符串
 func (o *Options) RandString() (result string) {
 	if param, def := o.Param, o.Default; param != nil && def == "" {
-		if o.Type == randTypeSequence {
+		if o.Type == typeSequence {
 			result = stringx.ParseInt(stringx.ToInt(param.Min) + o.Offset)
 		} else {
 			result = o.randString()
@@ -114,33 +114,33 @@ func (o *Options) RandString() (result string) {
 // 生成随机字符串
 func (o *Options) randString() (result string) {
 	switch o.Type {
-	case randTypePhone:
+	case typePhone:
 		return Phone()
-	case randTypeName:
+	case typeName:
 		return Name()
-	case randTypeIdCard:
+	case typeIdCard:
 		return IdCard()
-	case randTypePlateNo:
+	case typePlateNo:
 		return PlateNo()
-	case randTypeEmail:
+	case typeEmail:
 		return Email()
-	case randTypeUUID:
+	case typeUUID:
 		return UUID()
-	case randTypeIP:
+	case typeIP:
 		return IP()
-	case randTypeProvince:
+	case typeProvince:
 		return Province()
-	case randTypeCity:
+	case typeCity:
 		return City()
-	case randTypePassword:
+	case typePassword:
 		return o.Param.Password()
-	case randTypeDate:
+	case typeDate:
 		return o.Param.TimeFmt(timex.DateFmt)
-	case randTypeTime:
+	case typeTime:
 		return o.Param.TimeFmt()
-	case randTypeEnum:
+	case typeEnum:
 		return Enum(o.Param.Enums)
-	case randTypeOtherEnum:
+	case typeOtherEnum:
 		return Enum(append(o.Enums, o.Param.Enums...))
 	default:
 		return String(o.Param.Length)
@@ -164,15 +164,15 @@ type Param struct {
 	Enums  []string // 枚举选项，多个以逗号分割
 }
 
-func NewParam(constraint string) *Param {
-	params := stringx.ParseUrlParams(constraint)
+func NewParam(args string) *Param {
+	params := stringx.ParseUrlParams(args)
 	return &Param{
 		Min:    params["min"],
 		Max:    params["max"],
 		Prefix: params["prefix"],
 		Suffix: params["suffix"],
 		Upper:  params["upper"] == "true",
-		Lower:  params["suffix"] == "true",
+		Lower:  params["lower"] == "true",
 		Old:    params["old"],
 		New:    params["new"],
 		Format: params["format"],

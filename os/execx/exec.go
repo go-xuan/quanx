@@ -3,6 +3,7 @@ package execx
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 	"os/exec"
 	"runtime"
 )
@@ -20,7 +21,7 @@ func execCommandOnLinux(command string, in ...io.Reader) (string, error) {
 	cmd := exec.Command("/bin/bash", `-c`, command)
 	cmd.Dir = "./"
 	if len(in) > 0 {
-		cmd.Stdin = in[0]
+		cmd.Stdin = ioutil.NopCloser(in[0])
 	}
 	return commandRun(cmd)
 }
@@ -28,7 +29,7 @@ func execCommandOnLinux(command string, in ...io.Reader) (string, error) {
 func execCommandOnWindows(command string, in ...io.Reader) (string, error) {
 	cmd := exec.Command("cmd", `/C`, command)
 	if len(in) > 0 {
-		cmd.Stdin = in[0]
+		cmd.Stdin = ioutil.NopCloser(in[0])
 	}
 	return commandRun(cmd)
 }
