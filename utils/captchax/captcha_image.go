@@ -2,10 +2,9 @@ package captchax
 
 import (
 	"context"
+	"strings"
 
 	"github.com/mojocn/base64Captcha"
-
-	"github.com/go-xuan/quanx/types/stringx"
 )
 
 // NewImageCaptcha 初始化图片验证码
@@ -35,5 +34,5 @@ func (impl *ImageCaptcha) New(ctx context.Context) (id, image, answer string, er
 }
 
 func (impl *ImageCaptcha) Verify(ctx context.Context, id, answer string) bool {
-	return impl.capt.Verify(id, stringx.ToLowerCamel(answer), false)
+	return impl.capt.Verify(id, strings.ToLower(answer), false)
 }

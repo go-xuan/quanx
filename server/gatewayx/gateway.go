@@ -13,7 +13,7 @@ var Gateway = &Servers{}
 
 type Servers []*Server
 
-func (s *Servers) Title() string {
+func (s *Servers) name() string {
 	return "gateway"
 }
 
@@ -25,7 +25,7 @@ func (s *Servers) Reader() *configx.Reader {
 	}
 }
 
-func (s *Servers) Run() error {
+func (s *Servers) Execute() error {
 	return nil
 }
 

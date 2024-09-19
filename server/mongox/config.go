@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
 type Mongo struct {
@@ -20,17 +21,14 @@ type Mongo struct {
 	Database string `json:"database" yaml:"database"` // 数据库名
 }
 
-// Info 配置信息格式化
-func (m *Mongo) Info() string {
-	return fmt.Sprintf("host=%s port=%d database=%s", m.Host, m.Port, m.Database)
+func (m *Mongo) Format() string {
+	return fmtx.Yellow.XSPrintf("host=%s port=%v database=%s", m.Host, m.Port, m.Database)
 }
 
-// Title 配置器标题
-func (m *Mongo) Title() string {
-	return "Mongo"
+func (m *Mongo) ID() string {
+	return "mongo"
 }
 
-// Reader 配置文件读取
 func (*Mongo) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "mongo.yaml",
@@ -39,14 +37,13 @@ func (*Mongo) Reader() *configx.Reader {
 	}
 }
 
-// Run 配置器运行
-func (m *Mongo) Run() error {
+func (m *Mongo) Execute() error {
 	if client, err := m.NewClient(); err != nil {
-		log.Error("Mongo Connect Failed: ", m.Info(), err)
-		return errorx.Wrap(err, "NewClient error")
+		log.Error("mongo connect failed: ", m.Format(), err)
+		return errorx.Wrap(err, "new mongo client error")
 	} else {
 		handler = &Handler{config: m, client: client}
-		log.Info("Mongo Connect Successful: ", m.Info())
+		log.Info("mongo connect successfully: ", m.Format())
 		return nil
 	}
 }
@@ -55,7 +52,6 @@ func (m *Mongo) Uri() string {
 	return fmt.Sprintf("mongodb://%s:%s@%s", m.Username, m.Password, m.Host)
 }
 
-// NewClient 配置信息格式化
 func (m *Mongo) NewClient() (client *mongo.Client, err error) {
 	// 设置连接选项
 	clientOptions := options.Client().ApplyURI(m.Uri())

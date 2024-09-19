@@ -1,12 +1,11 @@
 package emailx
 
 import (
-	"fmt"
-
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
 
 	"github.com/go-xuan/quanx/app/configx"
+	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
 // Email 邮件服务器配置
@@ -21,17 +20,14 @@ func (e *Email) newDialer() *gomail.Dialer {
 	return gomail.NewDialer(e.Host, e.Port, e.Username, e.Password)
 }
 
-// Info 配置信息格式化
-func (e *Email) Info() string {
-	return fmt.Sprintf("host=%s port=%d username=%s password=%s", e.Host, e.Port, e.Username, e.Password)
+func (e *Email) Format() string {
+	return fmtx.Yellow.XSPrintf("host=%s port=%v username=%s password=%s", e.Host, e.Port, e.Username, e.Password)
 }
 
-// Title 配置器标题
-func (*Email) Title() string {
-	return "Email Server"
+func (*Email) ID() string {
+	return "email-server"
 }
 
-// Reader 配置文件读取
 func (*Email) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "mail.yaml",
@@ -40,9 +36,8 @@ func (*Email) Reader() *configx.Reader {
 	}
 }
 
-// Run 配置器运行
-func (e *Email) Run() error {
+func (e *Email) Execute() error {
 	handler = &Handler{config: e, dialer: e.newDialer()}
-	log.Info("email-server init successful: ", e.Info())
+	log.Info("email-server init successfully: ", e.Format())
 	return nil
 }

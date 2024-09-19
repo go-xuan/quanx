@@ -1,19 +1,20 @@
 package logx
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/go-xuan/quanx/app/configx"
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/os/filex"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/intx"
+	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
 // 日志级别
@@ -51,18 +52,15 @@ type Log struct {
 	Backups    int    `json:"backups" yaml:"backups" default:"10"`                            // 日志备份数
 }
 
-// Info 配置信息格式化
-func (l *Log) Info() string {
-	return fmt.Sprintf("logPath=%s level=%s output=%s maxSize=%d maxAge=%d backups=%d",
+func (*Log) ID() string {
+	return "log"
+}
+
+func (l *Log) Format() string {
+	return fmtx.Yellow.XSPrintf("logPath=%s level=%s output=%s maxSize=%v maxAge=%v backups=%v",
 		l.LogPath(), l.Level, l.Output, l.MaxSize, l.MaxAge, l.Backups)
 }
 
-// Title 配置器标题
-func (*Log) Title() string {
-	return "Log"
-}
-
-// Reader 配置文件读取
 func (*Log) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "log.yaml",
@@ -70,18 +68,16 @@ func (*Log) Reader() *configx.Reader {
 	}
 }
 
-// Run 配置器运行
-func (l *Log) Run() error {
+func (l *Log) Execute() error {
 	if err := anyx.SetDefaultValue(l); err != nil {
-		return err
+		return errorx.Wrap(err, "set default value error")
 	}
 	filex.CreateDir(l.Dir)
 	var writer, formatter = l.Writer(), l.Formatter()
-	logrus.AddHook(NewHook(writer, formatter))
-	logrus.SetFormatter(formatter)
-	logrus.SetLevel(l.GetLevel())
-	logrus.SetReportCaller(l.Caller)
-	logrus.Info("Log Init Successful: ", l.Info())
+	log.AddHook(NewHook(writer, formatter))
+	log.SetFormatter(formatter)
+	log.SetLevel(l.GetLevel())
+	log.SetReportCaller(l.Caller)
 	return nil
 }
 
@@ -89,7 +85,7 @@ func (l *Log) LogPath() string {
 	return filepath.Join(l.Dir, l.FileName)
 }
 
-func (l *Log) Formatter() logrus.Formatter {
+func (l *Log) Formatter() log.Formatter {
 	host, _ := os.Hostname()
 	return &LogFormatter{timeFormat: l.TimeFormat, host: host, Output: l.Output, useColor: l.UseColor}
 }
@@ -114,33 +110,33 @@ func (l *Log) Writer() io.Writer {
 }
 
 // GetLevel 日志级别映射，默认debug
-func (l *Log) GetLevel() logrus.Level {
+func (l *Log) GetLevel() log.Level {
 	switch strings.ToLower(l.Level) {
 	case TraceLevel:
-		return logrus.TraceLevel
+		return log.TraceLevel
 	case DebugLevel:
-		return logrus.DebugLevel
+		return log.DebugLevel
 	case InfoLevel:
-		return logrus.InfoLevel
+		return log.InfoLevel
 	case ErrorLevel:
-		return logrus.ErrorLevel
+		return log.ErrorLevel
 	case FatalLevel:
-		return logrus.FatalLevel
+		return log.FatalLevel
 	case PanicLevel:
-		return logrus.PanicLevel
+		return log.PanicLevel
 	default:
-		return logrus.DebugLevel
+		return log.DebugLevel
 	}
 }
 
-func AllLevels() []logrus.Level {
-	return []logrus.Level{
-		logrus.TraceLevel,
-		logrus.DebugLevel,
-		logrus.InfoLevel,
-		logrus.WarnLevel,
-		logrus.ErrorLevel,
-		logrus.FatalLevel,
-		logrus.PanicLevel,
+func AllLevels() []log.Level {
+	return []log.Level{
+		log.TraceLevel,
+		log.DebugLevel,
+		log.InfoLevel,
+		log.WarnLevel,
+		log.ErrorLevel,
+		log.FatalLevel,
+		log.PanicLevel,
 	}
 }

@@ -26,10 +26,10 @@ func (p *Parser) Help() {
 	fmt.Println()
 	fmt.Println("ALL OPTIONS：")
 	for _, name := range p.names {
-		fmt.Printf("options of [%s]:\n", fmtx.Cyan.String(name))
+		fmt.Printf("OPTIONS OF [%s]:\n", fmtx.Cyan.String(name))
 		for _, optName := range p.commands[name].optNames {
 			option := p.commands[name].options[optName]
-			fmt.Printf("%-50s %s\n", fmtx.Green.String("-"+option.Name()), option.Usage())
+			fmt.Printf("%-50s %s\n", fmtx.Magenta.String("-"+option.Name()), option.Usage())
 		}
 		fmt.Println()
 	}
@@ -41,7 +41,7 @@ func Execute() error {
 		return errorx.New("please use AddCommand() to add the command first")
 	}
 	if args := os.Args; len(args) > 1 {
-		var name = args[1]
+		var name = strings.ToLower(args[1])
 		if command, exist := parser.commands[name]; exist {
 			if err := command.FlagSet().Parse(args[2:]); err != nil {
 				return errorx.Wrap(err, "failed to parse command args")

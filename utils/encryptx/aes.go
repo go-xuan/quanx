@@ -3,7 +3,7 @@ package encryptx
 import (
 	"crypto/aes"
 	"crypto/cipher"
-
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/utils/randx"
 )
 
@@ -27,26 +27,34 @@ type Aes struct {
 func AES() *Aes {
 	if _aes == nil {
 		var err error
-		if _aes, err = NewAes(); err != nil {
+		var key = []byte(randx.String(aes.BlockSize))
+		var iv = []byte(randx.String(aes.BlockSize))
+		if _aes, err = NewAes(key, iv); err != nil {
 			panic(err)
 		}
 	}
 	return _aes
 }
 
-func NewAes(secretKey ...string) (*Aes, error) {
-	var key []byte
-	if len(secretKey) > 0 {
-		key = []byte(secretKey[0])
-	} else {
-		key = []byte(randx.String(aes.BlockSize))
-	}
+func NewAes(key, iv []byte) (*Aes, error) {
 	if block, err := aes.NewCipher(key); err != nil {
-		return nil, err
+		return nil, errorx.Wrap(err, "new cipher error")
+	} else if len(iv) != aes.BlockSize {
+		return nil, errorx.New("iv length must be equal to the block size")
 	} else {
-		var iv = []byte(randx.String(block.BlockSize()))
 		return &Aes{mode: CBC, block: block, key: key, iv: iv}, nil
 	}
+}
+
+func addPadding(text []byte) []byte {
+	if len(text)%16 == 0 {
+		return text
+	}
+	padding := 16 - (len(text) % 16)
+	for i := 0; i < padding; i++ {
+		text = append(text, byte(padding))
+	}
+	return text
 }
 
 // Mode 加密模式
@@ -57,13 +65,14 @@ func (a *Aes) Mode(m mode) *Aes {
 
 // Encrypt 加密
 func (a *Aes) Encrypt(plaintext []byte) []byte {
+	plaintext = addPadding(plaintext)
 	switch a.mode {
 	case CBC:
-		return a.EncryptCBC(plaintext)
+		return a.encryptCBC(plaintext)
 	case CFB:
-		return a.EncryptCFB(plaintext)
+		return a.encryptCFB(plaintext)
 	case ECB:
-		return a.EncryptECB(plaintext)
+		return a.encryptECB(plaintext)
 	}
 	return nil
 }
@@ -72,53 +81,53 @@ func (a *Aes) Encrypt(plaintext []byte) []byte {
 func (a *Aes) Decrypt(ciphertext []byte) []byte {
 	switch a.mode {
 	case CBC:
-		return a.DecryptCBC(ciphertext)
+		return a.decryptCBC(ciphertext)
 	case CFB:
-		return a.DecryptCFB(ciphertext)
+		return a.decryptCFB(ciphertext)
 	case ECB:
-		return a.DecryptECB(ciphertext)
+		return a.decryptECB(ciphertext)
 	}
 	return nil
 }
 
-// EncryptCBC CBC加密
-func (a *Aes) EncryptCBC(plaintext []byte) []byte {
-	var ciphertext []byte
+// encryptCBC CBC加密
+func (a *Aes) encryptCBC(plaintext []byte) []byte {
+	var ciphertext = make([]byte, len(plaintext))
 	cipher.NewCBCEncrypter(a.block, a.iv).CryptBlocks(ciphertext, plaintext)
 	return ciphertext
 }
 
-// DecryptCBC CBC解密
-func (a *Aes) DecryptCBC(ciphertext []byte) []byte {
-	var plaintext []byte
+// decryptCBC CBC解密
+func (a *Aes) decryptCBC(ciphertext []byte) []byte {
+	var plaintext = make([]byte, len(ciphertext))
 	cipher.NewCBCDecrypter(a.block, a.iv).CryptBlocks(plaintext, ciphertext)
 	return plaintext
 }
 
-// EncryptCFB CBC加密
-func (a *Aes) EncryptCFB(plaintext []byte) []byte {
-	var ciphertext []byte
+// encryptCFB CBC加密
+func (a *Aes) encryptCFB(plaintext []byte) []byte {
+	var ciphertext = make([]byte, len(plaintext))
 	cipher.NewCFBEncrypter(a.block, a.iv).XORKeyStream(ciphertext, plaintext)
 	return ciphertext
 }
 
-// DecryptCFB CBC解密
-func (a *Aes) DecryptCFB(ciphertext []byte) []byte {
-	var plaintext []byte
+// decryptCFB CBC解密
+func (a *Aes) decryptCFB(ciphertext []byte) []byte {
+	var plaintext = make([]byte, len(ciphertext))
 	cipher.NewCFBDecrypter(a.block, a.iv).XORKeyStream(plaintext, ciphertext)
 	return plaintext
 }
 
-// EncryptECB ECB加密
-func (a *Aes) EncryptECB(plaintext []byte) []byte {
-	var ciphertext []byte
+// encryptECB ECB加密
+func (a *Aes) encryptECB(plaintext []byte) []byte {
+	var ciphertext = make([]byte, len(plaintext))
 	a.block.Encrypt(ciphertext, plaintext)
 	return ciphertext
 }
 
-// DecryptECB ECB解密
-func (a *Aes) DecryptECB(ciphertext []byte) []byte {
-	var plaintext []byte
+// decryptECB ECB解密
+func (a *Aes) decryptECB(ciphertext []byte) []byte {
+	var plaintext = make([]byte, len(ciphertext))
 	a.block.Encrypt(plaintext, ciphertext)
 	return plaintext
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/go-xuan/quanx/server/redisx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/fmtx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
@@ -27,7 +28,8 @@ import (
 type Mode uint
 
 const (
-	NonGin        Mode = iota // 非gin项目
+	Debug         Mode = iota // debug模式
+	NonGin                    // 非gin项目
 	EnableNacos               // 启用nacos
 	MultiDatabase             // 开启多数据源
 	MultiRedis                // 开启多redis源
@@ -38,11 +40,11 @@ const (
 
 // Init Queue Function Department
 const (
-	LoadingConfig    = "loading_config"    // 加载配置文件
-	InitServerBasic  = "init_server_basic" // 初始化服务基础组件（log/nacos/gorm/redis/cache）
-	RunConfigurators = "run_configurators" // 运行自定义配置器
-	RunCustomFuncs   = "run_custom_funcs"  // 运行自定义函数
-	StartServer      = "start_server"      // 服务启动
+	LoadingConfig        = "loading_config"        // 加载配置文件
+	InitServerBasic      = "init_server_basic"     // 初始化服务基础组件（log/nacos/gorm/redis/cache）
+	ExecuteConfigurators = "execute_configurators" // 运行自定义配置器
+	RunCustomFuncs       = "run_custom_funcs"      // 运行自定义函数
+	StartServer          = "start_server"          // 服务启动
 )
 
 var engine *Engine
@@ -95,11 +97,11 @@ func NewEngine(modes ...Mode) *Engine {
 	// 设置服务启动队列
 	if engine.mode[UseQueue] {
 		queue := taskx.Queue()
-		queue.Add(LoadingConfig, engine.loadingAppConfig)    // 1.加载服务配置文件
-		queue.Add(InitServerBasic, engine.initAppBasic)      // 2.初始化服务基础组件（log/nacos/gorm/redis/cache）
-		queue.Add(RunConfigurators, engine.runConfigurators) // 3.运行自定义配置器
-		queue.Add(RunCustomFuncs, engine.runCustomFuncs)     // 4.运行自定义函数
-		queue.Add(StartServer, engine.startServer)           // 5.服务启动
+		queue.Add(LoadingConfig, engine.loadingAppConfig)            // 1.加载服务配置文件
+		queue.Add(InitServerBasic, engine.initAppBasic)              // 2.初始化服务基础组件（log/nacos/gorm/redis/cache）
+		queue.Add(ExecuteConfigurators, engine.executeConfigurators) // 3.运行自定义配置器
+		queue.Add(RunCustomFuncs, engine.runCustomFuncs)             // 4.运行自定义函数
+		queue.Add(StartServer, engine.startServer)                   // 5.服务启动
 		engine.queue = queue
 	}
 	return engine
@@ -110,18 +112,18 @@ func (e *Engine) RUN() {
 	if engine.mode[UseQueue] { // 任务队列方式启动
 		engine.queue.Execute()
 	} else { // 默认方式启动
-		syncx.OnceDo(e.loadingAppConfig) // 1.加载服务配置文件
-		syncx.OnceDo(e.initAppBasic)     // 2.初始化服务基础组件（log/nacos/gorm/redis/cache）
-		syncx.OnceDo(e.runConfigurators) // 3.运行自定义配置器
-		syncx.OnceDo(e.runCustomFuncs)   // 4.运行自定义函数
-		syncx.OnceDo(e.startServer)      // 5.服务启动
+		syncx.OnceDo(e.loadingAppConfig)     // 1.加载服务配置文件
+		syncx.OnceDo(e.initAppBasic)         // 2.初始化服务基础组件（log/nacos/gorm/redis/cache）
+		syncx.OnceDo(e.executeConfigurators) // 3.运行自定义配置器
+		syncx.OnceDo(e.runCustomFuncs)       // 4.运行自定义函数
+		syncx.OnceDo(e.startServer)          // 5.服务启动
 	}
 	e.mode[Running] = true
 }
 
 func (e *Engine) checkRunning() {
 	if engine.mode[Running] {
-		panic("Engine has already running")
+		panic("engine has already running")
 	}
 }
 
@@ -141,7 +143,7 @@ func (e *Engine) loadingAppConfig() {
 	}
 	// 从nacos加载配置
 	if e.mode[EnableNacos] && config.Nacos != nil {
-		e.RunConfigurator(config.Nacos, true)
+		e.ExecuteConfigurator(config.Nacos, true)
 		if config.Nacos.EnableNaming() {
 			// 注册nacos服务Nacos
 			if err := config.Nacos.Register(config.Server.Instance()); err != nil {
@@ -157,15 +159,15 @@ func (e *Engine) initAppBasic() {
 	e.checkRunning()
 	// 初始化日志
 	var serverName = stringx.IfZero(e.config.Server.Name, "app")
-	e.RunConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
+	e.ExecuteConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
 
 	// 初始化数据库连接
 	if e.mode[MultiDatabase] {
 		e.config.Database = anyx.IfZero(e.config.Database, &gormx.MultiDB{})
-		e.RunConfigurator(e.config.Database)
+		e.ExecuteConfigurator(e.config.Database)
 	} else {
 		var db = &gormx.DB{}
-		e.RunConfigurator(db)
+		e.ExecuteConfigurator(db)
 		e.config.Database = &gormx.MultiDB{db}
 	}
 
@@ -184,10 +186,10 @@ func (e *Engine) initAppBasic() {
 	// 初始化redis连接
 	if e.mode[MultiRedis] {
 		e.config.Redis = anyx.IfZero(e.config.Redis, &redisx.MultiRedis{})
-		e.RunConfigurator(e.config.Redis)
+		e.ExecuteConfigurator(e.config.Redis)
 	} else {
 		var redis = &redisx.Redis{}
-		e.RunConfigurator(redis)
+		e.ExecuteConfigurator(redis)
 		e.config.Redis = &redisx.MultiRedis{redis}
 	}
 
@@ -195,20 +197,20 @@ func (e *Engine) initAppBasic() {
 	if redisx.Initialized() {
 		if e.mode[MultiCache] {
 			e.config.Cache = anyx.IfZero(e.config.Cache, &cachex.MultiCache{})
-			e.RunConfigurator(e.config.Cache)
+			e.ExecuteConfigurator(e.config.Cache)
 		} else {
 			var cache = &cachex.Cache{}
-			e.RunConfigurator(cache, true)
+			e.ExecuteConfigurator(cache, true)
 			e.config.Cache = &cachex.MultiCache{cache}
 		}
 	}
 }
 
 // 运行自定义配置器
-func (e *Engine) runConfigurators() {
+func (e *Engine) executeConfigurators() {
 	e.checkRunning()
-	for _, config := range e.configurators {
-		e.RunConfigurator(config)
+	for _, configurator := range e.configurators {
+		e.ExecuteConfigurator(configurator)
 	}
 }
 
@@ -225,7 +227,7 @@ func (e *Engine) startServer() {
 	e.checkRunning()
 	if !e.mode[NonGin] {
 		defer PanicRecover()
-		if e.config.Server.Debug {
+		if e.mode[Debug] {
 			gin.SetMode(gin.DebugMode)
 		}
 		if e.ginEngine == nil {
@@ -239,7 +241,7 @@ func (e *Engine) startServer() {
 		e.InitGinLoader(group)
 		log.Info("API接口请求地址: " + e.config.Server.ApiHost())
 		if err := e.ginEngine.Run(":" + strconv.Itoa(e.config.Server.Port)); err != nil {
-			log.Error("gin-Engine run failed ")
+			log.Error("gin run failed ")
 			panic(err)
 		}
 	}
@@ -261,8 +263,8 @@ func (e *Engine) AddConfigurator(configurators ...configx.Configurator) {
 	}
 }
 
-// RunConfigurator 运行配置器
-func (e *Engine) RunConfigurator(configurator configx.Configurator, must ...bool) {
+// ExecuteConfigurator 运行配置器
+func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...bool) {
 	e.checkRunning()
 	var mustRun = anyx.Default(false, must...)
 	if reader := configurator.Reader(); reader != nil {
@@ -278,7 +280,18 @@ func (e *Engine) RunConfigurator(configurator configx.Configurator, must ...bool
 		}
 	}
 	if mustRun {
-		configx.RunConfigurator(configurator)
+		var entity = log.WithField("configurator", configurator.ID())
+		if err := configx.Execute(configurator); err != nil {
+			if e.mode[Debug] {
+				entity.Info("configurator data: ", configurator.Format())
+			}
+			entity.Error(fmtx.Red.String("configurator execute failed!"))
+			panic(err)
+		}
+		if e.mode[Debug] {
+			entity.Info("configurator data: ", configurator.Format())
+		}
+		entity.Info(fmtx.Green.String("configurator execute success!"))
 	}
 }
 
@@ -371,11 +384,11 @@ func (e *Engine) InitGinLoader(group *gin.RouterGroup) {
 func (e *Engine) AddQueueTask(name string, task func()) {
 	e.checkRunning()
 	if name == "" {
-		log.Error(`Add Queue Task Failed, Cause: the name is required`)
+		log.Error(`add queue task failed, cause: the name is required`)
 	} else {
 		e.mode[UseQueue] = true
 		e.queue.AddBefore(name, task, StartServer)
-		log.Info(`Add Queue Task Successful, task name:`, name)
+		log.Info(`add queue task successfully, task name:`, name)
 	}
 	return
 }

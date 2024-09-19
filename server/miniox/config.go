@@ -14,6 +14,7 @@ import (
 	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/timex"
+	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
 type Minio struct {
@@ -28,17 +29,14 @@ type Minio struct {
 	Expire       int64  `yaml:"expire" json:"expire"`             // 下载链接有效时长(分钟)
 }
 
-// Info 配置信息格式化
-func (m *Minio) Info() string {
-	return fmt.Sprintf("host=%s port=%d accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
+func (*Minio) ID() string {
+	return "minio"
 }
 
-// Title 配置器标题
-func (*Minio) Title() string {
-	return "Minio"
+func (m *Minio) Format() string {
+	return fmtx.Yellow.XSPrintf("host=%s port=%v accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
 }
 
-// Reader 配置文件读取
 func (*Minio) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "minio.yaml",
@@ -47,19 +45,17 @@ func (*Minio) Reader() *configx.Reader {
 	}
 }
 
-// Run 配置器运行
-func (m *Minio) Run() error {
+func (m *Minio) Execute() error {
 	if client, err := m.NewClient(); err != nil {
-		log.Error("minio connect failed: ", m.Info(), err)
-		return errorx.Wrap(err, "NewClient failed")
+		log.Error("minio connect failed: ", m.Format(), err)
+		return errorx.Wrap(err, "new minio client failed")
 	} else {
 		handler = &Handler{config: m, client: client}
-		log.Info("minio connect successful: ", m.Info())
+		log.Info("minio connect successfully: ", m.Format())
 		return nil
 	}
 }
 
-// Endpoint 配置信息格式化
 func (m *Minio) Endpoint() string {
 	return fmt.Sprintf("%s:%d", m.Host, m.Port)
 }

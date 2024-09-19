@@ -15,8 +15,8 @@ type Handler struct {
 	multi     bool // 是否多redis数据库
 	config    *Redis
 	configMap map[string]*Redis
-	client    *redis.UniversalClient
-	clientMap map[string]*redis.UniversalClient
+	client    redis.UniversalClient
+	clientMap map[string]redis.UniversalClient
 }
 
 func This() *Handler {
@@ -35,7 +35,7 @@ func Initialized() bool {
 }
 
 func Ping(client redis.UniversalClient) (bool, error) {
-	if _, err := client.Ping(context.Background()).Result(); err != nil {
+	if result, err := client.Ping(context.Background()).Result(); err != nil || result != "PONG" {
 		return false, err
 	} else {
 		return true, nil
@@ -45,10 +45,10 @@ func Ping(client redis.UniversalClient) (bool, error) {
 func (h *Handler) GetClient(source ...string) redis.UniversalClient {
 	if len(source) > 0 && source[0] != constx.DefaultKey {
 		if client, ok := h.clientMap[source[0]]; ok {
-			return *client
+			return client
 		}
 	}
-	return *h.client
+	return h.client
 }
 
 func (h *Handler) GetConfig(source ...string) *Redis {

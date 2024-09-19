@@ -1,6 +1,7 @@
 package gormx
 
 import (
+	"github.com/go-xuan/quanx/os/errorx"
 	"gorm.io/gorm"
 
 	"github.com/go-xuan/quanx/app/constx"
@@ -23,6 +24,24 @@ func GetConfig(source ...string) *DB {
 
 func GetDB(source ...string) *gorm.DB {
 	return This().GetDB(source...)
+}
+
+func CloseDB(source ...string) error {
+	if sqlDB, err := GetDB(source...).DB(); err != nil {
+		return errorx.Wrap(err, "获取*sql.DB连接失败")
+	} else if err = sqlDB.Close(); err != nil {
+		return errorx.Wrap(err, "关闭*sql.DB连接失败")
+	}
+	return nil
+}
+
+func Close(db *gorm.DB) error {
+	if sqlDB, err := db.DB(); err != nil {
+		return errorx.Wrap(err, "获取*sql.DB连接失败")
+	} else if err = sqlDB.Close(); err != nil {
+		return errorx.Wrap(err, "关闭*sql.DB连接失败")
+	}
+	return nil
 }
 
 func This() *Handler {

@@ -11,7 +11,7 @@ var handler *Handler
 // Handler hugegraph处理器
 type Handler struct {
 	config     *Hugegraph // hugegraph配置
-	gremlinUrl string     // Gremlin查询接口URL
+	gremlinUrl string     // gremlin查询接口URL
 	schemaUrl  string     // schema操作接口URL
 }
 

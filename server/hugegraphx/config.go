@@ -36,17 +36,14 @@ type Hugegraph struct {
 	Graph string `json:"graph" yaml:"graph" nacos:"hugegraph.graph"` // 图名称
 }
 
-// Info 配置信息格式化
-func (h *Hugegraph) Info() string {
+func (*Hugegraph) ID() string {
+	return "hugegraph"
+}
+
+func (h *Hugegraph) Format() string {
 	return fmt.Sprintf("host=%s port=%d graph=%s", h.Host, h.Port, h.Graph)
 }
 
-// Title 配置器标题
-func (*Hugegraph) Title() string {
-	return "Hugegraph"
-}
-
-// Reader 配置文件读取
 func (*Hugegraph) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "hugegraph.yaml",
@@ -55,14 +52,16 @@ func (*Hugegraph) Reader() *configx.Reader {
 	}
 }
 
-// Run 配置器运行
-func (h *Hugegraph) Run() error {
+func (h *Hugegraph) Execute() error {
 	if h.Host != "" && handler == nil {
 		if h.Ping() {
-			handler = &Handler{config: h, gremlinUrl: h.GremlinUrl(), schemaUrl: h.SchemaUrl()}
-			log.Info("hugegraph connect successful: ", h.Info())
+			handler = &Handler{
+				config:     h,
+				gremlinUrl: h.GremlinUrl(),
+				schemaUrl:  h.SchemaUrl()}
+			log.Info("hugegraph connect successfully: ", h.Format())
 		} else {
-			log.Error("hugegraph connect failed: ", h.Info())
+			log.Error("hugegraph connect failed: ", h.Format())
 		}
 	}
 	return nil

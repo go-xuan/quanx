@@ -7,11 +7,13 @@ import (
 	"encoding/pem"
 	"os"
 	"path/filepath"
-	"strings"
+
+	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/filex"
 )
 
 const (
-	defaultDir    = "resource/pem"
+	defaultDir    = "rsa"
 	privateKeyPem = "rsa-private.pem"
 	publicKeyPem  = "rsa-public.pem"
 )
@@ -44,53 +46,52 @@ func RSA() *Rsa {
 // Encrypt 公钥加密
 func (m *Rsa) Encrypt(plaintext string) (string, error) {
 	if ciphertext, err := rsa.EncryptPKCS1v15(rand.Reader, &m.privateKey.PublicKey, []byte(plaintext)); err != nil {
-		return "", err
+		return "", errorx.Wrap(err, "pkcs1v15 encrypt error")
 	} else {
-		return EncodeBase64(ciphertext, true), nil
+		return Base64Encode(ciphertext, true), nil
 	}
 }
 
 // Decrypt 私钥解密
 func (m *Rsa) Decrypt(ciphertext string) (string, error) {
-	var err error
-	var base64 []byte
-	if base64, err = DecodeBase64(ciphertext, true); err != nil {
-		return "", err
+	if base64, err := Base64Decode(ciphertext, true); err != nil {
+		return "", errorx.Wrap(err, "base64 decode error")
+	} else {
+		var plaintext []byte
+		if plaintext, err = rsa.DecryptPKCS1v15(rand.Reader, m.privateKey, base64); err != nil {
+			return "", errorx.Wrap(err, "pkcs1v15 decrypt error")
+		}
+		return string(plaintext), nil
 	}
-	var plaintext []byte
-	if plaintext, err = rsa.DecryptPKCS1v15(rand.Reader, m.privateKey, base64); err != nil {
-		return "", err
-	}
-	return string(plaintext), nil
 }
 
 // 自动生成密钥对并保存到文件
-func newRSA(path string) (*Rsa, error) {
-	priPath, pubPath := filepath.Join(path, privateKeyPem), filepath.Join(path, publicKeyPem)
-	if Exists(priPath) && Exists(pubPath) {
-		var priBytes = PemDecode(priPath)
+func newRSA(dir string) (*Rsa, error) {
+	priPath, pubPath := filepath.Join(dir, privateKeyPem), filepath.Join(dir, publicKeyPem)
+	if filex.Exists(priPath) && filex.Exists(pubPath) {
+		var priBytes = pemDecode(priPath)
 		if privateKey, err := x509.ParsePKCS1PrivateKey(priBytes); err != nil {
-			return nil, err
+			return nil, errorx.Wrap(err, "pkcs1v15 private key parse error")
 		} else {
 			return &Rsa{
 				privateKey:  privateKey,
 				privatePath: priPath,
 				privateData: priBytes,
 				publicPath:  pubPath,
-				publicData:  PemDecode(pubPath),
+				publicData:  pemDecode(pubPath),
 			}, nil
 		}
 	} else {
 		// 先确保文件夹存在
-		CreateDir(path)
+		filex.CreateDir(dir)
 		// 生成私钥
 		if privateKey, priBytes, err := NewRSAPrivateKey(priPath); err != nil {
-			return nil, err
+			return nil, errorx.Wrap(err, "new rsa private key error")
 		} else {
 			// 根据私钥生成公钥
 			var pubBytes []byte
 			if pubBytes, err = NewRSAPublicKey(pubPath, &privateKey.PublicKey); err != nil {
-				return nil, err
+				return nil, errorx.Wrap(err, "new rsa public key error")
 			}
 			return &Rsa{
 				privateKey:  privateKey,
@@ -103,29 +104,8 @@ func newRSA(path string) (*Rsa, error) {
 	}
 }
 
-func Exists(path string) bool {
-	if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
-// CreateDir 创建文件夹
-func CreateDir(path string) {
-	if !Exists(path) {
-		dir, file := filepath.Split(path)
-		if !strings.Contains(file, ".") {
-			dir = filepath.Join(dir, file)
-		}
-		// 先创建文件夹
-		_ = os.MkdirAll(dir, os.ModePerm)
-		// 再修改权限
-		_ = os.Chmod(dir, os.ModePerm)
-	}
-}
-
-// PemDecode pem解码
-func PemDecode(path string) []byte {
+// pemDecode pem解码
+func pemDecode(path string) []byte {
 	if data, err := os.ReadFile(path); err == nil {
 		if block, _ := pem.Decode(data); block != nil {
 			return block.Bytes
@@ -174,17 +154,17 @@ func NewRSAPublicKey(path string, key *rsa.PublicKey) ([]byte, error) {
 }
 
 // RsaEncrypt RSA加密
-func RsaEncrypt(plaintext []byte, path string) ([]byte, error) {
-	if publicKey, err := x509.ParsePKCS1PublicKey(PemDecode(path)); err != nil {
-		return nil, err
+func RsaEncrypt(plaintext []byte, pubPem string) ([]byte, error) {
+	if publicKey, err := x509.ParsePKCS1PublicKey(pemDecode(pubPem)); err != nil {
+		return nil, errorx.Wrap(err, "pkcs1 public key parse error")
 	} else {
 		return rsa.EncryptPKCS1v15(rand.Reader, publicKey, plaintext)
 	}
 }
 
 // RsaDecrypt RSA解密
-func RsaDecrypt(ciphertext []byte, path string) ([]byte, error) {
-	if privateKey, err := x509.ParsePKCS1PrivateKey(PemDecode(path)); err != nil {
+func RsaDecrypt(ciphertext []byte, priPem string) ([]byte, error) {
+	if privateKey, err := x509.ParsePKCS1PrivateKey(pemDecode(priPem)); err != nil {
 		return nil, err
 	} else {
 		return rsa.DecryptPKCS1v15(rand.Reader, privateKey, ciphertext)
@@ -192,8 +172,8 @@ func RsaDecrypt(ciphertext []byte, path string) ([]byte, error) {
 }
 
 // RsaEncryptPKIX RSA加密(PKIX)
-func RsaEncryptPKIX(plaintext []byte, path string) ([]byte, error) {
-	if publicKey, err := x509.ParsePKIXPublicKey(PemDecode(path)); err != nil {
+func RsaEncryptPKIX(plaintext []byte, pubPem string) ([]byte, error) {
+	if publicKey, err := x509.ParsePKIXPublicKey(pemDecode(pubPem)); err != nil {
 		return nil, err
 	} else {
 		return rsa.EncryptPKCS1v15(rand.Reader, publicKey.(*rsa.PublicKey), plaintext)
@@ -201,8 +181,8 @@ func RsaEncryptPKIX(plaintext []byte, path string) ([]byte, error) {
 }
 
 // RsaDecryptPKIX RSA解密(PKIX)
-func RsaDecryptPKIX(ciphertext []byte, path string) ([]byte, error) {
-	if privateKey, err := x509.ParsePKCS8PrivateKey(PemDecode(path)); err != nil {
+func RsaDecryptPKIX(ciphertext []byte, priPem string) ([]byte, error) {
+	if privateKey, err := x509.ParsePKCS8PrivateKey(pemDecode(priPem)); err != nil {
 		return nil, err
 	} else {
 		return rsa.DecryptPKCS1v15(rand.Reader, privateKey.(*rsa.PrivateKey), ciphertext)

@@ -1,7 +1,6 @@
 package nacosx
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -12,10 +11,11 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/model"
 	"github.com/nacos-group/nacos-sdk-go/vo"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/app/configx"
 	"github.com/go-xuan/quanx/types/stringx"
-	log "github.com/sirupsen/logrus"
+	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
 const (
@@ -33,24 +33,20 @@ type Nacos struct {
 	Mode      int    `yaml:"mode" json:"mode" default:"2"`                // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 }
 
-// Info 配置信息格式化
-func (n *Nacos) Info() string {
-	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%d",
+func (n *Nacos) ID() string {
+	return "nacos"
+}
+
+func (n *Nacos) Format() string {
+	return fmtx.Yellow.XSPrintf("address=%s username=%s password=%s nameSpace=%s mode=%v",
 		n.AddressUrl(), n.Username, n.Password, n.NameSpace, n.Mode)
 }
 
-// Title 配置器标题
-func (n *Nacos) Title() string {
-	return "Nacos"
-}
-
-// Reader 配置文件读取
 func (*Nacos) Reader() *configx.Reader {
 	return nil
 }
 
-// Run 配置器运行
-func (n *Nacos) Run() (err error) {
+func (n *Nacos) Execute() (err error) {
 	if handler == nil {
 		handler = &Handler{Config: n}
 		switch n.Mode {
@@ -72,7 +68,7 @@ func (n *Nacos) Run() (err error) {
 			}
 		}
 	}
-	log.Info("Nacos Connect Successful: ", n.Info())
+	log.Info("nacos connect successfully: ", n.Format())
 	return
 }
 
@@ -129,7 +125,7 @@ func (n *Nacos) ClientParam() vo.NacosClientParam {
 // ConfigClient 初始化Nacos配置中心客户端
 func (n *Nacos) ConfigClient(param vo.NacosClientParam) (client config_client.IConfigClient, err error) {
 	if client, err = clients.NewConfigClient(param); err != nil {
-		log.Error("Nacos Config Client Init Failed: ", n.Info())
+		log.Error("Nacos Config Client Init Failed: ", n.Format())
 		log.Error(err)
 		return
 	}
@@ -139,7 +135,7 @@ func (n *Nacos) ConfigClient(param vo.NacosClientParam) (client config_client.IC
 // NamingClient 初始化Nacos服务发现客户端
 func (n *Nacos) NamingClient(param vo.NacosClientParam) (client naming_client.INamingClient, err error) {
 	if client, err = clients.NewNamingClient(param); err != nil {
-		log.Error("Nacos Naming Client Init Failed: ", n.Info(), err)
+		log.Error("Nacos Naming Client Init Failed: ", n.Format(), err)
 		return
 	}
 	return
@@ -164,9 +160,9 @@ func (n *Nacos) Register(server ServerInstance) (err error) {
 		Ephemeral:   true,
 		Metadata:    nil,
 	}); err != nil {
-		log.Error("Nacos Server Register Failed: ", server.Info(), err)
+		log.Error("nacos server register Failed: ", server.Info(), err)
 	} else {
-		log.Info("Nacos Server Register Successful: ", server.Info())
+		log.Info("Nacos server register successfully: ", server.Info())
 	}
 	return
 }
@@ -185,9 +181,9 @@ func (n *Nacos) Deregister(server ServerInstance) (err error) {
 		ServiceName: server.Name,
 		Ephemeral:   true,
 	}); err != nil {
-		log.Error("Nacos Server Deregister Failed: ", server.Info(), err)
+		log.Error("nacos server deregister failed: ", server.Info(), err)
 	} else {
-		log.Info("Nacos Server Deregister Successful: ", server.Info())
+		log.Info("nacos server deregister successfully: ", server.Info())
 	}
 	return
 }

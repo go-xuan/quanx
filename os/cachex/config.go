@@ -1,8 +1,6 @@
 package cachex
 
 import (
-	"fmt"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/app/configx"
@@ -11,6 +9,7 @@ import (
 	"github.com/go-xuan/quanx/server/redisx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/fmtx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
@@ -29,12 +28,14 @@ type Cache struct {
 	Marshal string `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
 }
 
-// Title 配置器标题
-func (c *Cache) Title() string {
-	return "Cache"
+func (c *Cache) ID() string {
+	return "cache"
 }
 
-// Reader 配置文件读取
+func (c *Cache) Format() string {
+	return fmtx.Yellow.XSPrintf("type=%s source=%s prefix=%s marshal=%s", c.Type, c.Source, c.Prefix, c.Marshal)
+}
+
 func (c *Cache) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "cache.yaml",
@@ -43,10 +44,9 @@ func (c *Cache) Reader() *configx.Reader {
 	}
 }
 
-// Run 配置器运行
-func (c *Cache) Run() error {
+func (c *Cache) Execute() error {
 	if err := anyx.SetDefaultValue(c); err != nil {
-		return errorx.Wrap(err, "set-default-value error")
+		return errorx.Wrap(err, "set default value error")
 	}
 	var client = c.InitClient()
 	if handler == nil {
@@ -59,7 +59,6 @@ func (c *Cache) Run() error {
 		handler.Multi = true
 	}
 	handler.ClientMap[c.Source] = client
-	log.Info("Cache Init Successful: ", c.Info())
 	return nil
 }
 
@@ -71,12 +70,14 @@ func Default() *Cache {
 	}
 }
 
-// Title 配置信息格式化
-func (MultiCache) Title() string {
-	return "Cache"
+func (MultiCache) ID() string {
+	return "multi-cache"
 }
 
-// Reader 配置文件读取
+func (MultiCache) Format() string {
+	return ""
+}
+
 func (MultiCache) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "cache.yaml",
@@ -85,8 +86,7 @@ func (MultiCache) Reader() *configx.Reader {
 	}
 }
 
-// Run 配置器运行
-func (m MultiCache) Run() error {
+func (m MultiCache) Execute() error {
 	if handler == nil {
 		handler = &Handler{
 			Multi:     true,
@@ -102,14 +102,8 @@ func (m MultiCache) Run() error {
 		if i == 0 || c.Source == constx.DefaultKey {
 			handler.Client = client
 		}
-		log.Info("Cache Init Successful: ", c.Info())
 	}
 	return nil
-}
-
-// Info 配置信息格式化
-func (c *Cache) Info() string {
-	return fmt.Sprintf("type=%s source=%s prefix=%s marshal=%s", c.Type, c.Source, c.Prefix, c.Marshal)
 }
 
 // InitClient 根据缓存配置初始化缓存客户端

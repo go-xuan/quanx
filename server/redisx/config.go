@@ -13,34 +13,39 @@ import (
 	"github.com/go-xuan/quanx/app/constx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
 const (
 	StandAlone = iota // 单机
 	Cluster           // 集群
+	Sentinel          // 集群
 )
 
 // MultiRedis redis连接配置
 type MultiRedis []*Redis
 
 type Redis struct {
-	Source   string `json:"source" yaml:"source" default:"default"` // 数据源名称
-	Enable   bool   `json:"enable" yaml:"enable"`                   // 数据源启用
-	Mode     int    `json:"mode" yaml:"mode" default:"0"`           // 模式（0-单机；1-集群），默认单机模式
-	Host     string `json:"host" yaml:"host"`                       // 主机
-	Port     int    `json:"port" yaml:"port" default:"6379"`        // 端口
-	Username string `json:"username" yaml:"username"`               // 用户名
-	Password string `json:"password" yaml:"password"`               // 密码
-	Database int    `json:"database" yaml:"database" default:"0"`   // 数据库，默认0
-	PoolSize int    `json:"poolSize" yaml:"poolSize"`               // 池大小
+	Source     string `json:"source" yaml:"source" default:"default"` // 数据源名称
+	Enable     bool   `json:"enable" yaml:"enable"`                   // 数据源启用
+	Mode       int    `json:"mode" yaml:"mode" default:"0"`           // 模式（0-单机；1-集群；3-哨兵。默认单机模式）
+	Host       string `json:"host" yaml:"host"`                       // 主机（单机模式使用）
+	Port       int    `json:"port" yaml:"port" default:"6379"`        // 端口
+	Username   string `json:"username" yaml:"username"`               // 用户名
+	Password   string `json:"password" yaml:"password"`               // 密码
+	Database   int    `json:"database" yaml:"database" default:"0"`   // 数据库，默认0
+	MasterName string `json:"masterName" yaml:"masterName"`           // 哨兵模式主服务器名称
+	PoolSize   int    `json:"poolSize" yaml:"poolSize"`               // 池大小
 }
 
-// Title 配置信息格式化
-func (MultiRedis) Title() string {
-	return "Redis"
+func (MultiRedis) ID() string {
+	return "multi-redis"
 }
 
-// Reader 配置文件读取
+func (MultiRedis) Format() string {
+	return ""
+}
+
 func (MultiRedis) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "redis.yaml",
@@ -49,17 +54,16 @@ func (MultiRedis) Reader() *configx.Reader {
 	}
 }
 
-// Run 配置器运行
-func (conf MultiRedis) Run() error {
+func (conf MultiRedis) Execute() error {
 	if len(conf) == 0 {
-		log.Error("redis not connected! reason: [redis.yaml] not found")
+		log.Error("redis not connected! cause: redis.yaml not found")
 		return nil
 	}
 	if handler == nil {
 		handler = &Handler{
 			multi:     true,
-			clientMap: make(map[string]*redis.UniversalClient),
 			configMap: make(map[string]*Redis),
+			clientMap: make(map[string]redis.UniversalClient),
 		}
 	} else {
 		handler.multi = true
@@ -67,12 +71,10 @@ func (conf MultiRedis) Run() error {
 	for i, r := range conf {
 		if r.Enable {
 			if err := anyx.SetDefaultValue(r); err != nil {
-				return errorx.Wrap(err, "set-default-value error")
+				return errorx.Wrap(err, "set default value error")
 			}
 			var client = r.NewRedisClient()
-			ok, err := Ping(*client)
-			if !ok && err != nil {
-				log.Error("redis connect failed: ", r.Info())
+			if ok, err := Ping(client); !ok && err != nil {
 				return errorx.Wrap(err, "redis client ping error")
 			}
 			handler.clientMap[r.Source] = client
@@ -81,27 +83,23 @@ func (conf MultiRedis) Run() error {
 				handler.client = client
 				handler.config = r
 			}
-			log.Info("redis connect successful: ", r.Info())
 		}
 	}
 	if len(handler.configMap) == 0 {
-		log.Error("redis connect failed! reason: [redis.yaml] is empty or no enabled redis configured")
+		log.Error("redis connect failed! cause: redis.yaml is empty or no enabled redis configured")
 	}
 	return nil
 }
 
-// Info 配置信息格式化
-func (r *Redis) Info() string {
-	return fmt.Sprintf("source=%s mode=%d host=%s port=%d database=%d",
+func (r *Redis) ID() string {
+	return "redis"
+}
+
+func (r *Redis) Format() string {
+	return fmtx.Yellow.XSPrintf("source=%s mode=%v host=%s port=%v database=%v",
 		r.Source, r.Mode, r.Host, r.Port, r.Database)
 }
 
-// Title 配置器标题
-func (r *Redis) Title() string {
-	return "Redis"
-}
-
-// Reader 配置文件读取
 func (*Redis) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "redis.yaml",
@@ -110,16 +108,13 @@ func (*Redis) Reader() *configx.Reader {
 	}
 }
 
-// Run 配置器运行
-func (r *Redis) Run() error {
+func (r *Redis) Execute() error {
 	if r.Enable {
 		if err := anyx.SetDefaultValue(r); err != nil {
-			return errorx.Wrap(err, "set-default-value error")
+			return errorx.Wrap(err, "set default value error")
 		}
 		var client = r.NewRedisClient()
-		ok, err := Ping(*client)
-		if !ok && err != nil {
-			log.Error("redis connect failed: ", r.Info())
+		if ok, err := Ping(client); !ok && err != nil {
 			return errorx.Wrap(err, "redis client ping error")
 		}
 		if handler == nil {
@@ -128,51 +123,48 @@ func (r *Redis) Run() error {
 				config:    r,
 				configMap: make(map[string]*Redis),
 				client:    client,
-				clientMap: make(map[string]*redis.UniversalClient),
+				clientMap: make(map[string]redis.UniversalClient),
 			}
 		} else {
 			handler.multi = true
 		}
 		handler.clientMap[r.Source] = client
 		handler.configMap[r.Source] = r
-		log.Info("redis connect successful: ", r.Info())
 		return nil
 	}
 	log.Error(`redis connect failed! reason: redis.yaml is empty or the value of "enable" is false`)
 	return nil
 }
 
-// Address 配置信息格式化
 func (r *Redis) Address() string {
 	return fmt.Sprintf("%s:%d", r.Host, r.Port)
 }
 
 // NewRedisClient 初始化redis客户端
-// UniversalClient并不是一个客户端，而是对单节点客户端/集群客户端/哨兵客户端的包装。根据不同的选项，客户端的类型如下：
-// 1、如果指定了MasterName选项，则返回FailoverClient哨兵客户端。
-// 2、如果Addrs是2个以上的地址，则返回ClusterClient集群客户端。
-// 3、其他情况，返回Client单节点客户端。
-func (r *Redis) NewRedisClient() *redis.UniversalClient {
-	var client redis.UniversalClient
+// UniversalClient并不是一个客户端，而是对单节点客户端/集群客户端/哨兵客户端的接口包装。根据不同的选项，客户端的类型如下：
+// 1、如果指定了MasterName选项，则返回redis.FailoverClient哨兵客户端。
+// 2、如果Addrs是2个以上的地址，则返回redis.ClusterClient集群客户端。
+// 3、其他情况，返回redis.Client单节点客户端。
+func (r *Redis) NewRedisClient() redis.UniversalClient {
+	var opts = &redis.UniversalOptions{
+		ClientName: r.Source,
+		Username:   r.Username,
+		Password:   r.Password,
+		PoolSize:   r.PoolSize,
+	}
 	switch r.Mode {
 	case StandAlone:
-		client = redis.NewUniversalClient(&redis.UniversalOptions{
-			Addrs:    []string{net.JoinHostPort(r.Host, strconv.Itoa(r.Port))},
-			Username: r.Username,
-			Password: r.Password,
-			PoolSize: r.PoolSize,
-			DB:       r.Database,
-		})
+		opts.Addrs = []string{net.JoinHostPort(r.Host, strconv.Itoa(r.Port))}
+		return redis.NewClient(opts.Simple())
 	case Cluster:
-		client = redis.NewUniversalClient(&redis.UniversalOptions{
-			Addrs:    strings.Split(r.Host, ","),
-			Username: r.Username,
-			Password: r.Password,
-			PoolSize: r.PoolSize,
-		})
+		opts.Addrs = strings.Split(r.Host, ",")
+		return redis.NewClusterClient(opts.Cluster())
+	case Sentinel:
+		opts.Addrs = []string{net.JoinHostPort(r.Host, strconv.Itoa(r.Port))}
+		opts.MasterName = r.MasterName
+		return redis.NewFailoverClient(opts.Failover())
 	default:
-		log.Warn("Mode Is Invalid: ", r.Info())
+		log.Warn("redis mode is invalid: ")
 		return nil
 	}
-	return &client
 }

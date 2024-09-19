@@ -6,11 +6,12 @@ import (
 	"os"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/go-xuan/quanx/utils/fmtx"
-	"github.com/sirupsen/logrus"
 )
 
-func DefaultFormatter() logrus.Formatter {
+func DefaultFormatter() log.Formatter {
 	host, _ := os.Hostname()
 	return &LogFormatter{timeFormat: TimeFormat, host: host, Output: ConsoleOutput, useColor: true}
 }
@@ -27,7 +28,7 @@ func (f *LogFormatter) UseColor() bool {
 }
 
 // Format 日志格式化,用以实现logrus.Formatter接口
-func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+func (f *LogFormatter) Format(entry *log.Entry) ([]byte, error) {
 	var b = bytes.Buffer{}
 	b.WriteString(fmt.Sprintf("[%-23s][%-5s][%s]", time.Now().Format(f.timeFormat), entry.Level.String(), f.host))
 	b.WriteString(entry.Message)
@@ -42,13 +43,13 @@ func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	}
 }
 
-func Color(level logrus.Level) fmtx.Color {
+func Color(level log.Level) fmtx.Color {
 	switch level {
-	case logrus.InfoLevel:
+	case log.InfoLevel:
 		return fmtx.Green
-	case logrus.WarnLevel:
+	case log.WarnLevel:
 		return fmtx.Yellow
-	case logrus.ErrorLevel:
+	case log.ErrorLevel:
 		return fmtx.Red
 	default:
 		return 0

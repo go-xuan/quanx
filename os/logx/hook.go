@@ -7,29 +7,29 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
-type Writers map[logrus.Level]io.Writer
+type Writers map[log.Level]io.Writer
 
 type Hook struct {
 	lock      *sync.Mutex
 	writers   Writers
-	levels    []logrus.Level
-	formatter logrus.Formatter
+	levels    []log.Level
+	formatter log.Formatter
 }
 
-func NewHook(writer any, formatter logrus.Formatter) *Hook {
+func NewHook(writer any, formatter log.Formatter) *Hook {
 	hook := &Hook{lock: new(sync.Mutex)}
 	hook.SetFormatter(formatter)
 	switch writer.(type) {
 	case string:
 		hook.SetWriter(&FileWriter{writer.(string)})
-	case map[logrus.Level]string:
+	case map[log.Level]string:
 		var writers = make(Writers)
-		for level, path := range writer.(map[logrus.Level]string) {
+		for level, path := range writer.(map[log.Level]string) {
 			writers[level] = &FileWriter{path}
 		}
 		hook.SetWriters(writers)
@@ -43,11 +43,11 @@ func NewHook(writer any, formatter logrus.Formatter) *Hook {
 	return hook
 }
 
-func (hook *Hook) Levels() []logrus.Level {
+func (hook *Hook) Levels() []log.Level {
 	return hook.levels
 }
 
-func (hook *Hook) Fire(entry *logrus.Entry) error {
+func (hook *Hook) Fire(entry *log.Entry) error {
 	var caller = getCaller()
 	_, fileName := stringx.Cut(caller.File, "/", -1)
 	_, funcName := stringx.Cut(caller.Function, ".", -1)
@@ -57,17 +57,17 @@ func (hook *Hook) Fire(entry *logrus.Entry) error {
 	return hook.Write(entry)
 }
 
-func (hook *Hook) SetFormatter(formatter logrus.Formatter) {
+func (hook *Hook) SetFormatter(formatter log.Formatter) {
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
 	if formatter == nil {
-		formatter = &logrus.TextFormatter{
+		formatter = &log.TextFormatter{
 			DisableColors:          true,
 			DisableTimestamp:       true,
 			DisableLevelTruncation: true,
 			DisableSorting:         false,
 		}
-	} else if textFormatter, ok := formatter.(*logrus.TextFormatter); ok {
+	} else if textFormatter, ok := formatter.(*log.TextFormatter); ok {
 		textFormatter.DisableColors = true
 	}
 	hook.formatter = formatter
@@ -85,20 +85,20 @@ func (hook *Hook) SetWriters(writers Writers) {
 func (hook *Hook) SetWriter(writer io.Writer) {
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
-	hook.writers = map[logrus.Level]io.Writer{
-		logrus.TraceLevel: writer,
-		logrus.DebugLevel: writer,
-		logrus.InfoLevel:  writer,
-		logrus.WarnLevel:  writer,
-		logrus.ErrorLevel: writer,
-		logrus.FatalLevel: writer,
-		logrus.PanicLevel: writer,
+	hook.writers = map[log.Level]io.Writer{
+		log.TraceLevel: writer,
+		log.DebugLevel: writer,
+		log.InfoLevel:  writer,
+		log.WarnLevel:  writer,
+		log.ErrorLevel: writer,
+		log.FatalLevel: writer,
+		log.PanicLevel: writer,
 	}
 	hook.levels = AllLevels()
 }
 
 // 输出到ioWriter
-func (hook *Hook) Write(entry *logrus.Entry) (err error) {
+func (hook *Hook) Write(entry *log.Entry) (err error) {
 	if hook.writers != nil {
 		if writer, ok := hook.writers[entry.Level]; ok {
 			var bytes []byte
