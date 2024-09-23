@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-xuan/quanx/os/cachex"
+	"github.com/go-xuan/quanx/core/cachex"
 )
 
 func DefaultStore() *CaptchaStore {

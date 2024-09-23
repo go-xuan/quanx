@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/go-xuan/quanx/app/configx"
+	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/os/filex"
 	"github.com/go-xuan/quanx/types/anyx"
@@ -34,12 +34,12 @@ const (
 	LumberjackOutput = "lumberjack"
 )
 
-func New(app string) *Log {
-	return &Log{FileName: app + ".log"}
+func New(app string) *Config {
+	return &Config{FileName: app + ".log"}
 }
 
-// Log 日志配置
-type Log struct {
+// Config 日志配置
+type Config struct {
 	FileName   string `json:"fileName" yaml:"fileName" default:"app.log"`                     // 日志文件名
 	Dir        string `json:"dir" yaml:"dir" default:"resource/log"`                          // 日志保存文件夹
 	Level      string `json:"level" yaml:"level" default:"info"`                              // 日志级别
@@ -52,23 +52,23 @@ type Log struct {
 	Backups    int    `json:"backups" yaml:"backups" default:"10"`                            // 日志备份数
 }
 
-func (*Log) ID() string {
+func (*Config) ID() string {
 	return "log"
 }
 
-func (l *Log) Format() string {
+func (l *Config) Format() string {
 	return fmtx.Yellow.XSPrintf("logPath=%s level=%s output=%s maxSize=%v maxAge=%v backups=%v",
 		l.LogPath(), l.Level, l.Output, l.MaxSize, l.MaxAge, l.Backups)
 }
 
-func (*Log) Reader() *configx.Reader {
+func (*Config) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "log.yaml",
 		NacosDataId: "log.yaml",
 	}
 }
 
-func (l *Log) Execute() error {
+func (l *Config) Execute() error {
 	if err := anyx.SetDefaultValue(l); err != nil {
 		return errorx.Wrap(err, "set default value error")
 	}
@@ -81,16 +81,16 @@ func (l *Log) Execute() error {
 	return nil
 }
 
-func (l *Log) LogPath() string {
+func (l *Config) LogPath() string {
 	return filepath.Join(l.Dir, l.FileName)
 }
 
-func (l *Log) Formatter() log.Formatter {
+func (l *Config) Formatter() log.Formatter {
 	host, _ := os.Hostname()
 	return &LogFormatter{timeFormat: l.TimeFormat, host: host, Output: l.Output, useColor: l.UseColor}
 }
 
-func (l *Log) Writer() io.Writer {
+func (l *Config) Writer() io.Writer {
 	switch l.Output {
 	case ConsoleOutput:
 		return &ConsoleWriter{std: os.Stdout}
@@ -110,7 +110,7 @@ func (l *Log) Writer() io.Writer {
 }
 
 // GetLevel 日志级别映射，默认debug
-func (l *Log) GetLevel() log.Level {
+func (l *Config) GetLevel() log.Level {
 	switch strings.ToLower(l.Level) {
 	case TraceLevel:
 		return log.TraceLevel

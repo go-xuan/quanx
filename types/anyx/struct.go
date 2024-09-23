@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/go-xuan/quanx/app/constx"
+	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
@@ -18,7 +18,7 @@ func SetDefaultValue(v any) error {
 	for i := 0; i < valueRef.Elem().NumField(); i++ {
 		field := valueRef.Elem().Field(i)
 		if field.IsZero() {
-			if value := valueRef.Elem().Type().Field(i).Tag.Get(constx.DefaultKey); value != "" {
+			if value := valueRef.Elem().Type().Field(i).Tag.Get(constx.DefaultSource); value != "" {
 				switch field.Kind() {
 				case reflect.String:
 					field.SetString(value)

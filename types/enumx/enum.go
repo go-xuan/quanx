@@ -1,23 +1,23 @@
 package enumx
 
-type enum[KT any, VT any] struct {
+type Enum[KT any, VT any] struct {
 	keys []KT       // 保证有序
 	data map[any]VT // 存储枚举值
 }
 
 // NewEnum 任意KV类型
-func NewEnum[KT any, VT any]() *enum[KT, VT] {
-	return &enum[KT, VT]{
+func NewEnum[KT any, VT any]() *Enum[KT, VT] {
+	return &Enum[KT, VT]{
 		keys: make([]KT, 0),
 		data: make(map[any]VT),
 	}
 }
 
-func (e *enum[KT, VT]) Get(k KT) VT {
+func (e *Enum[KT, VT]) Get(k KT) VT {
 	return e.data[k]
 }
 
-func (e *enum[KT, VT]) Add(k KT, v VT) *enum[KT, VT] {
+func (e *Enum[KT, VT]) Add(k KT, v VT) *Enum[KT, VT] {
 	if e.data == nil {
 		e.keys = make([]KT, 0)
 		e.data = make(map[any]VT)
@@ -27,11 +27,11 @@ func (e *enum[KT, VT]) Add(k KT, v VT) *enum[KT, VT] {
 	return e
 }
 
-func (e *enum[KT, VT]) Keys() []KT {
+func (e *Enum[KT, VT]) Keys() []KT {
 	return e.keys
 }
 
-func (e *enum[KT, VT]) Values() []VT {
+func (e *Enum[KT, VT]) Values() []VT {
 	var values []VT
 	for _, key := range e.keys {
 		values = append(values, e.data[key])
@@ -78,23 +78,23 @@ func (e *StringEnum[T]) Values() []T {
 	return values
 }
 
-type iIntEnum[T any] struct {
+type IntEnum[T any] struct {
 	keys []int     // 保证有序
 	data map[int]T // 存储枚举值
 }
 
-func NewIntEnum[T any]() *iIntEnum[T] {
-	return &iIntEnum[T]{
+func NewIntEnum[T any]() *IntEnum[T] {
+	return &IntEnum[T]{
 		keys: make([]int, 0),
 		data: make(map[int]T),
 	}
 }
 
-func (e *iIntEnum[T]) Get(k int) T {
+func (e *IntEnum[T]) Get(k int) T {
 	return e.data[k]
 }
 
-func (e *iIntEnum[T]) Add(k int, v T) *iIntEnum[T] {
+func (e *IntEnum[T]) Add(k int, v T) *IntEnum[T] {
 	if e.data == nil {
 		e.keys = make([]int, 0)
 		e.data = make(map[int]T)
@@ -105,11 +105,11 @@ func (e *iIntEnum[T]) Add(k int, v T) *iIntEnum[T] {
 	return e
 }
 
-func (e *iIntEnum[T]) Keys() []int {
+func (e *IntEnum[T]) Keys() []int {
 	return e.keys
 }
 
-func (e *iIntEnum[T]) Values() []T {
+func (e *IntEnum[T]) Values() []T {
 	var values []T
 	for _, key := range e.keys {
 		values = append(values, e.data[key])
