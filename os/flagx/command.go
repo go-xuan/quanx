@@ -2,6 +2,10 @@ package flagx
 
 import (
 	"flag"
+	"fmt"
+
+	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
 type Command struct {
@@ -9,21 +13,67 @@ type Command struct {
 	usage    string
 	optNames []string
 	options  map[string]Option
+	handler  func() error
 }
 
+func NewCommand(name, usage string, options ...Option) *Command {
+	var opts = make(map[string]Option)
+	var optNames []string
+	for _, option := range options {
+		optName := option.Name()
+		optNames = append(optNames, optName)
+		opts[optName] = option
+	}
+	return &Command{
+		name:     name,
+		usage:    usage,
+		optNames: optNames,
+		options:  opts,
+	}
+}
+
+// AddOption 添加参数
 func (cmd *Command) AddOption(options ...Option) *Command {
 	for _, option := range options {
-		cmd.optNames = append(cmd.optNames, option.Name())
-		cmd.options[option.Name()] = option
+		optName := option.Name()
+		if _, ok := cmd.options[optName]; !ok {
+			cmd.optNames = append(cmd.optNames, optName)
+		}
+		cmd.options[optName] = option
 	}
 	return cmd
 }
 
-func (cmd *Command) Execute(handler func() error) {
-	parser.handlers[cmd.name] = handler
+func (cmd *Command) GetOptionValue(option string) anyx.Value {
+	if opt, ok := cmd.options[option]; ok {
+		return opt.Get()
+	} else {
+		fmt.Printf("option [%s] not found\n", option)
+		return nil
+	}
 }
 
-func (cmd *Command) FlagSet() *flag.FlagSet {
+// SetHandler 设置执行器
+func (cmd *Command) SetHandler(handler func() error) *Command {
+	cmd.handler = handler
+	return cmd
+}
+
+// Register 命令注册
+func (cmd *Command) Register() {
+	assertParser()
+	var name = cmd.name
+	if cmd.handler == nil {
+		panic(fmt.Sprintf("command %s has no handler", name))
+	}
+	if _, ok := parser.commands[name]; ok {
+		panic(fmt.Sprintf("command %s has been registered", name))
+	}
+	parser.names = append(parser.names, name)
+	parser.commands[name] = cmd
+}
+
+func (cmd *Command) newFlagSet() *flag.FlagSet {
 	fs := flag.NewFlagSet(cmd.name, flag.ExitOnError)
 	if options := cmd.options; options != nil {
 		for _, option := range cmd.options {
@@ -34,35 +84,11 @@ func (cmd *Command) FlagSet() *flag.FlagSet {
 	return fs
 }
 
-func AddCommand(name, usage string, options ...Option) *Command {
-	if parser == nil {
-		parser = &Parser{
-			names:    make([]string, 0),
-			commands: make(map[string]*Command),
-			handlers: make(map[string]func() error),
-		}
+func (cmd *Command) Help() {
+	fmt.Printf("OPTIONS OF [%s]:\n", fmtx.Cyan.String(cmd.name))
+	for _, optName := range cmd.optNames {
+		option := cmd.options[optName]
+		fmt.Printf("%-50s %s\n", fmtx.Magenta.String("-"+option.Name()), option.Usage())
 	}
-	if command, ok := parser.commands[name]; ok {
-		for _, option := range options {
-			command.optNames = append(command.optNames, option.Name())
-			command.options[option.Name()] = option
-		}
-		return command
-	} else {
-		var opts = make(map[string]Option)
-		var optNames []string
-		for _, option := range options {
-			optNames = append(optNames, option.Name())
-			opts[option.Name()] = option
-		}
-		command = &Command{
-			name:     name,
-			usage:    usage,
-			optNames: optNames,
-			options:  opts,
-		}
-		parser.commands[name] = command
-		parser.names = append(parser.names, name)
-		return command
-	}
+	fmt.Println()
 }

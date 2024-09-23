@@ -25,6 +25,7 @@ func IntOption(name, usage string, def int) Option {
 func BoolOption(name, usage string, def bool) Option {
 	return &boolOption{name, usage, def, new(bool)}
 }
+
 func FloatOption(name, usage string, def float64) Option {
 	return &floatOption{name, usage, def, new(float64)}
 }
@@ -41,7 +42,7 @@ func (opt *stringOption) Name() string {
 }
 
 func (opt *stringOption) Usage() string {
-	return fmt.Sprintf("%s | default:%s", opt.usage, opt.def)
+	return fmt.Sprintf("%s | default: %s", opt.usage, opt.def)
 }
 
 func (opt *stringOption) Add(fs *flag.FlagSet) {
@@ -64,7 +65,7 @@ func (opt *intOption) Name() string {
 }
 
 func (opt *intOption) Usage() string {
-	return fmt.Sprintf("%s | default:%d", opt.usage, opt.def)
+	return fmt.Sprintf("%s | default: %d", opt.usage, opt.def)
 }
 
 func (opt *intOption) Add(fs *flag.FlagSet) {
@@ -87,7 +88,7 @@ func (opt *boolOption) Name() string {
 }
 
 func (opt *boolOption) Usage() string {
-	return fmt.Sprintf("%s | default:%v", opt.usage, opt.def)
+	return fmt.Sprintf("%s | default: %v", opt.usage, opt.def)
 }
 
 func (opt *boolOption) Add(fs *flag.FlagSet) {
@@ -110,7 +111,7 @@ func (opt *floatOption) Name() string {
 }
 
 func (opt *floatOption) Usage() string {
-	return fmt.Sprintf("%s | default:%f", opt.usage, opt.def)
+	return fmt.Sprintf("%s | default: %f", opt.usage, opt.def)
 }
 
 func (opt *floatOption) Add(fs *flag.FlagSet) {
