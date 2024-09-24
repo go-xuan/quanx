@@ -1,4 +1,4 @@
-package execx
+package taskx
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ func InBatches(total, limit int, f func(int, int) error) error {
 				limit = total - start
 			}
 			if err := f(start, start+limit); err != nil {
-				return err
+				return errorx.Wrap(err, "execute failed")
 			}
 			start += limit
 		}
@@ -25,17 +25,17 @@ func InBatches(total, limit int, f func(int, int) error) error {
 }
 
 // Retry 重试执行
-func Retry(times, count int, interval time.Duration, f func() error) error {
-	if times > 0 {
+func Retry(size, index int, interval time.Duration, f func() error) error {
+	if size > 0 {
 		time.Sleep(interval)
-		count++
+		index++
 		if err := f(); err != nil {
-			fmt.Printf("重试第%d次执行失败！\n", count)
-			return Retry(times-1, count, interval, f)
+			fmt.Printf("execute failed after %d times retery\n", index)
+			return Retry(size-1, index, interval, f)
 		} else {
-			fmt.Printf("重试第%d次执行成功！\n", count)
+			fmt.Printf("execute success after %d times retery\n", index)
 			return nil
 		}
 	}
-	return errorx.New("重试失败")
+	return errorx.New("retry failed")
 }

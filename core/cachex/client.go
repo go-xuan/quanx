@@ -8,11 +8,11 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/execx"
+	"github.com/go-xuan/quanx/os/taskx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
-type Client interface {
+type CacheClient interface {
 	Config() *Config                                                                // 获取配置
 	Set(ctx context.Context, key string, value any, expiration time.Duration) error // 更新缓存
 	Get(ctx context.Context, key string, value any) bool                            // 获取缓存（指针，任意类型）
@@ -131,7 +131,7 @@ func (c *RedisClient) Delete(ctx context.Context, keys ...string) int64 {
 	var total int64
 	var err error
 	if l := len(keys); l > 100 {
-		if err = execx.InBatches(l, 100, func(x int, y int) (err error) {
+		if err = taskx.InBatches(l, 100, func(x int, y int) (err error) {
 			var n int64
 			if n, err = c.client.Del(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
 				return
@@ -153,7 +153,7 @@ func (c *RedisClient) Exist(ctx context.Context, keys ...string) bool {
 	var total int64
 	var err error
 	if l := len(keys); l > 100 {
-		if err = execx.InBatches(l, 100, func(x int, y int) (err error) {
+		if err = taskx.InBatches(l, 100, func(x int, y int) (err error) {
 			var n int64
 			if n, err = c.client.Exists(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
 				return

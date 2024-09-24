@@ -101,7 +101,7 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 	var obj T
 	var data []*T
 	if data, err = excelx.ExcelReaderAny(filePath, "", obj); err != nil {
-		respx.Ctx(ctx).EnumError(respx.ImportFailedEnum, err)
+		respx.Ctx(ctx).RespError(respx.ImportFailedResp.SetData(err))
 		return
 	}
 	err = m.DB.Model(obj).Create(&data).Error
@@ -111,13 +111,13 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 func (m *Model[T]) Export(ctx *gin.Context) {
 	var result []*T
 	if err := m.DB.Find(&result).Error; err != nil {
-		respx.Ctx(ctx).EnumError(respx.ImportFailedEnum, err)
+		respx.Ctx(ctx).RespError(respx.ImportFailedResp.SetData(err))
 		return
 	}
 	var filePath = filepath.Join(constx.DefaultResourceDir, time.Now().Format(timex.TimestampFmt)+".xlsx")
 	var obj T
 	if err := excelx.ExcelWriter(filePath, obj, result); err != nil {
-		respx.Ctx(ctx).EnumError(respx.ExportFailedEnum, err)
+		respx.Ctx(ctx).RespError(respx.ExportFailedResp.SetData(err))
 	}
 	respx.Ctx(ctx).File(filePath)
 }

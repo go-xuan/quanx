@@ -65,3 +65,23 @@ func MapToStruct(m map[string]string, v any) error {
 	}
 	return nil
 }
+
+func MergeStructs(a, b interface{}) {
+	va, vb := reflect.ValueOf(a).Elem(), reflect.ValueOf(b).Elem()
+	for i := 0; i < va.NumField(); i++ {
+		fieldA := va.Type().Field(i)
+		fieldB := vb.FieldByName(fieldA.Name)
+		if fieldB.IsValid() && fieldB.CanSet() {
+			va.Field(i).Set(fieldB)
+		}
+	}
+}
+
+func SetZeroValue[V any](a, b V) {
+	va, vb := reflect.ValueOf(a).Elem(), reflect.ValueOf(b).Elem()
+	for i := 0; i < va.NumField(); i++ {
+		if va.Field(i).IsZero() {
+			va.Field(i).Set(vb.Field(i))
+		}
+	}
+}

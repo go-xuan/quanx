@@ -51,94 +51,100 @@ func (q *QueueScheduler) Execute() {
 }
 
 // Add 新增队列任务（默认尾插）
-func (q *QueueScheduler) Add(name string, fn func()) {
-	if name != "" && fn != nil {
-		q.AddTail(name, fn)
-	}
+func (q *QueueScheduler) Add(name string, f func()) {
+	q.AddTail(name, f)
 }
 
 // AddTail 尾插（当前新增任务添加到队列末尾）
-func (q *QueueScheduler) AddTail(name string, fn func()) {
-	if name != "" && fn != nil {
+func (q *QueueScheduler) AddTail(name string, f func()) {
+	if name != "" && f != nil {
 		q.mutex.Lock()
 		defer q.mutex.Unlock()
 		if _, exist := q.Tasks[name]; !exist {
-			var add = &QueueTask{name: name, fn: fn}
+			var task = &QueueTask{name: name, fn: f}
 			if tail := q.Tail; tail != nil {
-				add.prev = tail
-				tail.next = add
-				q.Tail = add
+				task.prev = tail
+				tail.next = task
+				q.Tail = task
 			} else {
-				q.Head = add
-				q.Tail = add
+				q.Head = task
+				q.Tail = task
 			}
-			q.Tasks[name] = add
+			q.Tasks[name] = task
+		} else {
+			q.Tasks[name].fn = f
 		}
 	}
 }
 
 // AddHead 头插（当前新增任务添加到队列首位）
-func (q *QueueScheduler) AddHead(name string, task func()) {
-	if name != "" && task != nil {
+func (q *QueueScheduler) AddHead(name string, f func()) {
+	if name != "" && f != nil {
 		q.mutex.Lock()
 		defer q.mutex.Unlock()
 		if _, exist := q.Tasks[name]; !exist {
-			var add = &QueueTask{name: name, fn: task}
+			var task = &QueueTask{name: name, fn: f}
 			if head := q.Head; head != nil {
-				head.prev = add
-				add.next = head
-				q.Head = add
+				head.prev = task
+				task.next = head
+				q.Head = task
 			} else {
-				q.Head = add
-				q.Tail = add
+				q.Head = task
+				q.Tail = task
 			}
-			q.Tasks[name] = add
+			q.Tasks[name] = task
+		} else {
+			q.Tasks[name].fn = f
 		}
 	}
 }
 
 // AddAfter 后插队(当前新增任务添加到after任务之后)
-func (q *QueueScheduler) AddAfter(name string, task func(), after string) {
-	if name != "" && task != nil {
+func (q *QueueScheduler) AddAfter(name string, f func(), after string) {
+	if name != "" && f != nil {
 		q.mutex.Lock()
 		defer q.mutex.Unlock()
 		if _, exist := q.Tasks[name]; !exist {
-			var add = &QueueTask{name: name, fn: task}
+			var task = &QueueTask{name: name, fn: f}
 			if target, ok := q.Tasks[after]; ok && target.next != nil {
-				add.next = target.next
-				add.prev = target
-				target.next.prev = add
-				target.next = add
+				task.next = target.next
+				task.prev = target
+				target.next.prev = task
+				target.next = task
 			} else {
 				target = q.Tail
-				target.next = add
-				add.prev = target
-				q.Tail = add
+				target.next = task
+				task.prev = target
+				q.Tail = task
 			}
-			q.Tasks[name] = add
+			q.Tasks[name] = task
+		} else {
+			q.Tasks[name].fn = f
 		}
 	}
 }
 
 // AddBefore 前插队(当前新增任务添加到before任务之后)
-func (q *QueueScheduler) AddBefore(name string, task func(), before string) {
-	if name != "" && task != nil {
+func (q *QueueScheduler) AddBefore(name string, f func(), before string) {
+	if name != "" && f != nil {
 		q.mutex.Lock()
 		defer q.mutex.Unlock()
 		if _, exist := q.Tasks[name]; !exist {
-			var add = &QueueTask{name: name, fn: task}
+			var task = &QueueTask{name: name, fn: f}
 			if target, ok := q.Tasks[before]; ok && target.prev != nil {
-				add.prev = target.prev
-				add.next = target
-				target.prev.next = add
-				target.prev = add
+				task.prev = target.prev
+				task.next = target
+				target.prev.next = task
+				target.prev = task
 			} else {
 				target = q.Head
-				target.prev = add
-				add.next = target
-				q.Head = add
+				target.prev = task
+				task.next = target
+				q.Head = task
 			}
-			q.Tasks[name] = add
+			q.Tasks[name] = task
+		} else {
+			q.Tasks[name].fn = f
 		}
 	}
 }

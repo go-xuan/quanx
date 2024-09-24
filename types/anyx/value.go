@@ -94,7 +94,10 @@ func (v *stringValue) Bool(def ...bool) bool {
 	case "false", "否", "no":
 		return false
 	default:
-		return def[0]
+		if len(def) > 0 {
+			return def[0]
+		}
+		return false
 	}
 }
 

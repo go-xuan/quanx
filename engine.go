@@ -34,7 +34,7 @@ const (
 	MultiDatabase             // 开启多数据源
 	MultiRedis                // 开启多redis源
 	MultiCache                // 开启多缓存源
-	UseQueue                  // 使用队列任务启动
+	EnableQueue               // 使用队列任务启动
 	Running                   // 正在运行中
 )
 
@@ -95,21 +95,13 @@ func NewEngine(modes ...Mode) *Engine {
 	log.SetOutput(logx.DefaultWriter())
 	log.SetFormatter(logx.DefaultFormatter())
 	// 设置服务启动队列
-	if engine.mode[UseQueue] {
-		queue := taskx.Queue()
-		queue.Add(LoadingConfig, engine.loadingAppConfig)            // 1.加载服务配置文件
-		queue.Add(InitServerBasic, engine.initAppBasic)              // 2.初始化服务基础组件（log/nacos/gorm/redis/cache）
-		queue.Add(ExecuteConfigurators, engine.executeConfigurators) // 3.运行自定义配置器
-		queue.Add(RunCustomFuncs, engine.runCustomFuncs)             // 4.运行自定义函数
-		queue.Add(StartServer, engine.startServer)                   // 5.服务启动
-		engine.queue = queue
-	}
+	engine.enableQueue()
 	return engine
 }
 
 // RUN 服务运行
 func (e *Engine) RUN() {
-	if engine.mode[UseQueue] { // 任务队列方式启动
+	if engine.mode[EnableQueue] { // 任务队列方式启动
 		engine.queue.Execute()
 	} else { // 默认方式启动
 		syncx.OnceDo(e.loadingAppConfig)     // 1.加载服务配置文件
@@ -124,6 +116,19 @@ func (e *Engine) RUN() {
 func (e *Engine) checkRunning() {
 	if engine.mode[Running] {
 		panic("engine has already running")
+	}
+}
+
+// 是否启用队列
+func (e *Engine) enableQueue() {
+	if engine.mode[EnableQueue] && e.queue == nil {
+		queue := taskx.Queue()
+		queue.Add(LoadingConfig, engine.loadingAppConfig)            // 1.加载服务配置文件
+		queue.Add(InitServerBasic, engine.initAppBasic)              // 2.初始化服务基础组件（log/nacos/gorm/redis/cache）
+		queue.Add(ExecuteConfigurators, engine.executeConfigurators) // 3.运行自定义配置器
+		queue.Add(RunCustomFuncs, engine.runCustomFuncs)             // 4.运行自定义函数
+		queue.Add(StartServer, engine.startServer)                   // 5.服务启动
+		engine.queue = queue
 	}
 }
 
@@ -380,12 +385,14 @@ func (e *Engine) InitGinLoader(group *gin.RouterGroup) {
 	}
 }
 
+// AddQueueTask 使用后，会自动启用队列方式启动服务，且当前添加的任务会在 StartServer 之前执行
 func (e *Engine) AddQueueTask(name string, task func()) {
 	e.checkRunning()
 	if name == "" {
 		log.Error(`add queue task failed, cause: the name is required`)
 	} else {
-		e.mode[UseQueue] = true
+		e.mode[EnableQueue] = true
+		e.enableQueue()
 		e.queue.AddBefore(name, task, StartServer)
 		log.Info(`add queue task successfully, task name:`, name)
 	}

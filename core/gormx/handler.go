@@ -25,9 +25,9 @@ func GetConfig(source ...string) *Config {
 	return this().GetConfig(source...)
 }
 
-// GetDB 获取数据库连接
-func GetDB(source ...string) *gorm.DB {
-	return this().GetDB(source...)
+// DB 获取数据库连接
+func DB(source ...string) *gorm.DB {
+	return this().DB(source...)
 }
 
 // Sources 所有数据源
@@ -54,7 +54,7 @@ type Handler struct {
 	gormMap   map[string]*gorm.DB
 }
 
-func (h *Handler) GetDB(source ...string) *gorm.DB {
+func (h *Handler) DB(source ...string) *gorm.DB {
 	if len(source) > 0 && source[0] != constx.DefaultSource {
 		if db, ok := h.gormMap[source[0]]; ok {
 			return db
@@ -73,7 +73,7 @@ func (h *Handler) GetConfig(source ...string) *Config {
 }
 
 func (h *Handler) Close(source ...string) error {
-	if sqlDB, err := h.GetDB(source...).DB(); err != nil {
+	if sqlDB, err := h.DB(source...).DB(); err != nil {
 		return errorx.Wrap(err, "get sql.Config failed")
 	} else if err = sqlDB.Close(); err != nil {
 		return errorx.Wrap(err, "close sql.Config failed")

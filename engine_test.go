@@ -6,10 +6,10 @@ import (
 )
 
 func TestEngineRun(t *testing.T) {
-	var newEngine = NewEngine(NonGin)
+	var e = NewEngine(NonGin)
 
 	// 添加初始化方法
-	newEngine.AddCustomFunc(
+	e.AddCustomFunc(
 		func() {
 			fmt.Println("初始化加载方法1")
 		},
@@ -18,6 +18,18 @@ func TestEngineRun(t *testing.T) {
 		},
 	)
 
+	e.AddQueueTask("task1", func() {
+		fmt.Println("队列任务1")
+	})
+
+	e.AddQueueTask("task1", func() {
+		fmt.Println("队列任务2")
+	})
+
+	e.AddQueueTask("task1", func() {
+		fmt.Println("队列任务3")
+	})
+
 	// 服务启动
-	newEngine.RUN()
+	e.RUN()
 }

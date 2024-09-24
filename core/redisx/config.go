@@ -153,6 +153,7 @@ func (c *Config) NewRedisClient() redis.UniversalClient {
 		Username:   c.Username,
 		Password:   c.Password,
 		PoolSize:   c.PoolSize,
+		DB:         c.Database,
 	}
 	switch c.Mode {
 	case StandAlone:

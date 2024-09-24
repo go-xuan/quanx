@@ -5,8 +5,8 @@ import (
 
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/go-xuan/quanx/os/execx"
+	
+	"github.com/go-xuan/quanx/os/taskx"
 )
 
 var _handler *Handler
@@ -77,7 +77,7 @@ func (h *Handler) DeleteIndex(ctx context.Context, index string) (ok bool, err e
 
 // DeleteIndices 批量索引
 func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (ok bool, err error) {
-	if err = execx.InBatches(len(indices), 100, func(x int, y int) (err error) {
+	if err = taskx.InBatches(len(indices), 100, func(x int, y int) (err error) {
 		var resp *elastic.IndicesDeleteResponse
 		deleteIndices := indices[x:y]
 		if resp, err = h.client.DeleteIndex(deleteIndices...).Do(ctx); err != nil {

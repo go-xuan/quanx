@@ -8,70 +8,91 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Response 正常响应
+var (
+	SuccessResp      = Response{Code: 10000, Msg: "Success"}
+	FailedResp       = Response{Code: 10001, Msg: "failed"}
+	AuthFailedResp   = Response{Code: 10401, Msg: "auth failed"}
+	ParamErrorResp   = Response{Code: 10501, Msg: "request parameter error"}
+	RequiredResp     = Response{Code: 10502, Msg: "request parameter required"}
+	UploadFailedResp = Response{Code: 10601, Msg: "upload failed"}
+	ImportFailedResp = Response{Code: 10601, Msg: "import failed"}
+	ExportFailedResp = Response{Code: 10602, Msg: "export failed"}
+)
+
+// Response 响应
 type Response struct {
 	Code int    `json:"code"` // 响应状态码
 	Msg  string `json:"msg"`  // 响应消息
 	Data any    `json:"data"` // 响应数据
 }
 
-type ResponseBuilder struct {
-	ctx *gin.Context
-	f   func()
-}
-
-func Ctx(ctx *gin.Context) *ResponseBuilder {
-	return &ResponseBuilder{ctx: ctx}
-}
-
-func WhenSuccess(ctx *gin.Context, f func()) *ResponseBuilder {
-	return &ResponseBuilder{ctx: ctx, f: f}
-}
-
-func (b *ResponseBuilder) Success(data any) {
-	if b.f != nil {
-		b.f()
+// SetData 设置响应体
+func (e Response) SetData(data any) *Response {
+	return &Response{
+		Code: e.Code,
+		Msg:  e.Msg,
+		Data: data,
 	}
-	b.ctx.JSON(http.StatusOK, SuccessEnum.Response(data))
 }
 
-func (b *ResponseBuilder) Error(err error) {
-	log.Error("请求失败：", err)
-	b.ctx.JSON(http.StatusInternalServerError, ErrorEnum.Response(err.Error()))
+type Builder struct {
+	ctx *gin.Context
 }
 
-func (b *ResponseBuilder) EnumError(enum *Enum, err error) {
-	log.Error("请求失败：", err)
-	b.ctx.JSON(http.StatusInternalServerError, enum.Response(err.Error()))
+func Ctx(ctx *gin.Context) *Builder {
+	return &Builder{
+		ctx: ctx,
+	}
 }
 
-func (b *ResponseBuilder) CustomError(code int, msg string, data any) {
-	b.ctx.JSON(http.StatusInternalServerError, &Response{Code: code, Msg: msg, Data: data})
-}
-
-func (b *ResponseBuilder) ParamError(err error) {
-	log.Error("参数错误：", err)
-	b.ctx.JSON(http.StatusInternalServerError, ParamErrorEnum.Response(err.Error()))
-}
-
-func (b *ResponseBuilder) Forbidden(err error) {
-	log.Error("鉴权失败：", err)
-	b.ctx.JSON(http.StatusForbidden, AuthFailedEnum.Response(err.Error()))
-}
-
-func (b *ResponseBuilder) Response(data any, err error) {
+func (b *Builder) Response(data any, err error) {
 	if err != nil {
-		b.Error(err)
+		log.Error("请求失败：", err)
+		b.Failed(err)
 	} else {
 		b.Success(data)
 	}
+	b.ctx.Next()
 }
 
-func (b *ResponseBuilder) File(filePath string) {
+func (b *Builder) Success(data any) {
+	b.ctx.JSON(http.StatusOK, SuccessResp.SetData(data))
+}
+
+func (b *Builder) Failed(err error) {
+	b.ctx.JSON(http.StatusInternalServerError, FailedResp.SetData(err.Error()))
+}
+
+func (b *Builder) RespError(resp *Response) {
+	b.ctx.JSON(http.StatusInternalServerError, resp)
+}
+
+func (b *Builder) ParamError(err error) {
+	b.ctx.JSON(http.StatusInternalServerError, ParamErrorResp.SetData(err.Error()))
+}
+
+func (b *Builder) Forbidden(err error) {
+	b.ctx.JSON(http.StatusForbidden, AuthFailedResp.SetData(err.Error()))
+}
+
+func (b *Builder) Custom(httpCode, code int, msg string, data any) {
+	b.ctx.JSON(httpCode,
+		&Response{
+			Code: code,
+			Msg:  msg,
+			Data: data,
+		})
+}
+
+func (b *Builder) CustomError(code int, msg string, data any) {
+	b.Custom(http.StatusInternalServerError, code, msg, data)
+}
+
+func (b *Builder) File(filePath string) {
 	b.ctx.File(filePath)
 }
 
-func (b *ResponseBuilder) Render(contentType string, data []byte) {
+func (b *Builder) Render(contentType string, data []byte) {
 	b.ctx.Render(http.StatusOK, render.Data{
 		ContentType: contentType,
 		Data:        data,

@@ -34,7 +34,8 @@ func BuildExcelByData(ctx *gin.Context, model any, data any, excelName string) {
 	var xlsxFile = xlsx.NewFile()
 	sheet, err := xlsxFile.AddSheet("Sheet1")
 	if err != nil {
-		Ctx(ctx).EnumError(ExportFailedEnum, err)
+		Ctx(ctx).RespError(ExportFailedResp.SetData(err))
+		ctx.Abort()
 		return
 	}
 	// 写入表头
@@ -58,7 +59,8 @@ func BuildExcelByData(ctx *gin.Context, model any, data any, excelName string) {
 	ctx.Writer.Header().Add("Content-Disposition", "attachment;filename*=utf-8''"+excelName)
 	ctx.Writer.Header().Add("Content-Transfer-Encoding", "binary")
 	if err = xlsxFile.Write(ctx.Writer); err != nil {
-		Ctx(ctx).EnumError(ExportFailedEnum, err)
+		Ctx(ctx).RespError(ExportFailedResp.SetData(err))
+		ctx.Abort()
 		return
 	}
 	return

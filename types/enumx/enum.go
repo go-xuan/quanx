@@ -99,7 +99,6 @@ func (e *IntEnum[T]) Add(k int, v T) *IntEnum[T] {
 		e.keys = make([]int, 0)
 		e.data = make(map[int]T)
 	}
-	e.data = make(map[int]T)
 	e.keys = append(e.keys, k)
 	e.data[k] = v
 	return e

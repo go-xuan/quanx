@@ -57,7 +57,7 @@ func (c *Config) Execute() error {
 		_handler = &Handler{
 			multi:     false,
 			client:    client,
-			clientMap: make(map[string]Client),
+			clientMap: make(map[string]CacheClient),
 		}
 	} else {
 		_handler.multi = true
@@ -94,7 +94,7 @@ func (m MultiConfig) Execute() error {
 	if _handler == nil {
 		_handler = &Handler{
 			multi:     true,
-			clientMap: make(map[string]Client),
+			clientMap: make(map[string]CacheClient),
 		}
 	} else {
 		_handler.multi = true
@@ -111,7 +111,7 @@ func (m MultiConfig) Execute() error {
 }
 
 // InitClient 根据缓存配置初始化缓存客户端
-func (c *Config) InitClient() Client {
+func (c *Config) InitClient() CacheClient {
 	switch c.Type {
 	case CacheTypeRedis:
 		return &RedisClient{

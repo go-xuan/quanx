@@ -13,7 +13,7 @@ import (
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
-var client *Client
+var _client *Client
 
 type Client struct {
 	strategy int
@@ -56,39 +56,39 @@ const (
 )
 
 func newHttpClient() *Client {
-	if client == nil || client.strategy != httpStrategyCode {
-		client = &Client{strategy: httpStrategyCode, client: &http.Client{Transport: newTransport()}}
+	if _client == nil || _client.strategy != httpStrategyCode {
+		_client = &Client{strategy: httpStrategyCode, client: &http.Client{Transport: newTransport()}}
 	}
-	return client
+	return _client
 }
 
 func newHttpsClient(crt string) *Client {
-	if client == nil || client.strategy != httpsStrategyCode {
-		client = &Client{strategy: httpsStrategyCode, client: &http.Client{Transport: newTransport(crt)}}
+	if _client == nil || _client.strategy != httpsStrategyCode {
+		_client = &Client{strategy: httpsStrategyCode, client: &http.Client{Transport: newTransport(crt)}}
 	}
-	return client
+	return _client
 }
 
 func newHttpProxyClient(proxyUrl string) *Client {
-	if client == nil || client.strategy != proxyStrategyCode {
+	if _client == nil || _client.strategy != proxyStrategyCode {
 		var transport = newTransport()
 		if proxyURL, err := url.Parse(proxyUrl); err == nil {
 			transport.Proxy = http.ProxyURL(proxyURL)
 		}
-		client = &Client{strategy: proxyStrategyCode, client: &http.Client{Transport: transport}}
+		_client = &Client{strategy: proxyStrategyCode, client: &http.Client{Transport: transport}}
 	}
-	return client
+	return _client
 }
 
 func newHttpsProxyClient(proxyUrl string, crt string) *Client {
-	if client == nil || client.strategy != httpsProxyStrategyCode {
+	if _client == nil || _client.strategy != httpsProxyStrategyCode {
 		var transport = newTransport(crt)
 		if proxyURL, err := url.Parse(proxyUrl); err == nil {
 			transport.Proxy = http.ProxyURL(proxyURL)
 		}
-		client = &Client{strategy: httpsProxyStrategyCode, client: &http.Client{Transport: transport}}
+		_client = &Client{strategy: httpsProxyStrategyCode, client: &http.Client{Transport: transport}}
 	}
-	return client
+	return _client
 }
 
 func newTransport(crt ...string) *http.Transport {
