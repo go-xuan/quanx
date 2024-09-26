@@ -47,6 +47,7 @@ func (s *CronScheduler) Stop() {
 	s.cron.Stop()
 }
 
+// Add 添加定时任务
 func (s *CronScheduler) Add(name string, spec string, task func()) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -64,6 +65,7 @@ func (s *CronScheduler) Add(name string, spec string, task func()) error {
 	return nil
 }
 
+// All 获取所有定时任务
 func (s *CronScheduler) All() []*CronTask {
 	var tasks []*CronTask
 	for _, task := range s.tasks {
@@ -72,6 +74,7 @@ func (s *CronScheduler) All() []*CronTask {
 	return tasks
 }
 
+// Get 获取定时任务
 func (s *CronScheduler) Get(name string) *CronTask {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -81,6 +84,7 @@ func (s *CronScheduler) Get(name string) *CronTask {
 	return nil
 }
 
+// Remove 移除定时任务
 func (s *CronScheduler) Remove(name string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -90,6 +94,7 @@ func (s *CronScheduler) Remove(name string) {
 	}
 }
 
+// Info 获取定时任务信息
 func (s *CronTask) Info() string {
 	return fmt.Sprintf("name:%s spec:%s next:%s", s.name, s.spec, s.Next.Format("2006-01-02 15:04:05"))
 }
