@@ -10,8 +10,12 @@ import (
 
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/utils/fmtx"
+	"github.com/go-xuan/quanx/os/fmtx"
 )
+
+func NewConfigurator(conf *Config) configx.Configurator {
+	return conf
+}
 
 type Config struct {
 	Host     string `yaml:"host" json:"host"`         // 主机

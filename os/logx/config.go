@@ -12,9 +12,9 @@ import (
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/intx"
-	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
 // 日志级别
@@ -34,8 +34,8 @@ const (
 	LumberjackOutput = "lumberjack"
 )
 
-func New(app string) *Config {
-	return &Config{FileName: app + ".log"}
+func NewConfigurator(conf *Config) configx.Configurator {
+	return conf
 }
 
 // Config 日志配置

@@ -8,14 +8,13 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/clients/config_client"
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
-	"github.com/nacos-group/nacos-sdk-go/model"
 	"github.com/nacos-group/nacos-sdk-go/vo"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/core/configx"
+	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/stringx"
-	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
 const (
@@ -23,6 +22,10 @@ const (
 	OnlyNaming             // 仅用服务发现
 	ConfigAndNaming        // 配置中心和服务发现都使用
 )
+
+func NewConfigurator(conf *Config) configx.Configurator {
+	return conf
+}
 
 // Config nacos连接配置
 type Config struct {
@@ -48,22 +51,22 @@ func (*Config) Reader() *configx.Reader {
 
 func (c *Config) Execute() (err error) {
 	if handler == nil {
-		handler = &Handler{Config: c}
+		handler = &Handler{config: c}
 		switch c.Mode {
 		case OnlyConfig:
-			if handler.ConfigClient, err = c.ConfigClient(c.ClientParam()); err != nil {
+			if handler.configClient, err = c.ConfigClient(c.ClientParam()); err != nil {
 				return
 			}
 		case OnlyNaming:
-			if handler.NamingClient, err = c.NamingClient(c.ClientParam()); err != nil {
+			if handler.namingClient, err = c.NamingClient(c.ClientParam()); err != nil {
 				return
 			}
 		case ConfigAndNaming:
 			var param = c.ClientParam()
-			if handler.ConfigClient, err = c.ConfigClient(param); err != nil {
+			if handler.configClient, err = c.ConfigClient(param); err != nil {
 				return
 			}
-			if handler.NamingClient, err = c.NamingClient(param); err != nil {
+			if handler.namingClient, err = c.NamingClient(param); err != nil {
 				return
 			}
 		}
@@ -137,88 +140,6 @@ func (c *Config) NamingClient(param vo.NacosClientParam) (client naming_client.I
 	if client, err = clients.NewNamingClient(param); err != nil {
 		log.Error("nacos naming client init failed: ", c.Format(), err)
 		return
-	}
-	return
-}
-
-// Register 初始化Nacos服务发现客户端
-func (c *Config) Register(server ServerInstance) (err error) {
-	var client naming_client.INamingClient
-	if client = This().NamingClient; client == nil {
-		if client, err = c.NamingClient(c.ClientParam()); err != nil {
-			return
-		}
-	}
-	if _, err = client.RegisterInstance(vo.RegisterInstanceParam{
-		Ip:          server.Host,
-		Port:        uint64(server.Port),
-		GroupName:   c.NameSpace,
-		ServiceName: server.Name,
-		Weight:      1,
-		Enable:      true,
-		Healthy:     true,
-		Ephemeral:   true,
-		Metadata:    nil,
-	}); err != nil {
-		log.Error("nacos server register failed: ", server.Info(), err)
-	} else {
-		log.Info("nacos server register successfully: ", server.Info())
-	}
-	return
-}
-
-func (c *Config) Deregister(server ServerInstance) (err error) {
-	var client naming_client.INamingClient
-	if client = This().NamingClient; client == nil {
-		if client, err = c.NamingClient(c.ClientParam()); err != nil {
-			return
-		}
-	}
-	if _, err = client.DeregisterInstance(vo.DeregisterInstanceParam{
-		Ip:          server.Host,
-		Port:        uint64(server.Port),
-		GroupName:   c.NameSpace,
-		ServiceName: server.Name,
-		Ephemeral:   true,
-	}); err != nil {
-		log.Error("nacos server deregister failed: ", server.Info(), err)
-	} else {
-		log.Info("nacos server deregister successfully: ", server.Info())
-	}
-	return
-}
-
-func (c *Config) AllInstances(name string) (instances []*ServerInstance, err error) {
-	var servers []model.Instance
-	if servers, err = This().NamingClient.SelectInstances(vo.SelectInstancesParam{
-		ServiceName: name,
-		GroupName:   c.NameSpace,
-		HealthyOnly: true,
-	}); err != nil {
-		return
-	}
-	for _, server := range servers {
-		instances = append(instances, &ServerInstance{
-			Name: server.ServiceName,
-			Host: server.Ip,
-			Port: int(server.Port),
-		})
-	}
-	return
-}
-
-func (c *Config) GetInstance(name string) (instance *ServerInstance, err error) {
-	var servers *model.Instance
-	if servers, err = This().NamingClient.SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
-		ServiceName: name,
-		GroupName:   c.NameSpace,
-	}); err != nil {
-		return
-	}
-	instance = &ServerInstance{
-		Name: servers.ServiceName,
-		Host: servers.Ip,
-		Port: int(servers.Port),
 	}
 	return
 }

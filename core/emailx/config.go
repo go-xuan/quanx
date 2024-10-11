@@ -5,8 +5,12 @@ import (
 	"gopkg.in/gomail.v2"
 
 	"github.com/go-xuan/quanx/core/configx"
-	"github.com/go-xuan/quanx/utils/fmtx"
+	"github.com/go-xuan/quanx/os/fmtx"
 )
+
+func NewConfigurator(conf *Config) configx.Configurator {
+	return conf
+}
 
 // Config 邮件服务器配置
 type Config struct {

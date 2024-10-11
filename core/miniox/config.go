@@ -2,7 +2,6 @@ package miniox
 
 import (
 	"fmt"
-	"path"
 	"path/filepath"
 	"time"
 
@@ -13,9 +12,13 @@ import (
 
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/timex"
-	"github.com/go-xuan/quanx/utils/fmtx"
 )
+
+func NewConfigurator(conf *Config) configx.Configurator {
+	return conf
+}
 
 type Config struct {
 	Host         string `yaml:"host" json:"host"`                 // 主机
@@ -74,9 +77,9 @@ func (m *Config) NewClient() (client *minio.Client, err error) {
 
 func (m *Config) MinioPath(fileName string) (minioPath string) {
 	fileSuffix := filepath.Ext(filepath.Base(fileName))
-	minioPath = path.Join(time.Now().Format(timex.TimestampFmt), uuid.NewString()+fileSuffix)
+	minioPath = filepath.Join(time.Now().Format(timex.TimestampFmt), uuid.NewString()+fileSuffix)
 	if m.PrefixPath != "" {
-		minioPath = path.Join(m.PrefixPath, minioPath)
+		minioPath = filepath.Join(m.PrefixPath, minioPath)
 	}
 	return
 }

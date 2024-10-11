@@ -2,17 +2,15 @@ package emailx
 
 import (
 	"testing"
-
-	"github.com/go-xuan/quanx/core/configx"
 )
 
 func TestEmail(t *testing.T) {
-	if err := configx.Execute(&Config{
+	if err := NewConfigurator(&Config{
 		Host:     "smtp.qq.com",
 		Port:     465,
 		Username: "",
 		Password: "",
-	}); err != nil {
+	}).Execute(); err != nil {
 		panic(err)
 	}
 

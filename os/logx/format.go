@@ -8,7 +8,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/utils/fmtx"
+	"github.com/go-xuan/quanx/os/fmtx"
 )
 
 func DefaultFormatter() log.Formatter {

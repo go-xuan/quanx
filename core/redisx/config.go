@@ -3,6 +3,7 @@ package redisx
 import (
 	"context"
 	"fmt"
+	"github.com/go-xuan/quanx/common/constx"
 	"net"
 	"strconv"
 	"strings"
@@ -10,11 +11,10 @@ import (
 	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
 const (
@@ -23,8 +23,9 @@ const (
 	Sentinel          // 集群
 )
 
-// MultiConfig redis多连接配置
-type MultiConfig []*Config
+func NewConfigurator(conf *Config) configx.Configurator {
+	return conf
+}
 
 type Config struct {
 	Source     string `json:"source" yaml:"source" default:"default"` // 数据源名称
@@ -37,60 +38,6 @@ type Config struct {
 	Database   int    `json:"database" yaml:"database" default:"0"`   // 数据库，默认0
 	MasterName string `json:"masterName" yaml:"masterName"`           // 哨兵模式主服务器名称
 	PoolSize   int    `json:"poolSize" yaml:"poolSize"`               // 池大小
-}
-
-func (MultiConfig) ID() string {
-	return "multi-redis"
-}
-
-func (MultiConfig) Format() string {
-	return ""
-}
-
-func (MultiConfig) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "redis.yaml",
-		NacosDataId: "redis.yaml",
-		Listen:      false,
-	}
-}
-
-func (l MultiConfig) Execute() error {
-	if len(l) == 0 {
-		log.Error("redis not connected! cause: redis.yaml not found")
-		return nil
-	}
-	if _handler == nil {
-		_handler = &Handler{
-			multi:     true,
-			configMap: make(map[string]*Config),
-			clientMap: make(map[string]redis.UniversalClient),
-		}
-	} else {
-		_handler.multi = true
-	}
-	var ctx = context.Background()
-	for i, c := range l {
-		if c.Enable {
-			if err := anyx.SetDefaultValue(c); err != nil {
-				return errorx.Wrap(err, "set default value error")
-			}
-			var client = c.NewRedisClient()
-			if result, err := client.Ping(ctx).Result(); err != nil || result != "PONG" {
-				return errorx.Wrap(err, "redis client ping error")
-			}
-			_handler.clientMap[c.Source] = client
-			_handler.configMap[c.Source] = c
-			if i == 0 || c.Source == constx.DefaultSource {
-				_handler.client = client
-				_handler.config = c
-			}
-		}
-	}
-	if len(_handler.configMap) == 0 {
-		log.Error("redis connect failed! cause: redis.yaml is empty or no enabled redis configured")
-	}
-	return nil
 }
 
 func (c *Config) ID() string {
@@ -170,4 +117,61 @@ func (c *Config) NewRedisClient() redis.UniversalClient {
 		log.Warn("redis mode is invalid: ")
 		return nil
 	}
+}
+
+// MultiConfig redis多连接配置
+type MultiConfig []*Config
+
+func (MultiConfig) ID() string {
+	return "multi-redis"
+}
+
+func (MultiConfig) Format() string {
+	return ""
+}
+
+func (MultiConfig) Reader() *configx.Reader {
+	return &configx.Reader{
+		FilePath:    "redis.yaml",
+		NacosDataId: "redis.yaml",
+		Listen:      false,
+	}
+}
+
+func (l MultiConfig) Execute() error {
+	if len(l) == 0 {
+		log.Error("redis not connected! cause: redis.yaml not found")
+		return nil
+	}
+	if _handler == nil {
+		_handler = &Handler{
+			multi:     true,
+			configMap: make(map[string]*Config),
+			clientMap: make(map[string]redis.UniversalClient),
+		}
+	} else {
+		_handler.multi = true
+	}
+	var ctx = context.Background()
+	for i, c := range l {
+		if c.Enable {
+			if err := anyx.SetDefaultValue(c); err != nil {
+				return errorx.Wrap(err, "set default value error")
+			}
+			var client = c.NewRedisClient()
+			if result, err := client.Ping(ctx).Result(); err != nil || result != "PONG" {
+				return errorx.Wrap(err, "redis client ping error")
+			}
+			_handler.clientMap[c.Source] = client
+			_handler.configMap[c.Source] = c
+			if i == 0 || c.Source == constx.DefaultSource {
+				_handler.client = client
+				_handler.config = c
+			}
+		}
+	}
+	if len(_handler.configMap) == 0 {
+		log.Error("redis connect failed! cause: redis.yaml is empty or no enabled redis configured")
+	}
+	return nil
 }

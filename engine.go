@@ -1,6 +1,8 @@
 package quanx
 
 import (
+	"github.com/go-xuan/quanx/core/cachex"
+	"github.com/go-xuan/quanx/core/redisx"
 	"path/filepath"
 	"strconv"
 
@@ -8,19 +10,17 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/core/cachex"
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/ginx"
 	"github.com/go-xuan/quanx/core/gormx"
 	"github.com/go-xuan/quanx/core/nacosx"
-	"github.com/go-xuan/quanx/core/redisx"
 	"github.com/go-xuan/quanx/net/ipx"
+	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/os/logx"
 	"github.com/go-xuan/quanx/os/syncx"
 	"github.com/go-xuan/quanx/os/taskx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
-	"github.com/go-xuan/quanx/utils/fmtx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
@@ -29,7 +29,6 @@ type Mode uint
 
 const (
 	Debug         Mode = iota // debug模式
-	NonGin                    // 非gin项目
 	EnableNacos               // 启用nacos
 	MultiDatabase             // 开启多数据源
 	MultiRedis                // 开启多redis源
@@ -136,22 +135,20 @@ func (e *Engine) enableQueue() {
 func (e *Engine) loadingAppConfig() {
 	e.checkRunning()
 	var config = &Config{Server: &Server{}}
-	if !e.mode[NonGin] {
-		var path = e.GetConfigPath(constx.DefaultServerConfig)
-		if err := marshalx.UnmarshalFromFile(path, config); err != nil {
-			log.Errorf("Scan %s Failed", path)
-			panic(err)
-		}
-		if config.Server.Host == "" {
-			config.Server.Host = ipx.GetLocalIP()
-		}
+	var path = e.GetConfigPath(constx.DefaultServerConfig)
+	if err := marshalx.UnmarshalFromFile(path, config); err != nil {
+		log.Errorf("Scan %s Failed", path)
+		panic(err)
+	}
+	if config.Server.Host == "" {
+		config.Server.Host = ipx.GetLocalIP()
 	}
 	// 从nacos加载配置
 	if e.mode[EnableNacos] && config.Nacos != nil {
 		e.ExecuteConfigurator(config.Nacos, true)
 		if config.Nacos.EnableNaming() {
 			// 注册nacos服务Nacos
-			if err := config.Nacos.Register(config.Server.Instance()); err != nil {
+			if err := nacosx.Register(config.Server.Instance()); err != nil {
 				panic(err)
 			}
 		}
@@ -164,7 +161,7 @@ func (e *Engine) initAppBasic() {
 	e.checkRunning()
 	// 初始化日志
 	var serverName = stringx.IfZero(e.config.Server.Name, "app")
-	e.ExecuteConfigurator(anyx.IfZero(e.config.Log, logx.New(serverName)), true)
+	e.ExecuteConfigurator(anyx.IfZero(e.config.Log, &logx.Config{FileName: serverName + ".log"}), true)
 
 	// 初始化数据库连接
 	if e.mode[MultiDatabase] {
@@ -230,25 +227,23 @@ func (e *Engine) runCustomFuncs() {
 // 服务启动
 func (e *Engine) startServer() {
 	e.checkRunning()
-	if !e.mode[NonGin] {
-		defer PanicRecover()
-		if e.mode[Debug] {
-			gin.SetMode(gin.DebugMode)
-		}
-		if e.ginEngine == nil {
-			e.ginEngine = gin.New()
-		}
-		e.ginEngine.Use(gin.Recovery(), ginx.RequestLogFmt)
-		e.ginEngine.Use(e.ginMiddlewares...)
-		_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
-		// 注册服务根路由
-		group := e.ginEngine.Group(e.config.Server.ApiPrefix())
-		e.InitGinLoader(group)
-		log.Info("API接口请求地址: " + e.config.Server.ApiHost())
-		if err := e.ginEngine.Run(":" + strconv.Itoa(e.config.Server.Port)); err != nil {
-			log.Error("gin run failed ")
-			panic(err)
-		}
+	defer PanicRecover()
+	if e.mode[Debug] {
+		gin.SetMode(gin.DebugMode)
+	}
+	if e.ginEngine == nil {
+		e.ginEngine = gin.New()
+	}
+	e.ginEngine.Use(gin.Recovery(), ginx.RequestLogFmt)
+	e.ginEngine.Use(e.ginMiddlewares...)
+	_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
+	// 注册服务根路由
+	group := e.ginEngine.Group(e.config.Server.ApiPrefix())
+	e.InitGinLoader(group)
+	log.Info("API接口请求地址: " + e.config.Server.ApiHost())
+	if err := e.ginEngine.Run(":" + strconv.Itoa(e.config.Server.Port)); err != nil {
+		log.Error("gin run failed ")
+		panic(err)
 	}
 }
 
@@ -275,7 +270,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 	if reader := configurator.Reader(); reader != nil {
 		if e.mode[EnableNacos] {
 			reader.NacosGroup = e.config.Server.Name
-			if err := nacosx.NewScanner(reader.NacosGroup, reader.NacosDataId, reader.Listen).Scan(configurator); err == nil {
+			if err := nacosx.This().ScanConfig(configurator, reader.NacosGroup, reader.NacosDataId, reader.Listen); err == nil {
 				mustRun = true
 			}
 		} else {
@@ -300,21 +295,17 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 	}
 }
 
-// LoadingLocalConfig 初始化本地配置项（立即加载）
+// LoadingLocalConfig 加载本地配置项（立即加载）
 func (e *Engine) LoadingLocalConfig(v any, path string) {
 	if err := marshalx.UnmarshalFromFile(path, v); err != nil {
 		panic(err)
 	}
 }
 
-// ScanFromNacosConfig 初始化Nacos配置项（以自定义函数的形式延迟加载）
-func (e *Engine) ScanFromNacosConfig(v any, dataId string, listen ...bool) {
+// LoadingNacosConfig 加载nacos配置（以自定义函数的形式延迟加载）
+func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() {
-		if nacosx.This().ConfigClient == nil {
-			panic("nacos config client is uninitialized ")
-		}
-		// 加载微服务配置
-		if err := nacosx.NewScanner(e.config.Server.Name, dataId, listen...).Scan(v); err != nil {
+		if err := nacosx.This().ScanConfig(v, e.config.Server.Name, dataId, listen...); err != nil {
 			panic("scan nacos config failed : " + err.Error())
 		}
 	})

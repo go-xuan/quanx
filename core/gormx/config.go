@@ -15,12 +15,13 @@ import (
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
-// MultiConfig 数据库多数据源配置
-type MultiConfig []*Config
+func NewConfigurator(conf *Config) configx.Configurator {
+	return conf
+}
 
 type Config struct {
 	Source          string `json:"source" yaml:"source" default:"default"`              // 数据源名称
@@ -36,59 +37,6 @@ type Config struct {
 	MaxIdleConns    int    `json:"maxIdleConns" yaml:"maxIdleConns" default:"10"`       // 最大空闲连接
 	MaxOpenConns    int    `json:"maxOpenConns" yaml:"maxOpenConns" default:"10"`       // 最大打开连接
 	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
-}
-
-func (MultiConfig) Format() string {
-	return ""
-}
-
-func (MultiConfig) ID() string {
-	return "multi-database"
-}
-
-func (MultiConfig) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "database.yaml",
-		NacosDataId: "database.yaml",
-		Listen:      false,
-	}
-}
-
-func (m MultiConfig) Execute() error {
-	if len(m) == 0 {
-		log.Error("database not connected! cause: database.yaml Not Found")
-		return nil
-	}
-	if _handler == nil {
-		_handler = &Handler{
-			multi:     true,
-			gormMap:   make(map[string]*gorm.DB),
-			configMap: make(map[string]*Config),
-		}
-	} else {
-		_handler.multi = true
-	}
-	for i, c := range m {
-		if c.Enable {
-			if err := anyx.SetDefaultValue(c); err != nil {
-				return errorx.Wrap(err, "set default value error")
-			}
-			var db, err = c.NewGormDB()
-			if err != nil {
-				return errorx.Wrap(err, "new gorm.Config failed")
-			}
-			_handler.gormMap[c.Source] = db
-			_handler.configMap[c.Source] = c
-			if i == 0 || c.Source == constx.DefaultSource {
-				_handler.gormDB = db
-				_handler.config = c
-			}
-		}
-	}
-	if len(_handler.configMap) == 0 {
-		log.Error("database not connected! cause: database.yaml is empty or no enabled database configured")
-	}
-	return nil
 }
 
 func (c *Config) ID() string {
@@ -197,4 +145,60 @@ func (c *Config) GetGormDB() (*gorm.DB, error) {
 	} else {
 		return db, nil
 	}
+}
+
+// MultiConfig 数据库多数据源配置
+type MultiConfig []*Config
+
+func (MultiConfig) Format() string {
+	return ""
+}
+
+func (MultiConfig) ID() string {
+	return "multi-database"
+}
+
+func (MultiConfig) Reader() *configx.Reader {
+	return &configx.Reader{
+		FilePath:    "database.yaml",
+		NacosDataId: "database.yaml",
+		Listen:      false,
+	}
+}
+
+func (m MultiConfig) Execute() error {
+	if len(m) == 0 {
+		log.Error("database not connected! cause: database.yaml Not Found")
+		return nil
+	}
+	if _handler == nil {
+		_handler = &Handler{
+			multi:     true,
+			gormMap:   make(map[string]*gorm.DB),
+			configMap: make(map[string]*Config),
+		}
+	} else {
+		_handler.multi = true
+	}
+	for i, c := range m {
+		if c.Enable {
+			if err := anyx.SetDefaultValue(c); err != nil {
+				return errorx.Wrap(err, "set default value error")
+			}
+			var db, err = c.NewGormDB()
+			if err != nil {
+				return errorx.Wrap(err, "new gorm.Config failed")
+			}
+			_handler.gormMap[c.Source] = db
+			_handler.configMap[c.Source] = c
+			if i == 0 || c.Source == constx.DefaultSource {
+				_handler.gormDB = db
+				_handler.config = c
+			}
+		}
+	}
+	if len(_handler.configMap) == 0 {
+		log.Error("database not connected! cause: database.yaml is empty or no enabled database configured")
+	}
+	return nil
 }

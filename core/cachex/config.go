@@ -10,9 +10,9 @@ import (
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/redisx"
 	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
-	"github.com/go-xuan/quanx/utils/fmtx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
@@ -21,8 +21,9 @@ const (
 	CacheTypeLocal = "local"
 )
 
-// MultiConfig 多缓存配置
-type MultiConfig []*Config
+func NewConfigurator(conf *Config) configx.Configurator {
+	return conf
+}
 
 type Config struct {
 	Type    string `json:"type" yaml:"type" default:"redis"`         // 缓存类型（local/redis）
@@ -66,50 +67,6 @@ func (c *Config) Execute() error {
 	return nil
 }
 
-func Default() *Config {
-	return &Config{
-		Source:  constx.DefaultSource,
-		Prefix:  "cache",
-		Marshal: "json",
-	}
-}
-
-func (MultiConfig) ID() string {
-	return "multi-cache"
-}
-
-func (MultiConfig) Format() string {
-	return ""
-}
-
-func (MultiConfig) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "cache.yaml",
-		NacosDataId: "cache.yaml",
-		Listen:      false,
-	}
-}
-
-func (m MultiConfig) Execute() error {
-	if _handler == nil {
-		_handler = &Handler{
-			multi:     true,
-			clientMap: make(map[string]CacheClient),
-		}
-	} else {
-		_handler.multi = true
-	}
-	multi := anyx.IfZero(m, MultiConfig{Default()})
-	for i, c := range multi {
-		var client = c.InitClient()
-		_handler.clientMap[c.Source] = client
-		if i == 0 || c.Source == constx.DefaultSource {
-			_handler.client = client
-		}
-	}
-	return nil
-}
-
 // InitClient 根据缓存配置初始化缓存客户端
 func (c *Config) InitClient() CacheClient {
 	switch c.Type {
@@ -149,4 +106,47 @@ func (c *Config) GetKeys(keys []string) []string {
 		return newKeys
 	}
 	return keys
+}
+
+// MultiConfig 多缓存配置
+type MultiConfig []*Config
+
+func (MultiConfig) ID() string {
+	return "multi-cache"
+}
+
+func (MultiConfig) Format() string {
+	return ""
+}
+
+func (MultiConfig) Reader() *configx.Reader {
+	return &configx.Reader{
+		FilePath:    "cache.yaml",
+		NacosDataId: "cache.yaml",
+		Listen:      false,
+	}
+}
+
+func (m MultiConfig) Execute() error {
+	if _handler == nil {
+		_handler = &Handler{
+			multi:     true,
+			clientMap: make(map[string]CacheClient),
+		}
+	} else {
+		_handler.multi = true
+	}
+	multi := anyx.IfZero(m, MultiConfig{&Config{
+		Source:  constx.DefaultSource,
+		Prefix:  "cache",
+		Marshal: "json",
+	}})
+	for i, c := range multi {
+		var client = c.InitClient()
+		_handler.clientMap[c.Source] = client
+		if i == 0 || c.Source == constx.DefaultSource {
+			_handler.client = client
+		}
+	}
+	return nil
 }

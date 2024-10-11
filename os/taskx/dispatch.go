@@ -25,13 +25,13 @@ func InBatches(total, limit int, f func(int, int) error) error {
 }
 
 // Retry 重试执行
-func Retry(size, index int, interval time.Duration, f func() error) error {
-	if size > 0 {
+func Retry(times, index int, interval time.Duration, f func() error) error {
+	if times > 0 {
 		time.Sleep(interval)
 		index++
 		if err := f(); err != nil {
 			fmt.Printf("execute failed after %d times retery\n", index)
-			return Retry(size-1, index, interval, f)
+			return Retry(times-1, index, interval, f)
 		} else {
 			fmt.Printf("execute success after %d times retery\n", index)
 			return nil

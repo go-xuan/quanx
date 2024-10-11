@@ -3,28 +3,37 @@ package taskx
 import (
 	"fmt"
 	"testing"
-	"time"
 )
 
+func task1() {
+	fmt.Println("执行定时任务 ==> task1")
+}
+
+func task2() {
+	fmt.Println("执行定时任务 ==> task2")
+}
+
+func task3() {
+	fmt.Println("执行定时任务 ==> task3")
+}
+
+func task4() {
+	fmt.Println("执行定时任务 ==> task4")
+}
+
 func TestCron(t *testing.T) {
-	c := Corn()
+	// 初始化
+	scheduler := Corn()
 
-	var count1, count2 = 0, 0
-	if err := c.Add("task1", "@every 3s", func() {
-		count1++
-		fmt.Printf("第%d次执行task1\n", count1)
-	}); err != nil {
-		fmt.Println(err)
+	scheduler.Add("task1", "@every 5s", task1)
+	scheduler.Add("task2", "@every 10m", task2)
+	scheduler.Add("task3", "@daily", task3)
+	scheduler.Add("task4", "0 */1 * * * ?", task4)
+
+	scheduler.Start()
+
+	// 定时任务信息
+	for i, task := range scheduler.All() {
+		fmt.Println(i, task.Info())
 	}
-
-	if err := c.Add("task2", "@every 5s", func() {
-		count2++
-		fmt.Printf("第%d次执行task2\n", count2)
-	}); err != nil {
-		fmt.Println(err)
-	}
-
-	c.Start()
-	time.Sleep(time.Minute)
-	c.Stop()
 }

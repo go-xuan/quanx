@@ -46,7 +46,7 @@ func (d *ConfigData) Unmarshal(v any) error {
 }
 
 func getKey(group, dataId string) string {
-	return group + "_" + dataId
+	return group + ":" + dataId
 }
 
 // Set 新增nacos配置监听
@@ -56,11 +56,11 @@ func (m *ConfigMonitor) Set(group, dataId, content string) {
 	var key = getKey(group, dataId)
 	if data, exist := m.data[key]; !exist {
 		m.data[key] = &ConfigData{
-			group,
-			dataId,
-			content,
-			false,
-			time.Now().UnixMilli()}
+			group:   group,
+			dataId:  dataId,
+			content: content,
+			changed: false,
+			modify:  time.Now().UnixMilli()}
 		m.num++
 	} else {
 		data.content = content

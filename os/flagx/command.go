@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/utils/fmtx"
 )
 
 var _commands *commands
@@ -45,10 +45,10 @@ func Register(commands ...*Command) {
 	for _, command := range commands {
 		var name = command.name
 		if command.handler == nil {
-			panic(fmt.Sprintf("command %s has no handler", name))
+			panic(fmt.Sprintf("[%s]命令未设置执行器！", command.name))
 		}
 		if _, ok := _commands.child[command.name]; ok {
-			panic(fmt.Sprintf("command %s has been registered", name))
+			panic(fmt.Sprintf("[%s]命令未注册", name))
 		}
 		_commands.names = append(_commands.names, name)
 		_commands.child[name] = command
@@ -58,22 +58,21 @@ func Register(commands ...*Command) {
 // Execute 启动
 func Execute() error {
 	if _commands == nil {
-		return errorx.New("please register the command first")
+		return errorx.New("请先注册命令")
 	}
 	if args := os.Args; len(args) > 1 {
 		var name = strings.ToLower(args[1])
 		if command, exist := _commands.child[name]; exist {
 			if err := command.newFlagSet().Parse(args[2:]); err != nil {
-				return errorx.Wrap(err, "failed to parse command args")
+				return errorx.Wrap(err, "解析参数命令失败")
 			}
 			if handler := command.handler; handler != nil {
-				fmtx.Cyan.XPrintf("======current command is: %s======", command.name)
-				fmt.Println()
+				fmtx.Cyan.XPrintf("======当前执行命令是: %s======\n", command.name)
 				if err := handler(); err != nil {
 					return errorx.Wrap(err, command.name+" handle failed")
 				}
 			} else {
-				fmtx.Red.XPrintf("command %s hasn't set the handler", command.name)
+				fmtx.Red.XPrintf("[%s]命令未设置执行器！", command.name)
 			}
 			return nil
 		}
@@ -87,11 +86,11 @@ func GetOptionValue(command, option string) anyx.Value {
 		if opt, ok := cmd.options[option]; ok {
 			return opt.Get()
 		} else {
-			fmt.Printf("option [%s] not found\n", option)
+			fmt.Printf("[%s]命令未注册此参数：%s\n", command, option)
 			return nil
 		}
 	} else {
-		fmt.Printf("command [%s] not found\n", command)
+		fmt.Printf("[%s]命令未注册此参数：%s\n", command, option)
 		return nil
 	}
 }
@@ -102,12 +101,11 @@ type commands struct {
 }
 
 func (p *commands) Help() {
-	fmt.Println("ALL COMMANDS：")
+	fmt.Println("\n已注册命令：")
 	for _, name := range p.names {
 		fmt.Printf("%-50s %s\n", fmtx.Cyan.String(name), p.child[name].usage)
 	}
-	fmt.Println()
-	fmt.Println("ALL OPTIONS：")
+	fmt.Println("\n已注册参数：")
 	for _, name := range p.names {
 		p.child[name].Help()
 	}
@@ -137,7 +135,7 @@ func (cmd *Command) GetOptionValue(option string) anyx.Value {
 	if opt, ok := cmd.options[option]; ok {
 		return opt.Get()
 	} else {
-		fmt.Printf("option [%s] not found\n", option)
+		fmt.Printf("[%s]参数未找到\n", option)
 		return nil
 	}
 }
@@ -153,10 +151,10 @@ func (cmd *Command) Register() {
 	initCommands()
 	var name = cmd.name
 	if cmd.handler == nil {
-		panic(fmt.Sprintf("command %s has no handler", name))
+		panic(fmt.Sprintf("[%s]命令未设置执行器！", name))
 	}
 	if _, ok := _commands.child[name]; ok {
-		panic(fmt.Sprintf("command %s has been registered", name))
+		panic(fmt.Sprintf("[%s]命令未注册！", name))
 	}
 	_commands.names = append(_commands.names, name)
 	_commands.child[name] = cmd
@@ -174,7 +172,7 @@ func (cmd *Command) newFlagSet() *flag.FlagSet {
 }
 
 func (cmd *Command) Help() {
-	fmt.Printf("OPTIONS OF [%s]:\n", fmtx.Cyan.String(cmd.name))
+	fmt.Printf("[%s]命令的可用参数列表：\n", fmtx.Cyan.String(cmd.name))
 	for _, optName := range cmd.optNames {
 		option := cmd.options[optName]
 		fmt.Printf("%-50s %s\n", fmtx.Magenta.String("-"+option.Name()), option.Usage())
