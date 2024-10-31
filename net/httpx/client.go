@@ -41,11 +41,10 @@ func (c *Client) Do(httpRequest *http.Request) (*Response, error) {
 
 // GetClient 获取http客户端
 func GetClient(strategy ...ClientStrategy) *Client {
-	if len(strategy) > 0 {
+	if len(strategy) > 0 && strategy[0] != nil {
 		return strategy[0].Client()
-	} else {
-		return newHttpClient()
 	}
+	return newHttpClient()
 }
 
 const (
@@ -57,14 +56,26 @@ const (
 
 func newHttpClient() *Client {
 	if _client == nil || _client.strategy != httpStrategyCode {
-		_client = &Client{strategy: httpStrategyCode, client: &http.Client{Transport: newTransport()}}
+		_client = &Client{
+			strategy: httpStrategyCode,
+			client: &http.Client{
+				Timeout:   time.Second * 10,
+				Transport: newTransport(),
+			},
+		}
 	}
 	return _client
 }
 
 func newHttpsClient(crt string) *Client {
 	if _client == nil || _client.strategy != httpsStrategyCode {
-		_client = &Client{strategy: httpsStrategyCode, client: &http.Client{Transport: newTransport(crt)}}
+		_client = &Client{
+			strategy: httpsStrategyCode,
+			client: &http.Client{
+				Timeout:   time.Second * 10,
+				Transport: newTransport(crt),
+			},
+		}
 	}
 	return _client
 }
@@ -75,7 +86,13 @@ func newHttpProxyClient(proxyUrl string) *Client {
 		if proxyURL, err := url.Parse(proxyUrl); err == nil {
 			transport.Proxy = http.ProxyURL(proxyURL)
 		}
-		_client = &Client{strategy: proxyStrategyCode, client: &http.Client{Transport: transport}}
+		_client = &Client{
+			strategy: proxyStrategyCode,
+			client: &http.Client{
+				Timeout:   time.Second * 10,
+				Transport: transport,
+			},
+		}
 	}
 	return _client
 }
@@ -86,21 +103,30 @@ func newHttpsProxyClient(proxyUrl string, crt string) *Client {
 		if proxyURL, err := url.Parse(proxyUrl); err == nil {
 			transport.Proxy = http.ProxyURL(proxyURL)
 		}
-		_client = &Client{strategy: httpsProxyStrategyCode, client: &http.Client{Transport: transport}}
+		_client = &Client{
+			strategy: httpsProxyStrategyCode,
+			client: &http.Client{
+				Timeout:   time.Second * 10,
+				Transport: transport,
+			},
+		}
 	}
 	return _client
 }
 
 func newTransport(crt ...string) *http.Transport {
-	dialer := &net.Dialer{Timeout: 3 * time.Second, KeepAlive: 10 * time.Second}
+	dialer := &net.Dialer{
+		Timeout:   time.Second * 10,
+		KeepAlive: time.Second * 10,
+	}
 	var transport = &http.Transport{
 		TLSClientConfig:       newTLSClientConfig(crt...),
 		DialContext:           dialer.DialContext,
 		Proxy:                 http.ProxyFromEnvironment,
-		TLSHandshakeTimeout:   10 * time.Second,
 		MaxIdleConns:          30,
-		IdleConnTimeout:       90 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
+		IdleConnTimeout:       time.Second * 90,
+		TLSHandshakeTimeout:   time.Second * 10,
+		ExpectContinueTimeout: time.Second,
 	}
 	return transport
 }

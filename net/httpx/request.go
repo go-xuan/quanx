@@ -13,14 +13,6 @@ import (
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
-type Request struct {
-	method  string
-	url     string
-	headers map[string]string
-	body    io.Reader
-	debug   bool
-}
-
 func Method(method string, url string) *Request {
 	return &Request{
 		method: method,
@@ -40,6 +32,14 @@ func Post(url string) *Request {
 		method: "POST",
 		url:    url,
 	}
+}
+
+type Request struct {
+	method  string
+	url     string
+	headers map[string]string
+	body    io.Reader
+	debug   bool
 }
 
 func (r *Request) Params(params map[string]string) *Request {
@@ -88,17 +88,17 @@ func (r *Request) SetHeader(key, value string) *Request {
 	return r
 }
 
-func (r *Request) Authorization(token string) *Request {
+func (r *Request) SetAuthorization(token string) *Request {
 	r.SetHeader("Authorization", token)
 	return r
 }
 
-func (r *Request) Cookie(cookie string) *Request {
+func (r *Request) SetCookie(cookie string) *Request {
 	r.SetHeader("Cookie", cookie)
 	return r
 }
 
-func (r *Request) do(strategy ClientStrategy) (*Response, error) {
+func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 	if r.url == "" {
 		return nil, errorx.New("url is empty")
 	}
@@ -115,7 +115,7 @@ func (r *Request) do(strategy ClientStrategy) (*Response, error) {
 		}
 	}
 	var httpResponse *http.Response
-	if httpResponse, err = GetClient(strategy).client.Do(httpRequest); err != nil {
+	if httpResponse, err = GetClient(strategy...).client.Do(httpRequest); err != nil {
 		return nil, errorx.Wrap(err, "client.Do error")
 	}
 	resp := &Response{
@@ -135,20 +135,16 @@ func (r *Request) do(strategy ClientStrategy) (*Response, error) {
 	return resp, nil
 }
 
-func (r *Request) Do() (*Response, error) {
-	return r.do(&HttpClientStrategy{})
-}
-
 func (r *Request) DoProxy(proxyUrl string) (*Response, error) {
-	return r.do(&ProxyClientStrategy{Proxy: proxyUrl})
+	return r.Do(&ProxyClientStrategy{Proxy: proxyUrl})
 }
 
 func (r *Request) DoHttps(crt string) (*Response, error) {
-	return r.do(&HttpsClientStrategy{Crt: crt})
+	return r.Do(&HttpsClientStrategy{Crt: crt})
 }
 
 func (r *Request) DoHttpsProxy(proxyUrl, crt string) (*Response, error) {
-	return r.do(&HttpsProxyClientStrategy{
+	return r.Do(&HttpsProxyClientStrategy{
 		Proxy: proxyUrl,
 		Crt:   crt,
 	})

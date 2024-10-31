@@ -5,12 +5,11 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
 // SetDefaultValue 设置默认值
-func SetDefaultValue(v any) error {
+func SetDefaultValue(v interface{}) error {
 	valueRef := reflect.ValueOf(v)
 	if valueRef.Type().Kind() != reflect.Ptr {
 		return errorx.New("the obj must be pointer type")
@@ -18,7 +17,7 @@ func SetDefaultValue(v any) error {
 	for i := 0; i < valueRef.Elem().NumField(); i++ {
 		field := valueRef.Elem().Field(i)
 		if field.IsZero() {
-			if value := valueRef.Elem().Type().Field(i).Tag.Get(constx.DefaultSource); value != "" {
+			if value := valueRef.Elem().Type().Field(i).Tag.Get("default"); value != "" {
 				switch field.Kind() {
 				case reflect.String:
 					field.SetString(value)
@@ -40,7 +39,7 @@ func SetDefaultValue(v any) error {
 	return nil
 }
 
-func MapToStruct(m map[string]string, v any) error {
+func MapToStruct(m map[string]string, v interface{}) error {
 	elem := reflect.ValueOf(v).Elem() // 获取指向结构体的值类型
 	for key, value := range m {
 		field := elem.FieldByName(key) // 根据字段名称查找对应的字段
@@ -77,7 +76,7 @@ func MergeStructs(a, b interface{}) {
 	}
 }
 
-func SetZeroValue[V any](a, b V) {
+func SetZeroValue[T interface{}](a, b T) {
 	va, vb := reflect.ValueOf(a).Elem(), reflect.ValueOf(b).Elem()
 	for i := 0; i < va.NumField(); i++ {
 		if va.Field(i).IsZero() {

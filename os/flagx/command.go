@@ -136,7 +136,7 @@ func (cmd *Command) GetOptionValue(option string) anyx.Value {
 		return opt.Get()
 	} else {
 		fmt.Printf("[%s]参数未找到\n", option)
-		return nil
+		return anyx.ZeroValue()
 	}
 }
 

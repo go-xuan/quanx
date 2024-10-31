@@ -4,8 +4,7 @@ import "testing"
 
 func TestMongo(t *testing.T) {
 	if err := NewConfigurator(&Config{
-		Host:     "",
-		Port:     0,
+		URI:      "",
 		Username: "",
 		Password: "",
 		Database: "",

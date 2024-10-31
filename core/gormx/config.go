@@ -61,25 +61,24 @@ func (c *Config) Execute() error {
 		if err := anyx.SetDefaultValue(c); err != nil {
 			return errorx.Wrap(err, "set default value error")
 		}
-		var db, err = c.NewGormDB()
-		if err != nil {
+		if db, err := c.NewGormDB(); err != nil {
 			return errorx.Wrap(err, "new gorm.DB failed")
-		}
-
-		if _handler == nil {
-			_handler = &Handler{
-				multi:     false,
-				config:    c,
-				configMap: make(map[string]*Config),
-				gormDB:    db,
-				gormMap:   map[string]*gorm.DB{},
-			}
 		} else {
-			_handler.multi = true
+			if _handler == nil {
+				_handler = &Handler{
+					multi:     false,
+					config:    c,
+					configMap: make(map[string]*Config),
+					gormDB:    db,
+					gormMap:   map[string]*gorm.DB{},
+				}
+			} else {
+				_handler.multi = true
+			}
+			_handler.gormMap[c.Source] = db
+			_handler.configMap[c.Source] = c
+			return nil
 		}
-		_handler.gormMap[c.Source] = db
-		_handler.configMap[c.Source] = c
-		return nil
 	}
 	log.Info("database not connected! reason: database.yaml is empty or the value of enable is false")
 	return nil

@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 	
-	"github.com/go-xuan/quanx/app"
+	"github.com/go-xuan/quanx"
 
 	"demo/internal/model/entity"
 	"demo/internal/router"
@@ -27,7 +27,7 @@ import (
 
 func main() {
 	// 初始化服务引擎
-	var engine = app.NewEngine()
+	var engine = quanx.NewEngine()
 
 	// 服务启动
 	engine.RUN()
@@ -39,11 +39,11 @@ func main() {
 ```go
 func main() {
 	// 初始化服务引擎
-	var engine = app.NewEngine()
+	var engine = quanx.NewEngine()
     
 	// 初始化表结构
 	engine.AddTable(
-		&entity.User{}, // 需要实现gormx.Tabler接口
+		&User{}, // 需要实现gormx.Tabler接口
 	)
     
 	// 服务启动
@@ -88,7 +88,7 @@ func (User) InitData() any {
 ```go
 func main() {
 	// 初始化服务引擎
-	var engine = app.NewEngine()
+	var engine = quanx.NewEngine()
     
 	// 添加gin的路由加载函数
 	engine.AddGinRouter(BindApiRouter)
@@ -115,8 +115,8 @@ func BindApiRouter(router *gin.RouterGroup) {
 ```go
 func main() {
 	// 初始化服务引擎
-	var engine = app.NewEngine(
-		app.UseQueue, // 开启任务队列
+	var engine = quanx.NewEngine(
+	    quanx.UseQueue, // 开启任务队列
 	)
     
 	// 新增初始化方法
@@ -144,8 +144,8 @@ func Init2() {
 ```go
 func main() {
 	// 初始化服务引擎
-	var engine = app.NewEngine(
-		app.UseQueue, // 开启任务队列
+	var engine = quanx.NewEngine(
+	    quanx.UseQueue, // 开启任务队列
 	)
 
 	// 添加配置器，Config结构体需要实现Configurator接口
@@ -243,8 +243,8 @@ init: false                   # bool 是否初始化表结构以及数据
 
 ```go
 func main() {
-	var engine = app.NewEngine(
-		app.MultiDatabase, // 开启多数据源
+	var engine = quanx.NewEngine(
+	    quanx.MultiDatabase, // 开启多数据源
 	)
 }
 ```
@@ -293,8 +293,8 @@ mode: 0                       # int 模式（0-单机；1-集群），默认单�
 
 ```go
 func main() {
-	var engine = app.NewEngine(
-		app.MultiRedis, // 开启多redis数据源
+	var engine = quanx.NewEngine(
+	    quanx.MultiRedis, // 开启多redis数据源
 	)
 }
 ```
@@ -375,7 +375,7 @@ func (d demo) Run() error {
 func main() {
 	// 初始化服务启动引擎
 	// 启动参数不加app.EnableNacos即表示不使用nacos
-	var engine = app.NewEngine()
+	var engine = quanx.NewEngine()
 }
 
 func (d demo) Reader() *confx.Reader {
@@ -393,8 +393,8 @@ func (d demo) Reader() *confx.Reader {
 ```go
 func main() {
 	// 初始化服务启动引擎
-	var engine = app.NewEngine(
-		app.EnableNacos, // 启用nacos
+	var engine = quanx.NewEngine(
+	    quanx.EnableNacos, // 启用nacos
 	)
 }
 

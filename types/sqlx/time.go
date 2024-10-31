@@ -1,11 +1,12 @@
-package timex
+package sqlx
 
 import (
 	"time"
+
+	"github.com/go-xuan/quanx/types/timex"
 )
 
 type Time time.Time
-type Date time.Time
 
 func (t *Time) UnmarshalJSON(data []byte) (err error) {
 	var location time.Time
@@ -17,16 +18,18 @@ func (t *Time) UnmarshalJSON(data []byte) (err error) {
 }
 
 func (t *Time) MarshalJSON() ([]byte, error) {
-	b := make([]byte, 0, len(TimeFmt)+2)
+	b := make([]byte, 0, len(timex.TimeFmt)+2)
 	b = append(b, '"')
-	b = time.Time(*t).AppendFormat(b, TimeFmt)
+	b = time.Time(*t).AppendFormat(b, timex.TimeFmt)
 	b = append(b, '"')
 	return b, nil
 }
 
 func (t *Time) String() string {
-	return time.Time(*t).Format(TimeFmt)
+	return time.Time(*t).Format(timex.TimeFmt)
 }
+
+type Date time.Time
 
 func (t *Date) UnmarshalJSON(data []byte) (err error) {
 	var location time.Time
@@ -38,13 +41,13 @@ func (t *Date) UnmarshalJSON(data []byte) (err error) {
 }
 
 func (t *Date) MarshalJSON() ([]byte, error) {
-	b := make([]byte, 0, len(DateFmt)+2)
+	b := make([]byte, 0, len(timex.DateFmt)+2)
 	b = append(b, '"')
-	b = time.Time(*t).AppendFormat(b, DateFmt)
+	b = time.Time(*t).AppendFormat(b, timex.DateFmt)
 	b = append(b, '"')
 	return b, nil
 }
 
 func (t *Date) String() string {
-	return time.Time(*t).Format(DateFmt)
+	return time.Time(*t).Format(timex.DateFmt)
 }

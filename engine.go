@@ -1,8 +1,6 @@
 package quanx
 
 import (
-	"github.com/go-xuan/quanx/core/cachex"
-	"github.com/go-xuan/quanx/core/redisx"
 	"path/filepath"
 	"strconv"
 
@@ -10,10 +8,12 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/common/constx"
+	"github.com/go-xuan/quanx/core/cachex"
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/ginx"
 	"github.com/go-xuan/quanx/core/gormx"
 	"github.com/go-xuan/quanx/core/nacosx"
+	"github.com/go-xuan/quanx/core/redisx"
 	"github.com/go-xuan/quanx/net/ipx"
 	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/os/logx"
@@ -280,18 +280,18 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 		}
 	}
 	if mustRun {
-		var entity = log.WithField("configurator", configurator.ID())
+		var logger = log.WithField("configurator", configurator.ID())
 		if err := configx.Execute(configurator); err != nil {
 			if e.mode[Debug] {
-				entity.Info("configurator data: ", configurator.Format())
+				logger.Info("configurator data: ", configurator.Format())
 			}
-			entity.Error(fmtx.Red.String("configurator execute failed!"))
+			logger.Error(fmtx.Red.String("configurator execute failed!"))
 			panic(err)
 		}
 		if e.mode[Debug] {
-			entity.Info("configurator data: ", configurator.Format())
+			logger.Info("configurator data: ", configurator.Format())
 		}
-		entity.Info(fmtx.Green.String("configurator execute success!"))
+		logger.Info(fmtx.Green.String("configurator execute success!"))
 	}
 }
 

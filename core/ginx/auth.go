@@ -14,22 +14,27 @@ import (
 
 const (
 	tokenHeaderKey = "Authorization"
-	sessionUserKey = "session_user"
-	cookieName     = "cookie_user"
+	sessionUserKey = "SESSION_USER"
+	cookieName     = "COOKIE_USER"
+)
+
+var (
+	tokenSecret = "123456"         // token加解密密钥，可通过 SetSecret() 方法更改值
+	cacheClient cachex.CacheClient // token缓存客户端
 )
 
 func AuthValidate() AuthValidator {
 	return &JwtValidator{}
 }
 
-// AuthValidator 验证器接口
+// AuthValidator 验证器
 type AuthValidator interface {
 	Token(ctx *gin.Context)  // token鉴权
 	Cookie(ctx *gin.Context) // cookie鉴权
 	Debug(ctx *gin.Context)  // 本地调试使用
 }
 
-// AuthUser 鉴权用户接口
+// AuthUser 鉴权用户
 type AuthUser interface {
 	NewToken(secret string) (token string, err error) // 生成token
 	ParseToken(token, secret string) error            // 解析token
@@ -37,9 +42,6 @@ type AuthUser interface {
 	Username() string                                 // 用户名（唯一）
 	Duration() time.Duration                          // 缓存时间
 }
-
-// token 缓存
-var cacheClient cachex.CacheClient
 
 func authCache() cachex.CacheClient {
 	if cacheClient == nil {
@@ -57,8 +59,10 @@ func SetSessionUser(ctx *gin.Context, user AuthUser) {
 
 // GetSessionUser 获取会话用户
 func GetSessionUser(ctx *gin.Context) AuthUser {
-	if value, ok := ctx.Get(sessionUserKey); ok {
-		return value.(AuthUser)
+	if value, has := ctx.Get(sessionUserKey); has {
+		if user, ok := value.(AuthUser); ok {
+			return user
+		}
 	}
 	return nil
 }
@@ -79,9 +83,6 @@ func SetAuthCookie(ctx *gin.Context, username string, expire ...int) {
 func RemoveAuthCookie(ctx *gin.Context) {
 	ctx.SetCookie(cookieName, "", -1, "", "", false, true)
 }
-
-// token加解密密钥
-var tokenSecret = "123456"
 
 func getSecret() string {
 	return tokenSecret

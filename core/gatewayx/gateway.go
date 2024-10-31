@@ -6,6 +6,7 @@ import (
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/nacosx"
 	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
@@ -13,8 +14,15 @@ var Gateway = &Servers{}
 
 type Servers []*Server
 
-func (s *Servers) name() string {
+func (s *Servers) ID() string {
 	return "gateway"
+}
+
+func (s *Servers) Format() string {
+	if s != nil && len(*s) > 0 {
+
+	}
+	return ""
 }
 
 func (s *Servers) Reader() *configx.Reader {
@@ -37,6 +45,11 @@ type Server struct {
 	Router string   `yaml:"router" json:"router"` // API路由
 	Auth   string   `yaml:"auth" json:"auth"`     // 鉴权方式(cookie/token/no)
 	Ignore []string `yaml:"ignore" json:"ignore"` // 忽略鉴权(白名单)
+}
+
+func (s Server) Format() string {
+	return fmtx.Yellow.XSPrintf("name=%s group=%s prefix=%s router=%s auth=%s",
+		s.Name, s.Group, s.Prefix, s.Router, s.Auth)
 }
 
 // GetServerProxyAddr 获取微服务addr

@@ -29,7 +29,11 @@ func ValueOf(v any) Value {
 	default:
 		panic(fmt.Sprintf("unsupported value type: %T", value))
 	}
-	return nil
+	return ZeroValue()
+}
+
+func ZeroValue() Value {
+	return StringValue("")
 }
 
 func StringValue(v string) Value {

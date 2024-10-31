@@ -1,5 +1,6 @@
 package httpx
 
+// ClientStrategy 客户端类型
 type ClientStrategy interface {
 	Client() *Client
 }
