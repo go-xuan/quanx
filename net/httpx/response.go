@@ -21,6 +21,11 @@ func (r *Response) Unmarshal(v any) error {
 	}
 	return nil
 }
+
 func (r *Response) Cookies() []*http.Cookie {
 	return r.cookies
+}
+
+func (r *Response) Body() []byte {
+	return r.body
 }

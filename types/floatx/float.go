@@ -1,49 +1,44 @@
 package floatx
 
-import (
-	"math"
-	"strconv"
-)
+import "strconv"
 
-// Ratio 计算百分率
-func Ratio(numerator, denominator, prec int) float64 {
-	if denominator > 0 {
-		ratio := float64(numerator) * 100 / float64(denominator)
-		return Ground(ratio, prec)
-	}
-	return 0
-}
-
-// Ground 四舍五入
-func Ground(target float64, prec int) float64 {
-	if target == 0 {
-		return target
+func NewFloat64(t ...float64) *Float {
+	var ti = Float{notnull: true}
+	if len(t) > 0 {
+		ti.value = t[0]
 	} else {
-		pow := math.Pow10(prec)
-		return math.Floor(target*pow+0.5) / pow
+		ti.value = 0
+	}
+	return &ti
+}
+
+type Float struct {
+	value   float64
+	notnull bool
+}
+
+func (t *Float) UnmarshalJSON(bytes []byte) error {
+	if value, err := strconv.ParseFloat(string(bytes), 64); err != nil {
+		return err
+	} else {
+		t.value = value
+		t.notnull = true
+	}
+	return nil
+}
+
+func (t *Float) MarshalJSON() ([]byte, error) {
+	if t.notnull {
+		return []byte(strconv.FormatFloat(t.value, 'f', -1, 64)), nil
+	} else {
+		return []byte("null"), nil
 	}
 }
 
-// Min 三数取小
-func Min(a, b, c float64) float64 {
-	if a <= b && a <= c {
-		return a
-	} else if b <= a && b <= c {
-		return b
-	}
-	return c
+func (t *Float) Value() float64 {
+	return t.value
 }
 
-// Max 三数取大
-func Max(a, b, c float64) float64 {
-	if a >= b && a >= c {
-		return a
-	} else if b >= a && b >= c {
-		return b
-	}
-	return c
-}
-
-func String(f float64) string {
-	return strconv.FormatFloat(f, 'f', -1, 64)
+func (t *Float) NotNull() bool {
+	return t.notnull
 }

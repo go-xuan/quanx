@@ -1,18 +1,17 @@
 package anyx
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
-
-	"github.com/go-xuan/quanx/os/errorx"
 )
 
 // SetDefaultValue 设置默认值
 func SetDefaultValue(v interface{}) error {
 	valueRef := reflect.ValueOf(v)
 	if valueRef.Type().Kind() != reflect.Ptr {
-		return errorx.New("the obj must be pointer type")
+		return errors.New("param must be pointer type")
 	}
 	for i := 0; i < valueRef.Elem().NumField(); i++ {
 		field := valueRef.Elem().Field(i)

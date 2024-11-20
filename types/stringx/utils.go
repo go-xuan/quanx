@@ -1,14 +1,56 @@
 package stringx
 
 import (
+	"strconv"
 	"strings"
 )
 
+func ToInt(s string) int {
+	if value, err := strconv.Atoi(s); err != nil {
+		return 0
+	} else {
+		return value
+	}
+}
+
+func ToInt64(s string) int64 {
+	if value, err := strconv.ParseInt(s, 10, 64); err != nil {
+		return 0
+	} else {
+		return value
+	}
+}
+
+func ToFloat64(s string) float64 {
+	if value, err := strconv.ParseFloat(s, 64); err != nil {
+		return 0
+	} else {
+		return value
+	}
+}
+
+func ParseInt(i int) string {
+	return strconv.Itoa(i)
+}
+
+func ParseInt64(i int64) string {
+	return strconv.FormatInt(i, 10)
+}
+
+func ParseFloat64(f float64) string {
+	return strconv.FormatFloat(f, 'f', -1, 64)
+}
+
 // Between 获取起始字符首次出现和结尾字符末次出现的下标
 func Between(s, start, end string) (from, to int) {
+	from, to = -1, -1
 	if start == end {
-		indices := AllIndex(s, start, 2)
-		return indices[0], indices[1]
+		if indices := AllIndex(s, start); len(indices) > 1 {
+			from, to = indices[0], indices[1]
+		} else if len(indices) == 1 {
+			from = indices[0]
+		}
+		return
 	}
 	var l, m, n = len(s), len(start), len(end)
 	if m > l || n > l {
@@ -43,7 +85,7 @@ func Between(s, start, end string) (from, to int) {
 	return
 }
 
-// Index 获取子串下标
+// Index 获取命中子串的首位字符的下标
 // position：表示获取位置，默认position=1即正序第1处，position=-1即倒序第1处
 func Index(s, sep string, position ...int) int {
 	if l, m := len(s), len(sep); l >= m {
@@ -73,19 +115,14 @@ func Index(s, sep string, position ...int) int {
 	return -1
 }
 
-// AllIndex 获取所有下标,x：
-func AllIndex(s, sep string, x int) []int {
-	var indices = make([]int, x)
-	for i := 0; i < x; i++ {
-		indices[i] = -1
-	}
+// AllIndex 获取所有下标, x：命中数量
+func AllIndex(s, sep string) []int {
+	var indices []int
 	l, m, n := len(s), len(sep), 0
 	for i := 0; i <= l-m; i++ {
 		if s[i] == sep[0] && s[i:i+m] == sep {
+			indices = append(indices, i)
 			n++
-			if n <= x {
-				indices[n-1] = i
-			}
 			i = i + m - 1
 		}
 	}

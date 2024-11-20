@@ -15,9 +15,22 @@ import (
 
 var _client *Client
 
+// GetClient 获取httpx客户端
+func GetClient(strategy ...ClientStrategy) *Client {
+	if len(strategy) > 0 && strategy[0] != nil {
+		return strategy[0].Client()
+	}
+	return newHttpClient()
+}
+
 type Client struct {
-	strategy int
-	client   *http.Client
+	strategy int          // 客户端类型
+	client   *http.Client // http客户端
+}
+
+// HttpClient 获取http客户端
+func (c *Client) HttpClient() *http.Client {
+	return c.client
 }
 
 func (c *Client) Do(httpRequest *http.Request) (*Response, error) {
@@ -37,14 +50,6 @@ func (c *Client) Do(httpRequest *http.Request) (*Response, error) {
 	resp.body = body
 	return resp, nil
 
-}
-
-// GetClient 获取http客户端
-func GetClient(strategy ...ClientStrategy) *Client {
-	if len(strategy) > 0 && strategy[0] != nil {
-		return strategy[0].Client()
-	}
-	return newHttpClient()
 }
 
 const (
