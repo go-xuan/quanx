@@ -2,8 +2,8 @@ package intx
 
 import "strconv"
 
-func NewInt(v ...int) Int {
-	var x = Int{notnull: true}
+func NewInt64(v ...int64) Int64 {
+	var x = Int64{notnull: true}
 	if len(v) > 0 {
 		x.value = v[0]
 	} else {
@@ -12,13 +12,13 @@ func NewInt(v ...int) Int {
 	return x
 }
 
-type Int struct {
-	value   int
+type Int64 struct {
+	value   int64
 	notnull bool
 }
 
-func (x *Int) UnmarshalJSON(bytes []byte) error {
-	if value, err := strconv.Atoi(string(bytes)); err != nil {
+func (x *Int64) UnmarshalJSON(bytes []byte) error {
+	if value, err := strconv.ParseInt(string(bytes), 10, 64); err != nil {
 		return err
 	} else {
 		x.value = value
@@ -27,32 +27,41 @@ func (x *Int) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (x *Int) MarshalJSON() ([]byte, error) {
+func (x *Int64) MarshalJSON() ([]byte, error) {
 	if x.notnull {
-		return []byte(strconv.Itoa(x.value)), nil
+		return []byte(strconv.FormatInt(x.value, 10)), nil
 	} else {
 		return []byte("null"), nil
 	}
 }
 
-func (x *Int) Value() int {
+func (x *Int64) Value() int64 {
 	return x.value
 }
 
-func (x *Int) NotNull() bool {
+func (x *Int64) NotNull() bool {
 	return x.notnull
 }
 
-func (x *Int) String(def ...string) string {
+func (x *Int64) String(def ...string) string {
 	if x.notnull {
-		return strconv.Itoa(x.value)
+		return strconv.FormatInt(x.value, 10)
 	} else if len(def) > 0 {
 		return def[0]
 	}
 	return ""
 }
 
-func (x *Int) Int(def ...int) int {
+func (x *Int64) Int(def ...int) int {
+	if x.notnull {
+		return int(x.value)
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func (x *Int64) Int64(def ...int64) int64 {
 	if x.notnull {
 		return x.value
 	} else if len(def) > 0 {
@@ -61,16 +70,7 @@ func (x *Int) Int(def ...int) int {
 	return 0
 }
 
-func (x *Int) Int64(def ...int64) int64 {
-	if x.notnull {
-		return int64(x.value)
-	} else if len(def) > 0 {
-		return def[0]
-	}
-	return 0
-}
-
-func (x *Int) Float64(def ...float64) float64 {
+func (x *Int64) Float64(def ...float64) float64 {
 	if x.notnull {
 		return float64(x.value)
 	} else if len(def) > 0 {
@@ -79,7 +79,7 @@ func (x *Int) Float64(def ...float64) float64 {
 	return 0
 }
 
-func (x *Int) Bool(def ...bool) bool {
+func (x *Int64) Bool(def ...bool) bool {
 	if x.notnull {
 		return x.value == 1
 	} else if len(def) > 0 {

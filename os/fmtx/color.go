@@ -5,14 +5,14 @@ import (
 )
 
 const (
-	Black Color = iota + 30
-	Red
-	Green
-	Yellow
-	Blue
-	Magenta
-	Cyan
-	Grey
+	Black   Color = iota + 30 // 黑色
+	Red                       // 红色
+	Green                     // 绿色
+	Yellow                    // 黄色
+	Blue                      // 蓝色
+	Magenta                   // 洋红色
+	Cyan                      // 青色
+	Grey                      // 灰色
 )
 
 type Color uint8

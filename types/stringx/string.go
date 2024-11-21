@@ -1,13 +1,17 @@
 package stringx
 
-func NewString(t ...string) String {
-	var ti = String{notnull: true}
-	if len(t) > 0 {
-		ti.value = t[0]
+import (
+	"strconv"
+)
+
+func NewString(v ...string) String {
+	var x = String{notnull: true}
+	if len(v) > 0 {
+		x.value = v[0]
 	} else {
-		ti.value = ""
+		x.value = ""
 	}
-	return ti
+	return x
 }
 
 type String struct {
@@ -15,27 +19,27 @@ type String struct {
 	notnull bool
 }
 
-func (t *String) UnmarshalJSON(bytes []byte) error {
+func (x *String) UnmarshalJSON(bytes []byte) error {
 	if l := len(bytes); l >= 0 {
-		t.notnull = true
+		x.notnull = true
 		if l > 1 && bytes[0] == 34 && bytes[l-1] == 34 {
 			// 带引号则去掉引号
-			t.value = string(bytes[1 : l-1])
+			x.value = string(bytes[1 : l-1])
 		} else {
 			// 兼容不带引号的字符串
-			t.value = string(bytes)
+			x.value = string(bytes)
 		}
 	} else {
-		t.notnull = false
+		x.notnull = false
 	}
 	return nil
 }
 
-func (t *String) MarshalJSON() ([]byte, error) {
-	if t.notnull {
+func (x *String) MarshalJSON() ([]byte, error) {
+	if x.notnull {
 		var bytes []byte
 		bytes = append(bytes, 34)
-		bytes = append(bytes, []byte(t.value)...)
+		bytes = append(bytes, []byte(x.value)...)
 		bytes = append(bytes, 34)
 		return bytes, nil
 	} else {
@@ -43,10 +47,67 @@ func (t *String) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (t *String) Value() string {
-	return t.value
+func (x *String) Value() string {
+	return x.value
 }
 
-func (t *String) NotNull() bool {
-	return t.notnull
+func (x *String) NotNull() bool {
+	return x.notnull
+}
+
+func (x *String) String(def ...string) string {
+	if x.notnull {
+		return x.value
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return ""
+}
+
+func (x *String) Int(def ...int) int {
+	if x.notnull {
+		if value, err := strconv.Atoi(x.value); err == nil {
+			return value
+		}
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func (x *String) Int64(def ...int64) int64 {
+	if x.notnull {
+		if value, err := strconv.ParseInt(x.value, 10, 64); err == nil {
+			return value
+		}
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func (x *String) Float64(def ...float64) float64 {
+	if x.notnull {
+		if value, err := strconv.ParseFloat(x.value, 64); err == nil {
+			return value
+		}
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func (x *String) Bool(def ...bool) bool {
+	if x.notnull {
+		switch x.value {
+		case "1", "t", "T", "true", "TRUE", "True", "是", "yes":
+			return true
+		case "0", "f", "F", "false", "FALSE", "False", "否", "no":
+			return false
+		}
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return false
+
 }
