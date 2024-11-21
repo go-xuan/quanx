@@ -35,8 +35,8 @@ func (x *Int) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (x *Int) Value() int {
-	return x.value
+func (x *Int) Value(def ...int) int {
+	return x.Int(def...)
 }
 
 func (x *Int) NotNull() bool {

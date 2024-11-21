@@ -2,7 +2,6 @@ package floatx
 
 import (
 	"math"
-	"strconv"
 )
 
 // Ratio 计算百分率
@@ -42,8 +41,4 @@ func Max(a, b, c float64) float64 {
 		return b
 	}
 	return c
-}
-
-func String(f float64) string {
-	return strconv.FormatFloat(f, 'f', -1, 64)
 }

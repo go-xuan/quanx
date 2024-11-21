@@ -16,7 +16,7 @@ func TestExcelParse(t *testing.T) {
 		"手机号": "mobile",
 		"备注":  "comment",
 	}
-	if result, err := ExcelReader(inputFile, "", headerMapping); err != nil {
+	if result, err := ReadXlsxWithMapping(inputFile, "", headerMapping); err != nil {
 		fmt.Println(err)
 	} else {
 		var lines []string

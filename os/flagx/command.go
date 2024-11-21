@@ -28,14 +28,10 @@ type manager struct {
 	commands map[string]*Command
 }
 
-func (p *manager) Help() {
-	fmt.Println("\n已注册命令：")
-	for _, name := range p.names {
-		fmt.Printf("%-50s %s\n", fmtx.Cyan.String(name), p.commands[name].usage)
-	}
-	fmt.Println("\n已注册参数：")
-	for _, name := range p.names {
-		p.commands[name].OptionsHelp()
+func (m *manager) Help() {
+	fmt.Println("\n可用命令列表：")
+	for _, name := range m.names {
+		fmt.Printf("%-50s %s\n", fmtx.Cyan.String(name), m.commands[name].usage)
 	}
 }
 

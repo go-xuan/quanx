@@ -2,7 +2,8 @@ package boolx
 
 import (
 	"strconv"
-	"strings"
+	
+	"github.com/go-xuan/quanx/types/stringx"
 )
 
 func NewBool(v ...bool) Bool {
@@ -21,9 +22,7 @@ type Bool struct {
 func (x *Bool) UnmarshalJSON(bytes []byte) error {
 	if value := string(bytes); value != "" {
 		x.notnull = true
-		if value = strings.ToLower(value); value == "true" || value == "1" {
-			x.value = true
-		}
+		x.value = stringx.ParseBool(value)
 	} else {
 		x.notnull = false
 	}
@@ -40,8 +39,8 @@ func (x *Bool) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (x *Bool) Value() bool {
-	return x.value
+func (x *Bool) Value(def ...bool) bool {
+	return x.Bool(def...)
 }
 
 func (x *Bool) NotNull() bool {

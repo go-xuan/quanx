@@ -47,8 +47,8 @@ func (x *String) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (x *String) Value() string {
-	return x.value
+func (x *String) Value(def ...string) string {
+	return x.String(def...)
 }
 
 func (x *String) NotNull() bool {
@@ -99,12 +99,7 @@ func (x *String) Float64(def ...float64) float64 {
 
 func (x *String) Bool(def ...bool) bool {
 	if x.notnull {
-		switch x.value {
-		case "1", "t", "T", "true", "TRUE", "True", "是", "yes":
-			return true
-		case "0", "f", "F", "false", "FALSE", "False", "否", "no":
-			return false
-		}
+		return ParseBool(x.value)
 	} else if len(def) > 0 {
 		return def[0]
 	}

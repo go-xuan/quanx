@@ -37,8 +37,8 @@ func (x *Float) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (x *Float) Value() float64 {
-	return x.value
+func (x *Float) Value(def ...float64) float64 {
+	return x.Float64(def...)
 }
 
 func (x *Float) NotNull() bool {

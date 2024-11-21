@@ -3,8 +3,6 @@ package timex
 import (
 	"strings"
 	"time"
-
-	"github.com/go-xuan/quanx/types/anyx"
 )
 
 type Unit uint
@@ -30,7 +28,7 @@ const (
 	Year
 )
 
-// Format 时间转字符
+// Format 时间格式化
 func Format(time time.Time, format ...string) string {
 	var layout = TimeFmt
 	if len(format) > 0 {
@@ -39,25 +37,28 @@ func Format(time time.Time, format ...string) string {
 	return time.Format(layout)
 }
 
-// Parse 解析时间字符串
-func Parse(timeStr string) time.Time {
-	if timeStr == "" {
-		return time.Now()
-	} else if len(timeStr) == 10 && timeStr[4:5] == "-" {
-		return ParseFmt(timeStr, DateFmt)
-	} else {
-		return ParseFmt(timeStr, TimeFmt)
+// Parse 时间字符串解析
+func Parse(timeStr string, format ...string) time.Time {
+	layout := TimeFmt
+	if len(format) > 0 {
+		layout = format[0]
 	}
-}
-
-// ParseFmt 时间格式化
-func ParseFmt(timeStr string, format ...string) time.Time {
-	layout := anyx.Default(TimeFmt, format...)
-	if location, err := time.ParseInLocation(layout, timeStr, time.Local); err != nil {
-		return time.Unix(0, 0)
-	} else {
+	if location, err := time.ParseInLocation(layout, timeStr, time.Local); err == nil {
 		return location
 	}
+	return time.Time{}
+}
+
+// ParseDateOrTime 解析时间字符串
+func ParseDateOrTime(timeStr string) time.Time {
+	if len(timeStr) == 10 && timeStr[4:5] == "-" {
+		if location, err := time.ParseInLocation(DateFmt, timeStr, time.Local); err == nil {
+			return location
+		}
+	} else if location, err := time.ParseInLocation(TimeFmt, timeStr, time.Local); err == nil {
+		return location
+	}
+	return time.Time{}
 }
 
 // UnixFmt 时间戳(秒级)转字符

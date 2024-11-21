@@ -462,7 +462,7 @@ func bytesToHexString(src []byte) string {
 		sub := v & 0xFF
 		hv := hex.EncodeToString(append(temp, sub))
 		if len(hv) < 2 {
-			sb.WriteString(strconv.FormatInt(int64(0), 10))
+			sb.WriteString(stringx.FormatInt64(0))
 		}
 		sb.WriteString(hv)
 	}

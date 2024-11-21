@@ -4,9 +4,10 @@ go 1.18
 
 require (
 	github.com/BurntSushi/toml v1.4.0
+	github.com/apache/rocketmq-client-go/v2 v2.1.2
 	github.com/farmerx/gorsa v0.0.0-20161211100049-3ae06f674f40
 	github.com/gin-gonic/gin v1.9.0 // 1.9.1以上版本需要升级go 1.19
-	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/uuid v1.6.0
 	github.com/magiconair/properties v1.8.6 // 1.8.7以上版本需要升级go 1.19
 	github.com/minio/minio-go/v7 v7.0.60 // v7.0.60以上版本需要检查github.com/klauspost/compress的版本不超过1.17.2
@@ -29,8 +30,6 @@ require (
 	gorm.io/driver/postgres v1.4.7 // v1.4.8以上版本需要升级go 1.19
 	gorm.io/gorm v1.25.11
 )
-
-require github.com/apache/rocketmq-client-go/v2 v2.1.2
 
 require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.18 // indirect

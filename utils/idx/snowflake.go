@@ -1,8 +1,8 @@
 package idx
 
 import (
+	"github.com/go-xuan/quanx/types/stringx"
 	"math"
-	"strconv"
 	"sync"
 	"time"
 
@@ -68,5 +68,5 @@ func (s *Flake) Int64() int64 {
 }
 
 func (s *Flake) String() string {
-	return strconv.FormatInt(s.Int64(), 10)
+	return stringx.FormatInt64(s.Int64())
 }

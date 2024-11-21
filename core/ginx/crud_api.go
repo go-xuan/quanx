@@ -100,7 +100,7 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 	}
 	var obj T
 	var data []*T
-	if data, err = excelx.ExcelReaderAny(filePath, "", obj); err != nil {
+	if data, err = excelx.ReadXlsxWithStruct(filePath, "", obj); err != nil {
 		respx.Ctx(ctx).RespError(respx.ImportFailedResp.SetData(err))
 		return
 	}
@@ -115,9 +115,11 @@ func (m *Model[T]) Export(ctx *gin.Context) {
 		return
 	}
 	var filePath = filepath.Join(constx.DefaultResourceDir, time.Now().Format(timex.TimestampFmt)+".xlsx")
-	var obj T
-	if err := excelx.ExcelWriter(filePath, obj, result); err != nil {
-		respx.Ctx(ctx).RespError(respx.ExportFailedResp.SetData(err))
+	if len(result) > 0 {
+		headers := excelx.GetHeadersByReflect(result[0])
+		if err := excelx.WriteXlsx(filePath, result, headers); err != nil {
+			respx.Ctx(ctx).RespError(respx.ExportFailedResp.SetData(err))
+		}
 	}
 	respx.Ctx(ctx).File(filePath)
 }

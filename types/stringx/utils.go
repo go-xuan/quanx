@@ -3,41 +3,71 @@ package stringx
 import (
 	"strconv"
 	"strings"
+	"time"
 )
 
-func ToInt(s string) int {
-	if value, err := strconv.Atoi(s); err != nil {
-		return 0
-	} else {
+func ParseInt(s string, def ...int) int {
+	if value, err := strconv.Atoi(s); err == nil {
 		return value
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func ParseInt64(s string, def ...int64) int64 {
+	if value, err := strconv.ParseInt(s, 10, 64); err == nil {
+		return value
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func ParseFloat(s string, def ...float64) float64 {
+	if value, err := strconv.ParseFloat(s, 64); err == nil {
+		return value
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func ParseBool(value string, def ...bool) bool {
+	switch value {
+	case "1", "t", "T", "true", "TRUE", "True", "是", "yes", "YES", "Yes":
+		return true
+	default:
+		if len(def) > 0 {
+			return def[0]
+		} else {
+			return false
+		}
 	}
 }
 
-func ToInt64(s string) int64 {
-	if value, err := strconv.ParseInt(s, 10, 64); err != nil {
-		return 0
-	} else {
-		return value
+func ParseTime(value string, def ...time.Time) time.Time {
+	if len(value) == 10 && value[4:5] == "-" {
+		if location, err := time.ParseInLocation("2006-01-02", value, time.Local); err == nil {
+			return location
+		}
+	} else if location, err := time.ParseInLocation("2006-01-02 15:04:05", value, time.Local); err == nil {
+		return location
+	} else if len(def) > 0 {
+		return def[0]
 	}
+	return time.Time{}
 }
 
-func ToFloat64(s string) float64 {
-	if value, err := strconv.ParseFloat(s, 64); err != nil {
-		return 0
-	} else {
-		return value
-	}
-}
-
-func ParseInt(i int) string {
+func FormatInt(i int) string {
 	return strconv.Itoa(i)
 }
 
-func ParseInt64(i int64) string {
+func FormatInt64(i int64) string {
 	return strconv.FormatInt(i, 10)
 }
 
-func ParseFloat64(f float64) string {
+func FormatFloat(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
