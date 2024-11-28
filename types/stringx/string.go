@@ -35,7 +35,7 @@ func (x *String) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (x *String) MarshalJSON() ([]byte, error) {
+func (x String) MarshalJSON() ([]byte, error) {
 	if x.notnull {
 		var bytes []byte
 		bytes = append(bytes, 34)

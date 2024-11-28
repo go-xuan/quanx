@@ -2,7 +2,7 @@ package boolx
 
 import (
 	"strconv"
-	
+
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
@@ -29,7 +29,7 @@ func (x *Bool) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (x *Bool) MarshalJSON() ([]byte, error) {
+func (x Bool) MarshalJSON() ([]byte, error) {
 	if x.notnull && x.value {
 		return []byte("true"), nil
 	} else if x.notnull {

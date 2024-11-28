@@ -6,95 +6,86 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/types/enumx"
 )
 
-var (
-	SuccessResp      = Response{Code: 10000, Msg: "Success"}
-	FailedResp       = Response{Code: 10001, Msg: "failed"}
-	AuthFailedResp   = Response{Code: 10401, Msg: "auth failed"}
-	ParamErrorResp   = Response{Code: 10501, Msg: "request parameter error"}
-	RequiredResp     = Response{Code: 10502, Msg: "request parameter required"}
-	UploadFailedResp = Response{Code: 10601, Msg: "upload failed"}
-	ImportFailedResp = Response{Code: 10601, Msg: "import failed"}
-	ExportFailedResp = Response{Code: 10602, Msg: "export failed"}
+const (
+	SuccessCode      = 10000
+	FailedCode       = 10001
+	AuthFailedCode   = 10401
+	ParamErrorCode   = 10501
+	RequiredCode     = 10502
+	UploadFailedCode = 10601
+	ImportFailedCode = 10601
+	ExportFailedCode = 10602
 )
 
-// Response 响应
-type Response struct {
+var CodeMsgEnum = enumx.NewIntEnum[string]()
+
+func init() {
+	CodeMsgEnum.Add(SuccessCode, "success").
+		Add(FailedCode, "failed").
+		Add(AuthFailedCode, "auth failed").
+		Add(ParamErrorCode, "request parameter error").
+		Add(RequiredCode, "request parameter required").
+		Add(UploadFailedCode, "upload failed").
+		Add(ImportFailedCode, "import failed").
+		Add(ExportFailedCode, "export failed")
+}
+
+// ResponseData 响应数据
+type ResponseData struct {
 	Code int    `json:"code"` // 响应状态码
 	Msg  string `json:"msg"`  // 响应消息
 	Data any    `json:"data"` // 响应数据
 }
 
-// SetData 设置响应体
-func (e Response) SetData(data any) *Response {
-	return &Response{
-		Code: e.Code,
-		Msg:  e.Msg,
+func NewResponseData(code int, data any) *ResponseData {
+	return &ResponseData{
+		Code: code,
+		Msg:  CodeMsgEnum.Get(code),
 		Data: data,
 	}
 }
 
-type Builder struct {
-	ctx *gin.Context
-}
-
-func Ctx(ctx *gin.Context) *Builder {
-	return &Builder{
-		ctx: ctx,
-	}
-}
-
-func (b *Builder) Response(data any, err error) {
+func Response(ctx *gin.Context, data any, err error) {
 	if err != nil {
-		log.Error("请求失败：", err)
-		b.Failed(err)
+		Error(ctx, err.Error())
 	} else {
-		b.Success(data)
+		Success(ctx, data)
 	}
-	b.ctx.Next()
 }
 
-func (b *Builder) Success(data any) {
-	b.ctx.JSON(http.StatusOK, SuccessResp.SetData(data))
+func Success(ctx *gin.Context, data any) {
+	ctx.JSON(http.StatusOK, NewResponseData(SuccessCode, data))
 }
 
-func (b *Builder) Failed(err error) {
-	b.ctx.JSON(http.StatusInternalServerError, FailedResp.SetData(err.Error()))
+func Error(ctx *gin.Context, data any) {
+	log.Errorf("[%s]请求失败：%v", ctx.Request.URL.Path, data)
+	ctx.JSON(http.StatusInternalServerError, NewResponseData(FailedCode, data))
 }
 
-func (b *Builder) RespError(resp *Response) {
-	b.ctx.JSON(http.StatusInternalServerError, resp)
+func ParamError(ctx *gin.Context, err error) {
+	ctx.JSON(http.StatusBadRequest, NewResponseData(ParamErrorCode, err.Error()))
 }
 
-func (b *Builder) ParamError(err error) {
-	b.ctx.JSON(http.StatusInternalServerError, ParamErrorResp.SetData(err.Error()))
+func Forbidden(ctx *gin.Context, err error) {
+	ctx.JSON(http.StatusForbidden, NewResponseData(AuthFailedCode, err.Error()))
 }
 
-func (b *Builder) Forbidden(err error) {
-	b.ctx.JSON(http.StatusForbidden, AuthFailedResp.SetData(err.Error()))
+func Custom(ctx *gin.Context, httpCode int, data *ResponseData) {
+	ctx.JSON(httpCode, data)
 }
 
-func (b *Builder) Custom(httpCode, code int, msg string, data any) {
-	b.ctx.JSON(httpCode,
-		&Response{
-			Code: code,
-			Msg:  msg,
-			Data: data,
-		})
+func CustomError(ctx *gin.Context, data *ResponseData) {
+	ctx.JSON(http.StatusInternalServerError, data)
 }
 
-func (b *Builder) CustomError(code int, msg string, data any) {
-	b.Custom(http.StatusInternalServerError, code, msg, data)
+func File(ctx *gin.Context, filepath string) {
+	ctx.File(filepath)
 }
 
-func (b *Builder) File(filePath string) {
-	b.ctx.File(filePath)
-}
-
-func (b *Builder) Render(contentType string, data []byte) {
-	b.ctx.Render(http.StatusOK, render.Data{
-		ContentType: contentType,
-		Data:        data,
-	})
+func Render(ctx *gin.Context, data render.Data) {
+	ctx.Render(http.StatusOK, data)
 }

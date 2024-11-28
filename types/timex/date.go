@@ -29,7 +29,7 @@ func (x *Date) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (x *Date) MarshalJSON() ([]byte, error) {
+func (x Date) MarshalJSON() ([]byte, error) {
 	if x.notnull {
 		var bytes []byte
 		bytes = append(bytes, 34)

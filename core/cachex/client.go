@@ -128,47 +128,29 @@ func (c *RedisClient) GetString(ctx context.Context, key string) string {
 }
 
 func (c *RedisClient) Delete(ctx context.Context, keys ...string) int64 {
-	var total int64
-	var err error
-	if l := len(keys); l > 100 {
-		if err = taskx.InBatches(l, 100, func(x int, y int) (err error) {
-			var n int64
-			if n, err = c.client.Del(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
-				return
-			}
-			total += n
-			return
-		}); err != nil {
-			return total
+	var sum int64
+	_ = taskx.ExecWithBatches(len(keys), 100, func(x int, y int) error {
+		if s, err := c.client.Del(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
+			return err
+		} else {
+			sum += s
+			return nil
 		}
-	} else {
-		if total, err = c.client.Del(ctx, c.config.GetKeys(keys)...).Result(); err != nil {
-			return total
-		}
-	}
-	return 0
+	})
+	return sum
 }
 
 func (c *RedisClient) Exist(ctx context.Context, keys ...string) bool {
-	var total int64
-	var err error
-	if l := len(keys); l > 100 {
-		if err = taskx.InBatches(l, 100, func(x int, y int) (err error) {
-			var n int64
-			if n, err = c.client.Exists(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
-				return
-			}
-			total += n
-			return
-		}); err != nil {
-			return false
+	var sum int64
+	_ = taskx.ExecWithBatches(len(keys), 100, func(x int, y int) error {
+		if n, err := c.client.Exists(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
+			return err
+		} else {
+			sum += n
+			return nil
 		}
-	} else {
-		if total, err = c.client.Exists(ctx, c.config.GetKeys(keys)...).Result(); err != nil {
-			return false
-		}
-	}
-	return total > 0
+	})
+	return sum > 0
 }
 
 func (c *RedisClient) Expire(ctx context.Context, key string, d time.Duration) error {

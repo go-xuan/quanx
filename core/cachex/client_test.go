@@ -25,10 +25,9 @@ func TestHandler(t *testing.T) {
 
 	// 再初始化缓存客户端
 	if err := NewConfigurator(&Config{
-		Type:    "redis",
-		Source:  "default",
-		Prefix:  "test",
-		Marshal: "json",
+		Type:   "redis",
+		Source: "default",
+		Prefix: "test_",
 	}).Execute(); err != nil {
 		panic(err)
 	}

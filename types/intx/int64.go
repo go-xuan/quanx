@@ -2,7 +2,7 @@ package intx
 
 import (
 	"strconv"
-	
+
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
@@ -31,7 +31,7 @@ func (x *Int64) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (x *Int64) MarshalJSON() ([]byte, error) {
+func (x Int64) MarshalJSON() ([]byte, error) {
 	if x.notnull {
 		return []byte(stringx.FormatInt64(x.value)), nil
 	} else {

@@ -27,7 +27,7 @@ func (x *Int) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (x *Int) MarshalJSON() ([]byte, error) {
+func (x Int) MarshalJSON() ([]byte, error) {
 	if x.notnull {
 		return []byte(strconv.Itoa(x.value)), nil
 	} else {

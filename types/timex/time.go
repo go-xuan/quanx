@@ -43,7 +43,7 @@ func (x *Time) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (x *Time) MarshalJSON() ([]byte, error) {
+func (x Time) MarshalJSON() ([]byte, error) {
 	if x.notnull {
 		var bytes []byte
 		bytes = append(bytes, 34)

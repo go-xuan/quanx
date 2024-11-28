@@ -5,7 +5,7 @@ import (
 
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
-	
+
 	"github.com/go-xuan/quanx/os/taskx"
 )
 
@@ -76,33 +76,36 @@ func (h *Handler) DeleteIndex(ctx context.Context, index string) (ok bool, err e
 }
 
 // DeleteIndices 批量索引
-func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (ok bool, err error) {
-	if err = taskx.InBatches(len(indices), 100, func(x int, y int) (err error) {
-		var resp *elastic.IndicesDeleteResponse
-		deleteIndices := indices[x:y]
-		if resp, err = h.client.DeleteIndex(deleteIndices...).Do(ctx); err != nil {
+func (h *Handler) DeleteIndices(ctx context.Context, indices []string) (bool, error) {
+	var ok bool
+	if err := taskx.ExecWithBatches(len(indices), 100, func(start int, end int) error {
+		deleteIndices := indices[start:end]
+		if resp, err := h.client.DeleteIndex(deleteIndices...).Do(ctx); err != nil {
 			log.WithField("deleteIndices", deleteIndices).Error("delete indices failed: ", err)
-			return
+			return err
+		} else {
+			log.WithField("deleteIndices", deleteIndices).Info("delete indices success")
+			ok = resp.Acknowledged
+			return nil
 		}
-		log.WithField("deleteIndices", deleteIndices).Error("delete indices success")
-		ok = resp.Acknowledged
-		return
 	}); err != nil {
-		return
+		return ok, err
 	}
-	return
+	return ok, nil
 }
 
-func (h *Handler) Create(ctx context.Context, index, id string, body any) (err error) {
-	var resp *elastic.IndexResponse
-	if resp, err = h.client.Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
+func (h *Handler) Create(ctx context.Context, index, id string, body any) error {
+	if resp, err := h.client.Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
 		log.WithField("index", index).WithField("id", id).
 			Error("create failed: ", err)
-		return
+		return err
+	} else {
+		log.WithField("index", resp.Index).
+			WithField("id", resp.Id).
+			WithField("type", resp.Type).
+			Info("create success")
+		return nil
 	}
-	log.WithField("index", resp.Index).WithField("id", resp.Id).
-		WithField("type", resp.Type).Info("create success")
-	return
 }
 
 func (h *Handler) Update(ctx context.Context, index, id string, body any) (err error) {

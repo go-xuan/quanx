@@ -16,8 +16,8 @@ type JwtValidator struct{}
 
 func (v *JwtValidator) Token(ctx *gin.Context) {
 	if err := authValidateWithToken(ctx, &JwtUser{}); err != nil {
+		respx.Forbidden(ctx, err)
 		ctx.Abort()
-		respx.Ctx(ctx).Forbidden(err)
 	} else {
 		ctx.Next()
 	}
@@ -26,8 +26,8 @@ func (v *JwtValidator) Token(ctx *gin.Context) {
 
 func (v *JwtValidator) Cookie(ctx *gin.Context) {
 	if err := authValidateWithCookie(ctx, &JwtUser{}); err != nil {
+		respx.Forbidden(ctx, err)
 		ctx.Abort()
-		respx.Ctx(ctx).Forbidden(err)
 	} else {
 		ctx.Next()
 	}

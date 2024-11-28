@@ -29,7 +29,7 @@ func (x *Float) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (x *Float) MarshalJSON() ([]byte, error) {
+func (x Float) MarshalJSON() ([]byte, error) {
 	if x.notnull {
 		return []byte(strconv.FormatFloat(x.value, 'f', -1, 64)), nil
 	} else {

@@ -1,13 +1,5 @@
 package errorx
 
-/*
-
-错误码： 0-0-000-000
-格式说明：[功能码#1][级别码#1][服务码#3][自定义码#3]
-标签码：标识所属功能，
-级别码：对应错误级别
-*/
-
 type Enum struct {
 	Code string
 	Msg  string
