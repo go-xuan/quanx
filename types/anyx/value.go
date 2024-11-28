@@ -34,8 +34,7 @@ func ValueOf(v any) Value {
 }
 
 func ZeroValue() Value {
-	x := stringx.NewString()
-	return &x
+	return IntValue(0)
 }
 
 func StringValue(v string) Value {
