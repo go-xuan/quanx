@@ -106,16 +106,17 @@ func (c *Config) NewGormDB() (*gorm.DB, error) {
 
 // 数据库类型
 const (
-	Mysql    = "mysql"
-	Postgres = "postgres"
+	MYSQL    = "mysql"
+	POSTGRES = "postgres"
+	PGSQL    = "pgsql"
 )
 
 // CommentTableSql 生成表备注
 func (c *Config) CommentTableSql(table, comment string) string {
 	switch strings.ToLower(c.Type) {
-	case Mysql:
+	case MYSQL:
 		return "alter table " + table + " comment = '" + comment + "'"
-	case Postgres:
+	case POSTGRES, PGSQL:
 		return "comment on table " + table + " is '" + comment + "'"
 	}
 	return ""
@@ -125,14 +126,14 @@ func (c *Config) CommentTableSql(table, comment string) string {
 func (c *Config) GetGormDB() (*gorm.DB, error) {
 	var dial gorm.Dialector
 	switch strings.ToLower(c.Type) {
-	case Mysql:
+	case MYSQL:
 		dial = mysql.Open(fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?clientFoundRows=false&parseTime=true&timeout=1800s&charset=utf8&collation=utf8_general_ci&loc=Local",
 			c.Username, c.Password, c.Host, c.Port, c.Database))
-	case Postgres:
+	case POSTGRES, PGSQL:
 		dial = postgres.Open(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
 			c.Host, c.Port, c.Username, c.Password, c.Database))
 	default:
-		return nil, errorx.Errorf("database type only support : %s or %s", Mysql, Postgres)
+		return nil, errorx.Errorf("database type only support : %s or %s", MYSQL, POSTGRES)
 	}
 	if db, err := gorm.Open(dial, &gorm.Config{
 		// 模型命名策略

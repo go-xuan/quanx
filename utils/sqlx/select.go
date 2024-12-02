@@ -11,9 +11,9 @@ import (
 )
 
 // 解析sql字符串
-func parseSelectSQL(sql string, indent ...int) *SelectSqlParser {
+func parseSelectSQL(sql string, indent ...int) *SelectParser {
 	parser := newSelectSqlParser(sql, indent...) // 初始化
-	parser.prepareSQL()                          // sql准备
+	parser.prepare()                             // sql准备
 	parser.extractLimit()                        // 提取limit
 	parser.extractOrderBy()                      // 提取order by
 	parser.extractFields()                       // 提取查询字段
@@ -22,12 +22,13 @@ func parseSelectSQL(sql string, indent ...int) *SelectSqlParser {
 	parser.extractWhere()                        // 提取where
 	parser.extractGroupBy()                      // 提取group By
 	parser.extractHaving()                       // 提取having
+	parser.finish()                              // 解析完成
 	return parser
 }
 
 // 初始化查询SQL对象实例
-func newSelectSqlParser(sql string, indent ...int) *SelectSqlParser {
-	return &SelectSqlParser{
+func newSelectSqlParser(sql string, indent ...int) *SelectParser {
+	return &SelectParser{
 		ParserBase: ParserBase{
 			originSql: sql,
 			tempSql:   sql,
@@ -35,22 +36,22 @@ func newSelectSqlParser(sql string, indent ...int) *SelectSqlParser {
 		indent: intx.Default(0, indent...) + 6}
 }
 
-type SelectSqlParser struct {
+type SelectParser struct {
 	ParserBase
-	Table    *Table       // 查询主表
-	Fields   []*Field     // 查询字段
-	Joins    []*Join      // 关联子表
-	Where    []*Condition // 查询条件
-	GroupBy  []string     // 分组条件
-	Having   []*Condition // 分组筛选条件
-	OrderBy  []string     // 排序条件
-	Limit    string       // 限数条件
-	Distinct bool         // 是否distinct
-	indent   int          // 缩进量
+	Table    *TableParser       // 查询主表
+	Fields   []*FieldParser     // 查询字段
+	Joins    []*JoinParser      // 关联子表
+	Where    []*ConditionParser // 查询条件
+	GroupBy  []string           // 分组条件
+	Having   []*ConditionParser // 分组筛选条件
+	OrderBy  []string           // 排序条件
+	Limit    string             // 限数条件
+	Distinct bool               // 是否distinct
+	indent   int                // 缩进量
 }
 
 // Beautify SQL美化输出
-func (p *SelectSqlParser) Beautify() string {
+func (p *SelectParser) Beautify() string {
 	var sql = strings.Builder{}
 	sql.WriteString(p.buildSelectSql())
 	sql.WriteString(p.buildFromSql())
@@ -67,7 +68,7 @@ func (p *SelectSqlParser) Beautify() string {
 }
 
 // 提取查询字段
-func (p *SelectSqlParser) extractFields() *SelectSqlParser {
+func (p *SelectParser) extractFields() *SelectParser {
 	sql := p.tempSql
 	if x, y := stringx.Between(sql, SELECT, FROM); x > 0 {
 		fieldsSql := sql[x+1 : y]
@@ -78,7 +79,7 @@ func (p *SelectSqlParser) extractFields() *SelectSqlParser {
 		// 判断是否有字段包含括号（子查询或者函数等内部可能会包含","逗号，从而影响字段拆分）
 		var sqlList, lastSql = SplitButIgnoreInBracket(fieldsSql, Comma)
 		sqlList = append(sqlList, lastSql)
-		var fields []*Field
+		var fields []*FieldParser
 		for _, fieldSql := range sqlList {
 			var name, alias string
 			fieldSql = strings.TrimSpace(fieldSql)
@@ -94,7 +95,7 @@ func (p *SelectSqlParser) extractFields() *SelectSqlParser {
 			if stringx.Index(name, ReplacePrefix) >= 0 {
 				name = p.replacer.Replace(name)
 			}
-			fields = append(fields, &Field{Name: name, Alias: alias})
+			fields = append(fields, &FieldParser{Name: name, Alias: alias})
 		}
 		p.Fields = fields
 		p.tempSql = sql[y:]
@@ -104,11 +105,11 @@ func (p *SelectSqlParser) extractFields() *SelectSqlParser {
 }
 
 // 提取查询主表
-func (p *SelectSqlParser) extractTable() *SelectSqlParser {
+func (p *SelectParser) extractTable() *SelectParser {
 	// 判断第一个from所在位置
 	if f := KeywordIndex(p.tempSql, FROM); f >= 0 {
 		sql := p.tempSql[f+4:] // 截取掉from，但是保留表名前面的空格
-		var table = &Table{}
+		var table = &TableParser{}
 		var x, y, z int
 		if sql[1:2] == LeftBracket { // 如果from后面跟括号，表示是子查询
 			x, y = stringx.Between(sql, LeftBracket, RightBracket) // 截取最近的子查询，根据一个对括号内容进行截取
@@ -150,7 +151,7 @@ func (p *SelectSqlParser) extractTable() *SelectSqlParser {
 }
 
 // 提取关联子表
-func (p *SelectSqlParser) extractJoins() *SelectSqlParser {
+func (p *SelectParser) extractJoins() *SelectParser {
 	sql := p.tempSql
 	var sqlList []string
 	sqlList, sql = SplitButIgnoreInBracket(sql, JOIN)
@@ -166,12 +167,12 @@ func (p *SelectSqlParser) extractJoins() *SelectSqlParser {
 	sqlList = append(sqlList, lastJoin)
 	if len(sqlList) > 0 {
 		var joinType string
-		var joins []*Join
+		var joins []*JoinParser
 		for i, joinSql := range sqlList {
 			if i == 0 {
 				joinType = strings.TrimSpace(joinSql)
 			} else {
-				var join = &Join{}
+				var join = &JoinParser{}
 				var space = p.indent - 1
 				if joinType == Empty {
 					space = space - 5
@@ -198,7 +199,7 @@ func (p *SelectSqlParser) extractJoins() *SelectSqlParser {
 }
 
 // 提取查询条件
-func (p *SelectSqlParser) extractWhere() *SelectSqlParser {
+func (p *SelectParser) extractWhere() *SelectParser {
 	if f := KeywordIndex(p.tempSql, WHERE); f >= 0 {
 		sql := p.tempSql[f+5:]
 		var whereSql string
@@ -210,9 +211,9 @@ func (p *SelectSqlParser) extractWhere() *SelectSqlParser {
 		var sqlList, lastSql = SplitButIgnoreInBracket(whereSql, AND)
 		sqlList = append(sqlList, lastSql)
 		if len(sqlList) > 0 {
-			var conditions []*Condition
+			var conditions []*ConditionParser
 			for _, conditionSql := range sqlList {
-				conditions = append(conditions, &Condition{Content: strings.TrimSpace(conditionSql)})
+				conditions = append(conditions, &ConditionParser{Content: strings.TrimSpace(conditionSql)})
 			}
 			p.Where = conditions
 		}
@@ -223,7 +224,7 @@ func (p *SelectSqlParser) extractWhere() *SelectSqlParser {
 }
 
 // 提取group By
-func (p *SelectSqlParser) extractGroupBy() *SelectSqlParser {
+func (p *SelectParser) extractGroupBy() *SelectParser {
 	sql := p.tempSql
 	if i := KeywordIndex(sql, GroupBy); i >= 0 {
 		var groupBySql string
@@ -240,7 +241,7 @@ func (p *SelectSqlParser) extractGroupBy() *SelectSqlParser {
 }
 
 // 提取having
-func (p *SelectSqlParser) extractHaving() *SelectSqlParser {
+func (p *SelectParser) extractHaving() *SelectParser {
 	if len(p.GroupBy) > 0 {
 		if f := KeywordIndex(p.tempSql, HAVING); f >= 0 {
 			sql := p.tempSql[f+6:]
@@ -253,9 +254,9 @@ func (p *SelectSqlParser) extractHaving() *SelectSqlParser {
 			var sqlList, lastSql = SplitButIgnoreInBracket(havingSql, AND)
 			sqlList = append(sqlList, lastSql)
 			if len(sqlList) > 0 {
-				var conditions []*Condition
+				var conditions []*ConditionParser
 				for _, conditionSql := range sqlList {
-					conditions = append(conditions, &Condition{Content: strings.TrimSpace(conditionSql)})
+					conditions = append(conditions, &ConditionParser{Content: strings.TrimSpace(conditionSql)})
 				}
 				p.Having = conditions
 			}
@@ -267,7 +268,7 @@ func (p *SelectSqlParser) extractHaving() *SelectSqlParser {
 }
 
 // 提取order by
-func (p *SelectSqlParser) extractOrderBy() *SelectSqlParser {
+func (p *SelectParser) extractOrderBy() *SelectParser {
 	sql := p.tempSql
 	if i := KeywordIndex(sql, OrderBy, -1); i > 0 {
 		var orderBySql string
@@ -284,7 +285,7 @@ func (p *SelectSqlParser) extractOrderBy() *SelectSqlParser {
 }
 
 // 提取limit
-func (p *SelectSqlParser) extractLimit() *SelectSqlParser {
+func (p *SelectParser) extractLimit() *SelectParser {
 	sql := p.tempSql
 	i := KeywordIndex(sql, LIMIT, -1)
 	if j := KeywordIndex(sql, RightBracket, -1); i > 0 && i > j {
@@ -295,8 +296,15 @@ func (p *SelectSqlParser) extractLimit() *SelectSqlParser {
 	return p
 }
 
+// 提取limit
+func (p *SelectParser) finish() *SelectParser {
+	p.tempSql = ""
+	log.Info("解析查询SQL完成")
+	return p
+}
+
 // 以当前缩进量对齐
-func (p *SelectSqlParser) align(sql ...string) string {
+func (p *SelectParser) align(sql ...string) string {
 	if len(sql) == 0 {
 		return strings.Repeat(Blank, p.indent)
 	} else if str := sql[0]; len(str) <= p.indent {
@@ -309,12 +317,12 @@ func (p *SelectSqlParser) align(sql ...string) string {
 }
 
 // 新行以当前缩进量添加空格
-func (p *SelectSqlParser) newLineSpace(n int) string {
+func (p *SelectParser) newLineSpace(n int) string {
 	return strings.Repeat(Blank, p.indent+n)
 }
 
 // 构建查询字段sql
-func (p *SelectSqlParser) buildSelectSql() string {
+func (p *SelectParser) buildSelectSql() string {
 	var sql = strings.Builder{}
 	var space = 1
 	sql.WriteString(SELECT)
@@ -359,7 +367,7 @@ func (p *SelectSqlParser) buildSelectSql() string {
 	return sql.String()
 }
 
-func (p *SelectSqlParser) buildFromSql() string {
+func (p *SelectParser) buildFromSql() string {
 	sql := strings.Builder{}
 	sql.WriteString(NewLine)
 	sql.WriteString(p.align(FROM))
@@ -384,8 +392,8 @@ func (p *SelectSqlParser) buildFromSql() string {
 	return sql.String()
 }
 
-func (p *SelectSqlParser) buildConditionSql(in string) string {
-	var conditions []*Condition
+func (p *SelectParser) buildConditionSql(in string) string {
+	var conditions []*ConditionParser
 	switch in {
 	case WHERE:
 		conditions = p.Where
@@ -417,7 +425,7 @@ func (p *SelectSqlParser) buildConditionSql(in string) string {
 	return sql.String()
 }
 
-func (p *SelectSqlParser) buildGroupOrderSql(in string) string {
+func (p *SelectParser) buildGroupOrderSql(in string) string {
 	var values []string
 	switch in {
 	case GROUP:
@@ -445,7 +453,7 @@ func (p *SelectSqlParser) buildGroupOrderSql(in string) string {
 	return sql.String()
 }
 
-func (p *SelectSqlParser) buildLimitSql() string {
+func (p *SelectParser) buildLimitSql() string {
 	sql := strings.Builder{}
 	if p.Limit != Empty {
 		sql.WriteString(NewLine)
