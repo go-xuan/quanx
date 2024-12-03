@@ -77,16 +77,8 @@ func Execute() error {
 	if args := os.Args; len(args) > 1 {
 		var commandName = strings.ToLower(args[1])
 		if command, exist := _manager.commands[commandName]; exist {
-			if err := command.GetFlagSet().Parse(args[2:]); err != nil {
-				return errorx.Wrap(err, "解析命令参数失败")
-			}
-			if executor := command.executor; executor != nil {
-				fmtx.Cyan.XPrintf("======当前执行命令是: %s======\n", commandName)
-				if err := executor(); err != nil {
-					return errorx.Wrap(err, commandName+" execute failed")
-				}
-			} else {
-				fmtx.Red.XPrintf("[%s]命令未设置执行器！", commandName)
+			if err := command.Execute(args[2:]); err != nil {
+				return errorx.Wrap(err, "命令执行失败")
 			}
 			return nil
 		}
@@ -108,30 +100,78 @@ func GetCommandOptionValue(commandName, optionName string) anyx.Value {
 type Command struct {
 	name     string            // 命令名
 	usage    string            // 命令用法说明
-	optNames []string          // 选项参数
+	args     []string          // 当前输入参数
+	optNames []string          // 选项名
 	options  map[string]Option // 选项列表
-	flagSet  *flag.FlagSet
-	executor func() error // 命令处理器
+	flagSet  *flag.FlagSet     //
+	executor func() error      // 命令处理器
+}
+
+// Register 命令注册
+func (c *Command) Register() {
+	var name = c.name
+	if c.executor == nil {
+		panic(fmt.Sprintf("[%s]命令未设置执行器！", name))
+	}
+	c.addDefaultOption()
+	initManager()
+	if _, ok := _manager.commands[name]; ok {
+		panic(fmt.Sprintf("[%s]命令未注册！", name))
+	}
+	_manager.names = append(_manager.names, name)
+	_manager.commands[name] = c
+}
+
+// Execute 执行
+func (c *Command) Execute(args []string) error {
+	if err := c.doParse(args); err != nil {
+		return errorx.Wrap(err, "命令参数解析失败")
+	}
+	if err := c.doExecute(); err != nil {
+		return errorx.Wrap(err, "命令执行器执行失败")
+	}
+	return nil
+}
+
+func (c *Command) doParse(args []string) error {
+	if err := c.GetFlagSet().Parse(args); err != nil {
+		return errorx.Wrap(err, "解析命令参数失败")
+	}
+	c.args = args
+	return nil
+}
+
+// doExecute 执行
+func (c *Command) doExecute() error {
+	if executor := c.executor; executor != nil {
+		fmtx.Cyan.XPrintf("======当前执行命令是: %s======\n", c.name)
+		if err := executor(); err != nil {
+			return errorx.Wrap(err, c.name+" execute failed")
+		}
+	} else {
+		fmtx.Red.XPrintf("[%s]命令未设置执行器！", c.name)
+	}
+	return nil
 }
 
 // AddOption 添加参数
-func (cmd *Command) AddOption(options ...Option) *Command {
+func (c *Command) AddOption(options ...Option) *Command {
 	for _, option := range options {
 		if optName := option.Name(); optName != "" {
-			cmd.options[optName] = option
-			if _, ok := cmd.options[optName]; !ok {
-				cmd.optNames = append(cmd.optNames, optName)
+			c.options[optName] = option
+			if _, ok := c.options[optName]; !ok {
+				c.optNames = append(c.optNames, optName)
 			}
 		}
 	}
-	return cmd
+	return c
 }
 
 // GetOptionValue 获取参数值
-func (cmd *Command) GetOptionValue(optName string) anyx.Value {
-	if option, ok := cmd.options[optName]; ok {
+func (c *Command) GetOptionValue(optName string) anyx.Value {
+	if option, ok := c.options[optName]; ok {
 		if value := option.GetValue(); value.String() == "-h" {
-			_ = cmd.GetFlagSet().Set("h", "true")
+			_ = c.GetFlagSet().Set("h", "true")
 			return anyx.ZeroValue()
 		} else {
 			return value
@@ -142,57 +182,53 @@ func (cmd *Command) GetOptionValue(optName string) anyx.Value {
 	}
 }
 
-func (cmd *Command) GetHelpOptionValue() anyx.Value {
-	return cmd.GetOptionValue("h")
+func (c *Command) GetHelpOptionValue() anyx.Value {
+	return c.GetOptionValue("h")
 }
 
 // SetExecutor 设置执行器
-func (cmd *Command) SetExecutor(executor func() error) *Command {
-	cmd.executor = executor
-	return cmd
-}
-
-// Register 命令注册
-func (cmd *Command) Register() {
-	var name = cmd.name
-	if cmd.executor == nil {
-		panic(fmt.Sprintf("[%s]命令未设置执行器！", name))
-	}
-	cmd.addDefaultOption()
-	initManager()
-	if _, ok := _manager.commands[name]; ok {
-		panic(fmt.Sprintf("[%s]命令未注册！", name))
-	}
-	_manager.names = append(_manager.names, name)
-	_manager.commands[name] = cmd
+func (c *Command) SetExecutor(executor func() error) *Command {
+	c.executor = executor
+	return c
 }
 
 // GetFlagSet 初始化FlagSet并将参数注册到FlagSet
-func (cmd *Command) GetFlagSet() *flag.FlagSet {
-	if cmd.flagSet == nil {
-		fs := flag.NewFlagSet(cmd.name, flag.ExitOnError)
-		if options := cmd.options; options != nil {
+func (c *Command) GetFlagSet() *flag.FlagSet {
+	if c.flagSet == nil {
+		fs := flag.NewFlagSet(c.name, flag.ExitOnError)
+		if options := c.options; options != nil {
 			for _, option := range options {
 				option.Add(fs)
 			}
-			cmd.options = options
+			c.options = options
 		}
-		cmd.flagSet = fs
+		c.flagSet = fs
 	}
-	return cmd.flagSet
+	return c.flagSet
 }
 
-func (cmd *Command) addDefaultOption() {
-	cmd.AddOption(
+func (c *Command) GetArgs() []string {
+	return c.args
+}
+
+func (c *Command) GetArg(index int) string {
+	if index > 0 && index < len(c.args) {
+		return c.args[index]
+	}
+	return ""
+}
+
+func (c *Command) addDefaultOption() {
+	c.AddOption(
 		BoolOption("h", "帮助说明", false),
 	)
 }
 
 // OptionsHelp 命令参数的帮助说明
-func (cmd *Command) OptionsHelp() {
-	fmt.Printf("[%s]命令的可用参数列表：\n", fmtx.Cyan.String(cmd.name))
-	for _, optName := range cmd.optNames {
-		option := cmd.options[optName]
+func (c *Command) OptionsHelp() {
+	fmt.Printf("[%s]命令的可用参数列表：\n", fmtx.Cyan.String(c.name))
+	for _, optName := range c.optNames {
+		option := c.options[optName]
 		fmt.Printf("%-50s %s\n", fmtx.Magenta.String("-"+option.Name()), option.Usage())
 	}
 	fmt.Println()
