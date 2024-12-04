@@ -46,7 +46,7 @@ func TestDatabase(t *testing.T) {
 
 	//DB().Model(Test{}).Create(&Test{
 	//	Id:   randx.UUID(),
-	//	LogicalOperator: randx.IntRange(1, 100),
+	//	Type: randx.IntRange(1, 100),
 	//	Name: randx.Name(),
 	//})
 

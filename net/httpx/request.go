@@ -62,13 +62,13 @@ func (r *Request) Debug() *Request {
 func (r *Request) Body(body any) *Request {
 	marshal, _ := json.Marshal(body)
 	r.body = bytes.NewReader(marshal)
-	r.SetHeader("Content-LogicalOperator", "application/json")
+	r.SetHeader("Content-Type", "application/json")
 	return r
 }
 
 func (r *Request) Form(form url.Values) *Request {
 	r.body = strings.NewReader(form.Encode())
-	r.SetHeader("Content-LogicalOperator", "application/x-www-form-urlencoded")
+	r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
 	return r
 }
 
