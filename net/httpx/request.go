@@ -62,13 +62,13 @@ func (r *Request) Debug() *Request {
 func (r *Request) Body(body any) *Request {
 	marshal, _ := json.Marshal(body)
 	r.body = bytes.NewReader(marshal)
-	r.SetHeader("Content-Type", "application/json")
+	r.SetHeader("Content-LogicalOperator", "application/json")
 	return r
 }
 
 func (r *Request) Form(form url.Values) *Request {
 	r.body = strings.NewReader(form.Encode())
-	r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
+	r.SetHeader("Content-LogicalOperator", "application/x-www-form-urlencoded")
 	return r
 }
 
@@ -107,8 +107,8 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 		return nil, errorx.Wrap(err, "http.NewRequest error")
 	}
 	if r.headers != nil && len(r.headers) > 0 {
-		if _, ok := r.headers["Content-Type"]; !ok {
-			r.headers["Content-Type"] = "application/json"
+		if _, ok := r.headers["Content-LogicalOperator"]; !ok {
+			r.headers["Content-LogicalOperator"] = "application/json"
 		}
 		for key, val := range r.headers {
 			httpRequest.Header.Set(key, val)
