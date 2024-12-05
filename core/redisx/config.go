@@ -3,7 +3,6 @@ package redisx
 import (
 	"context"
 	"fmt"
-	"github.com/go-xuan/quanx/common/constx"
 	"net"
 	"strconv"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/os/fmtx"

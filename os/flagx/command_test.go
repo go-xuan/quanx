@@ -19,4 +19,5 @@ func TestCommand(t *testing.T) {
 	if err := Execute(); err != nil {
 		fmt.Println(err)
 	}
+	command.OptionsHelp()
 }

@@ -2,8 +2,6 @@ package intx
 
 import (
 	"strconv"
-
-	"github.com/go-xuan/quanx/types/stringx"
 )
 
 func NewInt64(v ...int64) Int64 {
@@ -33,7 +31,8 @@ func (x *Int64) UnmarshalJSON(bytes []byte) error {
 
 func (x Int64) MarshalJSON() ([]byte, error) {
 	if x.notnull {
-		return []byte(stringx.FormatInt64(x.value)), nil
+
+		return []byte(strconv.FormatInt(x.value, 10)), nil
 	} else {
 		return []byte("null"), nil
 	}
@@ -49,7 +48,7 @@ func (x *Int64) NotNull() bool {
 
 func (x *Int64) String(def ...string) string {
 	if x.notnull {
-		return stringx.FormatInt64(x.value)
+		return strconv.FormatInt(x.value, 10)
 	} else if len(def) > 0 {
 		return def[0]
 	}

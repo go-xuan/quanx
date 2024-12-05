@@ -23,12 +23,14 @@ func task4() {
 
 func TestCron(t *testing.T) {
 	// 初始化
-	scheduler := Corn()
+	scheduler := Corn(
+		DurationWarp,
+	)
 
-	scheduler.Add("task1", "@every 5s", task1)
-	scheduler.Add("task2", "@every 10m", task2)
-	scheduler.Add("task3", "@daily", task3)
-	scheduler.Add("task4", "0 */1 * * * ?", task4)
+	//scheduler.Add("task1", "@every 5s", task1)
+	//scheduler.Add("task2", "@every 2s", task2)
+	//scheduler.Add("task3", "@daily", task3)
+	//scheduler.Add("task4", "0 */1 * * * ?", task4)
 
 	scheduler.Start()
 
@@ -36,4 +38,5 @@ func TestCron(t *testing.T) {
 	for i, task := range scheduler.All() {
 		fmt.Println(i, task.Info())
 	}
+	select {}
 }

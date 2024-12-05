@@ -52,7 +52,6 @@ func NewCommand(name, usage string, options ...Option) *Command {
 	}
 }
 
-// Register 命令注册
 func Register(commands ...*Command) {
 	initManager()
 	for _, command := range commands {
@@ -61,7 +60,7 @@ func Register(commands ...*Command) {
 			panic(fmt.Sprintf("[%s]命令未设置执行器！", command.name))
 		}
 		if _, ok := _manager.commands[command.name]; ok {
-			panic(fmt.Sprintf("[%s]命令未注册", commandName))
+			panic(fmt.Sprintf("[%s]命令重复注册", commandName))
 		}
 		command.addDefaultOption()
 		_manager.names = append(_manager.names, commandName)
@@ -69,7 +68,6 @@ func Register(commands ...*Command) {
 	}
 }
 
-// Execute 启动
 func Execute() error {
 	if _manager == nil {
 		return errorx.New("请先注册命令")
@@ -116,7 +114,7 @@ func (c *Command) Register() {
 	c.addDefaultOption()
 	initManager()
 	if _, ok := _manager.commands[name]; ok {
-		panic(fmt.Sprintf("[%s]命令未注册！", name))
+		panic(fmt.Sprintf("[%s]命令重复注册！", name))
 	}
 	_manager.names = append(_manager.names, name)
 	_manager.commands[name] = c
@@ -145,7 +143,11 @@ func (c *Command) doParse(args []string) error {
 func (c *Command) doExecute() error {
 	if executor := c.executor; executor != nil {
 		fmtx.Cyan.XPrintf("======当前执行命令是: %s======\n", c.name)
-		if err := executor(); err != nil {
+		if c.NeedHelp() {
+			fmtx.Cyan.XPrintf("执行%s命令时，", c.name)
+			c.OptionsHelp()
+			return nil
+		} else if err := executor(); err != nil {
 			return errorx.Wrap(err, c.name+" execute failed")
 		}
 	} else {
@@ -158,10 +160,10 @@ func (c *Command) doExecute() error {
 func (c *Command) AddOption(options ...Option) *Command {
 	for _, option := range options {
 		if optName := option.Name(); optName != "" {
-			c.options[optName] = option
 			if _, ok := c.options[optName]; !ok {
 				c.optNames = append(c.optNames, optName)
 			}
+			c.options[optName] = option
 		}
 	}
 	return c
@@ -182,8 +184,8 @@ func (c *Command) GetOptionValue(optName string) anyx.Value {
 	}
 }
 
-func (c *Command) GetHelpOptionValue() anyx.Value {
-	return c.GetOptionValue("h")
+func (c *Command) NeedHelp() bool {
+	return c.GetOptionValue("h").Bool()
 }
 
 // SetExecutor 设置执行器

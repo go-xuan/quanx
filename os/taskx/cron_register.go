@@ -20,7 +20,7 @@ type FuncCronJob struct {
 // Register 任务注册
 func (t *FuncCronJob) Register() {
 	if err := Corn().Add(t.Name, t.Spec, t.Do); err != nil {
-		log.WithField("task", t.Name).WithField("spec", t.Spec).
+		log.WithField("job_name", t.Name).WithField("job_spec", t.Spec).
 			Error("register func-cron-job failed: " + err.Error())
 	}
 }
@@ -40,7 +40,7 @@ func (t *HttpCronJob) Register() {
 			log.Error("request failed: ", err)
 		}
 	}); err != nil {
-		log.WithField("task", t.Name).WithField("spec", t.Spec).
+		log.WithField("job_name", t.Name).WithField("job_spec", t.Spec).
 			Error("register http-cron-job failed: ", err)
 	}
 }

@@ -75,7 +75,7 @@ func FormatFloat(f float64) string {
 func Between(s, start, end string) (from, to int) {
 	from, to = -1, -1
 	if start == end {
-		if indices := AllIndex(s, start); len(indices) > 1 {
+		if indices := Indices(s, start); len(indices) > 1 {
 			from, to = indices[0], indices[1]
 		} else if len(indices) == 1 {
 			from = indices[0]
@@ -115,7 +115,21 @@ func Between(s, start, end string) (from, to int) {
 	return
 }
 
-// Index 获取命中子串的首位字符的下标
+// Indices 获取所有下标, x：命中数量
+func Indices(s, sep string) []int {
+	var indices []int
+	l, m, n := len(s), len(sep), 0
+	for i := 0; i <= l-m; i++ {
+		if s[i] == sep[0] && s[i:i+m] == sep {
+			indices = append(indices, i)
+			n++
+			i = i + m - 1
+		}
+	}
+	return indices
+}
+
+// Index 获取子串的下标
 // position：表示获取位置，默认position=1即正序第1处，position=-1即倒序第1处
 func Index(s, sep string, position ...int) int {
 	if l, m := len(s), len(sep); l >= m {
@@ -145,18 +159,28 @@ func Index(s, sep string, position ...int) int {
 	return -1
 }
 
-// AllIndex 获取所有下标, x：命中数量
-func AllIndex(s, sep string) []int {
-	var indices []int
-	l, m, n := len(s), len(sep), 0
-	for i := 0; i <= l-m; i++ {
-		if s[i] == sep[0] && s[i:i+m] == sep {
-			indices = append(indices, i)
-			n++
-			i = i + m - 1
+// IndexStrict 获取子串下标（严格模式：忽略单词中的子串）
+func IndexStrict(s, sep string) int {
+	kl, loop, index := len(sep), true, 0
+	for loop {
+		if newIndex := Index(s, sep, 1); newIndex >= 0 {
+			sl := len(s)
+			if newIndex == 0 && s[kl:kl+1] == " " {
+				index, loop = index+newIndex, false
+			} else if newIndex == sl-kl && s[newIndex-1:newIndex] == " " {
+				index, loop = index+newIndex, false
+			} else if s[newIndex-1:newIndex] == " " && s[newIndex+kl:newIndex+kl+1] == " " {
+				index, loop = index+newIndex, false
+			} else {
+				// 当前index无效则缩减原sql继续loop
+				index = newIndex + kl
+				s = s[index:]
+			}
+		} else {
+			index, loop = -1, false // 没找到直接跳出
 		}
 	}
-	return indices
+	return index
 }
 
 // AddPrefix 添加前缀
