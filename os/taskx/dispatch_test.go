@@ -10,9 +10,13 @@ import (
 )
 
 func TestInBatches(t *testing.T) {
-	if err := InBatches(100, 10, func(x int, y int) error {
-		fmt.Println(x, "==>", y)
-		time.Sleep(1 * time.Second)
+	var total = 100
+	var s []int
+	for i := 0; i < total; i++ {
+		s = append(s, i)
+	}
+	if err := ExecWithBatches(total, 10, func(start, end int) error {
+		fmt.Printf("%d ==> %d :%v \n", start, end, s[start:end])
 		return nil
 	}); err != nil {
 		t.Error(err)

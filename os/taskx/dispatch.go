@@ -7,19 +7,25 @@ import (
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
-// InBatches 分批次执行
-func InBatches(total, limit int, f func(int, int) error) error {
-	var start = 0
-	if start < total {
-		for start < total {
-			if start+limit > total {
-				limit = total - start
-			}
-			if err := f(start, start+limit); err != nil {
-				return errorx.Wrap(err, "execute failed")
-			}
-			start += limit
+// ExecWithBatches 分批次执行
+func ExecWithBatches(total, limit int, f func(start, end int) error) error {
+	if total > limit {
+		return execBatches(total, limit, f)
+	} else {
+		return f(0, total)
+	}
+}
+
+func execBatches(total, limit int, f func(int, int) error) error {
+	var start, end int
+	for start < total {
+		if end = start + limit; end > total {
+			end = total
 		}
+		if err := f(start, end); err != nil {
+			return errorx.Wrap(err, "execute failed")
+		}
+		start = end
 	}
 	return nil
 }

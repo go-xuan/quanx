@@ -2,24 +2,14 @@ package intx
 
 import "strconv"
 
-func NewInt(t ...int) Int {
-	var ti = Int{notnull: true}
-	if len(t) > 0 {
-		ti.value = t[0]
+func NewInt(v ...int) Int {
+	var x = Int{notnull: true}
+	if len(v) > 0 {
+		x.value = v[0]
 	} else {
-		ti.value = 0
+		x.value = 0
 	}
-	return ti
-}
-
-func NewInt64(t ...int64) Int64 {
-	var ti = Int64{notNil: true}
-	if len(t) > 0 {
-		ti.value = t[0]
-	} else {
-		ti.value = 0
-	}
-	return ti
+	return x
 }
 
 type Int struct {
@@ -27,59 +17,73 @@ type Int struct {
 	notnull bool
 }
 
-func (t *Int) UnmarshalJSON(bytes []byte) error {
+func (x *Int) UnmarshalJSON(bytes []byte) error {
 	if value, err := strconv.Atoi(string(bytes)); err != nil {
 		return err
 	} else {
-		t.value = value
-		t.notnull = true
+		x.value = value
+		x.notnull = true
 	}
 	return nil
 }
 
-func (t *Int) MarshalJSON() ([]byte, error) {
-	if t.notnull {
-		return []byte(strconv.Itoa(t.value)), nil
+func (x Int) MarshalJSON() ([]byte, error) {
+	if x.notnull {
+		return []byte(strconv.Itoa(x.value)), nil
 	} else {
 		return []byte("null"), nil
 	}
 }
 
-func (t *Int) Value() int {
-	return t.value
+func (x *Int) Value(def ...int) int {
+	return x.Int(def...)
 }
 
-func (t *Int) NotNull() bool {
-	return t.notnull
+func (x *Int) NotNull() bool {
+	return x.notnull
 }
 
-type Int64 struct {
-	value  int64
-	notNil bool
-}
-
-func (t *Int64) UnmarshalJSON(bytes []byte) error {
-	if value, err := strconv.ParseInt(string(bytes), 10, 64); err != nil {
-		return err
-	} else {
-		t.value = value
-		t.notNil = true
+func (x *Int) String(def ...string) string {
+	if x.notnull {
+		return strconv.Itoa(x.value)
+	} else if len(def) > 0 {
+		return def[0]
 	}
-	return nil
+	return ""
 }
 
-func (t *Int64) MarshalJSON() ([]byte, error) {
-	if t.notNil {
-		return []byte(strconv.FormatInt(t.value, 10)), nil
-	} else {
-		return []byte("null"), nil
+func (x *Int) Int(def ...int) int {
+	if x.notnull {
+		return x.value
+	} else if len(def) > 0 {
+		return def[0]
 	}
+	return 0
 }
 
-func (t *Int64) Value() int64 {
-	return t.value
+func (x *Int) Int64(def ...int64) int64 {
+	if x.notnull {
+		return int64(x.value)
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
 }
 
-func (t *Int64) NotNull() bool {
-	return t.notNil
+func (x *Int) Float64(def ...float64) float64 {
+	if x.notnull {
+		return float64(x.value)
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func (x *Int) Bool(def ...bool) bool {
+	if x.notnull {
+		return x.value == 1
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return false
 }

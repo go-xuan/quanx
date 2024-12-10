@@ -1,9 +1,11 @@
 package randx
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/go-xuan/quanx/types/intx"
 	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/types/timex"
 )
@@ -31,7 +33,7 @@ const (
 // Options 随机生成
 type Options struct {
 	Type    string   // 数据类型
-	Param   *Param   // 约束条件参数
+	Args    *Args    // 约束条件参数
 	Default string   // 默认值
 	Offset  int      // 偏移量
 	Enums   []string // 枚举
@@ -53,9 +55,9 @@ func (o *Options) RandData() any {
 func (o *Options) RandDataString() string {
 	switch o.Type {
 	case typeInt:
-		return stringx.ParseInt(o.RandInt())
+		return strconv.Itoa(o.RandInt())
 	case typeFloat:
-		return stringx.ParseFloat64(o.RandFloat())
+		return strconv.FormatFloat(o.RandFloat(), 'f', -1, 64)
 	default:
 		return o.RandString()
 	}
@@ -64,26 +66,26 @@ func (o *Options) RandDataString() string {
 // RandInt 生成随机数字
 func (o *Options) RandInt() int {
 	if o.Default == "" {
-		return o.Param.Int()
+		return o.Args.Int()
 	} else {
-		return stringx.ToInt(o.Default)
+		return stringx.ParseInt(o.Default)
 	}
 }
 
 // RandFloat 生成随机浮点数
 func (o *Options) RandFloat() float64 {
 	if o.Default == "" {
-		return o.Param.Float()
+		return o.Args.Float()
 	} else {
-		return stringx.ToFloat64(o.Default)
+		return stringx.ParseFloat(o.Default)
 	}
 }
 
 // RandString 生成随机字符串
 func (o *Options) RandString() (result string) {
-	if param, def := o.Param, o.Default; param != nil && def == "" {
+	if param, def := o.Args, o.Default; param != nil && def == "" {
 		if o.Type == typeSequence {
-			result = stringx.ParseInt(stringx.ToInt(param.Min) + o.Offset)
+			result = strconv.Itoa(stringx.ParseInt(param.Min) + o.Offset)
 		} else {
 			result = o.randString()
 		}
@@ -133,22 +135,22 @@ func (o *Options) randString() (result string) {
 	case typeCity:
 		return City()
 	case typePassword:
-		return o.Param.Password()
+		return o.Args.Password()
 	case typeDate:
-		return o.Param.TimeFmt(timex.DateFmt)
+		return o.Args.TimeFmt(timex.DateFmt)
 	case typeTime:
-		return o.Param.TimeFmt()
+		return o.Args.TimeFmt()
 	case typeEnum:
-		return Enum(o.Param.Enums)
+		return Enum(o.Args.Enums)
 	case typeOtherEnum:
-		return Enum(append(o.Enums, o.Param.Enums...))
+		return Enum(append(o.Enums, o.Args.Enums...))
 	default:
-		return String(o.Param.Length)
+		return String(o.Args.Length)
 	}
 }
 
-// Param 随机数生成参数
-type Param struct {
+// Args 随机数生成参数
+type Args struct {
 	Min    string   // 最小值
 	Max    string   // 最大值
 	Prefix string   // 前缀
@@ -164,9 +166,9 @@ type Param struct {
 	Enums  []string // 枚举选项，多个以逗号分割
 }
 
-func NewParam(args string) *Param {
+func NewArgs(args string) *Args {
 	params := stringx.ParseUrlParams(args)
-	return &Param{
+	return &Args{
 		Min:    params["min"],
 		Max:    params["max"],
 		Prefix: params["prefix"],
@@ -176,14 +178,14 @@ func NewParam(args string) *Param {
 		Old:    params["old"],
 		New:    params["new"],
 		Format: params["format"],
-		Length: stringx.ToInt(params["length"]),
-		Prec:   stringx.ToInt(params["prec"]),
-		Level:  stringx.ToInt(params["level"]),
+		Length: stringx.ParseInt(params["length"]),
+		Prec:   stringx.ParseInt(params["prec"]),
+		Level:  stringx.ParseInt(params["level"]),
 		Enums:  strings.Split(params["enums"], ","),
 	}
 }
 
-func (c *Param) Password() string {
+func (c *Args) Password() string {
 	switch c.Level {
 	case 2:
 		return StringWith(WithNumber|WithLowerLetter|WithUpperLetter, c.Length)
@@ -194,66 +196,41 @@ func (c *Param) Password() string {
 	}
 }
 
-func (c *Param) Int() int {
-	var minv, maxv int
-	if minv = stringx.ToInt(c.Min); minv == 0 {
-		minv = 1
-	}
-	if maxv = stringx.ToInt(c.Max); maxv == 0 {
-		maxv = 999
-	}
+func (c *Args) Int() int {
+	minv := stringx.ParseInt(c.Min, 1)
+	maxv := stringx.ParseInt(c.Max, 999)
 	return IntRange(minv, maxv)
 }
 
-func (c *Param) Float() float64 {
-	var minv, maxv float64
-	var prec int
-	if minv = stringx.ToFloat64(c.Min); minv == 0 {
-		minv = 1
-	}
-	if maxv = stringx.ToFloat64(c.Max); maxv == 0 {
-		maxv = 999
-	}
-	if prec = c.Prec; prec == 0 {
-		prec = 6
-	}
+func (c *Args) Float() float64 {
+	minv := stringx.ParseFloat(c.Min, 1)
+	maxv := stringx.ParseFloat(c.Max, 999)
+	prec := intx.IfZero(c.Prec, 6)
 	return Float64Range(minv, maxv, prec)
 }
 
-func (c *Param) Time() time.Time {
-	end := time.Now()
-	if c.Max != "" {
-		end = timex.Parse(c.Max)
-	}
-	start := end.Add(time.Hour * -24 * 30)
-	if c.Min != "" {
-		start = timex.Parse(c.Min)
-	}
-	return TimeRange(start, start)
+func (c *Args) Time() time.Time {
+	end := stringx.ParseTime(c.Max, time.Now())
+	start := stringx.ParseTime(c.Min, end.Add(time.Hour*-24*30))
+	return TimeRange(start, end)
 }
 
-func (c *Param) TimeFmt(layouts ...string) string {
-	end := time.Now()
-	if c.Max != "" {
-		end = timex.Parse(c.Max)
-	}
-	start := end.Add(time.Hour * -24 * 30)
-	if c.Min != "" {
-		start = timex.Parse(c.Min)
-	}
+func (c *Args) TimeFmt(format ...string) string {
+	end := stringx.ParseTime(c.Max, time.Now())
+	start := stringx.ParseTime(c.Min, end.Add(time.Hour*-24*30))
 	var layout = timex.TimeFmt
-	if len(layouts) > 0 {
-		layout = layouts[0]
+	if len(format) > 0 {
+		layout = format[0]
 	} else if c.Format != "" {
 		layout = c.Format
 	}
 	return TimeRange(start, start).Format(layout)
 }
 
-func (c *Param) Enum() string {
+func (c *Args) Enum() string {
 	return Enum(c.Enums)
 }
 
-func (c *Param) String() string {
+func (c *Args) String() string {
 	return String(c.Length)
 }

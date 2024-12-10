@@ -1,29 +1,18 @@
 package timex
 
 import (
+	"strconv"
 	"time"
 )
 
-func NewTime(t ...time.Time) Time {
-	var ti = Time{notnull: true}
-	if len(t) > 0 {
-		ti.value = t[0]
+func NewTime(v ...time.Time) Time {
+	var x = Time{notnull: true}
+	if len(v) > 0 {
+		x.value = v[0]
 	} else {
-		ti.value = time.Now()
+		x.value = time.Now()
 	}
-	return ti
-}
-
-func NewDate(t ...time.Time) Date {
-	var date = Date{notnull: true}
-	if len(t) > 0 {
-		y, m, d := t[0].Date()
-		date.value = time.Date(y, m, d, 0, 0, 0, 0, time.Local)
-	} else {
-		y, m, d := time.Now().Date()
-		date.value = time.Date(y, m, d, 0, 0, 0, 0, time.Local)
-	}
-	return date
+	return x
 }
 
 type Time struct {
@@ -31,21 +20,34 @@ type Time struct {
 	notnull bool
 }
 
-func (t *Time) UnmarshalJSON(bytes []byte) error {
-	if value, err := time.ParseInLocation(`"2006-01-02 15:04:05"`, string(bytes), time.Local); err != nil {
-		return err
+func (x *Time) UnmarshalJSON(bytes []byte) error {
+	if l := len(bytes); l >= 0 {
+		if l > 1 && bytes[0] == 34 && bytes[l-1] == 34 {
+			if value, err := time.ParseInLocation(`"2006-01-02 15:04:05"`, string(bytes), time.Local); err != nil {
+				return err
+			} else {
+				x.value = value
+				x.notnull = true
+			}
+		} else { // 兼容时间戳
+			if value, err := strconv.ParseInt(string(bytes), 10, 64); err != nil {
+				return err
+			} else {
+				x.value = time.Unix(value, 0)
+				x.notnull = true
+			}
+		}
 	} else {
-		t.value = value
-		t.notnull = true
+		x.notnull = false
 	}
 	return nil
 }
 
-func (t *Time) MarshalJSON() ([]byte, error) {
-	if t.notnull {
+func (x Time) MarshalJSON() ([]byte, error) {
+	if x.notnull {
 		var bytes []byte
 		bytes = append(bytes, 34)
-		bytes = t.value.AppendFormat(bytes, TimeFmt)
+		bytes = x.value.AppendFormat(bytes, TimeFmt)
 		bytes = append(bytes, 34)
 		return bytes, nil
 	} else {
@@ -53,45 +55,15 @@ func (t *Time) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (t *Time) Value() time.Time {
-	return t.value
-}
-
-func (t *Time) NotNull() bool {
-	return t.notnull
-}
-
-type Date struct {
-	value   time.Time
-	notnull bool
-}
-
-func (d *Date) UnmarshalJSON(bytes []byte) error {
-	if value, err := time.ParseInLocation(`"2006-01-02"`, string(bytes), time.Local); err != nil {
-		return err
-	} else {
-		d.value = value
-		d.notnull = true
+func (x *Time) Value(def ...time.Time) time.Time {
+	if x.notnull {
+		return x.value
+	} else if len(def) > 0 {
+		return def[0]
 	}
-	return nil
+	return time.Time{}
 }
 
-func (d *Date) MarshalJSON() ([]byte, error) {
-	if d.notnull {
-		var bytes []byte
-		bytes = append(bytes, 34)
-		bytes = d.value.AppendFormat(bytes, DateFmt)
-		bytes = append(bytes, 34)
-		return bytes, nil
-	} else {
-		return []byte("null"), nil
-	}
-}
-
-func (d *Date) Value() time.Time {
-	return d.value
-}
-
-func (d *Date) NotNull() bool {
-	return d.notnull
+func (x *Time) NotNull() bool {
+	return x.notnull
 }

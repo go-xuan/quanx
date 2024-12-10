@@ -10,16 +10,29 @@ import (
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
-var (
-	_scheduler *CronScheduler
-	CornParser = cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
+const (
+	initializationStatus = iota // 初始化
+	readinessStatus             // 待运行
+	runningStatus               // 运行中
+	stopStatus                  // 停止
 )
 
+var (
+	_scheduler *CronScheduler
+)
+
+// DefaultParser 默认的定时任务表达式解析器
+func DefaultParser() cron.Parser {
+	return cron.NewParser(
+		cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
+	)
+}
+
 // Corn 定时任务调度器
-func Corn(warps ...JobWrapper) *CronScheduler {
+func Corn(warps ...CronWrapper) *CronScheduler {
 	if _scheduler == nil {
 		var options = []cron.Option{
-			cron.WithParser(CornParser),
+			cron.WithParser(DefaultParser()),
 			cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger)),
 			cron.WithLogger(cron.DefaultLogger),
 		}
@@ -28,6 +41,7 @@ func Corn(warps ...JobWrapper) *CronScheduler {
 			mutex:   new(sync.Mutex),
 			status:  initializationStatus,
 			cron:    cron.New(options...),
+			names:   []string{},
 			entries: make(map[string]*CornEntry),
 			wraps:   warps,
 		}
@@ -37,30 +51,21 @@ func Corn(warps ...JobWrapper) *CronScheduler {
 
 // ParseDurationBySpec 解析表达式，计算当前时间和下次执行时间的时间差
 func ParseDurationBySpec(spec string) time.Duration {
-	if schedule, err := CornParser.Parse(spec); err == nil {
+	if schedule, err := DefaultParser().Parse(spec); err == nil {
 		var now = time.Now()
 		return schedule.Next(now).Sub(now)
 	}
 	return time.Duration(-1)
 }
 
-// JobWrapper 任务包装器
-type JobWrapper func(name, spec string, job func()) func()
-
-const (
-	initializationStatus = iota
-	readinessStatus
-	runningStatus
-	stopStatus
-)
-
 // CronScheduler 定时任务调度器
 type CronScheduler struct {
 	mutex   *sync.Mutex           // 互斥锁
-	status  int                   // 调度器状态（0-初始化；1-待运行；2-运行中；3-停止）
+	status  uint                  // 调度器状态（0-初始化；1-待运行；2-运行中；3-停止）
 	cron    *cron.Cron            // corn对象
+	names   []string              // 任务名称
 	entries map[string]*CornEntry // 定时任务条目
-	wraps   []JobWrapper          // 定时任务包装器
+	wraps   []CronWrapper         // 定时任务包装器
 }
 
 // Add 添加定时任务
@@ -68,7 +73,9 @@ func (s *CronScheduler) Add(name, spec string, job func()) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	// 如果已存在同名任务则先移除再新增
+	var exist bool
 	if cronTask, ok := s.entries[name]; ok {
+		exist = true
 		s.cron.Remove(cronTask.ID)
 	}
 	// 新增定时任务
@@ -77,20 +84,44 @@ func (s *CronScheduler) Add(name, spec string, job func()) error {
 	entry.spec = spec
 
 	// 遍历装饰器，对任务执行方法进行包装
-	if s.wraps != nil {
-		for _, wrap := range s.wraps {
+	if wraps := s.wraps; wraps != nil {
+		for _, wrap := range wraps {
 			job = wrap(name, spec, job)
 		}
 	}
 	entry.do = job
+
 	if entryID, err := s.cron.AddJob(spec, entry); err != nil {
 		return err
 	} else {
 		entry.ID = entryID
 		s.entries[name] = entry
+		if !exist {
+			s.names = append(s.names, name)
+		}
 	}
 	if s.status == initializationStatus {
 		s.status = readinessStatus
+	}
+	return nil
+}
+
+// Remove 移除定时任务
+func (s *CronScheduler) Remove(name string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	if entry, ok := s.entries[name]; ok {
+		s.cron.Remove(entry.ID)
+		delete(s.entries, name)
+	} else {
+		return errorx.New("task not found: " + name)
+	}
+	// 当任务清零则状态值归零
+	if len(s.entries) == 0 {
+		if s.status == runningStatus {
+			s.cron.Stop()
+		}
+		s.status = initializationStatus
 	}
 	return nil
 }
@@ -123,14 +154,31 @@ func (s *CronScheduler) Stop() error {
 	}
 }
 
+func (s *CronScheduler) Status() string {
+	switch s.status {
+	case initializationStatus:
+		return "initialization"
+	case readinessStatus:
+		return "readiness"
+	case runningStatus:
+		return "running"
+	case stopStatus:
+		return "stopped"
+	default:
+		return "unknown"
+	}
+}
+
 // All 获取所有定时任务
 func (s *CronScheduler) All() []*CornEntry {
-	var tasks []*CornEntry
-	for _, task := range s.entries {
-		task.Entry = s.cron.Entry(task.ID)
-		tasks = append(tasks, task)
+	var entries []*CornEntry
+	for _, name := range s.names {
+		if entry, ok := s.entries[name]; ok {
+			entry.Entry = s.cron.Entry(entry.ID)
+			entries = append(entries, entry)
+		}
 	}
-	return tasks
+	return entries
 }
 
 // Get 获取定时任务
@@ -142,23 +190,6 @@ func (s *CronScheduler) Get(name string) *CornEntry {
 		return task
 	}
 	return nil
-}
-
-// Remove 移除定时任务
-func (s *CronScheduler) Remove(name string) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	if entry, ok := s.entries[name]; ok {
-		s.cron.Remove(entry.ID)
-		delete(s.entries, name)
-	}
-	// 当任务清零则状态值归零
-	if len(s.entries) == 0 {
-		if s.status == runningStatus {
-			s.cron.Stop()
-		}
-		s.status = initializationStatus
-	}
 }
 
 type CornEntry struct {
@@ -174,7 +205,7 @@ func (e *CornEntry) Run() {
 
 // Info 获取定时任务信息
 func (e *CornEntry) Info() string {
-	return fmt.Sprintf("name:%-20s spec:%-20s prev:%s   next:%s",
+	return fmt.Sprintf("name:%-50s spec:%-20s prev:%s   next:%s",
 		e.name, e.spec,
 		e.Prev.Format("2006-01-02 15:04:05"),
 		e.Next.Format("2006-01-02 15:04:05"),

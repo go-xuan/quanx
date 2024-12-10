@@ -9,7 +9,7 @@ func TestCommand(t *testing.T) {
 	command := NewCommand("test", "test command",
 		StringOption("aaa", "option aaa", "aaa"),
 		BoolOption("bbb", "option bbb", false),
-	).SetHandler(func() error {
+	).SetExecutor(func() error {
 		fmt.Println("execute command")
 		return nil
 	})
@@ -19,4 +19,5 @@ func TestCommand(t *testing.T) {
 	if err := Execute(); err != nil {
 		fmt.Println(err)
 	}
+	command.OptionsHelp()
 }

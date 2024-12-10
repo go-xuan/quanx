@@ -107,15 +107,15 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 		return nil, errorx.Wrap(err, "http.NewRequest error")
 	}
 	if r.headers != nil && len(r.headers) > 0 {
-		if _, ok := r.headers["Content-Type"]; !ok {
-			r.headers["Content-Type"] = "application/json"
+		if _, ok := r.headers["Content-LogicalOperator"]; !ok {
+			r.headers["Content-LogicalOperator"] = "application/json"
 		}
 		for key, val := range r.headers {
 			httpRequest.Header.Set(key, val)
 		}
 	}
 	var httpResponse *http.Response
-	if httpResponse, err = GetClient(strategy...).client.Do(httpRequest); err != nil {
+	if httpResponse, err = GetClient(strategy...).HttpClient().Do(httpRequest); err != nil {
 		return nil, errorx.Wrap(err, "client.Do error")
 	}
 	resp := &Response{
@@ -129,8 +129,8 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 	}
 	resp.body = body
 	if r.debug {
-		log.Printf("[debug] url: %s\n", r.url)
-		log.Printf("[debug] body: %s\n", string(body))
+		log.Printf("[debug] url: %s", r.url)
+		log.Printf("[debug] body: %s", string(body))
 	}
 	return resp, nil
 }

@@ -11,7 +11,7 @@ type Option interface {
 	Name() string
 	Usage() string
 	Add(fs *flag.FlagSet)
-	Get() anyx.Value
+	GetValue() anyx.Value
 }
 
 func StringOption(name, usage string, def string) Option {
@@ -49,7 +49,7 @@ func (opt *stringOption) Add(fs *flag.FlagSet) {
 	opt.value = fs.String(opt.name, opt.def, opt.usage)
 }
 
-func (opt *stringOption) Get() anyx.Value {
+func (opt *stringOption) GetValue() anyx.Value {
 	return anyx.StringValue(*opt.value)
 }
 
@@ -72,7 +72,7 @@ func (opt *intOption) Add(fs *flag.FlagSet) {
 	opt.value = fs.Int(opt.name, opt.def, opt.usage)
 }
 
-func (opt *intOption) Get() anyx.Value {
+func (opt *intOption) GetValue() anyx.Value {
 	return anyx.IntValue(*opt.value)
 }
 
@@ -95,7 +95,7 @@ func (opt *boolOption) Add(fs *flag.FlagSet) {
 	opt.value = fs.Bool(opt.name, opt.def, opt.usage)
 }
 
-func (opt *boolOption) Get() anyx.Value {
+func (opt *boolOption) GetValue() anyx.Value {
 	return anyx.BoolValue(*opt.value)
 }
 
@@ -118,6 +118,6 @@ func (opt *floatOption) Add(fs *flag.FlagSet) {
 	opt.value = fs.Float64(opt.name, opt.def, opt.usage)
 }
 
-func (opt *floatOption) Get() anyx.Value {
+func (opt *floatOption) GetValue() anyx.Value {
 	return anyx.Float64Value(*opt.value)
 }

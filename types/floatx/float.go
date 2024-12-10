@@ -1,15 +1,17 @@
 package floatx
 
-import "strconv"
+import (
+	"strconv"
+)
 
-func NewFloat64(t ...float64) *Float {
-	var ti = Float{notnull: true}
+func NewFloat64(t ...float64) Float {
+	var x = Float{notnull: true}
 	if len(t) > 0 {
-		ti.value = t[0]
+		x.value = t[0]
 	} else {
-		ti.value = 0
+		x.value = 0
 	}
-	return &ti
+	return x
 }
 
 type Float struct {
@@ -17,28 +19,73 @@ type Float struct {
 	notnull bool
 }
 
-func (t *Float) UnmarshalJSON(bytes []byte) error {
+func (x *Float) UnmarshalJSON(bytes []byte) error {
 	if value, err := strconv.ParseFloat(string(bytes), 64); err != nil {
 		return err
 	} else {
-		t.value = value
-		t.notnull = true
+		x.value = value
+		x.notnull = true
 	}
 	return nil
 }
 
-func (t *Float) MarshalJSON() ([]byte, error) {
-	if t.notnull {
-		return []byte(strconv.FormatFloat(t.value, 'f', -1, 64)), nil
+func (x Float) MarshalJSON() ([]byte, error) {
+	if x.notnull {
+		return []byte(strconv.FormatFloat(x.value, 'f', -1, 64)), nil
 	} else {
 		return []byte("null"), nil
 	}
 }
 
-func (t *Float) Value() float64 {
-	return t.value
+func (x *Float) Value(def ...float64) float64 {
+	return x.Float64(def...)
 }
 
-func (t *Float) NotNull() bool {
-	return t.notnull
+func (x *Float) NotNull() bool {
+	return x.notnull
+}
+
+func (x *Float) String(def ...string) string {
+	if x.notnull {
+		return strconv.FormatFloat(x.value, 'f', -1, 64)
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return ""
+}
+
+func (x *Float) Int(def ...int) int {
+	if x.notnull {
+		return int(x.value)
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func (x *Float) Int64(def ...int64) int64 {
+	if x.notnull {
+		return int64(int(x.value))
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func (x *Float) Float64(def ...float64) float64 {
+	if x.notnull {
+		return x.value
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func (x *Float) Bool(def ...bool) bool {
+	if x.notnull {
+		return x.value == 1
+	} else if len(def) > 0 {
+		return def[0]
+	}
+	return false
 }

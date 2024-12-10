@@ -12,7 +12,7 @@ import (
 
 // String 随机字符串
 func String(length ...int) string {
-	var l = IntRange(5, 10)
+	var l = 1 << 5
 	if len(length) > 0 && length[0] > 0 {
 		l = length[0]
 	}

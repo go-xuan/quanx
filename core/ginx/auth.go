@@ -71,7 +71,7 @@ func GetSessionUser(ctx *gin.Context) AuthUser {
 func SetAuthCookie(ctx *gin.Context, username string, expire ...int) {
 	if cookie, err := encryptx.RSA().Encrypt(username); err != nil {
 		ctx.Abort()
-		respx.Ctx(ctx).Failed(err)
+		respx.Error(ctx, err.Error())
 	} else {
 		var maxAge = intx.Default(3600, expire...)
 		ctx.SetCookie(cookieName, cookie, maxAge, "", "", false, true)

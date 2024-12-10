@@ -112,7 +112,7 @@ func (c *Config) ServerConfigs() []constant.ServerConfig {
 		configs = append(configs, constant.ServerConfig{
 			ContextPath: "/nacos",
 			IpAddr:      host,
-			Port:        uint64(stringx.ToInt64(port)),
+			Port:        uint64(stringx.ParseInt64(port)),
 		})
 	}
 	return configs

@@ -1,7 +1,5 @@
 package intx
 
-import "strconv"
-
 // Default 用于函数中的不定参数取默认值
 func Default(def int, x ...int) int {
 	if len(x) == 0 {
@@ -47,8 +45,4 @@ func Max(a, b, c int) int {
 		return b
 	}
 	return c
-}
-
-func String(i int) string {
-	return strconv.Itoa(i)
 }

@@ -1,30 +1,28 @@
 package randx
 
 import (
-	"math"
-
 	"github.com/go-xuan/quanx/types/floatx"
 )
 
 // Int 随机整数
 func Int() int {
-	return IntRange(1, math.MaxInt)
+	return IntRange(1, 1<<16)
 }
 
 // Int64 随机整数
 func Int64() int64 {
-	return Int64Range(1, math.MaxInt64)
+	return Int64Range(1, 1<<16)
 }
 
 // Float64 随机浮点数
 func Float64() float64 {
-	return Float64Range(math.SmallestNonzeroFloat64, math.MaxFloat64, 6)
+	return Float64Range(1, 1<<16, 6)
 }
 
 // IntRange 随机整数
 func IntRange(min, max int) int {
 	if min != max {
-		return NewRand().Intn(1+max-min) + min
+		return NewRand().Intn(max-min+1) + min
 	}
 	return min
 }
@@ -32,7 +30,7 @@ func IntRange(min, max int) int {
 // Int64Range 随机整数
 func Int64Range(min, max int64) int64 {
 	if min != max {
-		return NewRand().Int63n(1+max-min) + min
+		return NewRand().Int63n(max-min+1) + min
 	}
 	return min
 }
@@ -40,7 +38,7 @@ func Int64Range(min, max int64) int64 {
 // Float64Range 随机浮点数
 func Float64Range(min, max float64, prec int) float64 {
 	if min != max {
-		float := NewRand().Float64()*(max-min) + min
+		float := NewRand().Float64()*(max-min+1) + min
 		return floatx.Ground(float, prec)
 	}
 	return min
