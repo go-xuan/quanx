@@ -115,7 +115,7 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 		}
 	}
 	var httpResponse *http.Response
-	if httpResponse, err = GetClient(strategy...).client.Do(httpRequest); err != nil {
+	if httpResponse, err = GetClient(strategy...).HttpClient().Do(httpRequest); err != nil {
 		return nil, errorx.Wrap(err, "client.Do error")
 	}
 	resp := &Response{
@@ -129,8 +129,8 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 	}
 	resp.body = body
 	if r.debug {
-		log.Printf("[debug] url: %s\n", r.url)
-		log.Printf("[debug] body: %s\n", string(body))
+		log.Printf("[debug] url: %s", r.url)
+		log.Printf("[debug] body: %s", string(body))
 	}
 	return resp, nil
 }

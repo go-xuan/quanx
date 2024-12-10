@@ -23,13 +23,18 @@ type SmsCaptcha struct {
 func (c *SmsCaptcha) Send(ctx context.Context, phone string) (captcha string, expired int, err error) {
 	// 根据模板生成消息体
 	captcha = randx.NumberCode(6)
-	var message string
-	if message, err = GetMessageByTemplate(c.template, captcha); err != nil {
+
+	// 构建模板填充数据
+	var data = make(map[string]string)
+	data["captcha"] = captcha
+
+	var content string
+	if content, err = NewMessageByTemplate(c.template, data); err != nil {
 		return
 	}
-	fmt.Println(message)
+	fmt.Println(content)
 
-	// todo 调用短信发送接口
+	// todo 短信发送逻辑处理
 
 	// 存储验证码
 	expired = c.store.expired

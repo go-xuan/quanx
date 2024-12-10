@@ -24,17 +24,23 @@ type EmailCaptcha struct {
 	store    *CaptchaStore
 }
 
-func (c *EmailCaptcha) Send(ctx context.Context, email string) (captcha string, expired int, err error) {
+func (c *EmailCaptcha) Send(ctx context.Context, reciver string) (captcha string, expired int, err error) {
 	// 根据模板生成消息体
 	captcha = randx.NumberCode(6)
+
+	// 构建模板填充数据
+	var data = make(map[string]string)
+	data["captcha"] = captcha
+
+	// 生成message内容
 	var content string
-	if content, err = GetMessageByTemplate(c.template, captcha); err != nil {
+	if content, err = NewMessageByTemplate(c.template, data); err != nil {
 		return
 	}
 
 	// 发送邮箱验证码
 	if err = c.handler.SendMail(emailx.Send{
-		To:      []string{email},
+		To:      []string{reciver},
 		Title:   c.title,
 		Content: content,
 	}); err != nil {
@@ -43,7 +49,7 @@ func (c *EmailCaptcha) Send(ctx context.Context, email string) (captcha string, 
 
 	// 存储验证码
 	expired = c.store.expired
-	if err = c.store.set(ctx, email, captcha); err != nil {
+	if err = c.store.set(ctx, reciver, captcha); err != nil {
 		return
 	}
 	return
