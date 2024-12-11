@@ -107,8 +107,8 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 		return nil, errorx.Wrap(err, "http.NewRequest error")
 	}
 	if r.headers != nil && len(r.headers) > 0 {
-		if _, ok := r.headers["Content-LogicalOperator"]; !ok {
-			r.headers["Content-LogicalOperator"] = "application/json"
+		if _, ok := r.headers["Content-AndOr"]; !ok {
+			r.headers["Content-AndOr"] = "application/json"
 		}
 		for key, val := range r.headers {
 			httpRequest.Header.Set(key, val)

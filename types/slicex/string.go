@@ -2,22 +2,12 @@ package slicex
 
 import (
 	"sort"
-	"strings"
 )
 
-// Split 字符串分割
-func Split(str string, sep string) []string {
-	slice := strings.Split(str, sep)
-	for i, s := range slice {
-		slice[i] = strings.TrimSpace(s)
-	}
-	return slice
-}
-
 // Contains 字符串是否包含
-func Contains(slice []string, str string) bool {
+func Contains[T string | int | int64 | float64](slice []T, v T) bool {
 	for _, item := range slice {
-		if item == str {
+		if item == v {
 			return true
 		}
 	}
@@ -25,14 +15,14 @@ func Contains(slice []string, str string) bool {
 }
 
 // ContainsAny 数组是否包含
-func ContainsAny(slice []string, args ...string) bool {
+func ContainsAny[T string | int | int64 | float64](slice []T, args ...T) bool {
 	if args != nil && len(args) > 0 {
-		set := make(map[string]struct{})
+		m := make(map[T]struct{})
 		for _, item := range slice {
-			set[item] = struct{}{}
+			m[item] = struct{}{}
 		}
-		for _, str := range args {
-			if _, ok := set[str]; ok {
+		for _, arg := range args {
+			if _, ok := m[arg]; ok {
 				return true
 			}
 		}
@@ -41,63 +31,74 @@ func ContainsAny(slice []string, args ...string) bool {
 }
 
 // ContainsAll 数组是否包含
-func ContainsAll(slice []string, args []string) (string, bool) {
+func ContainsAll[T string | int | int64 | float64](slice []T, args ...T) bool {
 	if args != nil && len(args) > 0 {
-		set := make(map[string]struct{})
-		for _, item := range slice {
-			set[item] = struct{}{}
+		var m = make(map[T]struct{})
+		for _, k := range slice {
+			m[k] = struct{}{}
 		}
-		for _, str := range args {
-			if _, ok := set[str]; !ok {
-				return str, false
+		for _, arg := range args {
+			if _, ok := m[arg]; !ok {
+				return false
 			}
 		}
 	}
-	return "", true
+	return true
 }
 
-// Distinct 合并并去重
-func Distinct(slices ...[]string) (result []string) {
-	set := make(map[string]struct{})
-	for _, slice := range slices {
-		for _, item := range slice {
-			set[item] = struct{}{}
+func Distinct[T string | int | int64 | float64](slices ...[]T) []T {
+	if len(slices) > 0 {
+		var m = make(map[any]struct{})
+		for _, slice := range slices {
+			for _, k := range slice {
+				m[k] = struct{}{}
+			}
 		}
+		var set []T
+		for k := range m {
+			set = append(set, k)
+		}
+		return set
 	}
-	for item := range set {
-		result = append(result, item)
-	}
-	return result
+	return nil
 }
 
 // RetainAll 取交集
-func RetainAll(slices ...[]string) (result []string) {
-	set := make(map[string]int)
-	for _, slice := range slices {
-		for _, item := range slice {
-			set[item]++
+func RetainAll[T string | int | int64 | float64](slices ...[]T) []T {
+	if len(slices) > 0 {
+		var m = make(map[T]int)
+		for _, slice := range slices {
+			for _, k := range slice {
+				m[k]++
+			}
 		}
-	}
-	for k, v := range set {
-		if v > 1 {
-			result = append(result, k)
+		var result []T
+		for k, v := range m {
+			if v > 1 {
+				result = append(result, k)
+			}
 		}
+		return result
 	}
-	return result
+	return nil
 }
 
 // Exclude 移除
-func Exclude(target []string, exclude []string) (result []string) {
-	set := make(map[string]struct{})
-	for _, item := range exclude {
-		set[item] = struct{}{}
-	}
-	for _, item := range target {
-		if _, ok := set[item]; !ok {
-			result = append(result, item)
+func Exclude[T string | int | int64 | float64](target []T, exclude []T) []T {
+	if len(target) > 0 && len(exclude) > 0 {
+		m := make(map[T]struct{})
+		for _, item := range exclude {
+			m[item] = struct{}{}
 		}
+		var result []T
+		for _, item := range target {
+			if _, ok := m[item]; !ok {
+				result = append(result, item)
+			}
+		}
+		return result
 	}
-	return result
+	return target
 }
 
 // SortAsc 数组正序
