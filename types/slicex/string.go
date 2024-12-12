@@ -48,7 +48,7 @@ func ContainsAll[T string | int | int64 | float64](slice []T, args ...T) bool {
 
 func Distinct[T string | int | int64 | float64](slices ...[]T) []T {
 	if len(slices) > 0 {
-		var m = make(map[any]struct{})
+		var m = make(map[T]struct{})
 		for _, slice := range slices {
 			for _, k := range slice {
 				m[k] = struct{}{}
