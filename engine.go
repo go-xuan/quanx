@@ -164,9 +164,12 @@ func (e *Engine) initAppBasic() {
 	e.ExecuteConfigurator(anyx.IfZero(e.config.Log, &logx.Config{FileName: serverName + ".log"}), true)
 
 	// 初始化数据库连接
-	if e.mode[MultiDatabase] {
-		e.config.Database = anyx.IfZero(e.config.Database, &gormx.MultiConfig{})
+	if e.config.Database != nil {
 		e.ExecuteConfigurator(e.config.Database)
+	} else if e.mode[MultiDatabase] {
+		var multi = &gormx.MultiConfig{}
+		e.ExecuteConfigurator(multi)
+		e.config.Database = multi
 	} else {
 		var db = &gormx.Config{}
 		e.ExecuteConfigurator(db)
@@ -186,13 +189,17 @@ func (e *Engine) initAppBasic() {
 	}
 
 	// 初始化redis连接
-	if e.mode[MultiRedis] {
-		e.config.Redis = anyx.IfZero(e.config.Redis, &redisx.MultiConfig{})
+
+	if e.config.Redis != nil {
 		e.ExecuteConfigurator(e.config.Redis)
+	} else if e.mode[MultiRedis] {
+		var multi = &redisx.MultiConfig{}
+		e.ExecuteConfigurator(multi)
+		e.config.Redis = multi
 	} else {
-		var redis = &redisx.Config{}
-		e.ExecuteConfigurator(redis)
-		e.config.Redis = &redisx.MultiConfig{redis}
+		var db = &redisx.Config{}
+		e.ExecuteConfigurator(db)
+		e.config.Redis = &redisx.MultiConfig{db}
 	}
 
 	// 初始化缓存
