@@ -117,3 +117,27 @@ func MarshalToStruct[T any](v any, filename string) (t T, err error) {
 	}
 	return
 }
+
+// WriteJson 写入json文件
+func WriteJson(path string, v any) error {
+	bytes, err := json.MarshalIndent(v, "", "	")
+	if err != nil {
+		return errorx.Wrap(err, "json marshal error")
+	}
+	if err = filex.WriteFile(path, bytes); err != nil {
+		return errorx.Wrap(err, "write file error")
+	}
+	return nil
+}
+
+// WriteYaml 写入yaml文件
+func WriteYaml(path string, v any) error {
+	bytes, err := yaml.Marshal(v)
+	if err != nil {
+		return errorx.Wrap(err, "yaml marshal error")
+	}
+	if err = filex.WriteFile(path, bytes); err != nil {
+		return errorx.Wrap(err, "write file error")
+	}
+	return nil
+}

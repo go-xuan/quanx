@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/csv"
 	"encoding/hex"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -37,7 +36,7 @@ const (
 // ReadFile 读取文件内容
 func ReadFile(path string) ([]byte, error) {
 	if bytes, err := os.ReadFile(path); err != nil {
-		return nil, errorx.Wrap(err, "os.ReadFile error")
+		return nil, errorx.Wrap(err, "read file error")
 	} else {
 		return bytes, nil
 	}
@@ -47,7 +46,7 @@ func ReadFile(path string) ([]byte, error) {
 func ReadFileLine(filePath string) ([]string, error) {
 	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
 	if err != nil {
-		return nil, errorx.Wrap(err, "os.OpenFile error")
+		return nil, errorx.Wrap(err, "open file error")
 	}
 	defer file.Close()
 	// 按行处理txt
@@ -67,33 +66,52 @@ func ReadFileLine(filePath string) ([]string, error) {
 func ContentReplace(filePath string, replaces map[string]string) error {
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
-		return errorx.Wrap(err, "os.ReadFile error")
+		return errorx.Wrap(err, "read file error")
 	}
 	content := string(bytes)
 	for k, v := range replaces {
 		content = strings.ReplaceAll(content, k, v)
 	}
-	if err = WriteFile(filePath, content); err != nil {
-		return errorx.Wrap(err, "WriteFile error")
+	if err = WriteFileString(filePath, content); err != nil {
+		return errorx.Wrap(err, "write to file error")
 	}
 	return nil
 }
 
 // WriteFile 写入文件
-func WriteFile(filePath, content string, mode ...int) error {
+func WriteFile(filePath string, data []byte, mode ...int) error {
 	CreateIfNotExist(filePath)
 	var flag = intx.Default(Overwrite, mode...)
 	file, err := os.OpenFile(filePath, flag, 0644)
 	if err != nil {
-		return errorx.Wrap(err, "os.OpenFile error")
+		return errorx.Wrap(err, "open file error")
 	}
 	defer file.Close()
 	writer := bufio.NewWriter(file)
-	if _, err = writer.WriteString(content); err != nil {
-		return errorx.Wrap(err, "writer.WriteString error")
+	if _, err = writer.Write(data); err != nil {
+		return errorx.Wrap(err, "write file with []byte error")
 	}
 	if err = writer.Flush(); err != nil {
-		return errorx.Wrap(err, "writer.Flush error")
+		return errorx.Wrap(err, "writer flush error")
+	}
+	return nil
+}
+
+// WriteFileString 写入文件
+func WriteFileString(filePath, data string, mode ...int) error {
+	CreateIfNotExist(filePath)
+	var flag = intx.Default(Overwrite, mode...)
+	file, err := os.OpenFile(filePath, flag, 0644)
+	if err != nil {
+		return errorx.Wrap(err, "open file error")
+	}
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+	if _, err = writer.WriteString(data); err != nil {
+		return errorx.Wrap(err, "write file with string error")
+	}
+	if err = writer.Flush(); err != nil {
+		return errorx.Wrap(err, "writer flush error")
 	}
 	return nil
 }
@@ -102,36 +120,36 @@ func WriteFile(filePath, content string, mode ...int) error {
 func FileSplit(filePath string, size int) ([]string, error) {
 	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
 	if err != nil {
-		return nil, errorx.Wrap(err, "os.OpenFile error")
+		return nil, errorx.Wrap(err, "open file error")
 	}
 	defer file.Close()
 	dir, filename, suffix := Analyse(filePath)
 	dir = filepath.Join(dir, filename)
 	reader := bufio.NewReader(file)
 	count, index := 1, 1
-	var bf = strings.Builder{}
+	var sb = strings.Builder{}
 	var paths []string
 	for {
 		if index < size {
 			var line []byte
 			if line, _, err = reader.ReadLine(); err == io.EOF {
 				path := filepath.Join(dir, "split_"+strconv.Itoa(count)+suffix)
-				if err = WriteFile(path, bf.String()); err != nil {
-					return nil, errorx.Wrap(err, "WriteFile error")
+				if err = WriteFileString(path, sb.String()); err != nil {
+					return nil, errorx.Wrap(err, "write file error")
 				}
 				paths = append(paths, path)
 				break
 			}
-			bf.WriteString("\n")
-			bf.Write(line)
+			sb.WriteString("\n")
+			sb.Write(line)
 		} else {
 			index = 1
 			path := filepath.Join(dir, "split_"+strconv.Itoa(count)+suffix)
-			if err = WriteFile(path, bf.String()); err != nil {
-				return nil, errorx.Wrap(err, "WriteFile error")
+			if err = WriteFileString(path, sb.String()); err != nil {
+				return nil, errorx.Wrap(err, "write file error")
 			}
 			paths = append(paths, path)
-			bf.Reset()
+			sb.Reset()
 			count++
 		}
 		index++
@@ -144,7 +162,7 @@ func WriteFileLine(filePath string, content []string, mode ...int) error {
 	var flag = intx.Default(Overwrite, mode...)
 	file, err := os.OpenFile(filePath, flag, 0644)
 	if err != nil {
-		return errorx.Wrap(err, "os.OpenFile error")
+		return errorx.Wrap(err, "open file error")
 	}
 	defer file.Close()
 	writer := bufio.NewWriter(file)
@@ -153,29 +171,7 @@ func WriteFileLine(filePath string, content []string, mode ...int) error {
 		_, _ = writer.WriteString("\n")
 	}
 	if err = writer.Flush(); err != nil {
-		return errorx.Wrap(err, "writer.Flush error")
-	}
-	return nil
-}
-
-// WriteJson 写入json文件
-func WriteJson(filePath string, v any) error {
-	bytes, err := json.MarshalIndent(v, "", "	")
-	if err != nil {
-		return errorx.Wrap(err, "json.MarshalIndent error")
-	}
-	CreateIfNotExist(filePath)
-	var file *os.File
-	if file, err = os.OpenFile(filePath, Overwrite, 0644); err != nil {
-		return errorx.Wrap(err, "os.OpenFile error")
-	}
-	defer file.Close()
-	writer := bufio.NewWriter(file)
-	if _, err = writer.Write(bytes); err != nil {
-		return errorx.Wrap(err, "writer.Write error")
-	}
-	if err = writer.Flush(); err != nil {
-		return errorx.Wrap(err, "writer.Flush error")
+		return errorx.Wrap(err, "writer flush error")
 	}
 	return nil
 }
@@ -185,14 +181,14 @@ func WriteCSV(filePath string, data [][]string) error {
 	CreateIfNotExist(filePath)
 	file, err := os.OpenFile(filePath, Overwrite, 0644)
 	if err != nil {
-		return errorx.Wrap(err, "os.OpenFile error")
+		return errorx.Wrap(err, "open file error")
 	}
 	defer file.Close()
 	writer := csv.NewWriter(file)
 	writer.Comma = ','
 	writer.UseCRLF = true
 	if err = writer.WriteAll(data); err != nil {
-		return errorx.Wrap(err, "writer.WriteAll error")
+		return errorx.Wrap(err, "write csv to file error")
 	}
 	writer.Flush()
 	return nil
@@ -279,7 +275,7 @@ func Exists(path string) bool {
 func Create(path string) error {
 	file, err := os.Create(path)
 	if err != nil {
-		return errorx.Wrap(err, "os.Create error")
+		return errorx.Wrap(err, "create error")
 	}
 	defer file.Close()
 	return nil
@@ -440,13 +436,13 @@ func GetFileBytesByUrl(fileUrl string) ([]byte, error) {
 	var client = &http.Client{Transport: tr}
 	resp, err := client.Get(fileUrl)
 	if err != nil {
-		return nil, errorx.Wrap(err, "http.Client.Get error")
+		return nil, errorx.Wrap(err, "get http client error")
 	}
 	var body = resp.Body
 	defer body.Close()
 	var bytes []byte
 	if bytes, err = io.ReadAll(body); err != nil {
-		return nil, errorx.Wrap(err, "http.Response.Body ReadAll error")
+		return nil, errorx.Wrap(err, "http response body read error")
 	}
 	return bytes, nil
 }

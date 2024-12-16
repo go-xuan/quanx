@@ -15,6 +15,8 @@ import (
 	"github.com/go-xuan/quanx/core/nacosx"
 	"github.com/go-xuan/quanx/core/redisx"
 	"github.com/go-xuan/quanx/net/ipx"
+	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/filex"
 	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/os/logx"
 	"github.com/go-xuan/quanx/os/syncx"
@@ -72,7 +74,9 @@ func GetEngine() *Engine {
 
 // DefaultEngine 默认Engine
 func DefaultEngine() *Engine {
-	return NewEngine(EnableNacos)
+	return NewEngine(
+		Debug,
+	)
 }
 
 // NewEngine 初始化Engine
@@ -114,7 +118,7 @@ func (e *Engine) RUN() {
 
 func (e *Engine) checkRunning() {
 	if engine.mode[Running] {
-		panic("engine has already running")
+		log.Panic("engine has already running")
 	}
 }
 
@@ -134,11 +138,21 @@ func (e *Engine) enableQueue() {
 // 加载服务配置文件
 func (e *Engine) loadingAppConfig() {
 	e.checkRunning()
-	var config = &Config{Server: &Server{}}
+	var server = &Server{}
+	if err := anyx.SetDefaultValue(server); err != nil {
+		log.Panic(errorx.Wrap(err, "set default value error "))
+	}
+	var config = e.config
+	config.Server = server
 	var path = e.GetConfigPath(constx.DefaultServerConfig)
-	if err := marshalx.UnmarshalFromFile(path, config); err != nil {
-		log.Errorf("Scan %s Failed", path)
-		panic(err)
+	if filex.Exists(path) {
+		if err := marshalx.UnmarshalFromFile(path, config); err != nil {
+			log.Panic(errorx.Wrap(err, "unmarshal file failed: "+path))
+		}
+	} else {
+		if err := marshalx.WriteYaml(path, config); err != nil {
+			log.Panic(errorx.Wrap(err, "set default value error "))
+		}
 	}
 	if config.Server.Host == "" {
 		config.Server.Host = ipx.GetLocalIP()
@@ -149,7 +163,7 @@ func (e *Engine) loadingAppConfig() {
 		if config.Nacos.EnableNaming() {
 			// 注册nacos服务Nacos
 			if err := nacosx.Register(config.Server.Instance()); err != nil {
-				panic(err)
+				log.Panic(errorx.Wrap(err, "nacos register error "))
 			}
 		}
 	}
@@ -181,8 +195,7 @@ func (e *Engine) initAppBasic() {
 		for _, source := range gormx.Sources() {
 			if dst, ok := e.gormTables[source]; ok {
 				if err := gormx.InitTable(source, dst...); err != nil {
-					log.Error("Init Table Struct And Data Failed")
-					panic(err)
+					log.Panic(errorx.Wrap(err, "init table struct and data failed"))
 				}
 			}
 		}
@@ -249,8 +262,7 @@ func (e *Engine) startServer() {
 	e.InitGinLoader(group)
 	log.Info("API接口请求地址: " + e.config.Server.ApiHost())
 	if err := e.ginEngine.Run(":" + strconv.Itoa(e.config.Server.Port)); err != nil {
-		log.Error("gin run failed ")
-		panic(err)
+		log.Panic(errorx.Wrap(err, "gin run failed"))
 	}
 }
 
@@ -293,7 +305,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 				logger.Info("configurator data: ", configurator.Format())
 			}
 			logger.Error(fmtx.Red.String("configurator execute failed!"))
-			panic(err)
+			log.Panic(err)
 		}
 		if e.mode[Debug] {
 			logger.Info("configurator data: ", configurator.Format())
@@ -305,7 +317,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 // LoadingLocalConfig 加载本地配置项（立即加载）
 func (e *Engine) LoadingLocalConfig(v any, path string) {
 	if err := marshalx.UnmarshalFromFile(path, v); err != nil {
-		panic(err)
+		log.Panic(errorx.Wrap(err, "unmarshal config file failed"))
 	}
 }
 
@@ -313,7 +325,7 @@ func (e *Engine) LoadingLocalConfig(v any, path string) {
 func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() {
 		if err := nacosx.This().ScanConfig(v, e.config.Server.Name, dataId, listen...); err != nil {
-			panic("scan nacos config failed : " + err.Error())
+			log.Panic(errorx.Wrap(err, "scan nacos config failed"))
 		}
 	})
 }
