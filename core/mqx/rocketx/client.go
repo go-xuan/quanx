@@ -26,7 +26,7 @@ func (c *RocketClient) PrepareProducer() {
 	if c.producer == nil {
 		opts := NewProducerOptions(c.conf)
 		if p, err := rocketmq.NewProducer(opts...); err != nil {
-			log.Error("NewProducer err:", err.Error())
+			log.Error("new producer err:", err.Error())
 			panic(err)
 		} else {
 			c.producer = p
@@ -37,9 +37,9 @@ func (c *RocketClient) PrepareProducer() {
 // PreparePushConsumer 准备PushConsumer消费者
 func (c *RocketClient) PreparePushConsumer() {
 	if c.pushConsumer == nil {
-		opts := NewPushConsumerOptions(c.conf)
+		opts := NewConsumerOptions(c.conf)
 		if pushConsumer, err := rocketmq.NewPushConsumer(opts...); err != nil {
-			log.Error("NewPushConsumer err:", err.Error())
+			log.Error("new push consumer err:", err.Error())
 			panic(err)
 		} else {
 			c.pushConsumer = pushConsumer
@@ -50,9 +50,9 @@ func (c *RocketClient) PreparePushConsumer() {
 // PreparePullConsumer 准备PullConsumer消费者
 func (c *RocketClient) PreparePullConsumer() {
 	if c.pullConsumer == nil {
-		opts := NewPushConsumerOptions(c.conf)
+		opts := NewConsumerOptions(c.conf)
 		if pullConsumer, err := rocketmq.NewPullConsumer(opts...); err != nil {
-			log.Error("NewPullConsumer err:", err.Error())
+			log.Error("new pull consumer err:", err.Error())
 			panic(err)
 		} else {
 			c.pullConsumer = pullConsumer
@@ -80,7 +80,7 @@ func NewProducerOptions(c *mqx.Config) []producer.Option {
 	return opts
 }
 
-func NewPushConsumerOptions(c *mqx.Config) []consumer.Option {
+func NewConsumerOptions(c *mqx.Config) []consumer.Option {
 	var opts []consumer.Option
 	opts = append(opts,
 		consumer.WithNameServer([]string{c.Endpoint}),
@@ -106,9 +106,9 @@ func (c *RocketClient) Publish(ctx context.Context, body []byte, topic string, t
 		msg.WithTag(tag)
 	}
 	if result, err := c.producer.SendSync(ctx, msg); err != nil {
-		return errorx.Wrap(err, "rocketmq publish error")
+		return errorx.Wrap(err, "rocketmq publish msg error")
 	} else {
-		log.Info("rocketMQ publish success: ", result.String())
+		log.Info("rocketmq publish msg success: ", result.String())
 	}
 	return nil
 }

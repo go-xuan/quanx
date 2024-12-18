@@ -44,12 +44,6 @@ func main() {
 	engine.RUN()
 }
 
-// gormx.Tabler接口
-type Tabler interface {
-	TableName() string    // 表名
-	TableComment() string // 表注释
-	InitData() any        // 表初始数据
-}
 
 // 用户表结构必须实现gormx.Tabler接口
 type User struct {
@@ -71,7 +65,7 @@ func (User) TableComment() string {
 	return "用户信息表"
 }
 
-// 不为nil时，在初始化表结构之后向表里插入初始化数据
+// 会在初始化表结构之后向目标表里插入初始化数据，为nil表示不做任何写入
 func (User) InitData() any {
 	return nil
 }

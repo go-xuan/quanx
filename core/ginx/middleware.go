@@ -7,36 +7,45 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	clientIpKey    = "_client_ip_"
+	localIpVale    = "::1"
+	localIpDefault = "127.0.0.1"
+)
+
 // RequestLogFmt gin请求日志格式化
 func RequestLogFmt(ctx *gin.Context) {
 	start := time.Now()
 	// 处理请求
 	ctx.Next()
-	var ip string
-	if ipv, ok := ctx.Get("ip"); ok {
-		ip = ipv.(string)
-	} else if ip = ctx.ClientIP(); ip == "::1" {
-		ip = "127.0.0.1"
-	}
 	// 日志格式
 	logrus.Infof("[%3d][%4dms][%s][%-4s %s]",
 		ctx.Writer.Status(),
 		time.Now().Sub(start).Milliseconds(),
-		ip,
+		ClientIP(ctx),
 		ctx.Request.Method,
 		ctx.Request.URL.Path,
 	)
 }
 
-// CheckIP 校验请求IP
-func CheckIP(ctx *gin.Context) {
-	var ip string
-	if ip = ctx.ClientIP(); ip == "::1" {
-		ip = "127.0.0.1"
+// CorrectIP 纠正客户端IP
+func CorrectIP(ctx *gin.Context) {
+	if clientIP := ctx.ClientIP(); clientIP == localIpVale {
+		ctx.Set(clientIpKey, localIpDefault)
+	} else {
+		ctx.Set(clientIpKey, clientIP)
 	}
-	ctx.Set("ip", ip)
 	ctx.Next()
 	return
+}
+
+func ClientIP(ctx *gin.Context) string {
+	if clientIP, ok := ctx.Get(clientIpKey); ok {
+		return clientIP.(string)
+	} else if clientIP = ctx.ClientIP(); clientIP == localIpVale {
+		return localIpDefault
+	}
+	return ""
 }
 
 // GetCorrectIP 当前请求IP

@@ -2,6 +2,7 @@ package quanx
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-xuan/quanx/core/cachex"
 	"github.com/go-xuan/quanx/core/gormx"
@@ -37,7 +38,7 @@ type Server struct {
 // ApiPrefix API路由前缀
 func (s *Server) ApiPrefix() string {
 	prefix := stringx.IfZero(s.Prefix, s.Name)
-	return stringx.AddPrefix(prefix, "/")
+	return stringx.AddPrefix(strings.ToLower(prefix), "/")
 }
 
 // ApiHost 服务host

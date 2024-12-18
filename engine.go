@@ -118,7 +118,7 @@ func (e *Engine) RUN() {
 
 func (e *Engine) checkRunning() {
 	if engine.mode[Running] {
-		log.Panic("engine has already running")
+		panic("engine has already running")
 	}
 }
 
@@ -139,20 +139,19 @@ func (e *Engine) enableQueue() {
 func (e *Engine) loadingAppConfig() {
 	e.checkRunning()
 	var server = &Server{}
+	// 先设置默认值
 	if err := anyx.SetDefaultValue(server); err != nil {
-		log.Panic(errorx.Wrap(err, "set default value error "))
+		panic(errorx.Wrap(err, "set default value error"))
 	}
 	var config = e.config
 	config.Server = server
-	var path = e.GetConfigPath(constx.DefaultServerConfig)
-	if filex.Exists(path) {
+	// 读取配置文件
+	if path := e.GetConfigPath(constx.DefaultConfigFilename); filex.Exists(path) {
 		if err := marshalx.UnmarshalFromFile(path, config); err != nil {
-			log.Panic(errorx.Wrap(err, "unmarshal file failed: "+path))
+			panic(errorx.Wrap(err, "unmarshal file failed: "+path))
 		}
-	} else {
-		if err := marshalx.WriteYaml(path, config); err != nil {
-			log.Panic(errorx.Wrap(err, "set default value error "))
-		}
+	} else if err := marshalx.WriteYaml(path, config); err != nil {
+		panic(errorx.Wrap(err, "set default value error"))
 	}
 	if config.Server.Host == "" {
 		config.Server.Host = ipx.GetLocalIP()
@@ -163,7 +162,7 @@ func (e *Engine) loadingAppConfig() {
 		if config.Nacos.EnableNaming() {
 			// 注册nacos服务Nacos
 			if err := nacosx.Register(config.Server.Instance()); err != nil {
-				log.Panic(errorx.Wrap(err, "nacos register error "))
+				panic(errorx.Wrap(err, "nacos register error"))
 			}
 		}
 	}
@@ -195,7 +194,7 @@ func (e *Engine) initAppBasic() {
 		for _, source := range gormx.Sources() {
 			if dst, ok := e.gormTables[source]; ok {
 				if err := gormx.InitTable(source, dst...); err != nil {
-					log.Panic(errorx.Wrap(err, "init table struct and data failed"))
+					panic(errorx.Wrap(err, "init table struct and data failed"))
 				}
 			}
 		}
@@ -262,7 +261,7 @@ func (e *Engine) startServer() {
 	e.InitGinLoader(group)
 	log.Info("API接口请求地址: " + e.config.Server.ApiHost())
 	if err := e.ginEngine.Run(":" + strconv.Itoa(e.config.Server.Port)); err != nil {
-		log.Panic(errorx.Wrap(err, "gin run failed"))
+		panic(errorx.Wrap(err, "gin run failed"))
 	}
 }
 
@@ -317,7 +316,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 // LoadingLocalConfig 加载本地配置项（立即加载）
 func (e *Engine) LoadingLocalConfig(v any, path string) {
 	if err := marshalx.UnmarshalFromFile(path, v); err != nil {
-		log.Panic(errorx.Wrap(err, "unmarshal config file failed"))
+		panic(errorx.Wrap(err, "unmarshal config file failed"))
 	}
 }
 
@@ -325,7 +324,7 @@ func (e *Engine) LoadingLocalConfig(v any, path string) {
 func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() {
 		if err := nacosx.This().ScanConfig(v, e.config.Server.Name, dataId, listen...); err != nil {
-			log.Panic(errorx.Wrap(err, "scan nacos config failed"))
+			panic(errorx.Wrap(err, "scan nacos config failed"))
 		}
 	})
 }
@@ -347,11 +346,11 @@ func (e *Engine) SetConfigDir(dir string) {
 }
 
 // GetConfigPath 设置配置文件
-func (e *Engine) GetConfigPath(path string) string {
-	if e.configDir != "" {
-		return filepath.Join(e.configDir, path)
+func (e *Engine) GetConfigPath(filename string) string {
+	if dir := e.configDir; dir != "" {
+		return filepath.Join(dir, filename)
 	} else {
-		return path
+		return filename
 	}
 }
 
@@ -399,7 +398,7 @@ func (e *Engine) InitGinLoader(group *gin.RouterGroup) {
 func (e *Engine) AddQueueTask(name string, task func()) {
 	e.checkRunning()
 	if name == "" {
-		log.Error(`add queue task failed, cause: the name is required`)
+		log.Error(`add queue task failed, cause: the task name is required`)
 	} else {
 		e.mode[EnableQueue] = true
 		e.enableQueue()
