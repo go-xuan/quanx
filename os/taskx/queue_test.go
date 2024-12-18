@@ -6,35 +6,39 @@ import (
 )
 
 func TestQueue(t *testing.T) {
-	q := Queue()
+	queue := Queue()
 
-	q.Add("task1", func() {
+	queue.Add("task1", func() {
 		fmt.Println("task1")
 	})
 
-	q.Add("task2", func() {
+	queue.Add("task2", func() {
 		fmt.Println("task2")
 	})
 
-	q.AddAfter("task3", func() {
+	// 插队到目标位置后一位
+	queue.AddAfter("task3", func() {
 		fmt.Println("task3")
 	}, "task1")
 
-	q.Add("task4", func() {
+	queue.Add("task4", func() {
 		fmt.Println("task4")
 	})
 
-	q.AddBefore("task5", func() {
+	// 插队到目标位置前一位
+	queue.AddBefore("task5", func() {
 		fmt.Println("task5")
 	}, "task4")
 
-	q.AddTail("task6", func() {
+	// 插队到末位
+	queue.AddTail("task6", func() {
 		fmt.Println("task6")
 	})
 
-	q.AddHead("task7", func() {
+	// 插队到首位
+	queue.AddHead("task7", func() {
 		fmt.Println("task7")
 	})
 
-	q.Execute()
+	queue.Execute()
 }
