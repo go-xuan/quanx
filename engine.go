@@ -74,9 +74,7 @@ func GetEngine() *Engine {
 
 // DefaultEngine 默认Engine
 func DefaultEngine() *Engine {
-	return NewEngine(
-		Debug,
-	)
+	return NewEngine(Debug)
 }
 
 // NewEngine 初始化Engine

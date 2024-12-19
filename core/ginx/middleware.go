@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	clientIpKey    = "_client_ip_"
-	localIpVale    = "::1"
-	localIpDefault = "127.0.0.1"
+	clientIpKey  = "CLIENT_IP"
+	localIp      = "::1"
+	localIpValue = "127.0.0.1"
 )
 
 // RequestLogFmt gin请求日志格式化
@@ -30,8 +30,8 @@ func RequestLogFmt(ctx *gin.Context) {
 
 // CorrectIP 纠正客户端IP
 func CorrectIP(ctx *gin.Context) {
-	if clientIP := ctx.ClientIP(); clientIP == localIpVale {
-		ctx.Set(clientIpKey, localIpDefault)
+	if clientIP := ctx.ClientIP(); clientIP == localIp {
+		ctx.Set(clientIpKey, localIpValue)
 	} else {
 		ctx.Set(clientIpKey, clientIP)
 	}
@@ -42,8 +42,8 @@ func CorrectIP(ctx *gin.Context) {
 func ClientIP(ctx *gin.Context) string {
 	if clientIP, ok := ctx.Get(clientIpKey); ok {
 		return clientIP.(string)
-	} else if clientIP = ctx.ClientIP(); clientIP == localIpVale {
-		return localIpDefault
+	} else if clientIP = ctx.ClientIP(); clientIP == localIp {
+		return localIpValue
 	}
 	return ""
 }
