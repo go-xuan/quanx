@@ -82,22 +82,22 @@ func (c *Config) Execute() error {
 
 // NewGormDB 创建数据库连接
 func (c *Config) NewGormDB() (*gorm.DB, error) {
-	var gormDB, err = c.GetGormDB()
-	if err != nil {
-		return nil, errorx.Wrap(err, "new gorm.DB failed")
+	if db, err := c.GetGormDB(); err != nil {
+		return nil, errorx.Wrap(err, "new gorm db failed")
+	} else {
+		var sqlDB *sql.DB
+		if sqlDB, err = db.DB(); err != nil {
+			return nil, errorx.Wrap(err, "get sql db failed")
+		}
+		sqlDB.SetMaxIdleConns(c.MaxIdleConns)
+		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
+		sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Minute)
+		// 是否打印SQL
+		if c.Debug {
+			db = db.Debug()
+		}
+		return db, nil
 	}
-	var sqlDB *sql.DB
-	if sqlDB, err = gormDB.DB(); err != nil {
-		return nil, errorx.Wrap(err, "get sql.Config failed")
-	}
-	sqlDB.SetMaxIdleConns(c.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(c.MaxOpenConns)
-	sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Minute)
-	// 是否打印SQL
-	if c.Debug {
-		gormDB = gormDB.Debug()
-	}
-	return gormDB, nil
 }
 
 // 数据库类型
