@@ -40,10 +40,6 @@ type Config struct {
 	PoolSize   int    `json:"poolSize" yaml:"poolSize"`               // 池大小
 }
 
-func (c *Config) ID() string {
-	return "redis"
-}
-
 func (c *Config) Format() string {
 	return fmtx.Yellow.XSPrintf("source=%s mode=%v host=%s port=%v database=%v",
 		c.Source, c.Mode, c.Host, c.Port, c.Database)
@@ -122,12 +118,19 @@ func (c *Config) NewRedisClient() redis.UniversalClient {
 // MultiConfig redis多连接配置
 type MultiConfig []*Config
 
-func (MultiConfig) ID() string {
-	return "multi-redis"
-}
-
-func (MultiConfig) Format() string {
-	return ""
+func (m MultiConfig) Format() string {
+	sb := &strings.Builder{}
+	sb.WriteString("[")
+	for i, config := range m {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString("{")
+		sb.WriteString(config.Format())
+		sb.WriteString("}")
+	}
+	sb.WriteString("]")
+	return sb.String()
 }
 
 func (MultiConfig) Reader() *configx.Reader {
@@ -138,10 +141,9 @@ func (MultiConfig) Reader() *configx.Reader {
 	}
 }
 
-func (l MultiConfig) Execute() error {
-	if len(l) == 0 {
-		log.Error("redis not connected! cause: redis.yaml not found")
-		return nil
+func (m MultiConfig) Execute() error {
+	if len(m) == 0 {
+		return errorx.New("redis not connected! cause: redis.yaml is invalid")
 	}
 	if _handler == nil {
 		_handler = &Handler{
@@ -153,7 +155,7 @@ func (l MultiConfig) Execute() error {
 		_handler.multi = true
 	}
 	var ctx = context.Background()
-	for i, c := range l {
+	for i, c := range m {
 		if c.Enable {
 			if err := anyx.SetDefaultValue(c); err != nil {
 				return errorx.Wrap(err, "set default value error")

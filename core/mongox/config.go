@@ -34,10 +34,6 @@ func (c *Config) Format() string {
 	return fmtx.Yellow.XSPrintf("uri=%s database=%s", c.URI, c.Database)
 }
 
-func (c *Config) ID() string {
-	return "mongo"
-}
-
 func (*Config) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "mongo.yaml",

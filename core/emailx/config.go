@@ -28,10 +28,6 @@ func (e *Config) Format() string {
 	return fmtx.Yellow.XSPrintf("host=%s port=%v username=%s password=%s", e.Host, e.Port, e.Username, e.Password)
 }
 
-func (*Config) ID() string {
-	return "email-server"
-}
-
 func (*Config) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "mail.yaml",

@@ -2,46 +2,44 @@ package execx
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"io/ioutil"
 	"os/exec"
 	"runtime"
 )
 
-// ExecCommand 执行命令
-func ExecCommand(command string, in ...io.Reader) (string, string, error) {
+func Command(command string) *Cmd {
 	if runtime.GOOS == `windows` {
-		return execCommandOnWindows(command, in...)
+		return &Cmd{exec.Command("cmd", `/C`, command)}
 	} else {
-		return execCommandOnLinux(command, in...)
+		return &Cmd{exec.Command("/bin/bash", `-c`, command)}
 	}
 }
 
-func execCommandOnLinux(command string, in ...io.Reader) (string, string, error) {
-	cmd := exec.Command("/bin/bash", `-c`, command)
-	cmd.Dir = "./"
-	if len(in) > 0 {
-		cmd.Stdin = ioutil.NopCloser(in[0])
-	}
-	return commandRun(cmd)
+type Cmd struct {
+	cmd *exec.Cmd
 }
 
-func execCommandOnWindows(command string, in ...io.Reader) (string, string, error) {
-	cmd := exec.Command("cmd", `/C`, command)
-	if len(in) > 0 {
-		cmd.Stdin = ioutil.NopCloser(in[0])
-	}
-	return commandRun(cmd)
+func (c *Cmd) Dir(dir string) *Cmd {
+	c.cmd.Dir = dir
+	return c
 }
 
-func commandRun(cmd *exec.Cmd) (string, string, error) {
-	// 设置接收
-	var stdout, stderr = &bytes.Buffer{}, &bytes.Buffer{}
-	cmd.Stdout, cmd.Stderr = stdout, stderr
-	// 执行命令
-	if err := cmd.Run(); err != nil {
-		return stdout.String(), stderr.String(), err
-	} else {
-		return stdout.String(), stderr.String(), nil
+func (c *Cmd) Stdin(in io.Reader) *Cmd {
+	c.cmd.Stdin = ioutil.NopCloser(in)
+	return c
+}
+
+func (c *Cmd) Run() (string, string, error) {
+	if cmd := c.cmd; cmd != nil {
+		var stdout, stderr = &bytes.Buffer{}, &bytes.Buffer{}
+		cmd.Stdout, cmd.Stderr = stdout, stderr
+		if err := cmd.Run(); err != nil {
+			return stdout.String(), stderr.String(), err
+		} else {
+			return stdout.String(), stderr.String(), nil
+		}
 	}
+	return "", "", errors.New("command not found")
 }

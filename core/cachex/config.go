@@ -1,6 +1,7 @@
 package cachex
 
 import (
+	"strings"
 	"time"
 
 	"github.com/patrickmn/go-cache"
@@ -30,10 +31,6 @@ type Config struct {
 	Source  string `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称
 	Prefix  string `json:"prefix" yaml:"prefix" default:"default"`   // 缓存KEY前缀前缀
 	Marshal string `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
-}
-
-func (c *Config) ID() string {
-	return "cache"
 }
 
 func (c *Config) Format() string {
@@ -111,12 +108,19 @@ func (c *Config) GetKeys(keys []string) []string {
 // MultiConfig 多缓存配置
 type MultiConfig []*Config
 
-func (MultiConfig) ID() string {
-	return "multi-cache"
-}
-
-func (MultiConfig) Format() string {
-	return ""
+func (m MultiConfig) Format() string {
+	sb := &strings.Builder{}
+	sb.WriteString("[")
+	for i, config := range m {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString("{")
+		sb.WriteString(config.Format())
+		sb.WriteString("}")
+	}
+	sb.WriteString("]")
+	return sb.String()
 }
 
 func (MultiConfig) Reader() *configx.Reader {

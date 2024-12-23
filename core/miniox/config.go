@@ -32,10 +32,6 @@ type Config struct {
 	Expire       int64  `yaml:"expire" json:"expire"`             // 下载链接有效时长(分钟)
 }
 
-func (*Config) ID() string {
-	return "minio"
-}
-
 func (m *Config) Format() string {
 	return fmtx.Yellow.XSPrintf("host=%s port=%v accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
 }

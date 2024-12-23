@@ -11,21 +11,17 @@ type Config struct {
 	SecretKey string `json:"secretKey" yaml:"secretKey"`
 }
 
-func (c Config) ID() string {
-	return c.Source
-}
-
-func (c Config) Format() string {
+func (c *Config) Format() string {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c Config) Reader() *configx.Reader {
+func (c *Config) Reader() *configx.Reader {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c Config) Execute() error {
+func (c *Config) Execute() error {
 	//TODO implement me
 	panic("implement me")
 }

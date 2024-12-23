@@ -2,7 +2,7 @@ package gormx
 
 import (
 	"reflect"
-	
+
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
@@ -21,7 +21,7 @@ func (h *Handler) InitTableWithTabler(source string, dst ...Tabler) error {
 				migrator := db.Migrator()
 				if migrator.HasTable(table) {
 					if err := migrator.AutoMigrate(table); err != nil {
-						return errorx.Wrap(err, "table auto migrate error")
+						//return errorx.Wrap(err, "table auto migrate error")
 					}
 					var count int64
 					if err := db.Model(table).Count(&count).Error; err != nil {

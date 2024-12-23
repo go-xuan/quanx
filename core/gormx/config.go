@@ -39,10 +39,6 @@ type Config struct {
 	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
 }
 
-func (c *Config) ID() string {
-	return "database"
-}
-
 func (c *Config) Format() string {
 	return fmtx.Yellow.XSPrintf("source=%s type=%s host=%s port=%v database=%s debug=%v",
 		c.Source, c.Type, c.Host, c.Port, c.Database, c.Debug)
@@ -150,12 +146,19 @@ func (c *Config) GetGormDB() (*gorm.DB, error) {
 // MultiConfig 数据库多数据源配置
 type MultiConfig []*Config
 
-func (MultiConfig) Format() string {
-	return ""
-}
-
-func (MultiConfig) ID() string {
-	return "multi-database"
+func (m MultiConfig) Format() string {
+	sb := &strings.Builder{}
+	sb.WriteString("[")
+	for i, config := range m {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString("{")
+		sb.WriteString(config.Format())
+		sb.WriteString("}")
+	}
+	sb.WriteString("]")
+	return sb.String()
 }
 
 func (MultiConfig) Reader() *configx.Reader {
@@ -168,8 +171,7 @@ func (MultiConfig) Reader() *configx.Reader {
 
 func (m MultiConfig) Execute() error {
 	if len(m) == 0 {
-		log.Error("database not connected! cause: database.yaml Not Found")
-		return nil
+		return errorx.New("database not connected! cause: database.yaml is invalid")
 	}
 	if _handler == nil {
 		_handler = &Handler{

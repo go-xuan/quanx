@@ -21,7 +21,7 @@ const (
 	Multiple       = "MULTIPLE"                                                                       // 允许多次连接
 	Single         = "SINGLE"                                                                         // 单条连接
 	DateTypesAll   = "TEXT,BYTE,DATE,INT,LONG,BOOLEAN,DOUBLE,FLOAT,UUID,BLOB,OBJECT,UNKNOWN"          // 属性数据类型
-	CardinalityAll = "SINGLE,Set,LIST"                                                                // 属性类型基数
+	CardinalityAll = "SINGLE,SET,LIST"                                                                // 属性类型基数
 	IdStrategyAll  = "DEFAULT,AUTOMATIC,PRIMARY_KEY,CUSTOMIZE_STRING,CUSTOMIZE_NUMBER,CUSTOMIZE_UUID" // ID策略
 	ThicknessAll   = "THICK,NORMAL,FINE"                                                              // 边线条粗细
 	SizeAll        = "TINY,SMALL,NORMAL,BIG,HUGE"                                                     // 顶点样式大小
@@ -40,10 +40,6 @@ type Config struct {
 	Graph string `json:"graph" yaml:"graph" nacos:"hugegraph.graph"` // 图名称
 }
 
-func (*Config) ID() string {
-	return "hugegraph"
-}
-
 func (h *Config) Format() string {
 	return fmt.Sprintf("host=%s port=%d graph=%s", h.Host, h.Port, h.Graph)
 }
@@ -60,9 +56,8 @@ func (h *Config) Execute() error {
 	if h.Host != "" && _handler == nil {
 		if h.Ping() {
 			_handler = &Handler{
-				config:     h,
-				gremlinUrl: h.GremlinUrl(),
-				schemaUrl:  h.SchemaUrl()}
+				config: h,
+			}
 			log.Info("hugegraph connect successfully: ", h.Format())
 		} else {
 			log.Error("hugegraph connect failed: ", h.Format())
@@ -75,8 +70,8 @@ func (h *Config) GremlinUrl() string {
 	return fmt.Sprintf("http://%s:%d/gremlin", h.Host, h.Port)
 }
 
-func (h *Config) SchemaUrl() string {
-	return fmt.Sprintf("http://%s:%d/graphs/%s/schema/", h.Host, h.Port, h.Graph)
+func (h *Config) SchemaUrl(uri string) string {
+	return fmt.Sprintf("http://%s:%d/graphs/%s/schema/%s", h.Host, h.Port, h.Graph, uri)
 }
 
 // Ping gremlin查询API-get请求

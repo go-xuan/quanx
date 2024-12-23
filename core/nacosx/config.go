@@ -36,10 +36,6 @@ type Config struct {
 	Mode      int    `yaml:"mode" json:"mode" default:"2"`                // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 }
 
-func (c *Config) ID() string {
-	return "nacos"
-}
-
 func (c *Config) Format() string {
 	return fmtx.Yellow.XSPrintf("address=%s username=%s password=%s nameSpace=%s mode=%v",
 		c.AddressUrl(), c.Username, c.Password, c.NameSpace, c.Mode)

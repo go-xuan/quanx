@@ -167,20 +167,21 @@ func (e *Engine) loadingAppConfig() {
 	e.config = config
 }
 
-// 初始化服务基础组件（log/nacos/gorm/redis）
+// 初始化服务基础组件（log/gorm/redis）
 func (e *Engine) initAppBasic() {
 	e.checkRunning()
 	// 初始化日志
 	var serverName = stringx.IfZero(e.config.Server.Name, "app")
-	e.ExecuteConfigurator(anyx.IfZero(e.config.Log, &logx.Config{FileName: serverName + ".log"}), true)
+	logConf := anyx.IfZero(e.config.Log, &logx.Config{FileName: serverName + ".log"})
+	e.ExecuteConfigurator(logConf, true)
 
 	// 初始化数据库连接
 	if e.config.Database != nil {
 		e.ExecuteConfigurator(e.config.Database)
 	} else if e.mode[MultiDatabase] {
-		var multi = &gormx.MultiConfig{}
-		e.ExecuteConfigurator(multi)
-		e.config.Database = multi
+		var multiDB = &gormx.MultiConfig{}
+		e.ExecuteConfigurator(multiDB, true)
+		e.config.Database = multiDB
 	} else {
 		var db = &gormx.Config{}
 		e.ExecuteConfigurator(db)
@@ -199,27 +200,29 @@ func (e *Engine) initAppBasic() {
 	}
 
 	// 初始化redis连接
-
 	if e.config.Redis != nil {
 		e.ExecuteConfigurator(e.config.Redis)
 	} else if e.mode[MultiRedis] {
-		var multi = &redisx.MultiConfig{}
-		e.ExecuteConfigurator(multi)
-		e.config.Redis = multi
+		var multiRedis = &redisx.MultiConfig{}
+		e.ExecuteConfigurator(multiRedis, true)
+		e.config.Redis = multiRedis
 	} else {
-		var db = &redisx.Config{}
-		e.ExecuteConfigurator(db)
-		e.config.Redis = &redisx.MultiConfig{db}
+		var redis = &redisx.Config{}
+		e.ExecuteConfigurator(redis)
+		e.config.Redis = &redisx.MultiConfig{redis}
 	}
 
 	// 初始化缓存
 	if redisx.Initialized() {
-		if e.mode[MultiCache] {
-			e.config.Cache = anyx.IfZero(e.config.Cache, &cachex.MultiConfig{})
+		if e.config.Cache != nil {
 			e.ExecuteConfigurator(e.config.Cache)
+		} else if e.mode[MultiCache] {
+			var multiCache = &cachex.MultiConfig{}
+			e.ExecuteConfigurator(multiCache, true)
+			e.config.Cache = multiCache
 		} else {
 			var cache = &cachex.Config{}
-			e.ExecuteConfigurator(cache, true)
+			e.ExecuteConfigurator(cache)
 			e.config.Cache = &cachex.MultiConfig{cache}
 		}
 	}
@@ -282,32 +285,31 @@ func (e *Engine) AddConfigurator(configurators ...configx.Configurator) {
 // ExecuteConfigurator 运行配置器
 func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...bool) {
 	e.checkRunning()
-	var mustRun = anyx.Default(false, must...)
+	var readFrom, mustRun = "default", anyx.Default(false, must...)
 	if reader := configurator.Reader(); reader != nil {
 		if e.mode[EnableNacos] {
-			reader.NacosGroup = e.config.Server.Name
-			if err := nacosx.This().ScanConfig(configurator, reader.NacosGroup, reader.NacosDataId, reader.Listen); err == nil {
-				mustRun = true
+			group := stringx.IfZero(reader.NacosGroup, e.config.Server.Name)
+			reader.NacosGroup = group
+			if err := nacosx.This().ScanConfig(configurator, group, reader.NacosDataId, reader.Listen); err == nil {
+				readFrom, mustRun = group+"@"+reader.NacosDataId, true
 			}
 		} else {
+			path := e.GetConfigPath(reader.FilePath)
 			if err := marshalx.UnmarshalFromFile(e.GetConfigPath(reader.FilePath), configurator); err == nil {
-				mustRun = true
+				readFrom, mustRun = path, true
 			}
 		}
 	}
 	if mustRun {
-		var logger = log.WithField("configurator", configurator.ID())
-		if err := configx.Execute(configurator); err != nil {
-			if e.mode[Debug] {
-				logger.Info("configurator data: ", configurator.Format())
-			}
-			logger.Error(fmtx.Red.String("configurator execute failed!"))
-			log.Panic(err)
-		}
 		if e.mode[Debug] {
-			logger.Info("configurator data: ", configurator.Format())
+			log.Info("configurator data: ", configurator.Format())
 		}
-		logger.Info(fmtx.Green.String("configurator execute success!"))
+		var logger = log.WithField("readFrom", readFrom)
+		if err := configx.Execute(configurator); err != nil {
+			logger.Error(fmtx.Red.String("configurator execute failed!"))
+		} else {
+			logger.Info(fmtx.Green.String("configurator execute success!"))
+		}
 	}
 }
 

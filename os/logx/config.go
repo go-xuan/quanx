@@ -52,10 +52,6 @@ type Config struct {
 	Backups    int    `json:"backups" yaml:"backups" default:"10"`                            // 日志备份数
 }
 
-func (*Config) ID() string {
-	return "log"
-}
-
 func (l *Config) Format() string {
 	return fmtx.Yellow.XSPrintf("logPath=%s level=%s output=%s maxSize=%v maxAge=%v backups=%v",
 		l.LogPath(), l.Level, l.Output, l.MaxSize, l.MaxAge, l.Backups)

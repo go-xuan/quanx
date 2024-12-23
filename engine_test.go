@@ -6,5 +6,5 @@ import (
 
 func TestEngineRun(t *testing.T) {
 	// 服务启动
-	NewEngine().RUN()
+	NewEngine(Debug).RUN()
 }

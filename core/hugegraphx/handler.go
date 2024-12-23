@@ -22,7 +22,7 @@ func GetConfig() *Config {
 // GremlinGet gremlin查询API-get请求
 func GremlinGet[T any](result T, gremlin string) (requestId string, err error) {
 	var res *httpx.Response
-	if res, err = httpx.Get(this().gremlinUrl + `?gremlin=` + gremlin).Do(); err != nil {
+	if res, err = httpx.Get(this().GetConfig().GremlinUrl() + `?gremlin=` + gremlin).Do(); err != nil {
 		return
 	}
 	var resp ApiResp[any]
@@ -46,7 +46,7 @@ func GremlinPost[T any](result T, gremlin string) (requestId string, err error) 
 	_ = json.Unmarshal([]byte(`{}`), &bindings)
 	_ = json.Unmarshal([]byte(`{"graph": "hugegraph","g": "__g_hugegraph"}`), &aliases)
 	var res *httpx.Response
-	if res, err = httpx.Post(this().gremlinUrl).Body(Param{
+	if res, err = httpx.Post(this().GetConfig().GremlinUrl()).Body(Param{
 		Gremlin:  gremlin,
 		Bindings: bindings,
 		Language: "gremlin-groovy",

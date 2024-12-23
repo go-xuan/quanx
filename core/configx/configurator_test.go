@@ -16,10 +16,6 @@ func (t *Test) Format() string {
 	return "test show id"
 }
 
-func (t *Test) ID() string {
-	return t.Id
-}
-
 func (t *Test) Reader() *Reader {
 	return nil
 }

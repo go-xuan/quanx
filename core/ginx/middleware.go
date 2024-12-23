@@ -39,6 +39,7 @@ func CorrectIP(ctx *gin.Context) {
 	return
 }
 
+// ClientIP 获取客户端IP
 func ClientIP(ctx *gin.Context) string {
 	if clientIP, ok := ctx.Get(clientIpKey); ok {
 		return clientIP.(string)
