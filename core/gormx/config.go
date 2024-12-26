@@ -91,7 +91,7 @@ func (c *Config) NewGormDB() (*gorm.DB, error) {
 		}
 		sqlDB.SetMaxIdleConns(c.MaxIdleConns)
 		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
-		sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Minute)
+		sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
 		// 是否打印SQL
 		if c.Debug {
 			db = db.Debug()

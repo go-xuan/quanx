@@ -1,6 +1,7 @@
 package quanx
 
 import (
+	"os"
 	"path/filepath"
 	"strconv"
 
@@ -26,13 +27,13 @@ import (
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
-// Init Queue Function
+// Queue task id
 const (
 	InitAppConfig     = "init_app_config"     // 初始化应用配置
 	InitInnerConfig   = "init_inner_config"   // 初始化内置组件（log/nacos/gorm/redis/cache）
 	InitOuterConfig   = "init_outer_config"   // 初始化外置组件
 	RunCustomFunction = "run_custom_function" // 运行自定义函数
-	StartWebServer    = "start_web_server"    // 启动web服务
+	StartServer       = "start_server"        // 启动web服务
 )
 
 var engine *Engine
@@ -89,11 +90,11 @@ func (e *Engine) RUN() {
 	if e.opts[enableQueue] { // 任务队列方式启动
 		e.queue.Execute()
 	} else { // 默认方式启动
-		syncx.OnceDo(e.initAppConfig)   // 1.初始化应用配置
-		syncx.OnceDo(e.initInnerConfig) // 2.初始化内置组件（log/nacos/gorm/redis/cache）
-		syncx.OnceDo(e.initOuterConfig) // 3.初始化外置组件
-		syncx.OnceDo(e.runCustomFuncs)  // 4.运行自定义函数
-		syncx.OnceDo(e.startWebServer)  // 5.启动web服务
+		syncx.OnceDo(e.initAppConfig)     // 1.初始化应用配置
+		syncx.OnceDo(e.initInnerConfig)   // 2.初始化内置组件（log/nacos/gorm/redis/cache）
+		syncx.OnceDo(e.initOuterConfig)   // 3.初始化外置组件
+		syncx.OnceDo(e.runCustomFunction) // 4.运行自定义函数
+		syncx.OnceDo(e.startServer)       // 5.启动服务
 	}
 	e.opts[running] = true
 }
@@ -108,11 +109,11 @@ func (e *Engine) checkRunning() {
 func (e *Engine) enableQueue() {
 	if e.opts[enableQueue] && e.queue == nil {
 		queue := taskx.Queue()
-		queue.Add(InitAppConfig, engine.initAppConfig)      // 1.初始化应用配置
-		queue.Add(InitInnerConfig, engine.initInnerConfig)  // 2.初始化内置组件（log/nacos/gorm/redis/cache）
-		queue.Add(InitOuterConfig, engine.initOuterConfig)  // 3.初始化外置组件
-		queue.Add(RunCustomFunction, engine.runCustomFuncs) // 4.运行自定义函数
-		queue.Add(StartWebServer, engine.startWebServer)    // 5.启动web服务
+		queue.Add(engine.initAppConfig, InitAppConfig)         // 1.初始化应用配置
+		queue.Add(engine.initInnerConfig, InitInnerConfig)     // 2.初始化内置组件（log/nacos/gorm/redis/cache）
+		queue.Add(engine.initOuterConfig, InitOuterConfig)     // 3.初始化外置组件
+		queue.Add(engine.runCustomFunction, RunCustomFunction) // 4.运行自定义函数
+		queue.Add(engine.startServer, StartServer)             // 5.启动服务
 		engine.queue = queue
 	}
 }
@@ -120,13 +121,14 @@ func (e *Engine) enableQueue() {
 // 加载服务配置文件
 func (e *Engine) initAppConfig() {
 	e.checkRunning()
+	var config = e.config
 	var server = &Server{}
 	// 先设置默认值
 	if err := anyx.SetDefaultValue(server); err != nil {
 		panic(errorx.Wrap(err, "set default value error"))
+	} else {
+		config.Server = server
 	}
-	var config = e.config
-	config.Server = server
 	// 读取配置文件
 	if path := e.GetConfigPath(constx.DefaultConfigFilename); filex.Exists(path) {
 		if err := marshalx.UnmarshalFromFile(path, config); err != nil {
@@ -163,13 +165,13 @@ func (e *Engine) initInnerConfig() {
 	if e.config.Database != nil {
 		e.ExecuteConfigurator(e.config.Database)
 	} else if e.opts[multiDatabase] {
-		var multiDB = &gormx.MultiConfig{}
-		e.ExecuteConfigurator(multiDB, true)
-		e.config.Database = multiDB
+		var database = &gormx.MultiConfig{}
+		e.ExecuteConfigurator(database, true)
+		e.config.Database = database
 	} else {
-		var db = &gormx.Config{}
-		e.ExecuteConfigurator(db)
-		e.config.Database = &gormx.MultiConfig{db}
+		var database = &gormx.Config{}
+		e.ExecuteConfigurator(database)
+		e.config.Database = &gormx.MultiConfig{database}
 	}
 
 	// 初始化表结构
@@ -187,9 +189,9 @@ func (e *Engine) initInnerConfig() {
 	if e.config.Redis != nil {
 		e.ExecuteConfigurator(e.config.Redis)
 	} else if e.opts[multiRedis] {
-		var multiRedis = &redisx.MultiConfig{}
-		e.ExecuteConfigurator(multiRedis, true)
-		e.config.Redis = multiRedis
+		var redis = &redisx.MultiConfig{}
+		e.ExecuteConfigurator(redis, true)
+		e.config.Redis = redis
 	} else {
 		var redis = &redisx.Config{}
 		e.ExecuteConfigurator(redis)
@@ -201,9 +203,9 @@ func (e *Engine) initInnerConfig() {
 		if e.config.Cache != nil {
 			e.ExecuteConfigurator(e.config.Cache)
 		} else if e.opts[multiCache] {
-			var multiCache = &cachex.MultiConfig{}
-			e.ExecuteConfigurator(multiCache, true)
-			e.config.Cache = multiCache
+			var cache = &cachex.MultiConfig{}
+			e.ExecuteConfigurator(cache, true)
+			e.config.Cache = cache
 		} else {
 			var cache = &cachex.Config{}
 			e.ExecuteConfigurator(cache)
@@ -221,11 +223,15 @@ func (e *Engine) initOuterConfig() {
 }
 
 // 运行自定义函数
-func (e *Engine) runCustomFuncs() {
+func (e *Engine) runCustomFunction() {
 	e.checkRunning()
 	for _, customFunc := range e.customFuncs {
 		customFunc()
 	}
+}
+
+func (e *Engine) startServer() {
+	e.startWebServer()
 }
 
 // 启动web服务
@@ -240,13 +246,24 @@ func (e *Engine) startWebServer() {
 	}
 	e.ginEngine.Use(gin.Recovery(), ginx.RequestLogFmt)
 	e.ginEngine.Use(e.ginMiddlewares...)
-	_ = e.ginEngine.SetTrustedProxies([]string{e.config.Server.Host})
+
+	host := e.config.Server.Host
+	_ = e.ginEngine.SetTrustedProxies([]string{host})
+
 	// 注册服务根路由
 	group := e.ginEngine.Group(e.config.Server.ApiPrefix())
 	e.InitGinLoader(group)
-	log.Info("API接口请求地址: " + e.config.Server.ApiHost())
-	if err := e.ginEngine.Run(":" + strconv.Itoa(e.config.Server.Port)); err != nil {
-		panic(errorx.Wrap(err, "gin run failed"))
+
+	// 获取服务端口
+	port := strconv.Itoa(e.config.Server.Port)
+	if e.opts[customPort] {
+		port = os.Getenv("PORT")
+	}
+
+	// 启动服务
+	log.Infof(`API接口请求地址: http://%s:%s`, host, port)
+	if err := e.ginEngine.Run(":" + port); err != nil {
+		panic(errorx.Wrap(err, "gin engine run failed"))
 	}
 }
 
@@ -269,18 +286,18 @@ func (e *Engine) AddConfigurator(configurators ...configx.Configurator) {
 // ExecuteConfigurator 运行配置器
 func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...bool) {
 	e.checkRunning()
-	var readFrom, mustRun = "default", anyx.Default(false, must...)
+	var configFrom, mustRun = "default", anyx.Default(false, must...)
 	if reader := configurator.Reader(); reader != nil {
 		if e.opts[enableNacos] {
 			group := stringx.IfZero(reader.NacosGroup, e.config.Server.Name)
 			reader.NacosGroup = group
 			if err := nacosx.This().ScanConfig(configurator, group, reader.NacosDataId, reader.Listen); err == nil {
-				readFrom, mustRun = group+"@"+reader.NacosDataId, true
+				configFrom, mustRun = group+"@"+reader.NacosDataId, true
 			}
 		} else {
 			path := e.GetConfigPath(reader.FilePath)
 			if err := marshalx.UnmarshalFromFile(e.GetConfigPath(reader.FilePath), configurator); err == nil {
-				readFrom, mustRun = path, true
+				configFrom, mustRun = path, true
 			}
 		}
 	}
@@ -288,7 +305,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 		if e.opts[enableDebug] {
 			log.Info("configurator data: ", configurator.Format())
 		}
-		var logger = log.WithField("readFrom", readFrom)
+		var logger = log.WithField("configFrom", configFrom)
 		if err := configx.Execute(configurator); err != nil {
 			logger.Error(fmtx.Red.String("configurator execute failed ==> "), err)
 		} else {
@@ -378,16 +395,16 @@ func (e *Engine) InitGinLoader(group *gin.RouterGroup) {
 	}
 }
 
-// AddQueueTask 使用后，会自动启用队列方式启动服务，且当前添加的任务会在 StartWebServer 之前执行
-func (e *Engine) AddQueueTask(name string, task func()) {
+// AddQueueTask 使用后，会自动启用队列方式启动服务，且当前添加的任务会在 StartServer 之前执行
+func (e *Engine) AddQueueTask(id string, task func()) {
 	e.checkRunning()
-	if name == "" {
-		log.Error(`add queue task failed, cause: the task name is required`)
+	if id == "" {
+		log.Error(`add queue task failed, cause: the task id is required`)
 	} else {
 		e.opts[enableQueue] = true
 		e.enableQueue()
-		e.queue.AddBefore(name, task, StartWebServer)
-		log.Info(`add queue task successfully, task name:`, name)
+		e.queue.AddBefore(task, id, StartServer)
+		log.Info(`add queue task successfully, task id:`, id)
 	}
 	return
 }

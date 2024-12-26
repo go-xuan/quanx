@@ -1,6 +1,9 @@
 package quanx
 
 import (
+	"os"
+	"strconv"
+	
 	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/gormx"
@@ -15,10 +18,18 @@ const (
 	multiRedis                  // 开启多redis源
 	multiCache                  // 开启多缓存源
 	enableQueue                 // 使用队列任务启动
+	customPort                  // 自定义端口
 	running                     // 正在运行中
 )
 
 type EngineOptionFunc = func(e *Engine)
+
+func SetPort(port int) EngineOptionFunc {
+	return func(e *Engine) {
+		_ = os.Setenv("PORT", strconv.Itoa(port))
+		e.opts[customPort] = true
+	}
+}
 
 // SetConfigDir 设置配置文件
 func SetConfigDir(dir string) EngineOptionFunc {
@@ -105,6 +116,7 @@ func MultiRedis() EngineOptionFunc {
 		e.opts[multiRedis] = true
 	}
 }
+
 func MultiCache() EngineOptionFunc {
 	return func(e *Engine) {
 		e.opts[multiCache] = true

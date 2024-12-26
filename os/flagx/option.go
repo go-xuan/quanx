@@ -22,6 +22,10 @@ func IntOption(name, usage string, def int) Option {
 	return &intOption{name, usage, def, new(int)}
 }
 
+func Int64Option(name, usage string, def int64) Option {
+	return &int64Option{name, usage, def, new(int64)}
+}
+
 func BoolOption(name, usage string, def bool) Option {
 	return &boolOption{name, usage, def, new(bool)}
 }
@@ -74,6 +78,29 @@ func (opt *intOption) Add(fs *flag.FlagSet) {
 
 func (opt *intOption) GetValue() anyx.Value {
 	return anyx.IntValue(*opt.value)
+}
+
+type int64Option struct {
+	name  string
+	usage string
+	def   int64
+	value *int64
+}
+
+func (opt *int64Option) Name() string {
+	return opt.name
+}
+
+func (opt *int64Option) Usage() string {
+	return fmt.Sprintf("%s | default: %d", opt.usage, opt.def)
+}
+
+func (opt *int64Option) Add(fs *flag.FlagSet) {
+	opt.value = fs.Int64(opt.name, opt.def, opt.usage)
+}
+
+func (opt *int64Option) GetValue() anyx.Value {
+	return anyx.Int64Value(*opt.value)
 }
 
 type boolOption struct {

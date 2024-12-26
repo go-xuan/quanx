@@ -170,8 +170,8 @@ func (c *Command) AddOption(options ...Option) *Command {
 }
 
 // GetOptionValue 获取参数值
-func (c *Command) GetOptionValue(optName string) anyx.Value {
-	if option, ok := c.options[optName]; ok {
+func (c *Command) GetOptionValue(name string) anyx.Value {
+	if option, ok := c.options[name]; ok {
 		if value := option.GetValue(); value.String() == "-h" {
 			_ = c.GetFlagSet().Set("h", "true")
 			return anyx.ZeroValue()
@@ -179,7 +179,7 @@ func (c *Command) GetOptionValue(optName string) anyx.Value {
 			return value
 		}
 	} else {
-		fmt.Printf("[%s]参数未找到\n", optName)
+		fmt.Printf("[%s]参数未找到\n", name)
 		return anyx.ZeroValue()
 	}
 }

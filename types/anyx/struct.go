@@ -8,15 +8,18 @@ import (
 )
 
 // SetDefaultValue 设置默认值
-func SetDefaultValue(v interface{}) error {
-	valueRef := reflect.ValueOf(v)
+func SetDefaultValue(v interface{}, tag ...string) error {
+	valueRef, key := reflect.ValueOf(v), "default"
+	if len(tag) > 0 && tag[0] != "" {
+		key = tag[0]
+	}
 	if valueRef.Type().Kind() != reflect.Ptr {
 		return errors.New("param must be pointer type")
 	}
 	for i := 0; i < valueRef.Elem().NumField(); i++ {
 		field := valueRef.Elem().Field(i)
 		if field.IsZero() {
-			if value := valueRef.Elem().Type().Field(i).Tag.Get("default"); value != "" {
+			if value := valueRef.Elem().Type().Field(i).Tag.Get(key); value != "" {
 				switch field.Kind() {
 				case reflect.String:
 					field.SetString(value)

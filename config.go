@@ -1,7 +1,6 @@
 package quanx
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/go-xuan/quanx/core/cachex"
@@ -41,12 +40,11 @@ func (s *Server) ApiPrefix() string {
 	return stringx.AddPrefix(strings.ToLower(prefix), "/")
 }
 
-// ApiHost 服务host
-func (s *Server) ApiHost() string {
-	return fmt.Sprintf(`http://%s:%d`, s.Host, s.Port)
-}
-
 // Instance 服务实例
 func (s *Server) Instance() nacosx.ServerInstance {
-	return nacosx.ServerInstance{Name: s.Name, Host: s.Host, Port: s.Port}
+	return nacosx.ServerInstance{
+		Name: s.Name,
+		Host: s.Host,
+		Port: s.Port,
+	}
 }
