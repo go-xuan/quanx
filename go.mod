@@ -12,14 +12,14 @@ require (
 	github.com/magiconair/properties v1.8.6 // 1.8.7以上版本需要升级go 1.19
 	github.com/minio/minio-go/v7 v7.0.60 // v7.0.60以上版本需要检查github.com/klauspost/compress的版本不超过1.17.2
 	github.com/mojocn/base64Captcha v1.3.6
-	github.com/nacos-group/nacos-sdk-go v1.1.4
+	github.com/nacos-group/nacos-sdk-go v1.1.5
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/redis/go-redis/v9 v9.5.3
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tealeg/xlsx v1.0.5
-	github.com/tidwall/gjson v1.17.1
+	github.com/tidwall/gjson v1.18.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/wenlng/go-captcha v1.2.5
 	go.mongodb.org/mongo-driver v1.16.0
@@ -87,9 +87,9 @@ require (
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/image v0.13.0 // indirect
 	golang.org/x/net v0.21.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect

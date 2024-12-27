@@ -15,7 +15,7 @@ import (
 const (
 	tokenHeaderKey = "Authorization"
 	sessionUserKey = "SESSION_USER"
-	cookieName     = "COOKIE_USER"
+	cookieUserName = "COOKIE_USER"
 )
 
 var (
@@ -74,14 +74,14 @@ func SetAuthCookie(ctx *gin.Context, username string, expire ...int) {
 		respx.Error(ctx, err.Error())
 	} else {
 		var maxAge = intx.Default(3600, expire...)
-		ctx.SetCookie(cookieName, cookie, maxAge, "", "", false, true)
+		ctx.SetCookie(cookieUserName, cookie, maxAge, "", "", false, true)
 	}
 	return
 }
 
 // RemoveAuthCookie 移除身份验证cookie maxAge=-1即可移除cookie
 func RemoveAuthCookie(ctx *gin.Context) {
-	ctx.SetCookie(cookieName, "", -1, "", "", false, true)
+	ctx.SetCookie(cookieUserName, "", -1, "", "", false, true)
 }
 
 func getSecret() string {
@@ -126,7 +126,7 @@ func authValidateWithToken(ctx *gin.Context, user AuthUser) error {
 
 // cookie方式鉴权
 func authValidateWithCookie(ctx *gin.Context, user AuthUser) error {
-	if cookie, err := ctx.Cookie(cookieName); err != nil {
+	if cookie, err := ctx.Cookie(cookieUserName); err != nil {
 		return errorx.Wrap(err, "get request cookie failed")
 	} else {
 		var username string

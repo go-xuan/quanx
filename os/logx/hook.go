@@ -12,6 +12,33 @@ import (
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
+func newHook() *Hook {
+	return &Hook{
+		lock:    new(sync.Mutex),
+		writers: make(map[log.Level]io.Writer),
+	}
+}
+
+func NewHook(writer any, formatter log.Formatter) *Hook {
+	hook := newHook()
+	hook.SetFormatter(formatter)
+	switch writer.(type) {
+	case string:
+		hook.InitWriter(&FileWriter{writer.(string)})
+	case map[log.Level]string:
+		for level, path := range writer.(map[log.Level]string) {
+			hook.SetWriter(level, &FileWriter{path})
+		}
+	case Writers:
+		hook.InitWriters(writer.(Writers))
+	case io.Writer:
+		hook.InitWriter(writer.(io.Writer))
+	default:
+		panic(fmt.Sprintf("unsupported writer type: %v", reflect.TypeOf(writer)))
+	}
+	return hook
+}
+
 type Writers map[log.Level]io.Writer
 
 type Hook struct {
@@ -19,28 +46,6 @@ type Hook struct {
 	writers   Writers
 	levels    []log.Level
 	formatter log.Formatter
-}
-
-func NewHook(writer any, formatter log.Formatter) *Hook {
-	hook := &Hook{lock: new(sync.Mutex)}
-	hook.SetFormatter(formatter)
-	switch writer.(type) {
-	case string:
-		hook.SetWriter(&FileWriter{writer.(string)})
-	case map[log.Level]string:
-		var writers = make(Writers)
-		for level, path := range writer.(map[log.Level]string) {
-			writers[level] = &FileWriter{path}
-		}
-		hook.SetWriters(writers)
-	case io.Writer:
-		hook.SetWriter(writer.(io.Writer))
-	case Writers:
-		hook.SetWriters(writer.(Writers))
-	default:
-		panic(fmt.Sprintf("unsupported writer type: %v", reflect.TypeOf(writer)))
-	}
-	return hook
 }
 
 func (hook *Hook) Levels() []log.Level {
@@ -73,7 +78,16 @@ func (hook *Hook) SetFormatter(formatter log.Formatter) {
 	hook.formatter = formatter
 }
 
-func (hook *Hook) SetWriters(writers Writers) {
+func (hook *Hook) InitWriter(writer io.Writer) {
+	hook.lock.Lock()
+	defer hook.lock.Unlock()
+	hook.levels = AllLogrusLevels()
+	for _, level := range hook.levels {
+		hook.writers[level] = writer
+	}
+}
+
+func (hook *Hook) InitWriters(writers Writers) {
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
 	hook.writers = writers
@@ -82,19 +96,13 @@ func (hook *Hook) SetWriters(writers Writers) {
 	}
 }
 
-func (hook *Hook) SetWriter(writer io.Writer) {
+func (hook *Hook) SetWriter(level log.Level, writer io.Writer) {
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
-	hook.writers = map[log.Level]io.Writer{
-		log.TraceLevel: writer,
-		log.DebugLevel: writer,
-		log.InfoLevel:  writer,
-		log.WarnLevel:  writer,
-		log.ErrorLevel: writer,
-		log.FatalLevel: writer,
-		log.PanicLevel: writer,
+	if _, ok := hook.writers[level]; !ok {
+		hook.levels = append(hook.levels, level)
 	}
-	hook.levels = AllLevels()
+	hook.writers[level] = writer
 }
 
 // 输出到ioWriter
