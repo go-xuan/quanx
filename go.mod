@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/farmerx/gorsa v0.0.0-20161211100049-3ae06f674f40
-	github.com/gin-gonic/gin v1.9.0 // 1.9.1以上版本需要升级go 1.19
+	github.com/gin-gonic/gin v1.9.0 // 1.9.1以上版本需要升级go 1.20
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/uuid v1.6.0
 	github.com/magiconair/properties v1.8.6 // 1.8.7以上版本需要升级go 1.19
@@ -14,7 +14,7 @@ require (
 	github.com/nacos-group/nacos-sdk-go v1.1.5
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/redis/go-redis/v9 v9.6.0
+	github.com/redis/go-redis/v9 v9.7.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tealeg/xlsx v1.0.5
@@ -26,7 +26,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.7
-	gorm.io/driver/postgres v1.4.7 // v1.4.8以上版本需要升级go 1.19
+	gorm.io/driver/postgres v1.4.7 // v1.4.8以上版本依赖github.com/jackc/pgx/v5的版本v5.3.0需要升级go 1.19
 	gorm.io/gorm v1.25.12
 )
 

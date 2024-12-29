@@ -1,9 +1,13 @@
 package miniox
 
-import "testing"
+import (
+	"testing"
+	
+	"github.com/go-xuan/quanx/core/configx"
+)
 
 func TestMinio(t *testing.T) {
-	if err := NewConfigurator(&Config{
+	if err := configx.Execute(&Config{
 		Host:         "",
 		Port:         0,
 		AccessId:     "",
@@ -13,7 +17,7 @@ func TestMinio(t *testing.T) {
 		BucketName:   "",
 		PrefixPath:   "",
 		Expire:       0,
-	}).Execute(); err != nil {
+	}); err != nil {
 		t.Error(err)
 	}
 }

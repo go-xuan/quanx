@@ -1,12 +1,12 @@
 package idx
 
 import (
-	"github.com/go-xuan/quanx/types/stringx"
 	"math"
 	"sync"
 	"time"
 
 	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/types/stringx"
 )
 
 /*

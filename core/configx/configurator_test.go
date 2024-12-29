@@ -34,11 +34,12 @@ func (t *Test) Execute() error {
 
 func TestConfigurator(t *testing.T) {
 	var config = &Test{}
-	fmt.Println("before execute, id:", config.ID())
-	if err := config.Execute(); err != nil {
+	fmt.Println("before execute, id:", config.Id)
+	if err := Execute(config); err != nil {
+		fmt.Println(err)
 		return
 	}
 	fmt.Println("==========================")
-	fmt.Println("after execute, id:", config.ID())
+	fmt.Println("after execute, id:", config.Id)
 	fmt.Println(config)
 }

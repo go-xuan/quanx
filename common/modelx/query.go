@@ -39,7 +39,7 @@ type Order struct {
 }
 
 // GetOrderBySql 计算分页数量
-func (orders Orders) GetOrderBySql() (orderBy string) {
+func (orders Orders) GetOrderBySql() string {
 	if orders != nil && len(orders) > 0 {
 		s := strings.Builder{}
 		s.WriteString(` order by `)
@@ -51,7 +51,7 @@ func (orders Orders) GetOrderBySql() (orderBy string) {
 			s.WriteString(" ")
 			s.WriteString(order.Type)
 		}
-		orderBy = s.String()
+		return s.String()
 	}
-	return
+	return ""
 }

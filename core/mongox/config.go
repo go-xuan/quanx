@@ -14,10 +14,6 @@ import (
 	"github.com/go-xuan/quanx/os/fmtx"
 )
 
-func NewConfigurator(conf *Config) configx.Configurator {
-	return conf
-}
-
 type Config struct {
 	URI             string `json:"uri" yaml:"uri"`                         // 连接uri
 	AuthMechanism   string `json:"authMechanism" yaml:"authMechanism"`     // 认证加密方式

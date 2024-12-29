@@ -23,10 +23,6 @@ const (
 	ConfigAndNaming        // 配置中心和服务发现都使用
 )
 
-func NewConfigurator(conf *Config) configx.Configurator {
-	return conf
-}
-
 // Config nacos连接配置
 type Config struct {
 	Address   string `yaml:"address" json:"address" default:"127.0.0.1"`  // nacos服务地址,多个以英文逗号分割

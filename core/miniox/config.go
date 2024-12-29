@@ -16,10 +16,6 @@ import (
 	"github.com/go-xuan/quanx/types/timex"
 )
 
-func NewConfigurator(conf *Config) configx.Configurator {
-	return conf
-}
-
 type Config struct {
 	Host         string `yaml:"host" json:"host"`                 // 主机
 	Port         int    `yaml:"port" json:"port"`                 // 端口

@@ -35,24 +35,26 @@ func (page *Page) Offset() int {
 
 // PgPageSql 获取PG分页SQL
 func (page *Page) PgPageSql() string {
-	pageSql := strings.Builder{}
 	if page != nil && page.PageNo != 0 {
-		pageSql.WriteString(` limit `)
-		pageSql.WriteString(strconv.Itoa(page.PageSize))
-		pageSql.WriteString(` offset `)
-		pageSql.WriteString(strconv.Itoa(page.Offset()))
+		sb := strings.Builder{}
+		sb.WriteString(` limit `)
+		sb.WriteString(strconv.Itoa(page.PageSize))
+		sb.WriteString(` offset `)
+		sb.WriteString(strconv.Itoa(page.Offset()))
+		return sb.String()
 	}
-	return pageSql.String()
+	return ""
 }
 
 // MysqlPageSql 获取Mysql分页SQL
 func (page *Page) MysqlPageSql() string {
-	pageSql := strings.Builder{}
 	if page != nil && page.PageNo != 0 {
-		pageSql.WriteString(` limit `)
-		pageSql.WriteString(strconv.Itoa(page.Offset() + 1))
-		pageSql.WriteString(` , `)
-		pageSql.WriteString(strconv.Itoa(page.PageSize))
+		sb := strings.Builder{}
+		sb.WriteString(` limit `)
+		sb.WriteString(strconv.Itoa(page.Offset() + 1))
+		sb.WriteString(` , `)
+		sb.WriteString(strconv.Itoa(page.PageSize))
+		return sb.String()
 	}
-	return pageSql.String()
+	return ""
 }
