@@ -39,32 +39,32 @@ type Options struct {
 	Enums   []string // 枚举
 }
 
-// RandData 生成随机数
-func (o *Options) RandData() any {
+// NewRandValue 生成随机数
+func (o *Options) NewRandValue() any {
 	switch o.Type {
 	case typeInt:
-		return o.RandInt()
+		return o.NewInt()
 	case typeFloat:
-		return o.RandFloat()
+		return o.NewFloat()
 	default:
-		return o.RandString()
+		return o.newString()
 	}
 }
 
-// RandDataString 生成随机数
-func (o *Options) RandDataString() string {
+// NewString 生成随机数
+func (o *Options) NewString() string {
 	switch o.Type {
 	case typeInt:
-		return strconv.Itoa(o.RandInt())
+		return strconv.Itoa(o.NewInt())
 	case typeFloat:
-		return strconv.FormatFloat(o.RandFloat(), 'f', -1, 64)
+		return strconv.FormatFloat(o.NewFloat(), 'f', -1, 64)
 	default:
-		return o.RandString()
+		return o.newString()
 	}
 }
 
-// RandInt 生成随机数字
-func (o *Options) RandInt() int {
+// NewInt 生成随机数字
+func (o *Options) NewInt() int {
 	if o.Default == "" {
 		return o.Args.Int()
 	} else {
@@ -72,8 +72,8 @@ func (o *Options) RandInt() int {
 	}
 }
 
-// RandFloat 生成随机浮点数
-func (o *Options) RandFloat() float64 {
+// NewFloat 生成随机浮点数
+func (o *Options) NewFloat() float64 {
 	if o.Default == "" {
 		return o.Args.Float()
 	} else {
@@ -81,40 +81,41 @@ func (o *Options) RandFloat() float64 {
 	}
 }
 
-// RandString 生成随机字符串
-func (o *Options) RandString() (result string) {
+// 生成随机字符串
+func (o *Options) newString() string {
+	var value string
 	if param, def := o.Args, o.Default; param != nil && def == "" {
 		if o.Type == typeSequence {
-			result = strconv.Itoa(stringx.ParseInt(param.Min) + o.Offset)
+			value = strconv.Itoa(stringx.ParseInt(param.Min) + o.Offset)
 		} else {
-			result = o.randString()
+			value = o.randString()
 		}
 		// 字符替换
 		if param.Old != "" && param.New != "" {
-			result = strings.ReplaceAll(result, param.Old, param.New)
+			value = strings.ReplaceAll(value, param.Old, param.New)
 		}
 		// 补充前后缀
 		if param.Prefix != "" {
-			result = param.Prefix + result
+			value = param.Prefix + value
 		}
 		if param.Suffix != "" {
-			result = result + param.Suffix
+			value = value + param.Suffix
 		}
 		// 转换大小写
 		if param.Upper {
-			result = strings.ToUpper(result)
+			value = strings.ToUpper(value)
 		}
 		if param.Lower {
-			result = strings.ToLower(result)
+			value = strings.ToLower(value)
 		}
 	} else {
-		result = def
+		value = def
 	}
-	return
+	return value
 }
 
 // 生成随机字符串
-func (o *Options) randString() (result string) {
+func (o *Options) randString() string {
 	switch o.Type {
 	case typePhone:
 		return Phone()

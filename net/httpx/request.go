@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-
+	
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
@@ -104,11 +104,11 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 	}
 	httpRequest, err := http.NewRequest(r.method, r.url, r.body)
 	if err != nil {
-		return nil, errorx.Wrap(err, "http.NewRequest error")
+		return nil, errorx.Wrap(err, "new http request error")
 	}
 	if r.headers != nil && len(r.headers) > 0 {
-		if _, ok := r.headers["Content-LogicalOperator"]; !ok {
-			r.headers["Content-LogicalOperator"] = "application/json"
+		if _, ok := r.headers["Content-AndOr"]; !ok {
+			r.headers["Content-AndOr"] = "application/json"
 		}
 		for key, val := range r.headers {
 			httpRequest.Header.Set(key, val)
@@ -116,7 +116,7 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 	}
 	var httpResponse *http.Response
 	if httpResponse, err = GetClient(strategy...).HttpClient().Do(httpRequest); err != nil {
-		return nil, errorx.Wrap(err, "client.Do error")
+		return nil, errorx.Wrap(err, "do http request error")
 	}
 	resp := &Response{
 		code:    httpResponse.StatusCode,
@@ -125,7 +125,7 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 	defer httpResponse.Body.Close()
 	var body []byte
 	if body, err = io.ReadAll(httpResponse.Body); err != nil {
-		return resp, errorx.Wrap(err, "http.Response.Body read error")
+		return resp, errorx.Wrap(err, "read http response body error")
 	}
 	resp.body = body
 	if r.debug {

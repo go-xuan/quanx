@@ -6,7 +6,6 @@ import (
 
 // Configurator 配置器
 type Configurator interface {
-	ID() string      // 配置器唯一标识
 	Format() string  // 配置信息格式化
 	Reader() *Reader // 配置文件读取
 	Execute() error  // 配置器运行

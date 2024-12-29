@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-func ParseInt(s string, def ...int) int {
-	if value, err := strconv.Atoi(s); err == nil {
+func ParseInt(str string, def ...int) int {
+	if value, err := strconv.Atoi(str); err == nil {
 		return value
 	} else if len(def) > 0 {
 		return def[0]
@@ -15,8 +15,8 @@ func ParseInt(s string, def ...int) int {
 	return 0
 }
 
-func ParseInt64(s string, def ...int64) int64 {
-	if value, err := strconv.ParseInt(s, 10, 64); err == nil {
+func ParseInt64(str string, def ...int64) int64 {
+	if value, err := strconv.ParseInt(str, 10, 64); err == nil {
 		return value
 	} else if len(def) > 0 {
 		return def[0]
@@ -24,8 +24,8 @@ func ParseInt64(s string, def ...int64) int64 {
 	return 0
 }
 
-func ParseFloat(s string, def ...float64) float64 {
-	if value, err := strconv.ParseFloat(s, 64); err == nil {
+func ParseFloat(str string, def ...float64) float64 {
+	if value, err := strconv.ParseFloat(str, 64); err == nil {
 		return value
 	} else if len(def) > 0 {
 		return def[0]
@@ -33,8 +33,8 @@ func ParseFloat(s string, def ...float64) float64 {
 	return 0
 }
 
-func ParseBool(value string, def ...bool) bool {
-	switch value {
+func ParseBool(str string, def ...bool) bool {
+	switch str {
 	case "1", "t", "T", "true", "TRUE", "True", "是", "yes", "YES", "Yes":
 		return true
 	default:
@@ -46,12 +46,12 @@ func ParseBool(value string, def ...bool) bool {
 	}
 }
 
-func ParseTime(value string, def ...time.Time) time.Time {
-	if len(value) == 10 && value[4:5] == "-" {
-		if location, err := time.ParseInLocation("2006-01-02", value, time.Local); err == nil {
+func ParseTime(str string, def ...time.Time) time.Time {
+	if len(str) == 10 && str[4:5] == "-" {
+		if location, err := time.ParseInLocation("2006-01-02", str, time.Local); err == nil {
 			return location
 		}
-	} else if location, err := time.ParseInLocation("2006-01-02 15:04:05", value, time.Local); err == nil {
+	} else if location, err := time.ParseInLocation("2006-01-02 15:04:05", str, time.Local); err == nil {
 		return location
 	} else if len(def) > 0 {
 		return def[0]
@@ -72,40 +72,40 @@ func FormatFloat(f float64) string {
 }
 
 // Between 获取起始字符首次出现和结尾字符末次出现的下标
-func Between(s, start, end string) (from, to int) {
+func Between(str, start, end string) (from, to int) {
 	from, to = -1, -1
 	if start == end {
-		if indices := Indices(s, start); len(indices) > 1 {
+		if indices := Indices(str, start); len(indices) > 1 {
 			from, to = indices[0], indices[1]
 		} else if len(indices) == 1 {
 			from = indices[0]
 		}
 		return
 	}
-	var l, m, n = len(s), len(start), len(end)
-	if m > l || n > l {
+	var l, sl, el = len(str), len(start), len(end)
+	if sl > l || el > l {
 		return
 	}
 	// x:start个数  y:end个数
 	var x, y int
 	for i := 0; i < l; i++ {
-		if s[i] == start[0] {
-			if s[i:i+m] == start {
+		if str[i] == start[0] {
+			if str[i:i+sl] == start {
 				x++
 				if x == 1 {
-					from = i + m
+					from = i
 				}
-				i = i + m - 1
+				i = i + sl - 1
 			}
 		}
-		if s[i] == end[0] {
-			if s[i:i+n] == end {
+		if str[i] == end[0] {
+			if str[i:i+el] == end {
 				y++
 				if y == x || x == 1 {
 					to = i
 					break
 				}
-				i = i + n - 1
+				i = i + el - 1
 			}
 		}
 	}
@@ -116,11 +116,11 @@ func Between(s, start, end string) (from, to int) {
 }
 
 // Indices 获取所有下标, x：命中数量
-func Indices(s, sep string) []int {
+func Indices(str, key string) []int {
 	var indices []int
-	l, m, n := len(s), len(sep), 0
+	l, m, n := len(str), len(key), 0
 	for i := 0; i <= l-m; i++ {
-		if s[i] == sep[0] && s[i:i+m] == sep {
+		if str[i] == key[0] && str[i:i+m] == key {
 			indices = append(indices, i)
 			n++
 			i = i + m - 1
@@ -131,15 +131,15 @@ func Indices(s, sep string) []int {
 
 // Index 获取子串的下标
 // position：表示获取位置，默认position=1即正序第1处，position=-1即倒序第1处
-func Index(s, sep string, position ...int) int {
-	if l, m := len(s), len(sep); l >= m {
+func Index(str, key string, position ...int) int {
+	if l, m := len(str), len(key); l >= m {
 		var x, y = 1, 0 // x：目标获取位置，y：sep出现次数计数
 		if len(position) > 0 {
 			x = position[0]
 		}
 		for i := 0; i <= l-m; i++ {
 			if x > 0 {
-				if s[i] == sep[0] && s[i:i+m] == sep {
+				if str[i] == key[0] && str[i:i+m] == key {
 					y++
 					if x == y {
 						return i
@@ -147,7 +147,7 @@ func Index(s, sep string, position ...int) int {
 				}
 			} else {
 				j := l - i
-				if s[j-1] == sep[m-1] && s[j-m:j] == sep {
+				if str[j-1] == key[m-1] && str[j-m:j] == key {
 					y--
 					if x == y {
 						return j - m
@@ -160,21 +160,15 @@ func Index(s, sep string, position ...int) int {
 }
 
 // IndexStrict 获取子串下标（严格模式：忽略单词中的子串）
-func IndexStrict(s, sep string) int {
-	kl, loop, index := len(sep), true, 0
+func IndexStrict(str, key string) int {
+	kl, loop, index := len(key), true, 0
 	for loop {
-		if newIndex := Index(s, sep, 1); newIndex >= 0 {
-			sl := len(s)
-			if newIndex == 0 && s[kl:kl+1] == " " {
-				index, loop = index+newIndex, false
-			} else if newIndex == sl-kl && s[newIndex-1:newIndex] == " " {
-				index, loop = index+newIndex, false
-			} else if s[newIndex-1:newIndex] == " " && s[newIndex+kl:newIndex+kl+1] == " " {
+		if newIndex := Index(str, key, 1); newIndex >= 0 {
+			if HasAdjacent(str, key, " ", newIndex) {
 				index, loop = index+newIndex, false
 			} else {
-				// 当前index无效则缩减原sql继续loop
 				index = newIndex + kl
-				s = s[index:]
+				str = str[index:]
 			}
 		} else {
 			index, loop = -1, false // 没找到直接跳出
@@ -183,31 +177,52 @@ func IndexStrict(s, sep string) int {
 	return index
 }
 
-// AddPrefix 添加前缀
-func AddPrefix(s, prefix string) string {
-	if strings.HasPrefix(s, prefix) {
-		return s
+// HasAdjacent 判断目标kew在文本中当前位置是否有相邻字符
+func HasAdjacent(str, key, adjacent string, index int) bool {
+	sl, kl, al := len(str), len(key), len(adjacent)
+	if index == 0 {
+		return str[kl:kl+al] == adjacent
+	} else if index == sl-kl {
+		return str[index-al:index] == adjacent
+	} else {
+		return str[index-al:index] == adjacent && str[index+kl:index+kl+al] == adjacent
 	}
-	return prefix + s
+}
+
+// AddPrefix 添加前缀
+func AddPrefix(str, prefix string) string {
+	if strings.HasPrefix(str, prefix) {
+		return str
+	}
+	return prefix + str
 }
 
 // AddSuffix 添加前缀
-func AddSuffix(s, suffix string) string {
-	if strings.HasSuffix(s, suffix) {
-		return s
+func AddSuffix(str, suffix string) string {
+	if strings.HasSuffix(str, suffix) {
+		return str
 	}
-	return s + suffix
+	return str + suffix
+}
+
+// Split 字符串分割
+func Split(str string, sep string) []string {
+	slice := strings.Split(str, sep)
+	for i, s := range slice {
+		slice[i] = strings.TrimSpace(s)
+	}
+	return slice
 }
 
 // Contains 字符串是否包含
-func Contains(s string, seps ...string) (string, int) {
+func Contains(str string, keys ...string) (string, int) {
 	var hit, index = "", -1
-	for _, sep := range seps {
-		if i := Index(s, sep); i >= 0 {
+	for _, key := range keys {
+		if i := Index(str, key); i >= 0 {
 			if i < index {
-				hit, index = sep, i
+				hit, index = key, i
 			} else if index == -1 {
-				hit, index = sep, i
+				hit, index = key, i
 			}
 		}
 	}
@@ -215,9 +230,9 @@ func Contains(s string, seps ...string) (string, int) {
 }
 
 // ContainsAny 字符串是否包含
-func ContainsAny(s string, seps ...string) bool {
-	for _, sep := range seps {
-		if Index(s, sep) >= 0 {
+func ContainsAny(str string, keys ...string) bool {
+	for _, key := range keys {
+		if Index(str, key) >= 0 {
 			return true
 		}
 	}
@@ -225,9 +240,9 @@ func ContainsAny(s string, seps ...string) bool {
 }
 
 // ContainsBoth 字符串是否包含
-func ContainsBoth(s string, seps ...string) bool {
+func ContainsBoth(str string, seps ...string) bool {
 	for _, sep := range seps {
-		if Index(s, sep) == -1 {
+		if Index(str, sep) == -1 {
 			return false
 		}
 	}
@@ -235,8 +250,8 @@ func ContainsBoth(s string, seps ...string) bool {
 }
 
 // HasEmpty 是否有空
-func HasEmpty(s ...string) bool {
-	for _, item := range s {
+func HasEmpty(str ...string) bool {
+	for _, item := range str {
 		if item == "" {
 			return true
 		}
@@ -254,26 +269,26 @@ func Default(def string, x ...string) string {
 }
 
 // IfNot 不等时取默认值
-func IfNot(s, v, def string) string {
-	if s != v {
+func IfNot(str, value, def string) string {
+	if str != value {
 		return def
 	} else {
-		return s
+		return str
 	}
 }
 
 // IfZero 为空时取默认值
-func IfZero(s, def string) string {
-	if s == "" {
+func IfZero(str, def string) string {
+	if str == "" {
 		return def
 	} else {
-		return s
+		return str
 	}
 }
 
 // Reverse 反转
-func Reverse(s string) string {
-	runes := []rune(s)
+func Reverse(str string) string {
+	runes := []rune(str)
 	for from, to := 0, len(runes)-1; from < to; from, to = from+1, to-1 {
 		runes[from], runes[to] = runes[to], runes[from]
 	}
@@ -281,60 +296,60 @@ func Reverse(s string) string {
 }
 
 // SubString 字符串截取
-func SubString(s string, start, end int) string {
-	var r = []rune(s)
+func SubString(str string, start, end int) string {
+	var r = []rune(str)
 	length := len(r)
 	if start < 0 || end > length || start > end {
 		return ""
 	}
 	if start == 0 && end == length {
-		return s
+		return str
 	}
 	return string(r[start:end])
 }
 
 // Cut 分割字符串（reverse=true从右往左）
 // position：表示分割位置，默认position=1即正序第1处，position=-1即倒序第1处
-func Cut(s, sep string, position ...int) (string, string) {
-	if i := Index(s, sep, position...); i >= 0 {
-		return s[:i], s[i+len(sep):]
+func Cut(str, sep string, position ...int) (string, string) {
+	if i := Index(str, sep, position...); i >= 0 {
+		return str[:i], str[i+len(sep):]
 	}
-	return s, ""
+	return str, ""
 }
 
 // Insert 插入字符串
-func Insert(s, insert string, position ...int) string {
+func Insert(str, insert string, position ...int) string {
 	if len(position) > 0 {
-		if i := position[0]; i > 0 && i < len(s) {
-			return s[:i] + insert + s[i:]
+		if i := position[0]; i > 0 && i < len(str) {
+			return str[:i] + insert + str[i:]
 		}
 	}
-	return s + insert
+	return str + insert
 }
 
 // Fill 字符以固定长度填充（默认填充左边）
-func Fill(s, fill string, length int, right ...bool) string {
-	strLen, addLen := len(s), len(fill)
+func Fill(str, fill string, length int, right ...bool) string {
+	strLen, addLen := len(str), len(fill)
 	fillLen := length - strLen
 	if fillLen <= 0 && addLen == 0 {
-		return s
+		return str
 	}
 	fillStr := strings.Builder{}
 	for i := 0; i < fillLen; i++ {
 		fillStr.WriteString(string(fill[i%addLen]))
 	}
 	if len(right) > 0 && right[0] {
-		return s + fillStr.String()
+		return str + fillStr.String()
 	} else {
-		return fillStr.String() + s
+		return fillStr.String() + str
 	}
 }
 
 // ParseUrlParams 解析url参数为map
-func ParseUrlParams(args string) map[string]string {
-	if strings.Contains(args, "=") {
+func ParseUrlParams(str string) map[string]string {
+	if strings.Contains(str, "=") {
 		var params = make(map[string]string)
-		kvs := strings.Split(args, "&")
+		kvs := strings.Split(str, "&")
 		for _, kv := range kvs {
 			k, v := Cut(kv, "=")
 			params[k] = v
@@ -345,12 +360,12 @@ func ParseUrlParams(args string) map[string]string {
 }
 
 // ToSnake 转下划线
-func ToSnake(s string) string {
-	data := make([]byte, 0, len(s)*2)
+func ToSnake(str string) string {
+	data := make([]byte, 0, len(str)*2)
 	j := false
-	num := len(s)
+	num := len(str)
 	for i := 0; i < num; i++ {
-		d := s[i]
+		d := str[i]
 		if i > 0 && d >= 'A' && d <= 'Z' && j {
 			data = append(data, '_')
 		}
@@ -363,20 +378,20 @@ func ToSnake(s string) string {
 }
 
 // ToLowerCamel 转小驼峰
-func ToLowerCamel(s string) string {
-	ucc := ToUpperCamel(s)
+func ToLowerCamel(str string) string {
+	ucc := ToUpperCamel(str)
 	return strings.ToLower(string(ucc[0])) + ucc[1:]
 }
 
 // ToUpperCamel 转大驼峰
-func ToUpperCamel(s string) string {
-	s = strings.ToLower(s)
-	data := make([]byte, 0, len(s))
+func ToUpperCamel(str string) string {
+	str = strings.ToLower(str)
+	data := make([]byte, 0, len(str))
 	j := false
 	k := false
-	num := len(s) - 1
+	num := len(str) - 1
 	for i := 0; i <= num; i++ {
-		d := s[i]
+		d := str[i]
 		if k == false && d >= 'A' && d <= 'Z' {
 			k = true
 		}
@@ -385,11 +400,11 @@ func ToUpperCamel(s string) string {
 			j = false
 			k = true
 		}
-		if k && d == '_' && num > i && s[i+1] >= 'a' && s[i+1] <= 'z' {
+		if k && d == '_' && num > i && str[i+1] >= 'a' && str[i+1] <= 'z' {
 			j = true
 			continue
 		}
-		if k && d == '_' && num > i && s[i+1] >= '0' && s[i+1] <= '9' {
+		if k && d == '_' && num > i && str[i+1] >= '0' && str[i+1] <= '9' {
 			j = true
 			continue
 		}
@@ -398,24 +413,24 @@ func ToUpperCamel(s string) string {
 	return string(data[:])
 }
 
-// TextSimilarity 文本相似度计算
-func TextSimilarity(source, target string) float64 {
-	sLen, tLen := len(source), len(target)
-	if (sLen == 0 && tLen == 0) || source == target {
+// Similarity 文本相似度计算
+func Similarity(source, target string) float64 {
+	sl, tl := len(source), len(target)
+	if (sl == 0 && tl == 0) || source == target {
 		return 1.0
 	}
-	matrix := make([][]int, sLen+1)
+	matrix := make([][]int, sl+1)
 	for i := range matrix {
-		matrix[i] = make([]int, tLen+1)
+		matrix[i] = make([]int, tl+1)
 		matrix[i][0] = i
 	}
 
-	for j := 0; j <= tLen; j++ {
+	for j := 0; j <= tl; j++ {
 		matrix[0][j] = j
 	}
 
-	for i := 1; i <= sLen; i++ {
-		for j := 1; j <= tLen; j++ {
+	for i := 1; i <= sl; i++ {
+		for j := 1; j <= tl; j++ {
 			cost := 0
 			if source[i-1] != target[j-1] {
 				cost = 1
@@ -424,10 +439,10 @@ func TextSimilarity(source, target string) float64 {
 		}
 	}
 
-	distance := matrix[sLen][tLen]
-	maxLen := float64(sLen)
-	if tLen > sLen {
-		maxLen = float64(tLen)
+	distance := matrix[sl][tl]
+	maxLen := float64(sl)
+	if tl > sl {
+		maxLen = float64(tl)
 	}
 	return 1.0 - float64(distance)/maxLen
 }

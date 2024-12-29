@@ -2,7 +2,7 @@ package gormx
 
 import (
 	"reflect"
-	
+
 	"github.com/go-xuan/quanx/os/errorx"
 )
 

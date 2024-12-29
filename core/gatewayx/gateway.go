@@ -14,10 +14,6 @@ var Gateway = &Servers{}
 
 type Servers []*Server
 
-func (s *Servers) ID() string {
-	return "gateway"
-}
-
 func (s *Servers) Format() string {
 	if s != nil && len(*s) > 0 {
 

@@ -23,10 +23,6 @@ type Config struct {
 	Index []string `yaml:"index" json:"index"` // 索引
 }
 
-func (*Config) ID() string {
-	return "elastic-search"
-}
-
 func (e *Config) Format() string {
 	return fmtx.Yellow.XSPrintf("host=%s port=%v", e.Host, e.Port)
 }

@@ -1,7 +1,7 @@
 package quanx
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/go-xuan/quanx/core/cachex"
 	"github.com/go-xuan/quanx/core/gormx"
@@ -28,7 +28,7 @@ type Config struct {
 
 // Server 服务配置
 type Server struct {
-	Name   string `yaml:"name"`                     // 服务名
+	Name   string `yaml:"name" default:"app"`       // 服务名
 	Host   string `yaml:"host" default:"127.0.0.1"` // 服务host
 	Port   int    `yaml:"port" default:"8888"`      // 服务端口
 	Prefix string `yaml:"prefix"`                   // api prefix（接口根路由）
@@ -37,15 +37,14 @@ type Server struct {
 // ApiPrefix API路由前缀
 func (s *Server) ApiPrefix() string {
 	prefix := stringx.IfZero(s.Prefix, s.Name)
-	return stringx.AddPrefix(prefix, "/")
-}
-
-// ApiHost 服务host
-func (s *Server) ApiHost() string {
-	return fmt.Sprintf(`http://%s:%d`, s.Host, s.Port)
+	return stringx.AddPrefix(strings.ToLower(prefix), "/")
 }
 
 // Instance 服务实例
 func (s *Server) Instance() nacosx.ServerInstance {
-	return nacosx.ServerInstance{Name: s.Name, Host: s.Host, Port: s.Port}
+	return nacosx.ServerInstance{
+		Name: s.Name,
+		Host: s.Host,
+		Port: s.Port,
+	}
 }

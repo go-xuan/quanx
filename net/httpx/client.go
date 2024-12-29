@@ -36,7 +36,7 @@ func (c *Client) HttpClient() *http.Client {
 func (c *Client) Do(httpRequest *http.Request) (*Response, error) {
 	httpResponse, err := c.client.Do(httpRequest)
 	if err != nil {
-		return nil, errorx.Wrap(err, "client.Do error")
+		return nil, errorx.Wrap(err, "do http request error")
 	}
 	resp := &Response{
 		code:    httpResponse.StatusCode,
@@ -45,7 +45,7 @@ func (c *Client) Do(httpRequest *http.Request) (*Response, error) {
 	defer httpResponse.Body.Close()
 	var body []byte
 	if body, err = io.ReadAll(httpResponse.Body); err != nil {
-		return resp, errorx.Wrap(err, "http.Response.Body read error")
+		return resp, errorx.Wrap(err, "read http response body error")
 	}
 	resp.body = body
 	return resp, nil

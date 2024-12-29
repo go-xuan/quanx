@@ -13,7 +13,12 @@ import (
 
 func DefaultFormatter() log.Formatter {
 	host, _ := os.Hostname()
-	return &LogFormatter{timeFormat: TimeFormat, host: host, Output: ConsoleOutput, useColor: true}
+	return &LogFormatter{
+		timeFormat: TimeFormat,    // 默认2006-01-02 15:04:05.999
+		host:       host,          // 默认当前机器host
+		Output:     ConsoleOutput, // 默认控制台输出
+		useColor:   true,          // 默认使用颜色
+	}
 }
 
 type LogFormatter struct {
@@ -30,7 +35,7 @@ func (f *LogFormatter) UseColor() bool {
 // Format 日志格式化,用以实现logrus.Formatter接口
 func (f *LogFormatter) Format(entry *log.Entry) ([]byte, error) {
 	var b = bytes.Buffer{}
-	b.WriteString(fmt.Sprintf("[%-23s][%-5s][%s]", time.Now().Format(f.timeFormat), entry.Level.String(), f.host))
+	b.WriteString(fmt.Sprintf("[%-23s][%-7s][%s]", time.Now().Format(f.timeFormat), entry.Level.String(), f.host))
 	b.WriteString(entry.Message)
 	for key, value := range entry.Data {
 		b.WriteString(fmt.Sprintf(", %s:%+v", key, value))

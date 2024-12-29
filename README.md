@@ -10,7 +10,7 @@ go get github.com/go-xuan/quanx
 
 ## 服务启动
 
-启动简单，两行代码即可启动一个微服务
+启动简单，一行代码即可启动一个微服务
 
 ```go
 package main
@@ -20,17 +20,11 @@ import (
 	"time"
 	
 	"github.com/go-xuan/quanx"
-
-	"demo/internal/model/entity"
-	"demo/internal/router"
 )
 
 func main() {
-	// 初始化服务引擎
-	var engine = quanx.NewEngine()
-
 	// 服务启动
-	engine.RUN()
+	quanx.NewEngine().RUN()
 }
 ```
 
@@ -50,12 +44,6 @@ func main() {
 	engine.RUN()
 }
 
-// gormx.Tabler接口
-type Tabler interface {
-	TableName() string    // 表名
-	TableComment() string // 表注释
-	InitData() any        // 表初始数据
-}
 
 // 用户表结构必须实现gormx.Tabler接口
 type User struct {
@@ -77,7 +65,7 @@ func (User) TableComment() string {
 	return "用户信息表"
 }
 
-// 不为nil时，在初始化表结构之后向表里插入初始化数据
+// 会在初始化表结构之后向目标表里插入初始化数据，为nil表示不做任何写入
 func (User) InitData() any {
 	return nil
 }
@@ -103,7 +91,7 @@ func BindApiRouter(router *gin.RouterGroup) {
 	db := gormx.DB()
     
 	// 获取具体数据源
-	//db := gormx.DB("{{数据源名称}}")
+	db := gormx.DB("{{数据源名称}}")
 
 	// 用户信息表-增删改查，一行代码实现CRUD
 	ginx.NewCrudApi[entity.User](router.Group("user"), db)
@@ -116,12 +104,12 @@ func BindApiRouter(router *gin.RouterGroup) {
 func main() {
 	// 初始化服务引擎
 	var engine = quanx.NewEngine(
-	    quanx.UseQueue, // 开启任务队列
+	    quanx.UseQueue, // 启用初始化任务队列
 	)
     
 	// 新增初始化方法
 	engine.AddCustomFunc(Init1)
-	// 或者开启任务队列，使用任务队列
+	// 或者启用任务队列
 	engine.AddQueueTask("init2", Init2)
     
 	// 服务启动
@@ -130,10 +118,12 @@ func main() {
 
 
 func Init1() {
+	fmt.Println("执行初始化任务1")
 	fmt.Println(time.Now().Format("2006-01-02 15:04:05"))
 }
 
 func Init2() {
+    fmt.Println("执行初始化任务2")
 	fmt.Println(time.Now().Format("2006-01-02 15:04:05"))
 }
 
@@ -156,11 +146,11 @@ func main() {
 }
 
 // Configurator配置器接口
-type Configurator interface {
-	Title() string   // 配置器标题
-	Reader() *Reader // 配置文件读取
-	Run() error      // 配置器运行
-}
+//type Configurator interface {
+//	Title() string   // 配置器标题
+//	Reader() *Reader // 配置文件读取
+//	Run() error      // 配置器运行
+//}
 
 var Config *config
 
@@ -202,9 +192,8 @@ quanx框架本身已实现了一些常规配置项的读取和初始化，开发
 ```yaml
 server:
   name: demo                  # 应用名
-  port: 8080                  # 服务端口
+  port: 8888                  # 服务端口
   prefix: /demo               # 服务api前缀
-  debug: true                 # 开启debug模式
 ```
 
 #### nacos配置
@@ -233,8 +222,7 @@ username: "root"              # string 用户名
 password: "root"              # string 密码
 database: ""                  # string 数据库名
 schema: ""                    # string 模式名（postgres）
-debug: false                  # bool 开启debug
-init: false                   # bool 是否初始化表结构以及数据
+debug: false                  # bool 开启debug模式以及初始化表结构以及数据
 ```
 
 ##### 多数据源
@@ -246,6 +234,9 @@ func main() {
 	var engine = quanx.NewEngine(
 	    quanx.MultiDatabase, // 开启多数据源
 	)
+    
+    // 服务启动
+    engine.RUN()
 }
 ```
 
@@ -254,21 +245,21 @@ func main() {
 ```yaml
 - name: default
   enable: true
-  type: 
-  host: 
-  port: 
-  username: 
-  password: 
-  database: 
-  debug: 
+  type: pgsql
+  host: localhost
+  port: 5432
+  username: postgres
+  password: postgres
+  database: demo
+  debug: false
 - name: db1
-  enable: 
-  type: 
-  host: 
-  port: 
-  username: 
-  password: 
-  database: 
+  enable: true
+  type: mysql
+  host: localhost
+  port: 3306
+  username: root
+  password: root
+  database: demo
   debug: true
 ......
 ```
@@ -296,6 +287,9 @@ func main() {
 	var engine = quanx.NewEngine(
 	    quanx.MultiRedis, // 开启多redis数据源
 	)
+	
+    // 服务启动
+    engine.RUN()
 }
 ```
 
@@ -321,7 +315,7 @@ func main() {
 
 #### 自定义配置
 
-每一项配置都需要在go代码中使用struct进行声明，而且结构体并实现Configurator配置器接口。
+每一项配置都需要在go代码中使用struct进行声明，而且该结构体需要实现Configurator配置器接口
 
 demo.yaml：
 
@@ -357,7 +351,7 @@ func (d demo) Reader() *confx.Reader {
 }
 
 func (d demo) Run() error {
-	// todo 配置读取后的实际操作
+	// todo 完成配置读取后需要进行的操作
 	fmt.Println(c.Key1)
 	fmt.Println(c.Key2)
 	fmt.Println(c.Key3)
@@ -365,11 +359,9 @@ func (d demo) Run() error {
 }
 ```
 
-
-
 ##### 本地配置
 
-当服务启动时不启用nacos，并且配置项对应结构实现Configurator接口时，Reader()方法返回的Reader.FilePath不为空。
+当服务未启用nacos，配置结构体在实现Configurator接口时，Reader()方法返回的Reader.FilePath不为空，确保能够从本地读取到响应配置文件。
 
 ```go
 func main() {
@@ -388,7 +380,7 @@ func (d demo) Reader() *confx.Reader {
 
 ##### Nacos配置
 
-当服务启动启用nacos，并且配置项对应结构实现Configurator接口时，Reader()方法返回的Reader.NacosDataId不为空。
+当服务可以连接nacos，配置结构体在实现Configurator接口时，则Reader()方法返回的Reader.NacosDataId不能为空。
 
 ```go
 func main() {

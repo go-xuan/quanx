@@ -106,14 +106,37 @@ func UnmarshalFromFile(path string, v any) error {
 }
 
 // MarshalToStruct 将任意对象序列化成指定结构体对象
-func MarshalToStruct[T any](v any, filename string) (t T, err error) {
+func MarshalToStruct[T any](v any, filename string) (T, error) {
+	var t T
 	var newCase = NewCase(filename)
-	var bytes []byte
-	if bytes, err = newCase.Marshal(v); err != nil {
-		return
+	if bytes, err := newCase.Marshal(v); err != nil {
+		return t, errorx.Wrap(err, "marshal failed")
+	} else if err = newCase.Unmarshal(bytes, &t); err != nil {
+		return t, errorx.Wrap(err, "unmarshal failed")
 	}
-	if err = newCase.Unmarshal(bytes, &t); err != nil {
-		return
+	return t, nil
+}
+
+// WriteJson 写入json文件
+func WriteJson(path string, v any) error {
+	bytes, err := json.MarshalIndent(v, "", "	")
+	if err != nil {
+		return errorx.Wrap(err, "json marshal error")
 	}
-	return
+	if err = filex.WriteFile(path, bytes); err != nil {
+		return errorx.Wrap(err, "write file error")
+	}
+	return nil
+}
+
+// WriteYaml 写入yaml文件
+func WriteYaml(path string, v any) error {
+	bytes, err := yaml.Marshal(v)
+	if err != nil {
+		return errorx.Wrap(err, "yaml marshal error")
+	}
+	if err = filex.WriteFile(path, bytes); err != nil {
+		return errorx.Wrap(err, "write file error")
+	}
+	return nil
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func TestExec(t *testing.T) {
-	out, err := ExecCommand("echo $GOPATH")
+	out, _, err := ExecCommand("echo $GOPATH")
 	fmt.Println(out)
 	fmt.Println(err)
 }
