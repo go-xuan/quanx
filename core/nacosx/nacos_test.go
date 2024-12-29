@@ -1,9 +1,12 @@
 package nacosx
 
-import "testing"
+import (
+	"github.com/go-xuan/quanx/core/configx"
+	"testing"
+)
 
 func TestNacos(t *testing.T) {
-	if err := NewConfigurator(&Config{
+	if err := configx.Execute(&Config{
 		Address:   "localhost:8848",
 		Username:  "nacos",
 		Password:  "nacos",

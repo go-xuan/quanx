@@ -22,10 +22,6 @@ const (
 	CacheTypeLocal = "local"
 )
 
-func NewConfigurator(conf *Config) configx.Configurator {
-	return conf
-}
-
 type Config struct {
 	Type    string `json:"type" yaml:"type" default:"redis"`         // 缓存类型（local/redis）
 	Source  string `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称

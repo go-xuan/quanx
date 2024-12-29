@@ -23,10 +23,6 @@ const (
 	Sentinel          // 集群
 )
 
-func NewConfigurator(conf *Config) configx.Configurator {
-	return conf
-}
-
 type Config struct {
 	Source     string `json:"source" yaml:"source" default:"default"` // 数据源名称
 	Enable     bool   `json:"enable" yaml:"enable"`                   // 数据源启用

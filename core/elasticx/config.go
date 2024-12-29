@@ -12,10 +12,6 @@ import (
 	"github.com/go-xuan/quanx/os/fmtx"
 )
 
-func NewConfigurator(conf *Config) configx.Configurator {
-	return conf
-}
-
 // Config ES配置
 type Config struct {
 	Host  string   `yaml:"host" json:"host"`   // 主机

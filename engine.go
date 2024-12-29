@@ -40,7 +40,7 @@ var engine *Engine
 
 // Engine 服务启动器
 type Engine struct {
-	opts           map[Option]bool           // 服务运行选项
+	switches       map[Option]bool           // 服务运行开关
 	config         *Config                   // 服务配置数据，使用 initAppConfig()将配置文件加载到此
 	configDir      string                    // 服务配置文件夹, 使用 SetConfigDir()设置配置文件读取路径
 	ginEngine      *gin.Engine               // gin框架引擎实例
@@ -72,7 +72,7 @@ func NewEngine(opts ...EngineOptionFunc) *Engine {
 			configurators:  make([]configx.Configurator, 0),
 			ginMiddlewares: make([]gin.HandlerFunc, 0),
 			gormTables:     make(map[string][]gormx.Tabler),
-			opts:           make(map[Option]bool),
+			switches:       make(map[Option]bool),
 		}
 		gin.SetMode(gin.ReleaseMode)
 		engine.SetOptions(opts...)
@@ -87,7 +87,7 @@ func NewEngine(opts ...EngineOptionFunc) *Engine {
 
 // RUN 服务运行
 func (e *Engine) RUN() {
-	if e.opts[enableQueue] { // 任务队列方式启动
+	if e.switches[enableQueue] { // 任务队列方式启动
 		e.queue.Execute()
 	} else { // 默认方式启动
 		syncx.OnceDo(e.initAppConfig)     // 1.初始化应用配置
@@ -96,18 +96,18 @@ func (e *Engine) RUN() {
 		syncx.OnceDo(e.runCustomFunction) // 4.运行自定义函数
 		syncx.OnceDo(e.startServer)       // 5.启动服务
 	}
-	e.opts[running] = true
+	e.switches[running] = true
 }
 
 func (e *Engine) checkRunning() {
-	if e.opts[running] {
+	if e.switches[running] {
 		panic("engine has already running")
 	}
 }
 
 // 是否启用队列
 func (e *Engine) enableQueue() {
-	if e.opts[enableQueue] && e.queue == nil {
+	if e.switches[enableQueue] && e.queue == nil {
 		queue := taskx.Queue()
 		queue.Add(engine.initAppConfig, InitAppConfig)         // 1.初始化应用配置
 		queue.Add(engine.initInnerConfig, InitInnerConfig)     // 2.初始化内置组件（log/nacos/gorm/redis/cache）
@@ -141,7 +141,7 @@ func (e *Engine) initAppConfig() {
 		config.Server.Host = ipx.GetLocalIP()
 	}
 	// 从nacos加载配置
-	if e.opts[enableNacos] && config.Nacos != nil {
+	if e.switches[enableNacos] && config.Nacos != nil {
 		e.ExecuteConfigurator(config.Nacos, true)
 		if config.Nacos.EnableNaming() {
 			// 注册nacos服务Nacos
@@ -149,6 +149,8 @@ func (e *Engine) initAppConfig() {
 				panic(errorx.Wrap(err, "nacos register error"))
 			}
 		}
+	} else {
+		e.switches[enableNacos] = false
 	}
 	e.config = config
 }
@@ -164,7 +166,7 @@ func (e *Engine) initInnerConfig() {
 	// 初始化数据库连接
 	if e.config.Database != nil {
 		e.ExecuteConfigurator(e.config.Database)
-	} else if e.opts[multiDatabase] {
+	} else if e.switches[multiDatabase] {
 		var database = &gormx.MultiConfig{}
 		e.ExecuteConfigurator(database, true)
 		e.config.Database = database
@@ -188,7 +190,7 @@ func (e *Engine) initInnerConfig() {
 	// 初始化redis连接
 	if e.config.Redis != nil {
 		e.ExecuteConfigurator(e.config.Redis)
-	} else if e.opts[multiRedis] {
+	} else if e.switches[multiRedis] {
 		var redis = &redisx.MultiConfig{}
 		e.ExecuteConfigurator(redis, true)
 		e.config.Redis = redis
@@ -202,7 +204,7 @@ func (e *Engine) initInnerConfig() {
 	if redisx.Initialized() {
 		if e.config.Cache != nil {
 			e.ExecuteConfigurator(e.config.Cache)
-		} else if e.opts[multiCache] {
+		} else if e.switches[multiCache] {
 			var cache = &cachex.MultiConfig{}
 			e.ExecuteConfigurator(cache, true)
 			e.config.Cache = cache
@@ -238,7 +240,7 @@ func (e *Engine) startServer() {
 func (e *Engine) startWebServer() {
 	e.checkRunning()
 	defer PanicRecover()
-	if e.opts[enableDebug] {
+	if e.switches[enableDebug] {
 		gin.SetMode(gin.DebugMode)
 	}
 	if e.ginEngine == nil {
@@ -256,7 +258,7 @@ func (e *Engine) startWebServer() {
 
 	// 获取服务端口
 	port := strconv.Itoa(e.config.Server.Port)
-	if e.opts[customPort] {
+	if e.switches[customPort] {
 		port = os.Getenv("PORT")
 	}
 
@@ -286,30 +288,32 @@ func (e *Engine) AddConfigurator(configurators ...configx.Configurator) {
 // ExecuteConfigurator 运行配置器
 func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...bool) {
 	e.checkRunning()
-	var configFrom, mustRun = "default", anyx.Default(false, must...)
+	var configFrom, mustRun = "local@" + e.GetConfigPath(constx.DefaultConfigFilename) + " or tag@default",
+		anyx.Default(false, must...)
 	if reader := configurator.Reader(); reader != nil {
-		if e.opts[enableNacos] {
+		if e.switches[enableNacos] {
 			group := stringx.IfZero(reader.NacosGroup, e.config.Server.Name)
 			reader.NacosGroup = group
 			if err := nacosx.This().ScanConfig(configurator, group, reader.NacosDataId, reader.Listen); err == nil {
-				configFrom, mustRun = group+"@"+reader.NacosDataId, true
+				configFrom, mustRun = "nacos@"+group+"@"+reader.NacosDataId, true
 			}
 		} else {
 			path := e.GetConfigPath(reader.FilePath)
 			if err := marshalx.UnmarshalFromFile(e.GetConfigPath(reader.FilePath), configurator); err == nil {
-				configFrom, mustRun = path, true
+				configFrom, mustRun = "local@"+path, true
 			}
 		}
 	}
 	if mustRun {
-		if e.opts[enableDebug] {
+		if e.switches[enableDebug] {
 			log.Info("configurator data: ", configurator.Format())
 		}
-		var logger = log.WithField("configFrom", configFrom)
 		if err := configx.Execute(configurator); err != nil {
-			logger.Error(fmtx.Red.String("configurator execute failed ==> "), err)
+			log.WithField("configFrom", configFrom).
+				Error(fmtx.Red.String("configurator execute failed ==> "), err)
 		} else {
-			logger.Info(fmtx.Green.String("configurator execute success"))
+			log.WithField("configFrom", configFrom).
+				Info(fmtx.Green.String("configurator execute success"))
 		}
 	}
 }
@@ -401,7 +405,7 @@ func (e *Engine) AddQueueTask(id string, task func()) {
 	if id == "" {
 		log.Error(`add queue task failed, cause: the task id is required`)
 	} else {
-		e.opts[enableQueue] = true
+		e.switches[enableQueue] = true
 		e.enableQueue()
 		e.queue.AddBefore(task, id, StartServer)
 		log.Info(`add queue task successfully, task id:`, id)

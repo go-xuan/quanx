@@ -8,10 +8,6 @@ import (
 	"github.com/go-xuan/quanx/os/fmtx"
 )
 
-func NewConfigurator(conf *Config) configx.Configurator {
-	return conf
-}
-
 // Config 邮件服务器配置
 type Config struct {
 	Host     string `json:"host" yaml:"host"`         // 邮件发送服务器地址

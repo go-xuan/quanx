@@ -2,7 +2,10 @@ package gormx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/utils/randx"
 	"testing"
+
+	"github.com/go-xuan/quanx/core/configx"
 )
 
 type Test struct {
@@ -27,7 +30,7 @@ func (t Test) InitData() any {
 
 func TestDatabase(t *testing.T) {
 	// 先初始化redis
-	if err := NewConfigurator(&Config{
+	if err := configx.Execute(&Config{
 		Source:   "default",
 		Enable:   true,
 		Type:     "postgres",
@@ -37,22 +40,21 @@ func TestDatabase(t *testing.T) {
 		Password: "postgres",
 		Database: "quanx",
 		Debug:    true,
-	}).Execute(); err != nil {
+	}); err != nil {
 		fmt.Println(err)
 	}
-	//if err := InitTable("default", &Test{}); err != nil {
-	//	fmt.Println(err)
-	//}
+	if err := InitTable("default", &Test{}); err != nil {
+		fmt.Println(err)
+	}
 
-	//DB().Model(Test{}).Create(&Test{
-	//	Id:   randx.UUID(),
-	//	Type: randx.IntRange(1, 100),
-	//	Name: randx.Name(),
-	//})
+	DB().Model(Test{}).Create(&Test{
+		Id:   randx.UUID(),
+		Type: randx.IntRange(1, 100),
+		Name: randx.Name(),
+	})
 
 	var tt2 = &Test{}
 	DB().Model(Test{}).First(tt2)
 
 	fmt.Println(tt2)
-
 }

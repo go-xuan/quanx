@@ -3,7 +3,7 @@ package quanx
 import (
 	"os"
 	"strconv"
-	
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/gormx"
@@ -27,7 +27,7 @@ type EngineOptionFunc = func(e *Engine)
 func SetPort(port int) EngineOptionFunc {
 	return func(e *Engine) {
 		_ = os.Setenv("PORT", strconv.Itoa(port))
-		e.opts[customPort] = true
+		e.switches[customPort] = true
 	}
 }
 
@@ -45,43 +45,43 @@ func SetConfig(cof *Config) EngineOptionFunc {
 	}
 }
 
-// SetConfigurator 自定义配置器
-func SetConfigurator(configurators ...configx.Configurator) EngineOptionFunc {
+// AddConfigurator 自定义配置器
+func AddConfigurator(configurators ...configx.Configurator) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddConfigurator(configurators...)
 	}
 }
 
-// SetCustomFunc 设置自定义函数
-func SetCustomFunc(funcs ...func()) EngineOptionFunc {
+// AddCustomFunc 设置自定义函数
+func AddCustomFunc(funcs ...func()) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddCustomFunc(funcs...)
 	}
 }
 
-// SetGinMiddleware 设置gin中间件
-func SetGinMiddleware(funcs ...gin.HandlerFunc) EngineOptionFunc {
+// AddGinMiddleware 设置gin中间件
+func AddGinMiddleware(funcs ...gin.HandlerFunc) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddGinMiddleware(funcs...)
 	}
 }
 
-// SetGinRouter 设置gin的路由加载函数
-func SetGinRouter(router ...func(*gin.RouterGroup)) EngineOptionFunc {
+// AddGinRouter 设置gin的路由加载函数
+func AddGinRouter(router ...func(*gin.RouterGroup)) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddGinRouter(router...)
 	}
 }
 
-// SetTable 设置 gormx.Tabler 模型
-func SetTable(dst ...gormx.Tabler) EngineOptionFunc {
+// AddTable 设置 gormx.Tabler 模型
+func AddTable(dst ...gormx.Tabler) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddTable(dst...)
 	}
 }
 
-// SetSourceTable 设置某个数据源的 gormx.Table 模型
-func SetSourceTable(source string, dst ...gormx.Tabler) EngineOptionFunc {
+// AddSourceTable 设置某个数据源的 gormx.Table 模型
+func AddSourceTable(source string, dst ...gormx.Tabler) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddSourceTable(source, dst...)
 	}
@@ -89,36 +89,36 @@ func SetSourceTable(source string, dst ...gormx.Tabler) EngineOptionFunc {
 
 func EnableDebug() EngineOptionFunc {
 	return func(e *Engine) {
-		e.opts[enableDebug] = true
+		e.switches[enableDebug] = true
 	}
 }
 
 func EnableNacos() EngineOptionFunc {
 	return func(e *Engine) {
-		e.opts[enableNacos] = true
+		e.switches[enableNacos] = true
 	}
 }
 
 func EnableQueue() EngineOptionFunc {
 	return func(e *Engine) {
-		e.opts[enableQueue] = true
+		e.switches[enableQueue] = true
 	}
 }
 
 func MultiDatabase() EngineOptionFunc {
 	return func(e *Engine) {
-		e.opts[multiDatabase] = true
+		e.switches[multiDatabase] = true
 	}
 }
 
 func MultiRedis() EngineOptionFunc {
 	return func(e *Engine) {
-		e.opts[multiRedis] = true
+		e.switches[multiRedis] = true
 	}
 }
 
 func MultiCache() EngineOptionFunc {
 	return func(e *Engine) {
-		e.opts[multiCache] = true
+		e.switches[multiCache] = true
 	}
 }
