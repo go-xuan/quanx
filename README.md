@@ -15,15 +15,9 @@ go get github.com/go-xuan/quanx
 ```go
 package main
 
-import (
-	"fmt"
-	"time"
-	
-	"github.com/go-xuan/quanx"
-)
+import "github.com/go-xuan/quanx"
 
 func main() {
-	// 服务启动
 	quanx.NewEngine().RUN()
 }
 ```
@@ -31,67 +25,59 @@ func main() {
 ### 初始化表结构
 
 ```go
+
 func main() {
-	// 初始化服务引擎
-	var engine = quanx.NewEngine()
-    
-	// 初始化表结构
-	engine.AddTable(
-		&User{}, // 需要实现gormx.Tabler接口
-	)
-    
-	// 服务启动
-	engine.RUN()
+    quanx.NewEngine(
+        // 初始化表结构
+        quanx.AddTable(
+            &User{}, // 需要实现gormx.Tabler接口
+        ),
+    ).RUN()
 }
 
-
-// 用户表结构必须实现gormx.Tabler接口
+// User 用户表结构必须实现gormx.Tabler接口
 type User struct {
-	Id           int64     `json:"id" gorm:"type:bigint; not null; comment:用户ID;"`
-	Name         string    `json:"name" gorm:"type:varchar; not null; comment:姓名;"`
-	CreateUserId int64     `json:"createUserId" gorm:"type:bigint; not null; comment:创建人ID;"`
-	CreateTime   time.Time `json:"createTime" gorm:"type:timestamp; default:now(); comment:创建时间;"`
-	UpdateUserId int64     `json:"updateUserId" gorm:"type:bigint; not null; comment:更新人ID;"`
-	UpdateTime   time.Time `json:"updateTime" gorm:"type:timestamp; default:now(); comment:更新时间;"`
+    Id           int64     `json:"id" gorm:"type:bigint; not null; comment:用户ID;"`
+    Name         string    `json:"name" gorm:"type:varchar; not null; comment:姓名;"`
+    CreateUserId int64     `json:"createUserId" gorm:"type:bigint; not null; comment:创建人ID;"`
+    CreateTime   time.Time `json:"createTime" gorm:"type:timestamp; default:now(); comment:创建时间;"`
+    UpdateUserId int64     `json:"updateUserId" gorm:"type:bigint; not null; comment:更新人ID;"`
+    UpdateTime   time.Time `json:"updateTime" gorm:"type:timestamp; default:now(); comment:更新时间;"`
 }
 
-// 定义表名
+// TableName 定义表名
 func (User) TableName() string {
-	return "t_sys_user"
+    return "t_sys_user"
 }
 
-// 定义表注释
+// TableComment 定义表注释
 func (User) TableComment() string {
-	return "用户信息表"
+    return "用户信息表"
 }
 
-// 会在初始化表结构之后向目标表里插入初始化数据，为nil表示不做任何写入
+// InitData 会在初始化表结构之后向目标表里插入初始化数据，为nil表示不做任何写入
 func (User) InitData() any {
-	return nil
+    return nil
 }
+
 ```
 
 ### 绑定路由
 
 ```go
 func main() {
-	// 初始化服务引擎
-	var engine = quanx.NewEngine()
-    
-	// 添加gin的路由加载函数
-	engine.AddGinRouter(BindApiRouter)
-    
-	// 服务启动
-	engine.RUN()
+    quanx.NewEngine(
+        // 添加gin的路由加载函数
+        quanx.AddGinRouter(BindApiRouter),
+    ).RUN()
 }
 
 // 绑定api路由
 func BindApiRouter(router *gin.RouterGroup) {
 	// 获取默认数据源
 	db := gormx.DB()
-    
-	// 获取具体数据源
-	db := gormx.DB("{{数据源名称}}")
+	// 获取指定数据源
+	// db := gormx.DB("{{数据源名称}}")
 
 	// 用户信息表-增删改查，一行代码实现CRUD
 	ginx.NewCrudApi[entity.User](router.Group("user"), db)
@@ -110,7 +96,7 @@ func main() {
 	// 新增初始化方法
 	engine.AddCustomFunc(Init1)
 	// 或者启用任务队列
-	engine.AddQueueTask("init2", Init2)
+	engine.AddQueueTask(Init2, "init2")
     
 	// 服务启动
 	engine.RUN()

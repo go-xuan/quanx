@@ -87,6 +87,13 @@ func AddSourceTable(source string, dst ...gormx.Tabler) EngineOptionFunc {
 	}
 }
 
+// AddQueueTask 使用后，会自动以队列方式来启动服务，且本次添加的任务会放在 taskStartServer 之前执行
+func AddQueueTask(task func(), id string) EngineOptionFunc {
+	return func(e *Engine) {
+		e.AddQueueTask(task, id)
+	}
+}
+
 func EnableDebug() EngineOptionFunc {
 	return func(e *Engine) {
 		e.switches[enableDebug] = true
