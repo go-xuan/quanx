@@ -27,15 +27,6 @@ import (
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
-// Queue task id
-const (
-	InitAppConfig     = "init_app_config"     // 初始化应用配置
-	InitInnerConfig   = "init_inner_config"   // 初始化内置组件（log/nacos/gorm/redis/cache）
-	InitOuterConfig   = "init_outer_config"   // 初始化外置组件
-	RunCustomFunction = "run_custom_function" // 运行自定义函数
-	StartServer       = "start_server"        // 启动web服务
-)
-
 var engine *Engine
 
 // Engine 服务启动器
@@ -105,15 +96,24 @@ func (e *Engine) checkRunning() {
 	}
 }
 
+// Queue task id
+const (
+	taskInitAppConfig     = "init_app_config"     // 初始化应用配置
+	taskInitInnerConfig   = "init_inner_config"   // 初始化内置组件（log/nacos/gorm/redis/cache）
+	taskInitOuterConfig   = "init_outer_config"   // 初始化外置组件
+	taskRunCustomFunction = "run_custom_function" // 运行自定义函数
+	taskStartServer       = "start_server"        // 启动web服务
+)
+
 // 是否启用队列
 func (e *Engine) enableQueue() {
 	if e.switches[enableQueue] && e.queue == nil {
 		queue := taskx.Queue()
-		queue.Add(engine.initAppConfig, InitAppConfig)         // 1.初始化应用配置
-		queue.Add(engine.initInnerConfig, InitInnerConfig)     // 2.初始化内置组件（log/nacos/gorm/redis/cache）
-		queue.Add(engine.initOuterConfig, InitOuterConfig)     // 3.初始化外置组件
-		queue.Add(engine.runCustomFunction, RunCustomFunction) // 4.运行自定义函数
-		queue.Add(engine.startServer, StartServer)             // 5.启动服务
+		queue.Add(engine.initAppConfig, taskInitAppConfig)         // 1.初始化应用配置
+		queue.Add(engine.initInnerConfig, taskInitInnerConfig)     // 2.初始化内置组件（log/nacos/gorm/redis/cache）
+		queue.Add(engine.initOuterConfig, taskInitOuterConfig)     // 3.初始化外置组件
+		queue.Add(engine.runCustomFunction, taskRunCustomFunction) // 4.运行自定义函数
+		queue.Add(engine.startServer, taskStartServer)             // 5.启动服务
 		engine.queue = queue
 	}
 }
@@ -254,7 +254,7 @@ func (e *Engine) startWebServer() {
 
 	// 注册服务根路由
 	group := e.ginEngine.Group(e.config.Server.ApiPrefix())
-	e.InitGinLoader(group)
+	e.initGinRouter(group)
 
 	// 获取服务端口
 	port := strconv.Itoa(e.config.Server.Port)
@@ -266,6 +266,17 @@ func (e *Engine) startWebServer() {
 	log.Infof(`API接口请求地址: http://%s:%s`, host, port)
 	if err := e.ginEngine.Run(":" + port); err != nil {
 		panic(errorx.Wrap(err, "gin engine run failed"))
+	}
+}
+
+// initGinRouter 执行gin的路由加载函数
+func (e *Engine) initGinRouter(group *gin.RouterGroup) {
+	if len(e.ginRouters) > 0 {
+		for _, router := range e.ginRouters {
+			router(group)
+		}
+	} else {
+		log.Warn("gin router is empty")
 	}
 }
 
@@ -388,26 +399,15 @@ func (e *Engine) AddGinRouter(router ...func(*gin.RouterGroup)) {
 	}
 }
 
-// InitGinLoader 执行gin的路由加载函数
-func (e *Engine) InitGinLoader(group *gin.RouterGroup) {
-	if len(e.ginRouters) > 0 {
-		for _, loader := range e.ginRouters {
-			loader(group)
-		}
-	} else {
-		log.Warn("gin router is empty")
-	}
-}
-
-// AddQueueTask 使用后，会自动启用队列方式启动服务，且当前添加的任务会在 StartServer 之前执行
-func (e *Engine) AddQueueTask(id string, task func()) {
+// AddQueueTask 使用后，会自动启用队列方式启动服务，且当前添加的任务会在 startServer 之前执行
+func (e *Engine) AddQueueTask(task func(), id string) {
 	e.checkRunning()
 	if id == "" {
 		log.Error(`add queue task failed, cause: the task id is required`)
 	} else {
 		e.switches[enableQueue] = true
 		e.enableQueue()
-		e.queue.AddBefore(task, id, StartServer)
+		e.queue.AddBefore(task, id, taskStartServer)
 		log.Info(`add queue task successfully, task id:`, id)
 	}
 	return
