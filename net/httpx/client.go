@@ -39,7 +39,7 @@ func (c *Client) Do(httpRequest *http.Request) (*Response, error) {
 		return nil, errorx.Wrap(err, "do http request error")
 	}
 	resp := &Response{
-		code:    httpResponse.StatusCode,
+		status:  httpResponse.StatusCode,
 		cookies: httpResponse.Cookies(),
 	}
 	defer httpResponse.Body.Close()
