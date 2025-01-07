@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	
+
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
@@ -22,14 +22,14 @@ func Method(method string, url string) *Request {
 
 func Get(url string) *Request {
 	return &Request{
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 	}
 }
 
 func Post(url string) *Request {
 	return &Request{
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 	}
 }
@@ -107,8 +107,8 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 		return nil, errorx.Wrap(err, "new http request error")
 	}
 	if r.headers != nil && len(r.headers) > 0 {
-		if _, ok := r.headers["Content-AndOr"]; !ok {
-			r.headers["Content-AndOr"] = "application/json"
+		if _, ok := r.headers["Content-Type"]; !ok {
+			r.headers["Content-Type"] = "application/json"
 		}
 		for key, val := range r.headers {
 			httpRequest.Header.Set(key, val)
@@ -119,7 +119,7 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 		return nil, errorx.Wrap(err, "do http request error")
 	}
 	resp := &Response{
-		code:    httpResponse.StatusCode,
+		status:  httpResponse.StatusCode,
 		cookies: httpResponse.Cookies(),
 	}
 	defer httpResponse.Body.Close()

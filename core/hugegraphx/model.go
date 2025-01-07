@@ -111,7 +111,7 @@ type EdgeAdd struct {
 	NullableKeys     []string          `json:"nullable_keys"`      // 可空属性列表
 	Frequency        string            `json:"frequency"`          // 允许多次连接，可以取值SINGLE和MULTIPLE
 	SortKeys         []string          `json:"sort_keys"`          // 当允许关联多次时，指定区分键属性列表
-	Ttl              int               `json:"ttl"`                // duration
+	TTL              int               `json:"ttl"`                // duration
 	EnableLabelIndex bool              `json:"enable_label_index"` // 启用类型索引,默认为true
 	UserData         map[string]string `json:"user_data"`          // 边风格配置
 }
