@@ -1,6 +1,7 @@
 package nacosx
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -13,7 +14,7 @@ import (
 
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/core/configx"
-	"github.com/go-xuan/quanx/os/fmtx"
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
@@ -33,7 +34,7 @@ type Config struct {
 }
 
 func (c *Config) Format() string {
-	return fmtx.Yellow.XSPrintf("address=%s username=%s password=%s nameSpace=%s mode=%v",
+	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%v",
 		c.AddressUrl(), c.Username, c.Password, c.NameSpace, c.Mode)
 }
 
@@ -41,30 +42,38 @@ func (*Config) Reader() *configx.Reader {
 	return nil
 }
 
-func (c *Config) Execute() (err error) {
+func (c *Config) Execute() error {
 	if handler == nil {
 		handler = &Handler{config: c}
+		var param = c.ClientParam()
 		switch c.Mode {
 		case OnlyConfig:
-			if handler.configClient, err = c.ConfigClient(c.ClientParam()); err != nil {
-				return
+			if configClient, err := c.ConfigClient(param); err != nil {
+				return errorx.Wrap(err, "init nacos config client error")
+			} else {
+				handler.configClient = configClient
 			}
 		case OnlyNaming:
-			if handler.namingClient, err = c.NamingClient(c.ClientParam()); err != nil {
-				return
+			if namingClient, err := c.NamingClient(param); err != nil {
+				return errorx.Wrap(err, "init nacos naming client error")
+			} else {
+				handler.namingClient = namingClient
 			}
 		case ConfigAndNaming:
-			var param = c.ClientParam()
-			if handler.configClient, err = c.ConfigClient(param); err != nil {
-				return
+			if configClient, err := c.ConfigClient(param); err != nil {
+				return errorx.Wrap(err, "init nacos config client error")
+			} else {
+				handler.configClient = configClient
 			}
-			if handler.namingClient, err = c.NamingClient(param); err != nil {
-				return
+			if namingClient, err := c.NamingClient(param); err != nil {
+				return errorx.Wrap(err, "init nacos naming client error")
+			} else {
+				handler.namingClient = namingClient
 			}
 		}
 	}
 	log.Info("nacos connect successfully: ", c.Format())
-	return
+	return nil
 }
 
 // AddressUrl nacos访问地址
@@ -118,20 +127,21 @@ func (c *Config) ClientParam() vo.NacosClientParam {
 }
 
 // ConfigClient 初始化Nacos配置中心客户端
-func (c *Config) ConfigClient(param vo.NacosClientParam) (client config_client.IConfigClient, err error) {
-	if client, err = clients.NewConfigClient(param); err != nil {
-		log.Error("nacos config client init failed: ", c.Format())
-		log.Error(err)
-		return
+func (c *Config) ConfigClient(param vo.NacosClientParam) (config_client.IConfigClient, error) {
+	if client, err := clients.NewConfigClient(param); err != nil {
+		log.WithField("format", c.Format()).Error("nacos config client init failed: ", err)
+		return nil, errorx.Wrap(err, "nacos config client init failed")
+	} else {
+		return client, nil
 	}
-	return
 }
 
 // NamingClient 初始化Nacos服务发现客户端
-func (c *Config) NamingClient(param vo.NacosClientParam) (client naming_client.INamingClient, err error) {
-	if client, err = clients.NewNamingClient(param); err != nil {
-		log.Error("nacos naming client init failed: ", c.Format(), err)
-		return
+func (c *Config) NamingClient(param vo.NacosClientParam) (naming_client.INamingClient, error) {
+	if client, err := clients.NewNamingClient(param); err != nil {
+		log.WithField("format", c.Format()).Error("nacos naming client init failed: ", err)
+		return nil, errorx.Wrap(err, "nacos naming client init failed")
+	} else {
+		return client, nil
 	}
-	return
 }

@@ -8,8 +8,8 @@ var _handler *Handler
 
 type Handler struct {
 	multi     bool // 是否多缓存
-	client    CacheClient
-	clientMap map[string]CacheClient
+	client    Client
+	clientMap map[string]Client
 }
 
 func this() *Handler {
@@ -23,11 +23,11 @@ func GetConfig(source ...string) *Config {
 	return this().GetClient(source...).Config()
 }
 
-func Client(source ...string) CacheClient {
+func GetClient(source ...string) Client {
 	return this().GetClient(source...)
 }
 
-func (h *Handler) GetClient(source ...string) CacheClient {
+func (h *Handler) GetClient(source ...string) Client {
 	if len(source) > 0 && source[0] != constx.DefaultSource {
 		if client, ok := h.clientMap[source[0]]; ok {
 			return client

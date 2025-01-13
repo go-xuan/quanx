@@ -10,7 +10,7 @@ import (
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
-func PropertiesMarshal(v any) (out []byte, err error) {
+func PropertiesMarshal(v any) ([]byte, error) {
 	var lines []string
 	val := reflect.ValueOf(v)
 	for i := 0; i < val.NumField(); i++ {
@@ -18,20 +18,19 @@ func PropertiesMarshal(v any) (out []byte, err error) {
 		value := val.Field(i).String()
 		lines = append(lines, fmt.Sprintf("%s=%s", key, value))
 	}
-	out = []byte(strings.Join(lines, "\n"))
-	return
+	return []byte(strings.Join(lines, "\n")), nil
 }
 
 // PropertiesUnmarshal 读取properties文件到指针
-func PropertiesUnmarshal(bytes []byte, v any) (err error) {
+func PropertiesUnmarshal(bytes []byte, v any) error {
 	valueRef := reflect.ValueOf(v)
 	if valueRef.Type().Kind() != reflect.Ptr {
 		// 对象必须是指针类型
 		return errorx.New("the config must be pointer type")
 	}
-	var pp *properties.Properties
-	if pp, err = properties.Load(bytes, properties.UTF8); err != nil {
-		return
+	pp, err := properties.Load(bytes, properties.UTF8)
+	if err != nil {
+		return errorx.Wrap(err, "load properties error")
 	}
 	for i := 0; i < valueRef.Elem().NumField(); i++ {
 		field := valueRef.Elem().Field(i)
@@ -58,7 +57,7 @@ func PropertiesUnmarshal(bytes []byte, v any) (err error) {
 			fmt.Println("the type not matched: ", field.Kind())
 		}
 	}
-	return
+	return nil
 }
 
 func propertiesSetStructValue(pp *properties.Properties, v reflect.Value) {

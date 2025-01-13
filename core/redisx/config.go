@@ -13,7 +13,6 @@ import (
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
@@ -37,7 +36,7 @@ type Config struct {
 }
 
 func (c *Config) Format() string {
-	return fmtx.Yellow.XSPrintf("source=%s mode=%v host=%s port=%v database=%v",
+	return fmt.Sprintf("source=%s mode=%v host=%s port=%v database=%v",
 		c.Source, c.Mode, c.Host, c.Port, c.Database)
 }
 

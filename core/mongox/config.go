@@ -2,6 +2,7 @@ package mongox
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/fmtx"
 )
 
 type Config struct {
@@ -27,7 +27,7 @@ type Config struct {
 }
 
 func (c *Config) Format() string {
-	return fmtx.Yellow.XSPrintf("uri=%s database=%s", c.URI, c.Database)
+	return fmt.Sprintf("uri=%s database=%s", c.URI, c.Database)
 }
 
 func (*Config) Reader() *configx.Reader {

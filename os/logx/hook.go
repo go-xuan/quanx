@@ -106,17 +106,17 @@ func (hook *Hook) SetWriter(level log.Level, writer io.Writer) {
 }
 
 // 输出到ioWriter
-func (hook *Hook) Write(entry *log.Entry) (err error) {
+func (hook *Hook) Write(entry *log.Entry) error {
 	if hook.writers != nil {
 		if writer, ok := hook.writers[entry.Level]; ok {
-			var bytes []byte
-			if bytes, err = hook.formatter.Format(entry); err != nil {
-				return
+			if bytes, err := hook.formatter.Format(entry); err != nil {
+				return err
+			} else if _, err = writer.Write(bytes); err != nil {
+				return err
 			}
-			_, err = writer.Write(bytes)
 		}
 	}
-	return
+	return nil
 }
 
 var (

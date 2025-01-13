@@ -1,12 +1,13 @@
 package gatewayx
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/nacosx"
 	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
@@ -16,7 +17,8 @@ type Servers []*Server
 
 func (s *Servers) Format() string {
 	if s != nil && len(*s) > 0 {
-
+		b, _ := json.Marshal(s)
+		return string(b)
 	}
 	return ""
 }
@@ -44,7 +46,7 @@ type Server struct {
 }
 
 func (s Server) Format() string {
-	return fmtx.Yellow.XSPrintf("name=%s group=%s prefix=%s router=%s auth=%s",
+	return fmt.Sprintf("name=%s group=%s prefix=%s router=%s auth=%s",
 		s.Name, s.Group, s.Prefix, s.Router, s.Auth)
 }
 

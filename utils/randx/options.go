@@ -11,23 +11,22 @@ import (
 )
 
 const (
-	typeInt       = "int"        // 数字
-	typeFloat     = "float"      // 浮点数
-	typeSequence  = "sequence"   // 数字编号
-	typeTime      = "time"       // 时间
-	typeDate      = "date"       // 日期
-	typeUUID      = "uuid"       // uuid
-	typePhone     = "phone"      // 手机号
-	typeName      = "name"       // 姓名
-	typeIdCard    = "id_card"    // 身份证
-	typePlateNo   = "plate_no"   // 车牌号
-	typeEmail     = "email"      // 邮箱
-	typeIP        = "ip"         // ip地址
-	typeProvince  = "province"   // 省
-	typeCity      = "city"       // 市
-	typePassword  = "password"   // 密码
-	typeEnum      = "enum"       // 枚举
-	typeOtherEnum = "other_enum" // 其他枚举
+	typeInt      = "int"      // 数字
+	typeFloat    = "float"    // 浮点数
+	typeSequence = "sequence" // 数字编号
+	typeTime     = "time"     // 时间
+	typeDate     = "date"     // 日期
+	typeUUID     = "uuid"     // uuid
+	typePhone    = "phone"    // 手机号
+	typeName     = "name"     // 姓名
+	typeIdCard   = "id_card"  // 身份证
+	typePlateNo  = "plate_no" // 车牌号
+	typeEmail    = "email"    // 邮箱
+	typeIP       = "ip"       // ip地址
+	typeProvince = "province" // 省
+	typeCity     = "city"     // 市
+	typePassword = "password" // 密码
+	typeEnum     = "enum"     // 枚举
 )
 
 // Options 随机生成
@@ -142,9 +141,8 @@ func (o *Options) randString() string {
 	case typeTime:
 		return o.Args.TimeFmt()
 	case typeEnum:
-		return Enum(o.Args.Enums)
-	case typeOtherEnum:
-		return Enum(append(o.Enums, o.Args.Enums...))
+		from := append(o.Enums, o.Args.Enums...)
+		return StringFrom(from...)
 	default:
 		return String(o.Args.Length)
 	}
@@ -189,11 +187,11 @@ func NewArgs(args string) *Args {
 func (c *Args) Password() string {
 	switch c.Level {
 	case 2:
-		return StringWith(WithNumber|WithLowerLetter|WithUpperLetter, c.Length)
+		return StringUse(UseNumber|UseLowerLetter|UseUpperLetter, c.Length)
 	case 3:
-		return StringWith(WithNumber|WithLowerLetter|WithUpperLetter|WithSpecial, c.Length)
+		return StringUse(UseNumber|UseLowerLetter|UseUpperLetter|UseSpecialSymbols, c.Length)
 	default:
-		return StringWith(WithNumber, c.Length)
+		return StringUse(UseNumber, c.Length)
 	}
 }
 
@@ -229,7 +227,7 @@ func (c *Args) TimeFmt(format ...string) string {
 }
 
 func (c *Args) Enum() string {
-	return Enum(c.Enums)
+	return StringFrom(c.Enums...)
 }
 
 func (c *Args) String() string {

@@ -136,16 +136,16 @@ func PresignedGetObjects(ctx context.Context, minioPaths []string) ([]string, er
 }
 
 // UploadFileByUrl 通过文件路径上传文件到桶
-func UploadFileByUrl(ctx context.Context, bucketName string, fileName string, url string) (minioPath string, err error) {
-	var fileBytes []byte
-	if fileBytes, err = filex.GetFileBytesByUrl(url); err != nil {
-		return
+func UploadFileByUrl(ctx context.Context, bucketName string, fileName string, url string) (string, error) {
+	if fileBytes, err := filex.GetFileBytesByUrl(url); err != nil {
+		return "", errorx.Wrap(err, "get file bytes error")
+	} else {
+		minioPath := GetConfig().MinioPath(fileName)
+		if err = PutObject(ctx, bucketName, minioPath, bytes.NewBuffer(fileBytes)); err != nil {
+			return minioPath, errorx.Wrap(err, "put object error")
+		}
+		return minioPath, nil
 	}
-	minioPath = GetConfig().MinioPath(fileName)
-	if err = PutObject(ctx, bucketName, minioPath, bytes.NewBuffer(fileBytes)); err != nil {
-		return
-	}
-	return
 }
 
 // Handler minio控制器

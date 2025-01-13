@@ -12,7 +12,7 @@ import (
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
-type CacheClient interface {
+type Client interface {
 	Config() *Config                                                                // 获取配置
 	Set(ctx context.Context, key string, value any, expiration time.Duration) error // 更新缓存
 	Get(ctx context.Context, key string, value any) bool                            // 获取缓存（指针，任意类型）
@@ -33,13 +33,13 @@ func (c *LocalClient) Config() *Config {
 	return c.config
 }
 
-func (c *LocalClient) Set(ctx context.Context, key string, value any, d time.Duration) (err error) {
-	var bytes []byte
-	if bytes, err = c.convert.Marshal(value); err != nil {
-		return
+func (c *LocalClient) Set(ctx context.Context, key string, value any, d time.Duration) error {
+	if bytes, err := c.convert.Marshal(value); err != nil {
+		return errorx.Wrap(err, "marshal value error")
+	} else {
+		c.client.Set(c.config.GetKey(key), string(bytes), d)
+		return nil
 	}
-	c.client.Set(c.config.GetKey(key), string(bytes), d)
-	return
 }
 
 func (c *LocalClient) Get(ctx context.Context, key string, value any) bool {
@@ -82,10 +82,12 @@ func (c *LocalClient) Exist(ctx context.Context, keys ...string) bool {
 
 func (c *LocalClient) Expire(ctx context.Context, key string, d time.Duration) error {
 	key = c.config.GetKey(key)
-	if result, ok := c.client.Get(key); ok {
+	if result, ok := c.client.Get(key); !ok {
+		return errorx.New("key not found")
+	} else {
 		c.client.Set(key, result, d)
+		return nil
 	}
-	return errorx.New("")
 }
 
 // RedisClient redis缓存客户端
@@ -99,15 +101,13 @@ func (c *RedisClient) Config() *Config {
 	return c.config
 }
 
-func (c *RedisClient) Set(ctx context.Context, key string, value any, d time.Duration) (err error) {
-	var bytes []byte
-	if bytes, err = c.marshal.Marshal(value); err != nil {
-		return
+func (c *RedisClient) Set(ctx context.Context, key string, value any, d time.Duration) error {
+	if bytes, err := c.marshal.Marshal(value); err != nil {
+		return errorx.Wrap(err, "marshal value error")
+	} else if err = c.client.Set(ctx, c.config.GetKey(key), bytes, d).Err(); err != nil {
+		return errorx.Wrap(err, "set value error")
 	}
-	if err = c.client.Set(ctx, c.config.GetKey(key), bytes, d).Err(); err != nil {
-		return
-	}
-	return
+	return nil
 }
 
 func (c *RedisClient) Get(ctx context.Context, key string, value any) bool {
@@ -131,7 +131,7 @@ func (c *RedisClient) Delete(ctx context.Context, keys ...string) int64 {
 	var sum int64
 	_ = taskx.ExecWithBatches(len(keys), 100, func(x int, y int) error {
 		if s, err := c.client.Del(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
-			return err
+			return errorx.Wrap(err, "delete redis keys error")
 		} else {
 			sum += s
 			return nil
@@ -144,7 +144,7 @@ func (c *RedisClient) Exist(ctx context.Context, keys ...string) bool {
 	var sum int64
 	_ = taskx.ExecWithBatches(len(keys), 100, func(x int, y int) error {
 		if n, err := c.client.Exists(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
-			return err
+			return errorx.Wrap(err, "redis exists error")
 		} else {
 			sum += n
 			return nil
@@ -155,7 +155,7 @@ func (c *RedisClient) Exist(ctx context.Context, keys ...string) bool {
 
 func (c *RedisClient) Expire(ctx context.Context, key string, d time.Duration) error {
 	if err := c.client.Expire(ctx, c.config.GetKey(key), d).Err(); err != nil {
-		return err
+		return errorx.Wrap(err, "redis expire error")
 	}
 	return nil
 }

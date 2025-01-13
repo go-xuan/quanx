@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+
+	"github.com/go-xuan/quanx/types/boolx"
 )
 
 // SetDefaultValue 设置默认值
@@ -24,7 +26,7 @@ func SetDefaultValue(v interface{}, tag ...string) error {
 				case reflect.String:
 					field.SetString(value)
 				case reflect.Bool:
-					field.SetBool(value == "true")
+					field.SetBool(boolx.ValueOf(value))
 				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 					reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 					intVal, _ := strconv.ParseInt(value, 10, 64)
@@ -49,6 +51,8 @@ func MapToStruct(m map[string]string, v interface{}) error {
 			switch field.Kind() {
 			case reflect.String:
 				field.SetString(value)
+			case reflect.Bool:
+				field.SetBool(boolx.ValueOf(value))
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 				reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				intVal, _ := strconv.ParseInt(value, 10, 64)
@@ -61,7 +65,7 @@ func MapToStruct(m map[string]string, v interface{}) error {
 			}
 		} else if !field.IsValid() {
 			// 如果没有找到对应的字段则返回错误
-			return fmt.Errorf("no such field %q in the structure", key)
+			return fmt.Errorf("no such field %s in the structure", key)
 		}
 	}
 	return nil

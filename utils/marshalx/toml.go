@@ -4,13 +4,14 @@ import (
 	"bytes"
 
 	"github.com/BurntSushi/toml"
+	
+	"github.com/go-xuan/quanx/os/errorx"
 )
 
-func TomlMarshal(v any) (out []byte, err error) {
+func TomlMarshal(v any) ([]byte, error) {
 	var buffer bytes.Buffer
-	if err = toml.NewEncoder(&buffer).Encode(v); err != nil {
-		return
+	if err := toml.NewEncoder(&buffer).Encode(v); err != nil {
+		return nil, errorx.Wrap(err, "encode toml failed")
 	}
-	out = buffer.Bytes()
-	return
+	return buffer.Bytes(), nil
 }

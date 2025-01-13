@@ -455,36 +455,3 @@ func minInThree(a, b, c int) int {
 	}
 	return c
 }
-
-const (
-	Upper      = "upper"      // 大写
-	Lower      = "lower"      // 小写
-	UpperCamel = "upperCamel" // 大驼峰
-	LowerCamel = "lowerCamel" // 小驼峰
-	Snake      = "snake"      // 蛇形
-)
-
-func Transforms(str string, mode ...string) map[string]string {
-	var result = make(map[string]string)
-	for _, m := range mode {
-		result[m] = Transform(str, m)
-	}
-	return result
-}
-
-func Transform(str string, mode string) string {
-	switch mode {
-	case Upper:
-		return strings.ToUpper(str)
-	case Lower:
-		return strings.ToLower(str)
-	case UpperCamel:
-		return ToUpperCamel(str)
-	case LowerCamel:
-		return ToLowerCamel(str)
-	case Snake:
-		return ToSnake(str)
-	default:
-		return str
-	}
-}

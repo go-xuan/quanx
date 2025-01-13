@@ -1,11 +1,12 @@
 package emailx
 
 import (
+	"fmt"
+	
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
 
 	"github.com/go-xuan/quanx/core/configx"
-	"github.com/go-xuan/quanx/os/fmtx"
 )
 
 // Config 邮件服务器配置
@@ -21,7 +22,7 @@ func (e *Config) newDialer() *gomail.Dialer {
 }
 
 func (e *Config) Format() string {
-	return fmtx.Yellow.XSPrintf("host=%s port=%v username=%s password=%s", e.Host, e.Port, e.Username, e.Password)
+	return fmt.Sprintf("host=%s port=%v username=%s password=%s", e.Host, e.Port, e.Username, e.Password)
 }
 
 func (*Config) Reader() *configx.Reader {

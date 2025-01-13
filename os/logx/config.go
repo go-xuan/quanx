@@ -1,6 +1,7 @@
 package logx
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/os/filex"
-	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/intx"
 )
@@ -42,6 +42,7 @@ type Config struct {
 	FileName   string            `json:"fileName" yaml:"fileName" default:"app.log"`                     // 日志文件名
 	Dir        string            `json:"dir" yaml:"dir" default:"resource/log"`                          // 日志保存文件夹
 	Level      string            `json:"level" yaml:"level" default:"info"`                              // 默认日志级别
+	Formatter  string            `json:"formatter" yaml:"formatter" default:"default"`                   // 日志格式化
 	TimeFormat string            `json:"timeFormat" yaml:"timeFormat" default:"2006-01-02 15:04:05.999"` // 时间格式化
 	UseColor   bool              `json:"useColor" yaml:"useColor" default:"false"`                       // 使用颜色
 	Output     string            `json:"output" yaml:"output" default:"default"`                         // 默认日志输出
@@ -53,7 +54,7 @@ type Config struct {
 }
 
 func (c *Config) Format() string {
-	return fmtx.Yellow.XSPrintf("logPath=%s level=%s output=%s maxSize=%v maxAge=%v backups=%v",
+	return fmt.Sprintf("logPath=%s level=%s output=%s maxSize=%v maxAge=%v backups=%v",
 		c.LogPath(), c.Level, c.Output, c.MaxSize, c.MaxAge, c.Backups)
 }
 
@@ -72,7 +73,7 @@ func (c *Config) Execute() error {
 	// 添加hook
 	log.AddHook(c.NewHook())
 	// 更新formatter
-	log.SetFormatter(c.Formatter())
+	log.SetFormatter(c.LogFormatter())
 	log.SetLevel(c.GetLogrusLevel())
 	log.SetReportCaller(c.Caller)
 	return nil
@@ -86,9 +87,22 @@ func (c *Config) LogPath(level ...string) string {
 	return filepath.Join(c.Dir, filename)
 }
 
-func (c *Config) Formatter() log.Formatter {
+func (c *Config) LogFormatter() log.Formatter {
 	host, _ := os.Hostname()
-	return &LogFormatter{timeFormat: c.TimeFormat, host: host, Output: c.Output, useColor: c.UseColor}
+	switch c.Formatter {
+	case "json":
+		return &jsonFormatter{
+			timeFormat: c.TimeFormat,
+			hostname:   host,
+		}
+	default:
+		return &defaultFormatter{
+			timeFormat: c.TimeFormat,
+			hostname:   host,
+			Output:     c.Output,
+			useColor:   c.UseColor,
+		}
+	}
 }
 
 func (c *Config) Writer(output ...string) io.Writer {
@@ -117,7 +131,7 @@ func (c *Config) Writer(output ...string) io.Writer {
 func (c *Config) NewHook() *Hook {
 	hook := newHook()
 	hook.InitWriter(c.Writer())
-	hook.SetFormatter(c.Formatter())
+	hook.SetFormatter(c.LogFormatter())
 	if c.Outputs != nil {
 		for level, output := range c.Outputs {
 			hook.SetWriter(ToLogrusLevel(level), c.Writer(output))

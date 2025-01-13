@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/utils/randx"
 )
 
@@ -20,28 +21,28 @@ type SmsCaptcha struct {
 	store    *CaptchaStore
 }
 
-func (c *SmsCaptcha) Send(ctx context.Context, phone string) (captcha string, expired int, err error) {
+func (c *SmsCaptcha) Send(ctx context.Context, phone string) (string, int, error) {
 	// 根据模板生成消息体
-	captcha = randx.NumberCode(6)
+	captcha := randx.NumberCode(6)
 
 	// 构建模板填充数据
 	var data = make(map[string]string)
 	data["captcha"] = captcha
 
-	var content string
-	if content, err = NewMessageByTemplate(c.template, data); err != nil {
-		return
+	content, err := NewMessageByTemplate(c.template, data)
+	if err != nil {
+		return "", 0, errorx.Wrap(err, "new message content error")
 	}
 	fmt.Println(content)
 
 	// todo 短信发送逻辑处理
 
 	// 存储验证码
-	expired = c.store.expired
+	expired := c.store.expired
 	if err = c.store.set(ctx, phone, captcha); err != nil {
-		return
+		return "", 0, errorx.Wrap(err, "store captcha error")
 	}
-	return
+	return content, expired, nil
 }
 
 func (c *SmsCaptcha) Verify(ctx context.Context, phone, captcha string) bool {

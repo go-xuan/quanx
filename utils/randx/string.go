@@ -23,24 +23,37 @@ func String(length ...int) string {
 	return string(bytes)
 }
 
-// StringWith 根据with生成字符串，可用于生成不同强度的密码
-func StringWith(with int, length ...int) string {
-	var l = IntRange(8, 16)
-	if len(length) > 0 && length[0] > 0 {
-		l = length[0]
+func StringFrom(from ...string) string {
+	if l := len(from); l > 0 {
+		i := IntRange(0, l-1)
+		return from[i]
 	}
-	bytes := make([]byte, l)
+	return ""
+}
+
+type Use int
+
+const (
+	UseNumber         Use = 1 << 0 // 数字
+	UseLowerLetter    Use = 1 << 1 // 小写字母
+	UseUpperLetter    Use = 1 << 2 // 大写字母
+	UseSpecialSymbols Use = 1 << 3 // 特殊符号
+)
+
+// StringUse 根据use生成包含不同类型字符的字符串
+func StringUse(uses Use, length int) string {
+	bytes := make([]byte, length)
 	var temp = numbers
-	if with&WithLowerLetter > 0 {
+	if uses&UseLowerLetter > 0 {
 		temp += lowerLetters
 	}
-	if with&WithUpperLetter > 0 {
+	if uses&UseUpperLetter > 0 {
 		temp += upperLetters
 	}
-	if with&WithSpecial > 0 {
+	if uses&UseSpecialSymbols > 0 {
 		temp += special
 	}
-	for i := 0; i < l; i++ {
+	for i := 0; i < length; i++ {
 		bytes[i] = SelectByte(temp)
 	}
 	for i := range bytes {
@@ -67,11 +80,14 @@ func UUID() string {
 
 // Name 随机姓名
 func Name() string {
-	sb := strings.Builder{}
-	sb.WriteString(Split(surname, ","))
-	sb.WriteString(Split(numberCn, ","))
-	sb.WriteString(Split(shengXiao, ","))
-	return sb.String()
+	second := StringFrom(numberCn, shengXiao)
+	name := Split(surname, ",")
+	name = name + Split(second, ",")
+	if Bool() {
+		third := StringFrom(numberCn, shengXiao)
+		name = name + Split(third, ",")
+	}
+	return name
 }
 
 // Phone 随机手机号
@@ -134,11 +150,9 @@ func IP() string {
 }
 
 func Province() string {
-	list := strings.Split(provinceName, ",")
-	return list[IntRange(0, len(list)-1)]
+	return Split(provinceName, ",")
 }
 
 func City() string {
-	list := strings.Split(hubeiCityName, ",")
-	return list[IntRange(0, len(list)-1)]
+	return Split(hubeiCityName, ",")
 }

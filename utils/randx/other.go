@@ -10,10 +10,9 @@ func Bool() bool {
 	return IntRange(0, 1) == 0
 }
 
-// Split 分割取值
+// Split 分割后随机取值
 func Split(str, sep string) string {
-	list := strings.Split(str, sep)
-	return list[IntRange(0, len(list)-1)]
+	return StringFrom(strings.Split(str, sep)...)
 }
 
 // SelectByte 选择字节
@@ -22,8 +21,12 @@ func SelectByte(str string) byte {
 }
 
 // Enum 枚举
-func Enum(enums []string) string {
-	return enums[IntRange(0, len(enums)-1)]
+func Enum[T string | int | int64 | float64](enums []T) T {
+	if l := len(enums); l > 0 {
+		i := IntRange(0, l-1)
+		return enums[i]
+	}
+	return T(0)
 }
 
 // Time 一天内随机时间

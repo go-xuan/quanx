@@ -32,30 +32,32 @@ func TestDecrypt(t *testing.T) {
 }
 
 // 密码RSA解密获取明文
-func DecryptPassword(password string, pemPath string) (plaintext []byte, err error) {
-	var cipherText []byte
-	if cipherText, err = base64.StdEncoding.DecodeString(password); err != nil {
-		return
+func DecryptPassword(password string, pemPath string) ([]byte, error) {
+	cipherText, err := base64.StdEncoding.DecodeString(password)
+	if err != nil {
+		return nil, err
 	}
 
 	var privateKey []byte
 	if privateKey, err = os.ReadFile(pemPath); err != nil {
-		return
+		return nil, err
 	}
+	var plaintext []byte
 	if plaintext, err = PriKeyDecrypt(cipherText, string(privateKey)); err != nil {
-		return
+		return nil, err
 	}
-	return
+	return plaintext, nil
 }
 
 // PriKeyDecrypt 私钥解密
-func PriKeyDecrypt(cipherText []byte, privateKey string) (plainText []byte, err error) {
+func PriKeyDecrypt(cipherText []byte, privateKey string) ([]byte, error) {
 	gRsa := gorsa.RSASecurity{}
-	if err = gRsa.SetPrivateKey(privateKey); err != nil {
-		return
+	if err := gRsa.SetPrivateKey(privateKey); err != nil {
+		return nil, err
 	}
-	if plainText, err = gRsa.PriKeyDECRYPT(cipherText); err != nil {
-		return
+	if plainText, err := gRsa.PriKeyDECRYPT(cipherText); err != nil {
+		return nil, err
+	} else {
+		return plainText, nil
 	}
-	return
 }

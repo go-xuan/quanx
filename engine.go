@@ -18,7 +18,6 @@ import (
 	"github.com/go-xuan/quanx/net/ipx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/os/filex"
-	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/os/logx"
 	"github.com/go-xuan/quanx/os/syncx"
 	"github.com/go-xuan/quanx/os/taskx"
@@ -162,6 +161,7 @@ func (e *Engine) initInnerConfig() {
 	var serverName = stringx.IfZero(e.config.Server.Name, "app")
 	logConf := anyx.IfZero(e.config.Log, &logx.Config{FileName: serverName + ".log"})
 	e.ExecuteConfigurator(logConf, true)
+	e.config.Log = logConf
 
 	// 初始化数据库连接
 	if e.config.Database != nil {
@@ -246,7 +246,12 @@ func (e *Engine) startWebServer() {
 	if e.ginEngine == nil {
 		e.ginEngine = gin.New()
 	}
-	e.ginEngine.Use(gin.Recovery(), ginx.RequestLogFmt)
+	e.ginEngine.Use(gin.Recovery())
+	if e.config.Log.Formatter == "json" {
+		e.ginEngine.Use(ginx.JsonLogFormatter)
+	} else {
+		e.ginEngine.Use(ginx.DefaultLogFormatter)
+	}
 	e.ginEngine.Use(e.ginMiddlewares...)
 
 	host := e.config.Server.Host
@@ -259,9 +264,8 @@ func (e *Engine) startWebServer() {
 	// 获取服务端口
 	port := strconv.Itoa(e.config.Server.Port)
 	if e.switches[customPort] {
-		port = os.Getenv("PORT")
+		port = os.Getenv("CUSTOM_PORT")
 	}
-
 	// 启动服务
 	log.Infof(`API接口请求地址: http://%s:%s`, host, port)
 	if err := e.ginEngine.Run(":" + port); err != nil {
@@ -321,10 +325,10 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 		}
 		if err := configx.Execute(configurator); err != nil {
 			log.WithField("configFrom", configFrom).
-				Error(fmtx.Red.String("configurator execute failed ==> "), err)
+				Error("configurator execute failed ==> ", err)
 		} else {
 			log.WithField("configFrom", configFrom).
-				Info(fmtx.Green.String("configurator execute success"))
+				Info("configurator execute success")
 		}
 	}
 }

@@ -371,23 +371,22 @@ func FileName(path string) string {
 }
 
 // MustOpen 强制打开文件
-func MustOpen(filePath string, fileName string) (file *os.File, err error) {
-	var fileAbsPath string
-	if fileAbsPath, err = filepath.Abs(filepath.Join(filePath, fileName)); err != nil {
-		return
+func MustOpen(filePath string, fileName string) (*os.File, error) {
+	path, err := filepath.Abs(filepath.Join(filePath, fileName))
+	if err != nil {
+		return nil, errorx.Wrap(err, "abs path error")
 	}
-	if perm := CheckPermission(fileAbsPath); perm == true {
-		err = errorx.Errorf("file permission denied: %s", fileAbsPath)
-		return
+	if perm := CheckPermission(path); perm == true {
+		return nil, errorx.Errorf("file permission denied: %s", path)
 	}
-	if err = CreateIsNotExist(fileAbsPath); err != nil {
-		return
+	if err = CreateIsNotExist(path); err != nil {
+		return nil, errorx.Wrap(err, "create file error")
 	}
-
-	if file, err = Open(fileAbsPath, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644); err != nil {
-		return
+	var file *os.File
+	if file, err = Open(path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644); err != nil {
+		return nil, errorx.Wrap(err, "open file error")
 	}
-	return
+	return file, nil
 }
 
 // Open 打开文件

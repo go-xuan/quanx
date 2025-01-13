@@ -5,6 +5,8 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	"github.com/go-xuan/quanx/os/errorx"
 )
 
 var _handler *Handler
@@ -37,12 +39,14 @@ func (h *Handler) GetClient() *mongo.Client {
 	return h.client
 }
 
-func (h *Handler) GetDatabaseNames(ctx context.Context) (dbs []string, err error) {
-	dbs, err = h.client.ListDatabaseNames(ctx, bson.M{})
-	return
+func (h *Handler) GetDatabaseNames(ctx context.Context) ([]string, error) {
+	if dbs, err := h.client.ListDatabaseNames(ctx, bson.M{}); err != nil {
+		return nil, errorx.Wrap(err, "get mongo db names failed")
+	} else {
+		return dbs, nil
+	}
 }
 
-func (h *Handler) GetCollection(collection string) (mc *mongo.Collection) {
-	mc = h.client.Database(h.config.Database).Collection(collection)
-	return
+func (h *Handler) GetCollection(collection string) *mongo.Collection {
+	return h.client.Database(h.config.Database).Collection(collection)
 }

@@ -26,7 +26,7 @@ type EngineOptionFunc = func(e *Engine)
 
 func SetPort(port int) EngineOptionFunc {
 	return func(e *Engine) {
-		_ = os.Setenv("PORT", strconv.Itoa(port))
+		_ = os.Setenv("CUSTOM_PORT", strconv.Itoa(port))
 		e.switches[customPort] = true
 	}
 }

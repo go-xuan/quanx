@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/wenlng/go-captcha/captcha"
 )
 
@@ -23,16 +24,16 @@ type ClickCaptcha struct {
 	store *CaptchaStore
 }
 
-func (impl *ClickCaptcha) New(ctx context.Context) (key, image, thumb string, err error) {
-	var dots = make(map[int]captcha.CharDot)
-	if dots, image, thumb, key, err = impl.capt.Generate(); err != nil {
-		return
+func (impl *ClickCaptcha) New(ctx context.Context) (string, string, string, error) {
+	if dots, image, thumb, key, err := impl.capt.Generate(); err != nil {
+		return "", "", "", errorx.Wrap(err, "generate captcha failed")
+	} else {
+		expiration := time.Duration(impl.store.expired) * time.Second
+		if err = impl.store.client.Set(ctx, key, dots, expiration); err != nil {
+			return "", "", "", errorx.Wrap(err, "store captcha failed")
+		}
+		return key, image, thumb, nil
 	}
-	expire := impl.store.expired
-	if err = impl.store.client.Set(ctx, key, dots, time.Duration(expire)*time.Second); err != nil {
-		return
-	}
-	return
 }
 
 func (impl *ClickCaptcha) Verify(ctx context.Context, key, answer string) bool {

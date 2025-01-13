@@ -1,6 +1,7 @@
 package cachex
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/redisx"
 	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"
@@ -30,7 +30,7 @@ type Config struct {
 }
 
 func (c *Config) Format() string {
-	return fmtx.Yellow.XSPrintf("type=%s source=%s prefix=%s marshal=%s",
+	return fmt.Sprintf("type=%s source=%s prefix=%s marshal=%s",
 		c.Type, c.Source, c.Prefix, c.Marshal)
 }
 
@@ -51,7 +51,7 @@ func (c *Config) Execute() error {
 		_handler = &Handler{
 			multi:     false,
 			client:    client,
-			clientMap: make(map[string]CacheClient),
+			clientMap: make(map[string]Client),
 		}
 	} else {
 		_handler.multi = true
@@ -61,7 +61,7 @@ func (c *Config) Execute() error {
 }
 
 // InitClient 根据缓存配置初始化缓存客户端
-func (c *Config) InitClient() CacheClient {
+func (c *Config) InitClient() Client {
 	switch c.Type {
 	case CacheTypeRedis:
 		return &RedisClient{
@@ -131,7 +131,7 @@ func (m MultiConfig) Execute() error {
 	if _handler == nil {
 		_handler = &Handler{
 			multi:     true,
-			clientMap: make(map[string]CacheClient),
+			clientMap: make(map[string]Client),
 		}
 	} else {
 		_handler.multi = true

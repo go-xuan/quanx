@@ -18,5 +18,7 @@ func TestJsonGet(t *testing.T) {
 		  ]
 		}`
 	fmt.Println(gjson.Get(j, "friends.1").Value())
-	fmt.Println(Get(j, "friends.[1].first").Value())
+	fmt.Println(gjson.Get(j, "friends.#").Value())
+	fmt.Println(gjson.Get(j, "friends.#.first").Value())
+	fmt.Println(Get(j, "friends.1.first").Value())
 }

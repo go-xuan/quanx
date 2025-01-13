@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/fmtx"
 )
 
 // Config ES配置
@@ -20,7 +19,7 @@ type Config struct {
 }
 
 func (e *Config) Format() string {
-	return fmtx.Yellow.XSPrintf("host=%s port=%v", e.Host, e.Port)
+	return fmt.Sprintf("host=%s port=%v", e.Host, e.Port)
 }
 
 func (*Config) Reader() *configx.Reader {
