@@ -25,18 +25,21 @@ func (w *ConsoleWriter) Write(bytes []byte) (int, error) {
 // FileWriter 文件输出
 type FileWriter struct {
 	path string
+	file *os.File
 }
 
 func (w *FileWriter) Write(bytes []byte) (int, error) {
-	filex.CreateIfNotExist(w.path)
-	file, err := os.OpenFile(w.path, filex.AppendOnly, 0666)
-	if err != nil {
-		return 0, err
+	if w.file == nil {
+		filex.CreateIfNotExist(w.path)
+		if file, err := os.OpenFile(w.path, os.O_APPEND|os.O_WRONLY, 0644); err != nil {
+			return 0, err
+		} else {
+			w.file = file
+		}
 	}
-	defer file.Close()
-	var n int
-	if n, err = file.Write(bytes); err != nil {
+	if n, err := w.file.Write(bytes); err != nil {
 		return n, err
+	} else {
+		return n, nil
 	}
-	return n, nil
 }

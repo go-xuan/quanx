@@ -167,8 +167,10 @@ func (e *Engine) initAppConfig() {
 func (e *Engine) initInnerConfig() {
 	e.checkRunning()
 	// 初始化日志
-	serverName := stringx.IfZero(e.config.Server.Name, "app")
-	logConf := anyx.IfZero(e.config.Log, &logx.Config{FileName: serverName + ".log"})
+	logConf := anyx.IfZero(e.config.Log, &logx.Config{})
+	if logConf.Name == "" {
+		logConf.Name = e.config.Server.Name
+	}
 	e.ExecuteConfigurator(logConf, true)
 	e.config.Log = logConf
 
@@ -255,7 +257,7 @@ func (e *Engine) startWebServer() {
 	if e.ginEngine == nil {
 		e.ginEngine = gin.New()
 	}
-	e.ginEngine.Use(gin.Recovery())
+	e.ginEngine.Use(gin.Recovery(), ginx.Trace)
 	if e.config.Log.Formatter == "json" {
 		e.ginEngine.Use(ginx.JsonLogFormatter)
 	} else {

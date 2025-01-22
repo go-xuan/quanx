@@ -24,10 +24,10 @@ func NewHook(writer any, formatter log.Formatter) *Hook {
 	hook.SetFormatter(formatter)
 	switch writer.(type) {
 	case string:
-		hook.InitWriter(&FileWriter{writer.(string)})
+		hook.InitWriter(&FileWriter{path: writer.(string)})
 	case map[log.Level]string:
 		for level, path := range writer.(map[log.Level]string) {
-			hook.SetWriter(level, &FileWriter{path})
+			hook.SetWriter(level, &FileWriter{path: path})
 		}
 	case Writers:
 		hook.InitWriters(writer.(Writers))

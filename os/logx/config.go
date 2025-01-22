@@ -26,7 +26,8 @@ const (
 	FatalLevel = "fatal"
 	PanicLevel = "panic"
 
-	TimeFormat = "2006-01-02 15:04:05.999"
+	TimeFormat    = "2006-01-02 15:04:05.999"
+	LogFileSuffix = ".log"
 
 	DefaultOutput    = "default"
 	ConsoleOutput    = "console"
@@ -39,7 +40,7 @@ func NewConfigurator(conf *Config) configx.Configurator {
 
 // Config 日志配置
 type Config struct {
-	FileName   string            `json:"fileName" yaml:"fileName" default:"app.log"`                     // 日志文件名
+	Name       string            `json:"name" yaml:"name" default:"app"`                                 // 日志文件名
 	Dir        string            `json:"dir" yaml:"dir" default:"resource/log"`                          // 日志保存文件夹
 	Level      string            `json:"level" yaml:"level" default:"info"`                              // 默认日志级别
 	Formatter  string            `json:"formatter" yaml:"formatter" default:"default"`                   // 日志格式化
@@ -80,11 +81,11 @@ func (c *Config) Execute() error {
 }
 
 func (c *Config) LogPath(level ...string) string {
-	filename := c.FileName
-	if len(level) > 0 && level[0] != "" {
-		filename = strings.Replace(filename, ".log", "-"+level[0]+".log", -1)
+	name := c.Name
+	if len(level) > 0 && level[0] != "" && level[0] != c.Level {
+		name = name + "_" + level[0]
 	}
-	return filepath.Join(c.Dir, filename)
+	return filepath.Join(c.Dir, name) + LogFileSuffix
 }
 
 func (c *Config) LogFormatter() log.Formatter {
@@ -128,13 +129,33 @@ func (c *Config) Writer(output ...string) io.Writer {
 	}
 }
 
+func (c *Config) FileWriter(level string, path ...string) io.Writer {
+	var writer = &FileWriter{}
+	if len(path) > 0 && path[0] != "" {
+		writer.path = path[0]
+	} else {
+		writer.path = c.LogPath(level)
+	}
+	return writer
+}
+
 func (c *Config) NewHook() *Hook {
 	hook := newHook()
 	hook.InitWriter(c.Writer())
 	hook.SetFormatter(c.LogFormatter())
+	// 重定向日志输出
 	if c.Outputs != nil {
 		for level, output := range c.Outputs {
-			hook.SetWriter(ToLogrusLevel(level), c.Writer(output))
+			// 排除默认日志级别
+			if level != c.Level {
+				var writer io.Writer
+				if output == DefaultOutput {
+					writer = c.FileWriter(level)
+				} else {
+					writer = c.Writer(output)
+				}
+				hook.SetWriter(ToLogrusLevel(level), writer)
+			}
 		}
 	}
 	return hook
