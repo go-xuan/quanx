@@ -17,6 +17,13 @@ func (e *Enum[KT, VT]) Get(k KT) VT {
 	return e.data[k]
 }
 
+func (e *Enum[KT, VT]) Exist(k KT) bool {
+	if _, ok := e.data[k]; ok {
+		return true
+	}
+	return false
+}
+
 func (e *Enum[KT, VT]) Add(k KT, v VT) *Enum[KT, VT] {
 	if e.data == nil {
 		e.keys = make([]KT, 0)
@@ -56,6 +63,13 @@ func (e *StringEnum[T]) Get(k string) T {
 	return e.data[k]
 }
 
+func (e *StringEnum[T]) Exist(k string) bool {
+	if _, ok := e.data[k]; ok {
+		return true
+	}
+	return false
+}
+
 func (e *StringEnum[T]) Add(k string, v T) *StringEnum[T] {
 	if e.data == nil {
 		e.keys = make([]string, 0)
@@ -92,6 +106,13 @@ func NewIntEnum[T any]() *IntEnum[T] {
 
 func (e *IntEnum[T]) Get(k int) T {
 	return e.data[k]
+}
+
+func (e *IntEnum[T]) Exist(k int) bool {
+	if _, ok := e.data[k]; ok {
+		return true
+	}
+	return false
 }
 
 func (e *IntEnum[T]) Add(k int, v T) *IntEnum[T] {

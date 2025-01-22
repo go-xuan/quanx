@@ -26,7 +26,7 @@ type Client interface {
 type LocalClient struct {
 	config  *Config
 	client  *cache.Cache
-	convert *marshalx.Case
+	marshal marshalx.Strategy
 }
 
 func (c *LocalClient) Config() *Config {
@@ -34,7 +34,7 @@ func (c *LocalClient) Config() *Config {
 }
 
 func (c *LocalClient) Set(ctx context.Context, key string, value any, d time.Duration) error {
-	if bytes, err := c.convert.Marshal(value); err != nil {
+	if bytes, err := c.marshal.Marshal(value); err != nil {
 		return errorx.Wrap(err, "marshal value error")
 	} else {
 		c.client.Set(c.config.GetKey(key), string(bytes), d)
@@ -44,7 +44,7 @@ func (c *LocalClient) Set(ctx context.Context, key string, value any, d time.Dur
 
 func (c *LocalClient) Get(ctx context.Context, key string, value any) bool {
 	if result := c.GetString(ctx, key); result != "" {
-		if err := c.convert.Unmarshal([]byte(result), value); err == nil {
+		if err := c.marshal.Unmarshal([]byte(result), value); err == nil {
 			return true
 		}
 	}
@@ -94,7 +94,7 @@ func (c *LocalClient) Expire(ctx context.Context, key string, d time.Duration) e
 type RedisClient struct {
 	config  *Config
 	client  redis.UniversalClient
-	marshal *marshalx.Case
+	marshal marshalx.Strategy
 }
 
 func (c *RedisClient) Config() *Config {

@@ -41,7 +41,7 @@ func (s *Scanner) Scan(v any) error {
 		log.Error("get nacos config content failed: ", s.Info(), err)
 		return errorx.Wrap(err, "get nacos config content failed")
 	}
-	if err = marshalx.NewCase(s.DataId).Unmarshal([]byte(content), v); err != nil {
+	if err = marshalx.Apply(s.DataId).Unmarshal([]byte(content), v); err != nil {
 		log.Error("loading nacos config failed: ", s.Info(), err)
 		return errorx.Wrap(err, "load nacos config failed")
 	}

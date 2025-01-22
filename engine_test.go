@@ -7,7 +7,7 @@ import (
 func TestEngineRun(t *testing.T) {
 	// 服务启动
 	NewEngine(
-		SetPort(9991),
+		SetPort(9995),
 		EnableDebug(),
 	).RUN()
 }

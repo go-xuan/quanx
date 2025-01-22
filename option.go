@@ -1,10 +1,8 @@
 package quanx
 
 import (
-	"os"
-	"strconv"
-
 	"github.com/gin-gonic/gin"
+
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/gormx"
 )
@@ -26,7 +24,11 @@ type EngineOptionFunc = func(e *Engine)
 
 func SetPort(port int) EngineOptionFunc {
 	return func(e *Engine) {
-		_ = os.Setenv("CUSTOM_PORT", strconv.Itoa(port))
+		if server := e.config.Server; server == nil {
+			e.config.Server = &Server{Port: port}
+		} else {
+			server.Port = port
+		}
 		e.switches[customPort] = true
 	}
 }

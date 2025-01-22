@@ -67,13 +67,13 @@ func (c *Config) InitClient() Client {
 		return &RedisClient{
 			config:  c,
 			client:  redisx.Client(c.Source),
-			marshal: marshalx.NewCase(c.Marshal),
+			marshal: marshalx.Apply(c.Marshal),
 		}
 	case CacheTypeLocal:
 		return &LocalClient{
 			config:  c,
 			client:  cache.New(time.Duration(-1), time.Duration(-1)),
-			convert: marshalx.NewCase(c.Marshal),
+			marshal: marshalx.Apply(c.Marshal),
 		}
 	default:
 		log.Error("cache client not support type: ", c.Type)

@@ -1,7 +1,6 @@
 package quanx
 
 import (
-	"os"
 	"path/filepath"
 	"strconv"
 
@@ -65,7 +64,7 @@ func NewEngine(opts ...EngineOptionFunc) *Engine {
 			switches:       make(map[Option]bool),
 		}
 		gin.SetMode(gin.ReleaseMode)
-		engine.SetOptions(opts...)
+		engine.doOptionFuncs(opts...)
 	}
 	// 设置默认日志输出
 	log.SetOutput(logx.DefaultWriter())
@@ -120,25 +119,35 @@ func (e *Engine) enableQueue() {
 // 加载服务配置文件
 func (e *Engine) initAppConfig() {
 	e.checkRunning()
-	var config = e.config
-	var server = &Server{}
+	config := e.config
+	server := &Server{}
+	if e.switches[customPort] && config.Server != nil {
+		server.Port = config.Server.Port
+	}
 	// 先设置默认值
 	if err := anyx.SetDefaultValue(server); err != nil {
 		panic(errorx.Wrap(err, "set default value error"))
-	} else {
-		config.Server = server
 	}
 	// 读取配置文件
 	if path := e.GetConfigPath(constx.DefaultConfigFilename); filex.Exists(path) {
-		if err := marshalx.UnmarshalFromFile(path, config); err != nil {
-			panic(errorx.Wrap(err, "unmarshal file failed: "+path))
+		if err := marshalx.Apply(path).Read(path, config); err != nil {
+			panic(errorx.Wrap(err, "unmarshal file error:"+path))
 		}
-	} else if err := marshalx.WriteYaml(path, config); err != nil {
-		panic(errorx.Wrap(err, "set default value error"))
+		if e.switches[customPort] {
+			config.Server.Port = server.Port
+		}
+	} else {
+		config.Server = server
+		if err := marshalx.Apply(path).Write(path, config); err != nil {
+			panic(errorx.Wrap(err, "save config file error:"+path))
+		}
 	}
+
+	// 设置host
 	if config.Server.Host == "" {
 		config.Server.Host = ipx.GetLocalIP()
 	}
+
 	// 从nacos加载配置
 	if e.switches[enableNacos] && config.Nacos != nil {
 		e.ExecuteConfigurator(config.Nacos, true)
@@ -158,7 +167,7 @@ func (e *Engine) initAppConfig() {
 func (e *Engine) initInnerConfig() {
 	e.checkRunning()
 	// 初始化日志
-	var serverName = stringx.IfZero(e.config.Server.Name, "app")
+	serverName := stringx.IfZero(e.config.Server.Name, "app")
 	logConf := anyx.IfZero(e.config.Log, &logx.Config{FileName: serverName + ".log"})
 	e.ExecuteConfigurator(logConf, true)
 	e.config.Log = logConf
@@ -263,9 +272,6 @@ func (e *Engine) startWebServer() {
 
 	// 获取服务端口
 	port := strconv.Itoa(e.config.Server.Port)
-	if e.switches[customPort] {
-		port = os.Getenv("CUSTOM_PORT")
-	}
 	// 启动服务
 	log.Infof(`API接口请求地址: http://%s:%s`, host, port)
 	if err := e.ginEngine.Run(":" + port); err != nil {
@@ -314,7 +320,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 			}
 		} else {
 			path := e.GetConfigPath(reader.FilePath)
-			if err := marshalx.UnmarshalFromFile(e.GetConfigPath(reader.FilePath), configurator); err == nil {
+			if err := marshalx.Apply(path).Read(path, configurator); err == nil {
 				configFrom, mustRun = "local@"+path, true
 			}
 		}
@@ -335,7 +341,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 
 // LoadingLocalConfig 加载本地配置项（立即加载）
 func (e *Engine) LoadingLocalConfig(v any, path string) {
-	if err := marshalx.UnmarshalFromFile(path, v); err != nil {
+	if err := marshalx.Apply(path).Read(path, v); err != nil {
 		panic(errorx.Wrap(err, "unmarshal config file failed"))
 	}
 }
@@ -349,8 +355,8 @@ func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	})
 }
 
-// SetOptions 设置启动项
-func (e *Engine) SetOptions(funcs ...EngineOptionFunc) {
+// doOptionFuncs 执行启动项函数
+func (e *Engine) doOptionFuncs(funcs ...EngineOptionFunc) {
 	e.checkRunning()
 	if len(funcs) > 0 {
 		for _, f := range funcs {

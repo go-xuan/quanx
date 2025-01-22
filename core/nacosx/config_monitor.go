@@ -42,7 +42,7 @@ func (d *ConfigData) SetChanged(changed bool) {
 }
 
 func (d *ConfigData) Unmarshal(v any) error {
-	return marshalx.NewCase(d.dataId).Unmarshal([]byte(d.content), v)
+	return marshalx.Apply(d.dataId).Unmarshal([]byte(d.content), v)
 }
 
 func getKey(group, dataId string) string {

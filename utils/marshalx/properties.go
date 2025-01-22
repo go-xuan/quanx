@@ -8,9 +8,16 @@ import (
 	"github.com/magiconair/properties"
 
 	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/filex"
 )
 
-func PropertiesMarshal(v any) ([]byte, error) {
+type Properties struct{}
+
+func (s Properties) Name() string {
+	return propertiesStrategy
+}
+
+func (s Properties) Marshal(v interface{}) ([]byte, error) {
 	var lines []string
 	val := reflect.ValueOf(v)
 	for i := 0; i < val.NumField(); i++ {
@@ -21,14 +28,13 @@ func PropertiesMarshal(v any) ([]byte, error) {
 	return []byte(strings.Join(lines, "\n")), nil
 }
 
-// PropertiesUnmarshal 读取properties文件到指针
-func PropertiesUnmarshal(bytes []byte, v any) error {
+func (s Properties) Unmarshal(data []byte, v interface{}) error {
 	valueRef := reflect.ValueOf(v)
 	if valueRef.Type().Kind() != reflect.Ptr {
 		// 对象必须是指针类型
-		return errorx.New("the config must be pointer type")
+		return errorx.New("the value must be pointer type")
 	}
-	pp, err := properties.Load(bytes, properties.UTF8)
+	pp, err := properties.Load(data, properties.UTF8)
 	if err != nil {
 		return errorx.Wrap(err, "load properties error")
 	}
@@ -56,6 +62,25 @@ func PropertiesUnmarshal(bytes []byte, v any) error {
 			}
 			fmt.Println("the type not matched: ", field.Kind())
 		}
+	}
+	return nil
+}
+
+func (s Properties) Read(path string, v interface{}) error {
+	if !filex.Exists(path) {
+		return errorx.Errorf("the file not exist: %s", path)
+	} else if data, err := filex.ReadFile(path); err != nil {
+		return errorx.Wrap(err, "read file error")
+	} else {
+		return s.Unmarshal(data, v)
+	}
+}
+
+func (s Properties) Write(path string, v interface{}) error {
+	if data, err := s.Marshal(v); err != nil {
+		return errorx.Wrap(err, "properties marshal error")
+	} else if err = filex.WriteFile(path, data); err != nil {
+		return errorx.Wrap(err, "write file error")
 	}
 	return nil
 }
