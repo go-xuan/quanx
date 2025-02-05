@@ -3,7 +3,6 @@ package logx
 import (
 	"fmt"
 	"io"
-	"reflect"
 	"runtime"
 	"sync"
 
@@ -19,31 +18,9 @@ func newHook() *Hook {
 	}
 }
 
-func NewHook(writer any, formatter log.Formatter) *Hook {
-	hook := newHook()
-	hook.SetFormatter(formatter)
-	switch writer.(type) {
-	case string:
-		hook.InitWriter(&FileWriter{path: writer.(string)})
-	case map[log.Level]string:
-		for level, path := range writer.(map[log.Level]string) {
-			hook.SetWriter(level, &FileWriter{path: path})
-		}
-	case Writers:
-		hook.InitWriters(writer.(Writers))
-	case io.Writer:
-		hook.InitWriter(writer.(io.Writer))
-	default:
-		panic(fmt.Sprintf("unsupported writer type: %v", reflect.TypeOf(writer)))
-	}
-	return hook
-}
-
-type Writers map[log.Level]io.Writer
-
 type Hook struct {
 	lock      *sync.Mutex
-	writers   Writers
+	writers   map[log.Level]io.Writer
 	levels    []log.Level
 	formatter log.Formatter
 }
@@ -72,8 +49,8 @@ func (hook *Hook) SetFormatter(formatter log.Formatter) {
 			DisableLevelTruncation: true,
 			DisableSorting:         false,
 		}
-	} else if textFormatter, ok := formatter.(*log.TextFormatter); ok {
-		textFormatter.DisableColors = true
+	} else if f, ok := formatter.(*log.TextFormatter); ok {
+		f.DisableColors = true
 	}
 	hook.formatter = formatter
 }
@@ -87,7 +64,7 @@ func (hook *Hook) InitWriter(writer io.Writer) {
 	}
 }
 
-func (hook *Hook) InitWriters(writers Writers) {
+func (hook *Hook) InitWriters(writers map[log.Level]io.Writer) {
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
 	hook.writers = writers
@@ -99,10 +76,21 @@ func (hook *Hook) InitWriters(writers Writers) {
 func (hook *Hook) SetWriter(level log.Level, writer io.Writer) {
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
+	hook.writers[level] = writer
 	if _, ok := hook.writers[level]; !ok {
 		hook.levels = append(hook.levels, level)
 	}
-	hook.writers[level] = writer
+}
+
+func (hook *Hook) SetWriters(writers map[log.Level]io.Writer) {
+	hook.lock.Lock()
+	defer hook.lock.Unlock()
+	for level, writer := range writers {
+		hook.writers[level] = writer
+		if _, ok := hook.writers[level]; !ok {
+			hook.levels = append(hook.levels, level)
+		}
+	}
 }
 
 // 输出到ioWriter

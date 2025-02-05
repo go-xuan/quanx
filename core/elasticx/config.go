@@ -35,7 +35,7 @@ func (e *Config) Execute() error {
 		var url = e.Url()
 		if client, err := e.NewClient(url); err != nil {
 			log.Error("elastic-search connect failed: ", e.Format(), err)
-			return errorx.Wrap(err, "elasticx.Config.NewClient error")
+			return errorx.Wrap(err, "elasticx new client error")
 		} else {
 			_handler = &Handler{config: e, client: client}
 			log.Info("elastic-search connect successfully: ", e.Format())
@@ -51,15 +51,13 @@ func (e *Config) Url() string {
 func (e *Config) NewClient(url string) (*elastic.Client, error) {
 	client, err := elastic.NewClient(elastic.SetURL(url), elastic.SetSniff(false))
 	if err != nil {
-		return nil, errorx.Wrap(err, "elastic.NewClient Failed")
+		return nil, errorx.Wrap(err, "new elastic client failed")
 	}
 	var result *elastic.PingResult
 	var code int
-	result, code, err = client.Ping(url).Do(context.Background())
-	if err != nil || code != 200 {
-		return nil, errorx.Wrap(err, "elastic.Client.Ping Failed")
+	if result, code, err = client.Ping(url).Do(context.Background()); err != nil || code != 200 {
+		return nil, errorx.Wrap(err, "elastic ping failed")
 	}
 	log.Info("elastic-search version: ", result.Version.Number)
 	return client, nil
-
 }

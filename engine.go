@@ -12,12 +12,12 @@ import (
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/ginx"
 	"github.com/go-xuan/quanx/core/gormx"
+	"github.com/go-xuan/quanx/core/logx"
 	"github.com/go-xuan/quanx/core/nacosx"
 	"github.com/go-xuan/quanx/core/redisx"
 	"github.com/go-xuan/quanx/net/ipx"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/os/filex"
-	"github.com/go-xuan/quanx/os/logx"
 	"github.com/go-xuan/quanx/os/syncx"
 	"github.com/go-xuan/quanx/os/taskx"
 	"github.com/go-xuan/quanx/types/anyx"
@@ -68,7 +68,6 @@ func NewEngine(opts ...EngineOptionFunc) *Engine {
 	}
 	// 设置默认日志输出
 	log.SetOutput(logx.DefaultWriter())
-	log.SetFormatter(logx.DefaultFormatter())
 	// 设置服务启动队列
 	engine.enableQueue()
 	return engine
@@ -80,7 +79,7 @@ func (e *Engine) RUN() {
 		e.queue.Execute()
 	} else { // 默认方式启动
 		syncx.OnceDo(e.initAppConfig)     // 1.初始化应用配置
-		syncx.OnceDo(e.initInnerConfig)   // 2.初始化内置组件（log/nacos/gorm/redis/cache）
+		syncx.OnceDo(e.initInnerConfig)   // 2.初始化内置组件
 		syncx.OnceDo(e.initOuterConfig)   // 3.初始化外置组件
 		syncx.OnceDo(e.runCustomFunction) // 4.运行自定义函数
 		syncx.OnceDo(e.startServer)       // 5.启动服务
@@ -97,7 +96,7 @@ func (e *Engine) checkRunning() {
 // Queue task id
 const (
 	taskInitAppConfig     = "init_app_config"     // 初始化应用配置
-	taskInitInnerConfig   = "init_inner_config"   // 初始化内置组件（log/nacos/gorm/redis/cache）
+	taskInitInnerConfig   = "init_inner_config"   // 初始化内置组件
 	taskInitOuterConfig   = "init_outer_config"   // 初始化外置组件
 	taskRunCustomFunction = "run_custom_function" // 运行自定义函数
 	taskStartServer       = "start_server"        // 启动web服务
@@ -108,7 +107,7 @@ func (e *Engine) enableQueue() {
 	if e.switches[enableQueue] && e.queue == nil {
 		queue := taskx.Queue()
 		queue.Add(engine.initAppConfig, taskInitAppConfig)         // 1.初始化应用配置
-		queue.Add(engine.initInnerConfig, taskInitInnerConfig)     // 2.初始化内置组件（log/nacos/gorm/redis/cache）
+		queue.Add(engine.initInnerConfig, taskInitInnerConfig)     // 2.初始化内置组件
 		queue.Add(engine.initOuterConfig, taskInitOuterConfig)     // 3.初始化外置组件
 		queue.Add(engine.runCustomFunction, taskRunCustomFunction) // 4.运行自定义函数
 		queue.Add(engine.startServer, taskStartServer)             // 5.启动服务
@@ -163,7 +162,7 @@ func (e *Engine) initAppConfig() {
 	e.config = config
 }
 
-// 初始化服务基础组件（log/gorm/redis）
+// 初始化内置组件（log/gorm/redis/cache）
 func (e *Engine) initInnerConfig() {
 	e.checkRunning()
 	// 初始化日志
@@ -328,15 +327,15 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 		}
 	}
 	if mustRun {
-		if e.switches[enableDebug] {
-			log.Info("configurator data: ", configurator.Format())
-		}
 		if err := configx.Execute(configurator); err != nil {
 			log.WithField("configFrom", configFrom).
 				Error("configurator execute failed ==> ", err)
 		} else {
 			log.WithField("configFrom", configFrom).
 				Info("configurator execute success")
+		}
+		if e.switches[enableDebug] {
+			log.Info("configurator data: ", configurator.Format())
 		}
 	}
 }

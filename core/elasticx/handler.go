@@ -12,6 +12,10 @@ import (
 
 var _handler *Handler
 
+func Initialized() bool {
+	return _handler != nil
+}
+
 func this() *Handler {
 	if _handler == nil {
 		panic("the elastic handler has not been initialized, please check the relevant config")
@@ -100,10 +104,8 @@ func (h *Handler) Create(ctx context.Context, index, id string, body any) error 
 			Error("create failed: ", err)
 		return err
 	} else {
-		log.WithField("index", resp.Index).
-			WithField("id", resp.Id).
-			WithField("type", resp.Type).
-			Info("create success")
+		log.WithField("index", resp.Index).WithField("id", resp.Id).
+			WithField("type", resp.Type).Info("create success")
 		return nil
 	}
 }

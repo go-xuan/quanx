@@ -5,9 +5,9 @@ import (
 
 	"github.com/go-xuan/quanx/core/cachex"
 	"github.com/go-xuan/quanx/core/gormx"
+	"github.com/go-xuan/quanx/core/logx"
 	"github.com/go-xuan/quanx/core/nacosx"
 	"github.com/go-xuan/quanx/core/redisx"
-	"github.com/go-xuan/quanx/os/logx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 

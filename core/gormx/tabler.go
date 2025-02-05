@@ -14,7 +14,7 @@ type Tabler interface {
 
 // InitTableWithTabler 初始化表结构以及表数据（基于接口实现）
 func (h *Handler) InitTableWithTabler(source string, dst ...Tabler) error {
-	var db, conf = h.gormMap[source], h.configMap[source]
+	var db, conf = h.dbs[source], h.configs[source]
 	if db != nil && conf != nil && len(dst) > 0 {
 		if conf.Debug {
 			for _, table := range dst {
@@ -59,7 +59,7 @@ func (h *Handler) InitTableWithTabler(source string, dst ...Tabler) error {
 
 // InitTableWithAny 初始化表结构（基于反射）
 func (h *Handler) InitTableWithAny(source string, dst ...any) error {
-	var db, conf = h.gormMap[source], h.configMap[source]
+	var db, conf = h.dbs[source], h.configs[source]
 	if db != nil && conf != nil && len(dst) > 0 {
 		if conf.Debug {
 			for _, model := range dst {

@@ -25,7 +25,7 @@ func GetConfig(source ...string) *Config {
 	return this().GetConfig(source...)
 }
 
-func Client(source ...string) redis.UniversalClient {
+func GetClient(source ...string) redis.UniversalClient {
 	return this().GetClient(source...)
 }
 
@@ -39,16 +39,16 @@ func Ping(ctx context.Context, source ...string) (bool, error) {
 
 // Handler redis连接句柄
 type Handler struct {
-	multi     bool // 是否多redis数据库
-	config    *Config
-	configMap map[string]*Config
-	client    redis.UniversalClient
-	clientMap map[string]redis.UniversalClient
+	multi   bool // 是否多redis数据库
+	config  *Config
+	configs map[string]*Config
+	client  redis.UniversalClient
+	clients map[string]redis.UniversalClient
 }
 
 func (h *Handler) GetClient(source ...string) redis.UniversalClient {
 	if len(source) > 0 && source[0] != constx.DefaultSource {
-		if client, ok := h.clientMap[source[0]]; ok {
+		if client, ok := h.clients[source[0]]; ok {
 			return client
 		}
 	}
@@ -57,7 +57,7 @@ func (h *Handler) GetClient(source ...string) redis.UniversalClient {
 
 func (h *Handler) GetConfig(source ...string) *Config {
 	if len(source) > 0 && source[0] != constx.DefaultSource {
-		if conf, ok := h.configMap[source[0]]; ok {
+		if conf, ok := h.configs[source[0]]; ok {
 			return conf
 		}
 	}

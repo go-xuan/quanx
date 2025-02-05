@@ -20,11 +20,11 @@ func LockWarp(name, spec string, job func(context.Context)) func(context.Context
 		var key = "cron_job_lock:" + name
 		var expiration = ParseDurationBySpec(spec) - time.Millisecond
 		var host = ipx.GetLocalIP()
-		if ok, err := redisx.Client().SetNX(ctx, key, host, expiration).Result(); ok && err == nil { // 获取到锁才执行
+		if ok, err := redisx.GetClient().SetNX(ctx, key, host, expiration).Result(); ok && err == nil { // 获取到锁才执行
 			logger.WithField("host", host).Info("ready to execute")
 			job(ctx) // 执行
 		} else {
-			host, _ = redisx.Client().Get(ctx, key).Result()
+			host, _ = redisx.GetClient().Get(ctx, key).Result()
 			logger.WithField("host", host).Error("already executed by other scheduler")
 		}
 	}

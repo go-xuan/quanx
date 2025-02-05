@@ -18,10 +18,6 @@ import (
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
-func NewConfigurator(conf *Config) configx.Configurator {
-	return conf
-}
-
 type Config struct {
 	Source          string `json:"source" yaml:"source" default:"default"`              // 数据源名称
 	Enable          bool   `json:"enable" yaml:"enable"`                                // 数据源启用
@@ -57,21 +53,21 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "set default value error")
 		}
 		if db, err := c.NewGormDB(); err != nil {
-			return errorx.Wrap(err, "new gorm.DB failed")
+			return errorx.Wrap(err, "new gorm db failed")
 		} else {
 			if _handler == nil {
 				_handler = &Handler{
-					multi:     false,
-					config:    c,
-					configMap: make(map[string]*Config),
-					gormDB:    db,
-					gormMap:   map[string]*gorm.DB{},
+					multi:   false,
+					config:  c,
+					configs: make(map[string]*Config),
+					db:      db,
+					dbs:     map[string]*gorm.DB{},
 				}
 			} else {
 				_handler.multi = true
 			}
-			_handler.gormMap[c.Source] = db
-			_handler.configMap[c.Source] = c
+			_handler.dbs[c.Source] = db
+			_handler.configs[c.Source] = c
 			return nil
 		}
 	}
@@ -128,7 +124,7 @@ func (c *Config) GetGormDB() (*gorm.DB, error) {
 		dial = postgres.Open(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
 			c.Host, c.Port, c.Username, c.Password, c.Database))
 	default:
-		return nil, errorx.Errorf("database type only support : %s or %s", MYSQL, POSTGRES)
+		return nil, errorx.Errorf("database type only support : %v", []string{MYSQL, POSTGRES, PGSQL})
 	}
 	if db, err := gorm.Open(dial, &gorm.Config{
 		// 模型命名策略
@@ -174,9 +170,9 @@ func (m MultiConfig) Execute() error {
 	}
 	if _handler == nil {
 		_handler = &Handler{
-			multi:     true,
-			gormMap:   make(map[string]*gorm.DB),
-			configMap: make(map[string]*Config),
+			multi:   true,
+			dbs:     make(map[string]*gorm.DB),
+			configs: make(map[string]*Config),
 		}
 	} else {
 		_handler.multi = true
@@ -190,16 +186,16 @@ func (m MultiConfig) Execute() error {
 			if err != nil {
 				return errorx.Wrap(err, "new gorm.Config failed")
 			}
-			_handler.gormMap[c.Source] = db
-			_handler.configMap[c.Source] = c
+			_handler.dbs[c.Source] = db
+			_handler.configs[c.Source] = c
 			if i == 0 || c.Source == constx.DefaultSource {
-				_handler.gormDB = db
+				_handler.db = db
 				_handler.config = c
 			}
 		}
 	}
-	if len(_handler.configMap) == 0 {
-		log.Error("database not connected! cause: database.yaml is empty or no enabled database configured")
+	if len(_handler.configs) == 0 {
+		log.Error("database not connected! cause: database.yaml is empty or no enabled source")
 	}
 	return nil
 }

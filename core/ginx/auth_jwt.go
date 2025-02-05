@@ -69,7 +69,7 @@ func (u *JwtUser) NewToken(secret string) (string, error) {
 }
 
 func (u *JwtUser) ParseToken(token, secret string) error {
-	if jwtToken, err := jwt.ParseWithClaims(token, &JwtUser{}, func(token *jwt.Token) (any, error) {
+	if jwtToken, err := jwt.ParseWithClaims(token, &JwtUser{}, func(*jwt.Token) (any, error) {
 		return []byte(secret), nil
 	}); err != nil {
 		return errorx.Wrap(err, "parse token error")

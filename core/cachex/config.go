@@ -66,7 +66,7 @@ func (c *Config) InitClient() Client {
 	case CacheTypeRedis:
 		return &RedisClient{
 			config:  c,
-			client:  redisx.Client(c.Source),
+			client:  redisx.GetClient(c.Source),
 			marshal: marshalx.Apply(c.Marshal),
 		}
 	case CacheTypeLocal:

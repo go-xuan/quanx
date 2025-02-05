@@ -22,7 +22,7 @@ func TestHandler(t *testing.T) {
 		panic(err)
 	}
 	ctx := context.TODO()
-	Client().Set(ctx, "test_1", "111", -1)
-	value := Client().Get(ctx, "test_1").Val()
+	GetClient().Set(ctx, "test_1", "111", -1)
+	value := GetClient().Get(ctx, "test_1").Val()
 	fmt.Println(value)
 }
