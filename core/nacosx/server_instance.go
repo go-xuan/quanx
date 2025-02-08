@@ -2,6 +2,7 @@ package nacosx
 
 import (
 	"fmt"
+	"github.com/nacos-group/nacos-sdk-go/vo"
 
 	"github.com/go-xuan/quanx/os/errorx"
 )
@@ -19,23 +20,38 @@ func (s *ServerInstance) Info() string {
 }
 
 // SelectOneHealthyInstance 随机获取一个健康的服务实例
-func SelectOneHealthyInstance(name, group string) (string, error) {
-	if instance, err := This().SelectOneHealthyInstance(name, group); err != nil {
-		return "", errorx.Wrap(err, "select one healthy instances error")
+func SelectOneHealthyInstance(name, group string) (*ServerInstance, error) {
+	if instance, err := GetNacosNamingClient().SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
+		ServiceName: name,
+		GroupName:   group,
+	}); err != nil {
+		return nil, errorx.Wrap(err, "select one healthy instance failed")
 	} else {
-		return fmt.Sprintf("%s:%d", instance.Host, instance.Port), nil
+		return &ServerInstance{
+			Name: instance.ServiceName,
+			Host: instance.Ip,
+			Port: int(instance.Port),
+		}, nil
 	}
 }
 
 // SelectInstances 获取所有健康服务实例
-func SelectInstances(name, group string) ([]string, error) {
-	if instances, err := This().SelectInstances(name, group); err != nil {
-		return nil, errorx.Wrap(err, "select instances error")
+func SelectInstances(name, group string) ([]*ServerInstance, error) {
+	if instances, err := GetNacosNamingClient().SelectInstances(vo.SelectInstancesParam{
+		ServiceName: name,
+		GroupName:   group,
+		HealthyOnly: true,
+	}); err != nil {
+		return nil, errorx.Wrap(err, "select instances failed")
 	} else {
-		var addrs []string
+		var servers []*ServerInstance
 		for _, instance := range instances {
-			addrs = append(addrs, fmt.Sprintf("%s:%d", instance.Host, instance.Port))
+			servers = append(servers, &ServerInstance{
+				Name: instance.ServiceName,
+				Host: instance.Ip,
+				Port: int(instance.Port),
+			})
 		}
-		return addrs, nil
+		return servers, nil
 	}
 }

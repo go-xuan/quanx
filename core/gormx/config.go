@@ -53,25 +53,25 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "set default value error")
 		}
 		if db, err := c.NewGormDB(); err != nil {
-			return errorx.Wrap(err, "new gorm db failed")
+			return errorx.Wrap(err, "new gorm db error")
 		} else {
 			if _handler == nil {
 				_handler = &Handler{
-					multi:   false,
-					config:  c,
+					multi: false, config: c, db: db,
 					configs: make(map[string]*Config),
-					db:      db,
-					dbs:     map[string]*gorm.DB{},
+					dbs:     make(map[string]*gorm.DB),
 				}
 			} else {
 				_handler.multi = true
+				if c.Source == constx.DefaultSource {
+					_handler.config = c
+					_handler.db = db
+				}
 			}
-			_handler.dbs[c.Source] = db
 			_handler.configs[c.Source] = c
-			return nil
+			_handler.dbs[c.Source] = db
 		}
 	}
-	log.Info("database not connected! reason: database.yaml is empty or the value of enable is false")
 	return nil
 }
 
@@ -170,19 +170,17 @@ func (m MultiConfig) Execute() error {
 	}
 	if _handler == nil {
 		_handler = &Handler{
-			multi:   true,
 			dbs:     make(map[string]*gorm.DB),
 			configs: make(map[string]*Config),
 		}
-	} else {
-		_handler.multi = true
 	}
+	_handler.multi = true
 	for i, c := range m {
 		if c.Enable {
 			if err := anyx.SetDefaultValue(c); err != nil {
 				return errorx.Wrap(err, "set default value error")
 			}
-			var db, err = c.NewGormDB()
+			db, err := c.NewGormDB()
 			if err != nil {
 				return errorx.Wrap(err, "new gorm.Config failed")
 			}

@@ -187,7 +187,7 @@ func (e *Engine) initInnerConfig() {
 	}
 
 	// 初始化表结构
-	if gormx.Initialized() {
+	if gormx.IsInitialized() {
 		for _, source := range gormx.Sources() {
 			if dst, ok := e.gormTables[source]; ok {
 				if err := gormx.InitTable(source, dst...); err != nil {
@@ -211,7 +211,7 @@ func (e *Engine) initInnerConfig() {
 	}
 
 	// 初始化缓存
-	if redisx.Initialized() {
+	if redisx.IsInitialized() {
 		if e.config.Cache != nil {
 			e.ExecuteConfigurator(e.config.Cache)
 		} else if e.switches[multiCache] {
@@ -316,7 +316,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 		if e.switches[enableNacos] {
 			group := stringx.IfZero(reader.NacosGroup, e.config.Server.Name)
 			reader.NacosGroup = group
-			if err := nacosx.This().ScanConfig(configurator, group, reader.NacosDataId, reader.Listen); err == nil {
+			if err := nacosx.ScanConfig(configurator, group, reader.NacosDataId, reader.Listen); err == nil {
 				configFrom, mustRun = "nacos@"+group+"@"+reader.NacosDataId, true
 			}
 		} else {
@@ -350,7 +350,7 @@ func (e *Engine) LoadingLocalConfig(v any, path string) {
 // LoadingNacosConfig 加载nacos配置（以自定义函数的形式延迟加载）
 func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() {
-		if err := nacosx.This().ScanConfig(v, e.config.Server.Name, dataId, listen...); err != nil {
+		if err := nacosx.ScanConfig(v, e.config.Server.Name, dataId, listen...); err != nil {
 			panic(errorx.Wrap(err, "scan nacos config failed"))
 		}
 	})

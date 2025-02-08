@@ -9,8 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/core/configx"
-	"github.com/go-xuan/quanx/core/elasticx"
-	"github.com/go-xuan/quanx/core/mongox"
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/types/anyx"
 )
@@ -28,6 +26,8 @@ const (
 	fileWriterType    = "file"    // file
 	mongoWriterType   = "mongo"   // Mongo
 	eSOutWriterType   = "es"      // Elasticsearch
+
+	logWriterSource = "log"
 )
 
 // Config 日志配置
@@ -41,8 +41,6 @@ type Config struct {
 	Color      bool              `json:"color" yaml:"color" default:"false"`                             // 使用颜色
 	Caller     bool              `json:"caller" yaml:"caller" default:"false"`                           // caller开关
 	File       *FileWriterConfig `json:"file" yaml:"file"`                                               // 日志输出到文件
-	Mongo      *mongox.Config    `json:"mongo" yaml:"mongo"`                                             // 日志输出到mongo
-	ES         *elasticx.Config  `json:"es" yaml:"es"`                                                   // 日志输出到es
 }
 
 func (c *Config) Format() string {
@@ -108,11 +106,11 @@ func (c *Config) NewWriter() io.Writer {
 	case fileWriterType:
 		return NewFileWriter(c.File)
 	case mongoWriterType:
-		if writer, err := NewMongoWriter(c.Mongo, c.Name); writer != nil && err == nil {
+		if writer, err := NewMongoWriter(c.Name); writer != nil && err == nil {
 			return writer
 		}
 	case eSOutWriterType:
-		if writer, err := NewElasticSearchWriter(c.ES, c.Name); writer != nil && err == nil {
+		if writer, err := NewElasticSearchWriter(c.Name); writer != nil && err == nil {
 			return writer
 		}
 	}
@@ -121,23 +119,24 @@ func (c *Config) NewWriter() io.Writer {
 
 func (c *Config) NewWriters() map[log.Level]io.Writer {
 	var writers = make(map[log.Level]io.Writer)
-	for key, value := range c.Writers {
-		if key == c.Level {
+	for lv, writerType := range c.Writers {
+		if lv == c.Level {
 			continue
 		}
-		level := ToLogrusLevel(key)
-		switch value {
+		level := ToLogrusLevel(lv)
+		switch writerType {
 		case fileWriterType:
-			writers[level] = NewFileWriter(c.File, key)
+			writers[level] = NewFileWriter(c.File, lv)
 		case mongoWriterType:
-			if writer, err := NewMongoWriter(c.Mongo, c.Name); writer != nil && err == nil {
+			if writer, err := NewMongoWriter(c.Name); writer != nil && err == nil {
 				writers[level] = writer
 			}
 		case eSOutWriterType:
-			if writer, err := NewElasticSearchWriter(c.ES, c.Name); writer != nil && err == nil {
+			if writer, err := NewElasticSearchWriter(c.Name); writer != nil && err == nil {
 				writers[level] = writer
 			}
 		}
+		// 保底
 		if _, ok := writers[level]; !ok {
 			writers[level] = DefaultWriter()
 		}

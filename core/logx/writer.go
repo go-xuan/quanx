@@ -11,7 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/elasticx"
 	"github.com/go-xuan/quanx/core/mongox"
 	"github.com/go-xuan/quanx/types/intx"
@@ -73,36 +72,23 @@ func (w *MongoWriter) Write(bytes []byte) (int, error) {
 	return 0, nil
 }
 
-func NewMongoWriter(conf *mongox.Config, collection string) (io.Writer, error) {
-	if conf != nil {
-		source := "log_writer"
-		conf.Source = source
-		conf.Enable = true
-		if err := configx.Execute(conf); err != nil {
-			return nil, err
-		}
+// NewMongoWriter 初始化mongo写入
+func NewMongoWriter(collection string) (io.Writer, error) {
+	if conf := mongox.GetConfig(logWriterSource); conf != nil {
 		return &MongoWriter{
 			database:   conf.Database,
 			collection: collection,
-			client:     mongox.GetClient(source),
+			client:     mongox.GetClient(logWriterSource),
 		}, nil
 	}
 	return nil, nil
 }
 
-func NewElasticSearchWriter(conf *elasticx.Config, index string) (io.Writer, error) {
-	if elasticx.Initialized() {
+func NewElasticSearchWriter(index string) (io.Writer, error) {
+	if conf := elasticx.GetConfig(logWriterSource); conf != nil {
 		return &ElasticSearchWriter{
 			index:  index,
-			client: elasticx.Client(),
-		}, nil
-	} else if conf != nil {
-		if err := configx.Execute(conf); err != nil {
-			return nil, err
-		}
-		return &ElasticSearchWriter{
-			index:  index,
-			client: elasticx.Client(),
+			client: elasticx.GetClient(logWriterSource),
 		}, nil
 	}
 	return nil, nil

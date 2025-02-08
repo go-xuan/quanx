@@ -66,10 +66,11 @@ func GetServerProxyAddr(group, dataId, url string) (string, string, error) {
 					}
 				}
 			}
-			if addr, err := nacosx.SelectOneHealthyInstance(server.Name, server.Group); err != nil {
+			if instance, err := nacosx.SelectOneHealthyInstance(server.Name, server.Group); err != nil {
 				return "", "", errorx.Wrap(err, "微服务实例未注册")
 			} else {
-				addr = "http://" + addr + server.Prefix
+				addr := fmt.Sprintf("http://%s:%d/%s",
+					instance.Host, instance.Port, strings.TrimPrefix(server.Prefix, "/"))
 				return addr, auth, nil
 			}
 		}

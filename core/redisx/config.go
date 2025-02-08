@@ -53,26 +53,26 @@ func (c *Config) Execute() error {
 		if err := anyx.SetDefaultValue(c); err != nil {
 			return errorx.Wrap(err, "set default value error")
 		}
-		var client = c.NewRedisClient()
+		client := c.NewRedisClient()
 		if result, err := client.Ping(context.TODO()).Result(); err != nil || result != "PONG" {
 			return errorx.Wrap(err, "redis client ping error")
 		}
 		if _handler == nil {
 			_handler = &Handler{
-				multi:   false,
-				config:  c,
+				multi: false, config: c, client: client,
 				configs: make(map[string]*Config),
-				client:  client,
 				clients: make(map[string]redis.UniversalClient),
 			}
 		} else {
 			_handler.multi = true
+			if c.Source == constx.DefaultSource {
+				_handler.config = c
+				_handler.client = client
+			}
 		}
-		_handler.clients[c.Source] = client
 		_handler.configs[c.Source] = c
-		return nil
+		_handler.clients[c.Source] = client
 	}
-	log.Error(`redis connect failed! reason: redis.yaml is empty or the value of "enable" is false`)
 	return nil
 }
 
@@ -142,13 +142,11 @@ func (m MultiConfig) Execute() error {
 	}
 	if _handler == nil {
 		_handler = &Handler{
-			multi:   true,
 			configs: make(map[string]*Config),
 			clients: make(map[string]redis.UniversalClient),
 		}
-	} else {
-		_handler.multi = true
 	}
+	_handler.multi = true
 	var ctx = context.Background()
 	for i, c := range m {
 		if c.Enable {

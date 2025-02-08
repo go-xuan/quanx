@@ -9,10 +9,16 @@ import (
 	"github.com/go-xuan/quanx/os/errorx"
 	"github.com/go-xuan/quanx/os/filex"
 	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/types/stringx"
 )
 
 var handler *Handler
+
+func this() *Handler {
+	if handler == nil {
+		panic("the nacos handler has not been initialized, please check the relevant config")
+	}
+	return handler
+}
 
 type Handler struct {
 	config       *Config                     // nacos配置
@@ -20,30 +26,41 @@ type Handler struct {
 	namingClient naming_client.INamingClient // nacos服务发现客户端
 }
 
-func This() *Handler {
-	if handler == nil {
-		panic("the nacos handler has not been initialized, please check the relevant config")
+// ScanConfig 从nacos获取配置并扫描
+func ScanConfig(v any, group, dataId string, listen ...bool) error {
+	var scanner = &Scanner{
+		Group:  group,
+		DataId: dataId,
+		Type:   vo.ConfigType(filex.GetSuffix(dataId)),
+		Listen: anyx.Default(false, listen...),
 	}
-	return handler
+	if err := scanner.Scan(v); err != nil {
+		return errorx.Wrap(err, "nacos config scan failed")
+	}
+	return nil
 }
 
-func NacosConfigClient() config_client.IConfigClient {
-	if This().configClient == nil {
+// GetNacosConfigClient 获取配置中心客户端
+func GetNacosConfigClient() config_client.IConfigClient {
+	if client := this().configClient; client == nil {
 		panic("the nacos config client has not been initialized")
+	} else {
+		return client
 	}
-	return This().configClient
 }
 
-func NacosNamingClient() naming_client.INamingClient {
-	if This().namingClient == nil {
+// GetNacosNamingClient 获取服务中心客户端
+func GetNacosNamingClient() naming_client.INamingClient {
+	if client := this().namingClient; client == nil {
 		panic("the nacos naming client has not been initialized")
+	} else {
+		return client
 	}
-	return This().namingClient
 }
 
 // Register 注册Nacos服务
 func Register(server ServerInstance) error {
-	if ok, err := NacosNamingClient().RegisterInstance(vo.RegisterInstanceParam{
+	if ok, err := GetNacosNamingClient().RegisterInstance(vo.RegisterInstanceParam{
 		Ip:          server.Host,
 		Port:        uint64(server.Port),
 		GroupName:   server.Group,
@@ -63,7 +80,7 @@ func Register(server ServerInstance) error {
 
 // Deregister 注销nacos服务
 func Deregister(server ServerInstance) error {
-	if ok, err := NacosNamingClient().DeregisterInstance(vo.DeregisterInstanceParam{
+	if ok, err := GetNacosNamingClient().DeregisterInstance(vo.DeregisterInstanceParam{
 		Ip:          server.Host,
 		Port:        uint64(server.Port),
 		GroupName:   server.Group,
@@ -76,55 +93,4 @@ func Deregister(server ServerInstance) error {
 		log.Info("nacos server deregister successfully: ", server.Info())
 		return nil
 	}
-}
-
-func (h *Handler) SelectInstances(name string, group ...string) ([]*ServerInstance, error) {
-	var groupName = stringx.Default(h.config.NameSpace, group...)
-	if instances, err := NacosNamingClient().SelectInstances(vo.SelectInstancesParam{
-		ServiceName: name,
-		GroupName:   groupName,
-		HealthyOnly: true,
-	}); err != nil {
-		return nil, err
-	} else {
-		var servers []*ServerInstance
-		for _, instance := range instances {
-			servers = append(servers, &ServerInstance{
-				Name: instance.ServiceName,
-				Host: instance.Ip,
-				Port: int(instance.Port),
-			})
-		}
-		return servers, nil
-	}
-}
-
-func (h *Handler) SelectOneHealthyInstance(name string, group ...string) (*ServerInstance, error) {
-	var groupName = stringx.Default(h.config.NameSpace, group...)
-	if instance, err := NacosNamingClient().SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
-		ServiceName: name,
-		GroupName:   groupName,
-	}); err != nil {
-		return nil, err
-	} else {
-		return &ServerInstance{
-			Name: instance.ServiceName,
-			Host: instance.Ip,
-			Port: int(instance.Port),
-		}, nil
-	}
-}
-
-// ScanConfig 从nacos获取配置并扫描
-func (h *Handler) ScanConfig(v any, group, dataId string, listen ...bool) error {
-	var scanner = &Scanner{
-		Group:  group,
-		DataId: dataId,
-		Type:   vo.ConfigType(filex.GetSuffix(dataId)),
-		Listen: anyx.Default(false, listen...),
-	}
-	if err := scanner.Scan(v); err != nil {
-		return errorx.Wrap(err, "nacos config scan failed")
-	}
-	return nil
 }

@@ -44,14 +44,33 @@ func (*Config) Reader() *configx.Reader {
 }
 
 func (c *Config) Execute() error {
-	if client, err := c.NewClient(); err != nil {
-		log.Error("mongo connect failed: ", c.Format())
-		return errorx.Wrap(err, "mongo init client error")
-	} else {
-		_handler = &Handler{config: c, client: client}
-		log.Info("mongo connect successfully: ", c.Format())
-		return nil
+	if c.Enable {
+		if err := anyx.SetDefaultValue(c); err != nil {
+			return errorx.Wrap(err, "set default value error")
+		}
+		if client, err := c.NewClient(); err != nil {
+			log.Error("mongo connect failed: ", c.Format())
+			return errorx.Wrap(err, "mongo init client error")
+		} else {
+			log.Info("mongo connect success: ", c.Format())
+			if _handler == nil {
+				_handler = &Handler{
+					multi: false, config: c, client: client,
+					configs: make(map[string]*Config),
+					clients: make(map[string]*mongo.Client),
+				}
+			} else {
+				_handler.multi = true
+				if c.Source == constx.DefaultSource {
+					_handler.config = c
+					_handler.client = client
+				}
+			}
+			_handler.configs[c.Source] = c
+			_handler.clients[c.Source] = client
+		}
 	}
+	return nil
 }
 
 func (c *Config) NewClient() (*mongo.Client, error) {
@@ -116,17 +135,15 @@ func (MultiConfig) Reader() *configx.Reader {
 
 func (m MultiConfig) Execute() error {
 	if len(m) == 0 {
-		return errorx.New("database not connected! cause: database.yaml is invalid")
+		return errorx.New("mongo not connected! cause: mongo.yaml is invalid")
 	}
 	if _handler == nil {
 		_handler = &Handler{
-			multi:   true,
-			clients: make(map[string]*mongo.Client),
 			configs: make(map[string]*Config),
+			clients: make(map[string]*mongo.Client),
 		}
-	} else {
-		_handler.multi = true
 	}
+	_handler.multi = true
 	for i, c := range m {
 		if c.Enable {
 			if err := anyx.SetDefaultValue(c); err != nil {

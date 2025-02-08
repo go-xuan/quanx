@@ -13,7 +13,6 @@ func NewEmailCaptcha() *EmailCaptcha {
 	return &EmailCaptcha{
 		title:    "",
 		template: "",
-		handler:  emailx.This(),
 		store:    DefaultStore(),
 	}
 }
@@ -21,7 +20,6 @@ func NewEmailCaptcha() *EmailCaptcha {
 type EmailCaptcha struct {
 	title    string
 	template string
-	handler  *emailx.Handler
 	store    *CaptchaStore
 }
 
@@ -39,7 +37,7 @@ func (c *EmailCaptcha) Send(ctx context.Context, reciver string) (string, int, e
 		return "", 0, errorx.Wrap(err, "new message content error")
 	}
 	// 发送邮箱验证码
-	if err = c.handler.SendMail(emailx.Send{
+	if err = emailx.SendMail(emailx.Send{
 		To:      []string{reciver},
 		Title:   c.title,
 		Content: content,
