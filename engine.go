@@ -68,23 +68,24 @@ func NewEngine(opts ...EngineOptionFunc) *Engine {
 	}
 	// 设置默认日志输出
 	log.SetOutput(logx.DefaultWriter())
-	// 设置服务启动队列
+	// 以队列方式启动服务
 	engine.enableQueue()
 	return engine
 }
 
 // RUN 服务运行
 func (e *Engine) RUN() {
-	if e.switches[enableQueue] { // 任务队列方式启动
+	if e.switches[enableQueue] {
+		// 任务队列方式启动
 		e.queue.Execute()
-	} else { // 默认方式启动
+	} else {
+		// 默认方式启动
 		syncx.OnceDo(e.initAppConfig)     // 1.初始化应用配置
 		syncx.OnceDo(e.initInnerConfig)   // 2.初始化内置组件
 		syncx.OnceDo(e.initOuterConfig)   // 3.初始化外置组件
 		syncx.OnceDo(e.runCustomFunction) // 4.运行自定义函数
 		syncx.OnceDo(e.startServer)       // 5.启动服务
 	}
-	e.switches[running] = true
 }
 
 func (e *Engine) checkRunning() {
@@ -95,22 +96,22 @@ func (e *Engine) checkRunning() {
 
 // Queue task id
 const (
-	taskInitAppConfig     = "init_app_config"     // 初始化应用配置
-	taskInitInnerConfig   = "init_inner_config"   // 初始化内置组件
-	taskInitOuterConfig   = "init_outer_config"   // 初始化外置组件
-	taskRunCustomFunction = "run_custom_function" // 运行自定义函数
-	taskStartServer       = "start_server"        // 启动web服务
+	stepInitAppConfig     = "init_app_config"     // 初始化应用配置
+	stepInitInnerConfig   = "init_inner_config"   // 初始化内置组件
+	stepInitOuterConfig   = "init_outer_config"   // 初始化外置组件
+	stepRunCustomFunction = "run_custom_function" // 运行自定义函数
+	stepStartServer       = "start_server"        // 启动web服务
 )
 
-// 是否启用队列
+// 以队列方式启动服务
 func (e *Engine) enableQueue() {
 	if e.switches[enableQueue] && e.queue == nil {
 		queue := taskx.Queue()
-		queue.Add(engine.initAppConfig, taskInitAppConfig)         // 1.初始化应用配置
-		queue.Add(engine.initInnerConfig, taskInitInnerConfig)     // 2.初始化内置组件
-		queue.Add(engine.initOuterConfig, taskInitOuterConfig)     // 3.初始化外置组件
-		queue.Add(engine.runCustomFunction, taskRunCustomFunction) // 4.运行自定义函数
-		queue.Add(engine.startServer, taskStartServer)             // 5.启动服务
+		queue.Add(engine.initAppConfig, stepInitAppConfig)         // 1.初始化应用配置
+		queue.Add(engine.initInnerConfig, stepInitInnerConfig)     // 2.初始化内置组件
+		queue.Add(engine.initOuterConfig, stepInitOuterConfig)     // 3.初始化外置组件
+		queue.Add(engine.runCustomFunction, stepRunCustomFunction) // 4.运行自定义函数
+		queue.Add(engine.startServer, stepStartServer)             // 5.启动服务
 		engine.queue = queue
 	}
 }
@@ -165,6 +166,7 @@ func (e *Engine) initAppConfig() {
 // 初始化内置组件（log/gorm/redis/cache）
 func (e *Engine) initInnerConfig() {
 	e.checkRunning()
+
 	// 初始化日志
 	logConf := anyx.IfZero(e.config.Log, &logx.Config{})
 	if logConf.Name == "" {
@@ -242,6 +244,7 @@ func (e *Engine) runCustomFunction() {
 	}
 }
 
+// 启动服务
 func (e *Engine) startServer() {
 	e.startWebServer()
 }
@@ -256,6 +259,8 @@ func (e *Engine) startWebServer() {
 	if e.ginEngine == nil {
 		e.ginEngine = gin.New()
 	}
+
+	// 初始化中间件
 	e.ginEngine.Use(gin.Recovery(), ginx.Trace)
 	if e.config.Log.Formatter == "json" {
 		e.ginEngine.Use(ginx.JsonLogFormatter)
@@ -274,13 +279,14 @@ func (e *Engine) startWebServer() {
 	// 获取服务端口
 	port := strconv.Itoa(e.config.Server.Port)
 	// 启动服务
+	e.switches[running] = true
 	log.Infof(`API接口请求地址: http://%s:%s`, host, port)
 	if err := e.ginEngine.Run(":" + port); err != nil {
 		panic(errorx.Wrap(err, "gin engine run failed"))
 	}
 }
 
-// initGinRouter 执行gin的路由加载函数
+// initGinRouter 初始化gin路由
 func (e *Engine) initGinRouter(group *gin.RouterGroup) {
 	if len(e.ginRouters) > 0 {
 		for _, router := range e.ginRouters {
@@ -307,11 +313,11 @@ func (e *Engine) AddConfigurator(configurators ...configx.Configurator) {
 	}
 }
 
-// ExecuteConfigurator 运行配置器
+// ExecuteConfigurator 执行配置器（立即执行）
 func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...bool) {
 	e.checkRunning()
-	var configFrom, mustRun = "local@" + e.GetConfigPath(constx.DefaultConfigFilename) + " or tag@default",
-		anyx.Default(false, must...)
+	configFrom := "local@" + e.GetConfigPath(constx.DefaultConfigFilename) + " or tag@default"
+	mustRun := anyx.Default(false, must...)
 	if reader := configurator.Reader(); reader != nil {
 		if e.switches[enableNacos] {
 			group := stringx.IfZero(reader.NacosGroup, e.config.Server.Name)
@@ -340,15 +346,15 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 	}
 }
 
-// LoadingLocalConfig 加载本地配置项（立即加载）
-func (e *Engine) LoadingLocalConfig(v any, path string) {
+// ReadLocalConfig 读取本地配置项（立即执行）
+func (e *Engine) ReadLocalConfig(v any, path string) {
 	if err := marshalx.Apply(path).Read(path, v); err != nil {
 		panic(errorx.Wrap(err, "unmarshal config file failed"))
 	}
 }
 
-// LoadingNacosConfig 加载nacos配置（以自定义函数的形式延迟加载）
-func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
+// ScanNacosConfig 扫描nacos配置（以自定义函数的形式延迟执行，确保nacos已经提前初始化）
+func (e *Engine) ScanNacosConfig(v any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() {
 		if err := nacosx.ScanConfig(v, e.config.Server.Name, dataId, listen...); err != nil {
 			panic(errorx.Wrap(err, "scan nacos config failed"))
@@ -356,7 +362,7 @@ func (e *Engine) LoadingNacosConfig(v any, dataId string, listen ...bool) {
 	})
 }
 
-// doOptionFuncs 执行启动项函数
+// doOptionFuncs 启动项函数
 func (e *Engine) doOptionFuncs(funcs ...EngineOptionFunc) {
 	e.checkRunning()
 	if len(funcs) > 0 {
@@ -366,31 +372,31 @@ func (e *Engine) doOptionFuncs(funcs ...EngineOptionFunc) {
 	}
 }
 
-// SetConfigDir 设置配置文件
+// SetConfigDir 设置配置文件路径
 func (e *Engine) SetConfigDir(dir string) {
 	e.checkRunning()
 	e.configDir = dir
 }
 
-// GetConfigPath 设置配置文件
-func (e *Engine) GetConfigPath(filename string) string {
+// GetConfigPath 获取配置文件
+func (e *Engine) GetConfigPath(path string) string {
 	if dir := e.configDir; dir != "" {
-		return filepath.Join(dir, filename)
+		return filepath.Join(dir, path)
 	} else {
-		return filename
+		return path
 	}
 }
 
-// AddTable 添加 gormx.Tabler 模型
-func (e *Engine) AddTable(dst ...gormx.Tabler) {
-	e.AddSourceTable(constx.DefaultSource, dst...)
+// AddTable 添加gormx.Tabler模型
+func (e *Engine) AddTable(tablers ...gormx.Tabler) {
+	e.AddSourceTable(constx.DefaultSource, tablers...)
 }
 
-// AddSourceTable 添加某个数据源的 gormx.Table 模型
-func (e *Engine) AddSourceTable(source string, dst ...gormx.Tabler) {
+// AddSourceTable 添加某个数据源的gormx.Table模型
+func (e *Engine) AddSourceTable(source string, tablers ...gormx.Tabler) {
 	e.checkRunning()
-	if len(dst) > 0 {
-		e.gormTables[source] = append(e.gormTables[source], dst...)
+	if len(tablers) > 0 {
+		e.gormTables[source] = append(e.gormTables[source], tablers...)
 	}
 }
 
@@ -410,7 +416,7 @@ func (e *Engine) AddGinRouter(router ...func(*gin.RouterGroup)) {
 	}
 }
 
-// AddQueueTask 使用后，会自动启用队列方式启动服务，且当前添加的任务会在 startServer 之前执行
+// AddQueueTask 会自动以队列方式启动服务，且默认在startServer前一步执行
 func (e *Engine) AddQueueTask(task func(), id string) {
 	e.checkRunning()
 	if id == "" {
@@ -418,7 +424,7 @@ func (e *Engine) AddQueueTask(task func(), id string) {
 	} else {
 		e.switches[enableQueue] = true
 		e.enableQueue()
-		e.queue.AddBefore(task, id, taskStartServer)
+		e.queue.AddBefore(task, id, stepStartServer)
 		log.Info(`add queue task successfully, task id:`, id)
 	}
 	return

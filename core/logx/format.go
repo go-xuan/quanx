@@ -87,23 +87,23 @@ type jsonFormatter struct {
 	hostname   string
 }
 
-type jsonLog struct {
-	Time    string      `json:"time"`
-	Level   string      `json:"level"`
-	Host    string      `json:"hostname"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+type LogRecord struct {
+	Time     string      `json:"create_time"`
+	Level    string      `json:"level"`
+	Hostname string      `json:"hostname"`
+	Message  string      `json:"message"`
+	Data     interface{} `json:"data"`
 }
 
 // Format 日志格式化,用以实现logrus.Formatter接口
 func (f *jsonFormatter) Format(entry *log.Entry) ([]byte, error) {
 	var buffer = bytes.Buffer{}
-	if marshal, err := json.Marshal(jsonLog{
-		Time:    entry.Time.Format(f.timeFormat),
-		Level:   LevelString(entry.Level, 5),
-		Host:    f.hostname,
-		Message: entry.Message,
-		Data:    entry.Data,
+	if marshal, err := json.Marshal(LogRecord{
+		Time:     entry.Time.Format(f.timeFormat),
+		Level:    LevelString(entry.Level, 5),
+		Hostname: f.hostname,
+		Message:  entry.Message,
+		Data:     entry.Data,
 	}); err != nil {
 		return nil, err
 	} else {

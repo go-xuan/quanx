@@ -347,9 +347,9 @@ func Fill(str, fill string, length int, right ...bool) string {
 
 // ParseUrlParams 解析url参数为map
 func ParseUrlParams(str string) map[string]string {
-	if strings.Contains(str, "=") {
+	if str != "" {
 		var params = make(map[string]string)
-		kvs := strings.Split(str, "&")
+		var kvs = strings.Split(str, "&")
 		for _, kv := range kvs {
 			k, v := Cut(kv, "=")
 			params[k] = v

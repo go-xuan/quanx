@@ -165,22 +165,21 @@ type Args struct {
 	Enums  []string // 枚举选项，多个以逗号分割
 }
 
-func NewArgs(args string) *Args {
-	params := stringx.ParseUrlParams(args)
+func NewArgs(args map[string]string) *Args {
 	return &Args{
-		Min:    params["min"],
-		Max:    params["max"],
-		Prefix: params["prefix"],
-		Suffix: params["suffix"],
-		Upper:  params["upper"] == "true",
-		Lower:  params["lower"] == "true",
-		Old:    params["old"],
-		New:    params["new"],
-		Format: params["format"],
-		Length: stringx.ParseInt(params["length"]),
-		Prec:   stringx.ParseInt(params["prec"]),
-		Level:  stringx.ParseInt(params["level"]),
-		Enums:  strings.Split(params["enums"], ","),
+		Min:    args["min"],
+		Max:    args["max"],
+		Prefix: args["prefix"],
+		Suffix: args["suffix"],
+		Upper:  args["upper"] == "true",
+		Lower:  args["lower"] == "true",
+		Old:    args["old"],
+		New:    args["new"],
+		Format: args["format"],
+		Length: stringx.ParseInt(args["length"]),
+		Prec:   stringx.ParseInt(args["prec"]),
+		Level:  stringx.ParseInt(args["level"]),
+		Enums:  strings.Split(args["enums"], ","),
 	}
 }
 

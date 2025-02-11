@@ -18,17 +18,17 @@ import (
 )
 
 type Config struct {
-	Source          string `json:"source" yaml:"source" default:"default"` // 数据源名称
-	Enable          bool   `json:"enable" yaml:"enable"`                   // 数据源启用
-	URI             string `json:"uri" yaml:"uri"`                         // 连接uri
-	AuthMechanism   string `json:"authMechanism" yaml:"authMechanism"`     // 认证加密方式
-	AuthSource      string `json:"authSource" yaml:"authSource"`           // 认证数据库
-	Username        string `json:"username" yaml:"username"`               // 用户名
-	Password        string `json:"password" yaml:"password"`               // 密码
-	Database        string `json:"database" yaml:"database"`               // 数据库名
-	MaxPoolSize     uint64 `json:"maxPoolSize" yaml:"maxPoolSize"`         // 连接池最大连接数
-	MinPoolSize     uint64 `json:"minPoolSize" yaml:"minPoolSize"`         // 连接池最小连接数
-	MaxConnIdleTime int64  `json:"maxConnIdleTime" yaml:"maxConnIdleTime"` // 连接池保持空闲连接的最长时间
+	Source          string `json:"source" yaml:"source" default:"default"`                   // 数据源名称
+	Enable          bool   `json:"enable" yaml:"enable"`                                     // 数据源启用
+	URI             string `json:"uri" yaml:"uri"`                                           // 连接uri
+	AuthMechanism   string `json:"authMechanism" yaml:"authMechanism" default:"SCRAM-SHA-1"` // 认证加密方式
+	AuthSource      string `json:"authSource" yaml:"authSource"`                             // 认证数据库
+	Username        string `json:"username" yaml:"username"`                                 // 用户名
+	Password        string `json:"password" yaml:"password"`                                 // 密码
+	Database        string `json:"database" yaml:"database"`                                 // 数据库名
+	MaxPoolSize     uint64 `json:"maxPoolSize" yaml:"maxPoolSize"`                           // 连接池最大连接数
+	MinPoolSize     uint64 `json:"minPoolSize" yaml:"minPoolSize"`                           // 连接池最小连接数
+	MaxConnIdleTime int64  `json:"maxConnIdleTime" yaml:"maxConnIdleTime"`                   // 连接池保持空闲连接的最长时间
 }
 
 func (c *Config) Format() string {
@@ -81,7 +81,7 @@ func (c *Config) NewClient() (*mongo.Client, error) {
 	opts := options.Client().ApplyURI(c.URI)
 	if c.Username != "" && c.Password != "" {
 		opts.SetAuth(options.Credential{
-			AuthMechanism: "SCRAM-SHA-1",
+			AuthMechanism: c.AuthMechanism,
 			AuthSource:    c.AuthSource,
 			Username:      c.Username,
 			Password:      c.Password,

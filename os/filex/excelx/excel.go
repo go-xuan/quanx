@@ -130,7 +130,10 @@ func ReadXlsxWithMapping(path, sheet string, mapping map[string]string) ([]map[s
 	// 读取表头
 	var headers []string
 	for _, cell := range readSheet.Rows[0].Cells {
-		var header = stringx.IfZero(mapping[cell.Value], cell.Value)
+		header := cell.Value
+		if mapping != nil && mapping[cell.Value] != "" {
+			header = mapping[cell.Value]
+		}
 		headers = append(headers, header)
 	}
 	// 遍历excel(x:横向坐标，y:纵向坐标)

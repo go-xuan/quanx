@@ -63,7 +63,7 @@ type MongoWriter struct {
 // 异步写入mongo
 func (w *MongoWriter) Write(bytes []byte) (int, error) {
 	go func() {
-		var log jsonLog
+		var log LogRecord
 		if err := json.Unmarshal(bytes, &log); err != nil {
 			return
 		}
@@ -74,21 +74,25 @@ func (w *MongoWriter) Write(bytes []byte) (int, error) {
 
 // NewMongoWriter 初始化mongo写入
 func NewMongoWriter(collection string) (io.Writer, error) {
-	if conf := mongox.GetConfig(logWriterSource); conf != nil {
+	if client := mongox.GetClient(logWriterSource); client != nil {
 		return &MongoWriter{
-			database:   conf.Database,
+			database:   mongox.GetConfig(logWriterSource).Database,
 			collection: collection,
-			client:     mongox.GetClient(logWriterSource),
+			client:     client,
 		}, nil
 	}
 	return nil, nil
 }
 
 func NewElasticSearchWriter(index string) (io.Writer, error) {
-	if conf := elasticx.GetConfig(logWriterSource); conf != nil {
+	if client := elasticx.GetClient(logWriterSource); client != nil {
+		ctx := context.TODO()
+		if exist, err := client.IndexExists(index).Do(ctx); err != nil || !exist {
+			_, _ = client.CreateIndex(index).Do(ctx)
+		}
 		return &ElasticSearchWriter{
 			index:  index,
-			client: elasticx.GetClient(logWriterSource),
+			client: client,
 		}, nil
 	}
 	return nil, nil
@@ -103,7 +107,7 @@ type ElasticSearchWriter struct {
 // 异步写入es
 func (w *ElasticSearchWriter) Write(bytes []byte) (int, error) {
 	go func() {
-		var log jsonLog
+		var log LogRecord
 		if err := json.Unmarshal(bytes, &log); err != nil {
 			return
 		}

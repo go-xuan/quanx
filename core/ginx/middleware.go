@@ -14,14 +14,12 @@ func DefaultLogFormatter(ctx *gin.Context) {
 	// 处理请求
 	ctx.Next()
 	// 日志格式化
-	log.WithField("traceId", TraceId(ctx)).
-		WithField("clientIp", ClientIP(ctx)).
-		Infof("[%3d][%dms][%-4s %s]",
-			ctx.Writer.Status(),
-			time.Since(start).Milliseconds(),
-			ctx.Request.Method,
-			ctx.Request.URL.Path,
-		)
+	Log(ctx).Infof("[%3d][%dms][%-4s %s]",
+		ctx.Writer.Status(),
+		time.Since(start).Milliseconds(),
+		ctx.Request.Method,
+		ctx.Request.URL.Path,
+	)
 }
 
 // JsonLogFormatter gin请求日志格式化
@@ -30,13 +28,20 @@ func JsonLogFormatter(ctx *gin.Context) {
 	// 处理请求
 	ctx.Next()
 	// 日志格式化
-	log.WithField("traceId", TraceId(ctx)).
-		WithField("clientIp", ClientIP(ctx)).
-		WithField("method", ctx.Request.Method).
+	Log(ctx).WithField("method", ctx.Request.Method).
 		WithField("url", ctx.Request.URL.Path).
 		WithField("status", ctx.Writer.Status()).
 		WithField("duration", time.Since(start).Milliseconds()).
 		Info()
+}
+
+// Log 日志包装
+func Log(ctx *gin.Context) *log.Entry {
+	entry := log.WithField("traceId", TraceId(ctx)).WithField("clientIp", ClientIP(ctx))
+	if user := GetSessionUser(ctx); user != nil {
+		entry = entry.WithField("userId", user.UserId()).WithField("userName", user.Username())
+	}
+	return entry
 }
 
 // ClientIP 获取客户端IP
@@ -51,11 +56,13 @@ func ClientIP(ctx *gin.Context) string {
 	return clientIp
 }
 
+// Trace traceId
 func Trace(ctx *gin.Context) {
 	ctx.Set(traceIdKey, uuid.NewString())
 	ctx.Next()
 }
 
+// TraceId 获取traceId
 func TraceId(ctx *gin.Context) string {
 	if traceId, ok := ctx.Get(traceIdKey); ok {
 		return traceId.(string)
