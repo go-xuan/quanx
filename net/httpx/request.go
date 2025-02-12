@@ -98,7 +98,7 @@ func (r *Request) SetCookie(cookie string) *Request {
 	return r
 }
 
-func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
+func (r *Request) Do(category ...ClientCategory) (*Response, error) {
 	if r.url == "" {
 		return nil, errorx.New("url is empty")
 	}
@@ -115,7 +115,7 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 		}
 	}
 	var httpResponse *http.Response
-	if httpResponse, err = GetClient(strategy...).HttpClient().Do(httpRequest); err != nil {
+	if httpResponse, err = GetClient(category...).HttpClient().Do(httpRequest); err != nil {
 		return nil, errorx.Wrap(err, "do http request error")
 	}
 	resp := &Response{
@@ -136,15 +136,15 @@ func (r *Request) Do(strategy ...ClientStrategy) (*Response, error) {
 }
 
 func (r *Request) DoProxy(proxyUrl string) (*Response, error) {
-	return r.Do(&ProxyClientStrategy{Proxy: proxyUrl})
+	return r.Do(&ProxyClientCategory{Proxy: proxyUrl})
 }
 
 func (r *Request) DoHttps(crt string) (*Response, error) {
-	return r.Do(&HttpsClientStrategy{Crt: crt})
+	return r.Do(&HttpsClientCategory{Crt: crt})
 }
 
 func (r *Request) DoHttpsProxy(proxyUrl, crt string) (*Response, error) {
-	return r.Do(&HttpsProxyClientStrategy{
+	return r.Do(&HttpsProxyClientCategory{
 		Proxy: proxyUrl,
 		Crt:   crt,
 	})
