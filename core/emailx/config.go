@@ -1,11 +1,12 @@
 package emailx
 
 import (
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
 
 	"github.com/go-xuan/quanx/core/configx"
-	"github.com/go-xuan/quanx/os/fmtx"
 )
 
 // Config 邮件服务器配置
@@ -16,15 +17,11 @@ type Config struct {
 	Password string `json:"password" yaml:"password"` // 账号授权码
 }
 
-func (e *Config) newDialer() *gomail.Dialer {
-	return gomail.NewDialer(e.Host, e.Port, e.Username, e.Password)
+func (c *Config) Format() string {
+	return fmt.Sprintf("host=%s port=%v username=%s password=%s", c.Host, c.Port, c.Username, c.Password)
 }
 
-func (e *Config) Format() string {
-	return fmtx.Yellow.XSPrintf("host=%s port=%v username=%s password=%s", e.Host, e.Port, e.Username, e.Password)
-}
-
-func (*Config) Reader() *configx.Reader {
+func (c *Config) Reader() *configx.Reader {
 	return &configx.Reader{
 		FilePath:    "mail.yaml",
 		NacosDataId: "mail.yaml",
@@ -32,8 +29,11 @@ func (*Config) Reader() *configx.Reader {
 	}
 }
 
-func (e *Config) Execute() error {
-	handler = &Handler{config: e, dialer: e.newDialer()}
-	log.Info("email-server init successfully: ", e.Format())
+func (c *Config) Execute() error {
+	handler = &Handler{
+		config: c,
+		dialer: gomail.NewDialer(c.Host, c.Port, c.Username, c.Password),
+	}
+	log.Info("email-server init success: ", c.Format())
 	return nil
 }

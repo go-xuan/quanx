@@ -149,6 +149,7 @@ func (q *QueueScheduler) AddBefore(fn func(), id string, beforeId string) {
 	}
 }
 
+// Remove 移除任务
 func (q *QueueScheduler) Remove(id string) {
 	if id != "" {
 		q.mutex.Lock()

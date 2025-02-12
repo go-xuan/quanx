@@ -1,6 +1,7 @@
 package taskx
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -29,7 +30,7 @@ func DefaultParser() cron.Parser {
 }
 
 // Corn 定时任务调度器
-func Corn(warps ...CronWrapper) *CronScheduler {
+func Corn(warps ...CronJobWrapper) *CronScheduler {
 	if _scheduler == nil {
 		var options = []cron.Option{
 			cron.WithParser(DefaultParser()),
@@ -65,11 +66,11 @@ type CronScheduler struct {
 	cron    *cron.Cron            // corn对象
 	names   []string              // 任务名称
 	entries map[string]*CornEntry // 定时任务条目
-	wraps   []CronWrapper         // 定时任务包装器
+	wraps   []CronJobWrapper      // 定时任务包装器
 }
 
 // Add 添加定时任务
-func (s *CronScheduler) Add(name, spec string, job func()) error {
+func (s *CronScheduler) Add(name, spec string, job func(context.Context)) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	// 如果已存在同名任务则先移除再新增
@@ -194,13 +195,13 @@ func (s *CronScheduler) Get(name string) *CornEntry {
 
 type CornEntry struct {
 	cron.Entry
-	name string // 定时任务名
-	spec string // 任务定时表达式
-	do   func() // 任务执行方法
+	name string                // 定时任务名
+	spec string                // 任务定时表达式
+	do   func(context.Context) // 任务执行方法
 }
 
 func (e *CornEntry) Run() {
-	e.do()
+	e.do(context.TODO())
 }
 
 // Info 获取定时任务信息

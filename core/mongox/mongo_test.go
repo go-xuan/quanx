@@ -7,7 +7,7 @@ import (
 
 func TestMongo(t *testing.T) {
 	if err := configx.Execute(&Config{
-		URI:      "",
+		URI:      "mongodb://localhost:27017",
 		Username: "",
 		Password: "",
 		Database: "",

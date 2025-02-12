@@ -24,13 +24,6 @@ const (
 	phonePrefix       = "358"
 )
 
-const (
-	WithNumber      = 1 << 0 // 数字
-	WithLowerLetter = 1 << 1 // 小写字母
-	WithUpperLetter = 1 << 2 // 大写字母
-	WithSpecial     = 1 << 3 // 特殊符号
-)
-
 var newRand *rand.Rand
 
 func NewRand() *rand.Rand {

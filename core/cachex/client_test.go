@@ -36,12 +36,12 @@ func TestHandler(t *testing.T) {
 	}
 
 	ctx := context.TODO()
-	if err := Client().Set(ctx, "test_1", "111", -1); err != nil {
+	if err := GetClient().Set(ctx, "test_1", "111", -1); err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	var value string
-	Client().Get(ctx, "test_1", &value)
+	GetClient().Get(ctx, "test_1", &value)
 	fmt.Println(value)
 }

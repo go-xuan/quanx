@@ -9,7 +9,7 @@ import (
 
 func DefaultStore() *CaptchaStore {
 	return &CaptchaStore{
-		client:  cachex.Client(),
+		client:  cachex.GetClient(),
 		expired: 120,
 		clear:   false,
 	}
@@ -17,7 +17,7 @@ func DefaultStore() *CaptchaStore {
 
 // CaptchaStore 验证码存储
 type CaptchaStore struct {
-	client  cachex.CacheClient
+	client  cachex.Client
 	expired int
 	clear   bool
 }

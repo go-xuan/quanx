@@ -6,7 +6,7 @@ import (
 )
 
 var weight = [17]int{7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2}
-var IdCardLastCodes = [11]byte{'1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'}
+var idCardLastCodes = [11]byte{'1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'}
 var provinceCodes = []string{
 	"11", "12", "13", "14", "15",
 	"21", "22", "23",
@@ -18,7 +18,7 @@ var provinceCodes = []string{
 }
 
 // GetIdCardLastCode 获生成身份证最后一位校验码
-// 十七位计算公式：IdCardLastCodes[Sum(x*y)%11]
+// 十七位计算公式：idCardLastCodes[Sum(x*y)%11]
 // x:表示第i位置上的身份证号码数字值
 // y:表示第i位置上的加权因子
 func GetIdCardLastCode(idCard string) byte {
@@ -30,7 +30,7 @@ func GetIdCardLastCode(idCard string) byte {
 	for i := 0; i < 17; i++ {
 		sum += array[i] * weight[i]
 	}
-	return IdCardLastCodes[sum%11]
+	return idCardLastCodes[sum%11]
 }
 
 // GetIdCardGender 根据身份证获取性别

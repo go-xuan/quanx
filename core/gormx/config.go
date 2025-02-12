@@ -15,13 +15,8 @@ import (
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/anyx"
 )
-
-func NewConfigurator(conf *Config) configx.Configurator {
-	return conf
-}
 
 type Config struct {
 	Source          string `json:"source" yaml:"source" default:"default"`              // 数据源名称
@@ -40,7 +35,7 @@ type Config struct {
 }
 
 func (c *Config) Format() string {
-	return fmtx.Yellow.XSPrintf("source=%s type=%s host=%s port=%v database=%s debug=%v",
+	return fmt.Sprintf("source=%s type=%s host=%s port=%v database=%s debug=%v",
 		c.Source, c.Type, c.Host, c.Port, c.Database, c.Debug)
 }
 
@@ -58,25 +53,25 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "set default value error")
 		}
 		if db, err := c.NewGormDB(); err != nil {
-			return errorx.Wrap(err, "new gorm.DB failed")
+			return errorx.Wrap(err, "new gorm db error")
 		} else {
 			if _handler == nil {
 				_handler = &Handler{
-					multi:     false,
-					config:    c,
-					configMap: make(map[string]*Config),
-					gormDB:    db,
-					gormMap:   map[string]*gorm.DB{},
+					multi: false, config: c, db: db,
+					configs: make(map[string]*Config),
+					dbs:     make(map[string]*gorm.DB),
 				}
 			} else {
 				_handler.multi = true
+				if c.Source == constx.DefaultSource {
+					_handler.config = c
+					_handler.db = db
+				}
 			}
-			_handler.gormMap[c.Source] = db
-			_handler.configMap[c.Source] = c
-			return nil
+			_handler.configs[c.Source] = c
+			_handler.dbs[c.Source] = db
 		}
 	}
-	log.Info("database not connected! reason: database.yaml is empty or the value of enable is false")
 	return nil
 }
 
@@ -92,8 +87,9 @@ func (c *Config) NewGormDB() (*gorm.DB, error) {
 		sqlDB.SetMaxIdleConns(c.MaxIdleConns)
 		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
 		sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
-		// 是否打印SQL
+		
 		if c.Debug {
+			// 是否打印SQL
 			db = db.Debug()
 		}
 		return db, nil
@@ -129,7 +125,7 @@ func (c *Config) GetGormDB() (*gorm.DB, error) {
 		dial = postgres.Open(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
 			c.Host, c.Port, c.Username, c.Password, c.Database))
 	default:
-		return nil, errorx.Errorf("database type only support : %s or %s", MYSQL, POSTGRES)
+		return nil, errorx.Errorf("database type only support : %v", []string{MYSQL, POSTGRES, PGSQL})
 	}
 	if db, err := gorm.Open(dial, &gorm.Config{
 		// 模型命名策略
@@ -175,32 +171,30 @@ func (m MultiConfig) Execute() error {
 	}
 	if _handler == nil {
 		_handler = &Handler{
-			multi:     true,
-			gormMap:   make(map[string]*gorm.DB),
-			configMap: make(map[string]*Config),
+			dbs:     make(map[string]*gorm.DB),
+			configs: make(map[string]*Config),
 		}
-	} else {
-		_handler.multi = true
 	}
+	_handler.multi = true
 	for i, c := range m {
 		if c.Enable {
 			if err := anyx.SetDefaultValue(c); err != nil {
 				return errorx.Wrap(err, "set default value error")
 			}
-			var db, err = c.NewGormDB()
+			db, err := c.NewGormDB()
 			if err != nil {
 				return errorx.Wrap(err, "new gorm.Config failed")
 			}
-			_handler.gormMap[c.Source] = db
-			_handler.configMap[c.Source] = c
+			_handler.dbs[c.Source] = db
+			_handler.configs[c.Source] = c
 			if i == 0 || c.Source == constx.DefaultSource {
-				_handler.gormDB = db
+				_handler.db = db
 				_handler.config = c
 			}
 		}
 	}
-	if len(_handler.configMap) == 0 {
-		log.Error("database not connected! cause: database.yaml is empty or no enabled database configured")
+	if len(_handler.configs) == 0 {
+		log.Error("database not connected! cause: database.yaml is empty or no enabled source")
 	}
 	return nil
 }

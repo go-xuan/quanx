@@ -1,55 +1,53 @@
 package gormx
 
 import (
-	"reflect"
+	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
+	"strings"
 
 	"github.com/go-xuan/quanx/os/errorx"
 )
 
-type Tabler interface {
-	TableName() string    // 表名
-	TableComment() string // 表注释
-	InitData() any        // 表初始数据
+// InitTabler 初始化表数据
+type InitTabler interface {
+	InitData() any
 }
 
-// InitTableWithTabler 初始化表结构以及表数据（基于接口实现）
-func (h *Handler) InitTableWithTabler(source string, dst ...Tabler) error {
-	var db, conf = h.gormMap[source], h.configMap[source]
-	if db != nil && conf != nil && len(dst) > 0 {
-		if conf.Debug {
-			for _, table := range dst {
-				migrator := db.Migrator()
-				if migrator.HasTable(table) {
-					if err := migrator.AutoMigrate(table); err != nil {
+// CommentTabler 添加表备注
+type CommentTabler interface {
+	TableComment() string
+}
+
+// InitTabler 初始化表
+func (h *Handler) InitTabler(source string, tablers ...interface{}) error {
+	var db, conf = h.dbs[source], h.configs[source]
+	if db != nil && conf != nil && len(tablers) > 0 {
+		migrator := db.Migrator()
+		for _, tabler := range tablers {
+			if schemaTabler, ok := tabler.(schema.Tabler); ok {
+				if migrator.HasTable(tabler) {
+					if err := db.Migrator().AutoMigrate(tabler); err != nil {
 						if err.Error() != "insufficient arguments" {
 							return errorx.Wrap(err, "table auto migrate error")
 						}
 					}
-					var count int64
-					if err := db.Model(table).Count(&count).Error; err != nil {
-						return errorx.Wrap(err, "table count error")
-					} else if count == 0 {
-						// 初始化表数据
-						if initData := table.InitData(); initData != nil {
-							if err = db.Create(initData).Error; err != nil {
-								return errorx.Wrap(err, "table init data error")
-							}
-						}
+					if err := initTableData(db, tabler); err != nil {
+						return errorx.Wrap(err, "table init data error")
 					}
 				} else {
-					if err := migrator.CreateTable(table); err != nil {
+					if err := db.Migrator().CreateTable(tabler); err != nil {
 						return errorx.Wrap(err, "table create error")
 					}
-					if name, comment := table.TableName(), table.TableComment(); name != "" && comment != "" {
-						if err := db.Exec(conf.CommentTableSql(name, comment)).Error; err != nil {
-							return errorx.Wrap(err, "table alter comment error")
-						}
+					if err := alterTableComment(db, schemaTabler, conf.Type); err != nil {
+						return errorx.Wrap(err, "alter table comment error")
 					}
-					if initData := table.InitData(); initData != nil {
-						if err := db.Create(initData).Error; err != nil {
-							return errorx.Wrap(err, "table init data error")
-						}
+					if err := initTableData(db, tabler); err != nil {
+						return errorx.Wrap(err, "table init data error")
 					}
+				}
+			} else {
+				if err := migrator.AutoMigrate(tabler); err != nil {
+					return errorx.Wrap(err, "table create error")
 				}
 			}
 		}
@@ -57,39 +55,39 @@ func (h *Handler) InitTableWithTabler(source string, dst ...Tabler) error {
 	return nil
 }
 
-// InitTableWithAny 初始化表结构（基于反射）
-func (h *Handler) InitTableWithAny(source string, dst ...any) (err error) {
-	var db, conf = h.gormMap[source], h.configMap[source]
-	if db != nil && conf != nil && len(dst) > 0 {
-		if conf.Debug {
-			for _, model := range dst {
-				if db.Migrator().HasTable(model) {
-					if err = db.Migrator().AutoMigrate(model); err != nil {
-						return
-					}
-				} else {
-					if err = db.Migrator().CreateTable(model); err != nil {
-						return
-					}
-					// 添加表备注
-					var refValue = reflect.ValueOf(model)
-					if method := refValue.MethodByName("TableComment"); method.IsValid() {
-						tableName := refValue.MethodByName("TableName").Call([]reflect.Value{})[0].String()
-						comment := method.Call([]reflect.Value{})[0].String()
-						if err = db.Exec(conf.CommentTableSql(tableName, comment)).Error; err != nil {
-							return
-						}
-					}
-					// 初始化表数据
-					if method := refValue.MethodByName("InitData"); method.IsValid() {
-						initData := method.Call([]reflect.Value{})[0].Interface()
-						if err = db.Create(initData).Error; err != nil {
-							return
-						}
-					}
-				}
+// 初始化表数据
+func initTableData(db *gorm.DB, tabler interface{}) error {
+	if initTabler, ok := tabler.(InitTabler); ok {
+		var count int64
+		if err := db.Model(tabler).Count(&count).Error; err != nil {
+			return errorx.Wrap(err, "table count error")
+		} else if initData := initTabler.InitData(); initData != nil && count == 0 {
+			if err = db.Create(initData).Error; err != nil {
+				return errorx.Wrap(err, "table insert error")
 			}
 		}
 	}
-	return
+	return nil
+}
+
+// 添加表备注
+func alterTableComment(db *gorm.DB, tabler schema.Tabler, dbType string) error {
+	if commentTabler, ok := tabler.(CommentTabler); ok {
+		if name, comment := tabler.TableName(), commentTabler.TableComment(); name != "" && comment != "" {
+			if err := db.Exec(commentTableSql(dbType, name, comment)).Error; err != nil {
+				return errorx.Wrap(err, "table alter comment error")
+			}
+		}
+	}
+	return nil
+}
+
+func commentTableSql(dbType, table, comment string) string {
+	switch strings.ToLower(dbType) {
+	case MYSQL:
+		return "alter table " + table + " comment = '" + comment + "'"
+	case POSTGRES, PGSQL:
+		return "comment on table " + table + " is '" + comment + "'"
+	}
+	return ""
 }

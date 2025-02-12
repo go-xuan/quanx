@@ -1,10 +1,9 @@
 package mongox
 
 import (
-	"context"
-
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	"github.com/go-xuan/quanx/common/constx"
 )
 
 var _handler *Handler
@@ -16,33 +15,50 @@ func this() *Handler {
 	return _handler
 }
 
-func GetConfig() *Config {
-	return this().GetConfig()
-}
-
-func Client() *mongo.Client {
-	return this().GetClient()
-}
-
 type Handler struct {
-	config *Config
-	client *mongo.Client
+	multi   bool
+	config  *Config
+	client  *mongo.Client
+	configs map[string]*Config
+	clients map[string]*mongo.Client
 }
 
-func (h *Handler) GetConfig() *Config {
+func (h *Handler) GetConfig(source ...string) *Config {
+	if h.multi && len(source) > 0 && source[0] != constx.DefaultSource {
+		if conf, ok := h.configs[source[0]]; ok {
+			return conf
+		}
+	}
 	return h.config
 }
 
-func (h *Handler) GetClient() *mongo.Client {
+func (h *Handler) GetClient(source ...string) *mongo.Client {
+	if h.multi && len(source) > 0 && source[0] != constx.DefaultSource {
+		if client, ok := h.clients[source[0]]; ok {
+			return client
+		}
+	}
 	return h.client
 }
 
-func (h *Handler) GetDatabaseNames(ctx context.Context) (dbs []string, err error) {
-	dbs, err = h.client.ListDatabaseNames(ctx, bson.M{})
-	return
+// IsInitialized 是否初始化
+func IsInitialized() bool {
+	return _handler != nil
 }
 
-func (h *Handler) GetCollection(collection string) (mc *mongo.Collection) {
-	mc = h.client.Database(h.config.Database).Collection(collection)
-	return
+// GetConfig 获取配置
+func GetConfig(source ...string) *Config {
+	return this().GetConfig(source...)
+}
+
+// GetClient 获取客户端
+func GetClient(source ...string) *mongo.Client {
+	return this().GetClient(source...)
+}
+
+func GetDatabase(source ...string) *mongo.Database {
+	if conf, client := GetConfig(source...), GetClient(source...); conf != nil && client != nil {
+		return client.Database(conf.Database)
+	}
+	return nil
 }

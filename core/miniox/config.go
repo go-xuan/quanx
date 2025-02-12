@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/fmtx"
 	"github.com/go-xuan/quanx/types/timex"
 )
 
@@ -29,7 +28,7 @@ type Config struct {
 }
 
 func (m *Config) Format() string {
-	return fmtx.Yellow.XSPrintf("host=%s port=%v accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
+	return fmt.Sprintf("host=%s port=%v accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
 }
 
 func (*Config) Reader() *configx.Reader {
@@ -46,7 +45,7 @@ func (m *Config) Execute() error {
 		return errorx.Wrap(err, "new minio client failed")
 	} else {
 		_handler = &Handler{config: m, client: client}
-		log.Info("minio connect successfully: ", m.Format())
+		log.Info("minio connect success: ", m.Format())
 		return nil
 	}
 }
@@ -56,22 +55,23 @@ func (m *Config) Endpoint() string {
 }
 
 // NewClient 初始化minio客户端
-func (m *Config) NewClient() (client *minio.Client, err error) {
-	if client, err = minio.New(m.Endpoint(), &minio.Options{
+func (m *Config) NewClient() (*minio.Client, error) {
+	if client, err := minio.New(m.Endpoint(), &minio.Options{
 		Creds:  credentials.NewStaticV4(m.AccessId, m.AccessSecret, m.SessionToken),
 		Secure: m.Secure,
 		Region: Region,
 	}); err != nil {
-		return
+		return nil, errorx.Wrap(err, "new minio client failed")
+	} else {
+		return client, nil
 	}
-	return
 }
 
-func (m *Config) MinioPath(fileName string) (minioPath string) {
+func (m *Config) MinioPath(fileName string) string {
 	fileSuffix := filepath.Ext(filepath.Base(fileName))
-	minioPath = filepath.Join(time.Now().Format(timex.TimestampFmt), uuid.NewString()+fileSuffix)
+	minioPath := filepath.Join(time.Now().Format(timex.TimestampFmt), uuid.NewString()+fileSuffix)
 	if m.PrefixPath != "" {
 		minioPath = filepath.Join(m.PrefixPath, minioPath)
 	}
-	return
+	return minioPath
 }

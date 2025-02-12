@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/redis/go-redis/v9"
-
+	
 	"github.com/go-xuan/quanx/common/constx"
 )
 
@@ -17,38 +17,18 @@ func this() *Handler {
 	return _handler
 }
 
-func Initialized() bool {
-	return _handler != nil
-}
-
-func GetConfig(source ...string) *Config {
-	return this().GetConfig(source...)
-}
-
-func Client(source ...string) redis.UniversalClient {
-	return this().GetClient(source...)
-}
-
-func Ping(ctx context.Context, source ...string) (bool, error) {
-	if result, err := this().GetClient(source...).Ping(ctx).Result(); err != nil || result != "PONG" {
-		return false, err
-	} else {
-		return true, nil
-	}
-}
-
 // Handler redis连接句柄
 type Handler struct {
-	multi     bool // 是否多redis数据库
-	config    *Config
-	configMap map[string]*Config
-	client    redis.UniversalClient
-	clientMap map[string]redis.UniversalClient
+	multi   bool
+	config  *Config
+	client  redis.UniversalClient
+	configs map[string]*Config
+	clients map[string]redis.UniversalClient
 }
 
 func (h *Handler) GetClient(source ...string) redis.UniversalClient {
-	if len(source) > 0 && source[0] != constx.DefaultSource {
-		if client, ok := h.clientMap[source[0]]; ok {
+	if h.multi && len(source) > 0 && source[0] != constx.DefaultSource {
+		if client, ok := h.clients[source[0]]; ok {
 			return client
 		}
 	}
@@ -56,10 +36,34 @@ func (h *Handler) GetClient(source ...string) redis.UniversalClient {
 }
 
 func (h *Handler) GetConfig(source ...string) *Config {
-	if len(source) > 0 && source[0] != constx.DefaultSource {
-		if conf, ok := h.configMap[source[0]]; ok {
+	if h.multi && len(source) > 0 && source[0] != constx.DefaultSource {
+		if conf, ok := h.configs[source[0]]; ok {
 			return conf
 		}
 	}
 	return h.config
+}
+
+// IsInitialized 是否初始化
+func IsInitialized() bool {
+	return _handler != nil
+}
+
+// GetConfig 获取配置
+func GetConfig(source ...string) *Config {
+	return this().GetConfig(source...)
+}
+
+// GetClient 获取客户端
+func GetClient(source ...string) redis.UniversalClient {
+	return this().GetClient(source...)
+}
+
+// Ping 连接检查
+func Ping(ctx context.Context, source ...string) (bool, error) {
+	if result, err := this().GetClient(source...).Ping(ctx).Result(); err != nil || result != "PONG" {
+		return false, err
+	} else {
+		return true, nil
+	}
 }

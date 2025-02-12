@@ -60,22 +60,20 @@ func (u *JwtUser) Valid() error {
 	return nil
 }
 
-func (u *JwtUser) NewToken(secret string) (token string, err error) {
-	if token, err = jwt.NewWithClaims(jwt.SigningMethodHS256, u).SignedString([]byte(secret)); err != nil {
-		return
+func (u *JwtUser) NewToken(secret string) (string, error) {
+	if token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, u).SignedString([]byte(secret)); err != nil {
+		return "", errorx.Wrap(err, "token sign failed")
+	} else {
+		return token, nil
 	}
-	return
 }
 
-func (u *JwtUser) ParseToken(token, secret string) (err error) {
-	var jwtToken *jwt.Token
-	if jwtToken, err = jwt.ParseWithClaims(token, &JwtUser{}, func(token *jwt.Token) (any, error) {
+func (u *JwtUser) ParseToken(token, secret string) error {
+	if jwtToken, err := jwt.ParseWithClaims(token, &JwtUser{}, func(*jwt.Token) (any, error) {
 		return []byte(secret), nil
 	}); err != nil {
-		err = errorx.Wrap(err, "parse token error")
-		return
-	}
-	if user, ok := jwtToken.Claims.(*JwtUser); ok {
+		return errorx.Wrap(err, "parse token error")
+	} else if user, ok := jwtToken.Claims.(*JwtUser); ok {
 		u.Id = user.Id
 		u.Account = user.Account
 		u.Name = user.Name
@@ -84,7 +82,7 @@ func (u *JwtUser) ParseToken(token, secret string) (err error) {
 		u.Domain = user.Domain
 		u.TTL = user.TTL
 	}
-	return
+	return nil
 }
 
 func (u *JwtUser) Username() string {

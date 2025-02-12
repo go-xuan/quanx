@@ -24,17 +24,33 @@ func this() *Handler {
 	return _handler
 }
 
-func GetConfig() *Config {
-	return this().config
+// Handler minio控制器
+type Handler struct {
+	config *Config       // minio配置
+	client *minio.Client // minio客户端
 }
 
-func Client() *minio.Client {
-	return this().client
+func (h *Handler) GetConfig() *Config {
+	return h.config
+}
+
+func (h *Handler) GetClient() *minio.Client {
+	return h.client
+}
+
+// GetConfig 获取配置
+func GetConfig() *Config {
+	return this().GetConfig()
+}
+
+// GetClient 获取客户端
+func GetClient() *minio.Client {
+	return this().GetClient()
 }
 
 // CreateBucket 创建桶
 func CreateBucket(ctx context.Context, name string) error {
-	var client = Client()
+	var client = GetClient()
 	if exist, err := client.BucketExists(ctx, name); err != nil {
 		return errorx.Wrap(err, "check bucket exists error")
 	} else if !exist {
@@ -50,7 +66,7 @@ func CreateBucket(ctx context.Context, name string) error {
 
 // PutObject 上传文件
 func PutObject(ctx context.Context, bucketName, minioPath string, reader io.Reader) error {
-	var client = Client()
+	var client = GetClient()
 	if _, err := client.PutObject(ctx, bucketName, minioPath, reader, -1, minio.PutObjectOptions{ContentType: "application/octet-stream"}); err != nil {
 		return errorx.Wrap(err, "put object error")
 	}
@@ -59,7 +75,7 @@ func PutObject(ctx context.Context, bucketName, minioPath string, reader io.Read
 
 // ObjectExist 获取对象是否存在
 func ObjectExist(ctx context.Context, bucketName string, minioPath string) (bool, error) {
-	if objInfo, err := Client().StatObject(ctx, bucketName, minioPath, minio.StatObjectOptions{}); err != nil {
+	if objInfo, err := GetClient().StatObject(ctx, bucketName, minioPath, minio.StatObjectOptions{}); err != nil {
 		return false, errorx.Wrap(err, "stat object error")
 	} else {
 		return objInfo.Size > 0, nil
@@ -85,7 +101,7 @@ func UploadFile(ctx context.Context, bucketName string, minioPath string, file *
 
 // FGetObject 下载文件
 func FGetObject(ctx context.Context, bucketName, minioPath, savePath string) error {
-	var client = Client()
+	var client = GetClient()
 	if err := client.FGetObject(ctx, bucketName, minioPath, savePath, minio.GetObjectOptions{}); err != nil {
 		return errorx.Wrap(err, "get object error")
 	}
@@ -94,7 +110,7 @@ func FGetObject(ctx context.Context, bucketName, minioPath, savePath string) err
 
 // RemoveObject 删除文件
 func RemoveObject(ctx context.Context, bucketName, minioPath string) error {
-	var client = Client()
+	var client = GetClient()
 	if err := client.RemoveObject(ctx, bucketName, minioPath, minio.RemoveObjectOptions{GovernanceBypass: true}); err != nil {
 		return errorx.Wrap(err, "remove object error")
 	}
@@ -115,7 +131,7 @@ func (h *Handler) RemoveObjectBatch(ctx context.Context, bucketName string, mini
 func PresignedGetObject(ctx context.Context, minioPath string) (string, error) {
 	var expires = time.Duration(GetConfig().Expire) * time.Minute
 	var bucketName = GetConfig().BucketName
-	if URL, err := Client().PresignedGetObject(ctx, bucketName, minioPath, expires, nil); err != nil {
+	if URL, err := GetClient().PresignedGetObject(ctx, bucketName, minioPath, expires, nil); err != nil {
 		return "", errorx.Wrap(err, "presigned get object error")
 	} else {
 		return URL.String(), nil
@@ -136,28 +152,14 @@ func PresignedGetObjects(ctx context.Context, minioPaths []string) ([]string, er
 }
 
 // UploadFileByUrl 通过文件路径上传文件到桶
-func UploadFileByUrl(ctx context.Context, bucketName string, fileName string, url string) (minioPath string, err error) {
-	var fileBytes []byte
-	if fileBytes, err = filex.GetFileBytesByUrl(url); err != nil {
-		return
+func UploadFileByUrl(ctx context.Context, bucketName string, fileName string, url string) (string, error) {
+	if fileBytes, err := filex.GetFileBytesByUrl(url); err != nil {
+		return "", errorx.Wrap(err, "get file bytes error")
+	} else {
+		minioPath := GetConfig().MinioPath(fileName)
+		if err = PutObject(ctx, bucketName, minioPath, bytes.NewBuffer(fileBytes)); err != nil {
+			return minioPath, errorx.Wrap(err, "put object error")
+		}
+		return minioPath, nil
 	}
-	minioPath = GetConfig().MinioPath(fileName)
-	if err = PutObject(ctx, bucketName, minioPath, bytes.NewBuffer(fileBytes)); err != nil {
-		return
-	}
-	return
-}
-
-// Handler minio控制器
-type Handler struct {
-	config *Config       // minio配置
-	client *minio.Client // minio客户端
-}
-
-func (h *Handler) GetConfig() *Config {
-	return h.config
-}
-
-func (h *Handler) GetClient() *minio.Client {
-	return h.client
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/go-xuan/quanx/core/configx"
 )
 
-func TestHugegraph(t *testing.T) {
+func TestElastic(t *testing.T) {
 	if err := configx.Execute(&Config{
 		Host: "localhost",
 		Port: 9200,
