@@ -31,7 +31,7 @@ func (t *FunctionCronJob) Register() {
 type RequestCronJob struct {
 	Name     string               // 任务名
 	Spec     string               // 定时表达式
-	Strategy httpx.ClientStrategy // http客户端类型
+	Strategy httpx.ClientCategory // http客户端类型
 	Request  *httpx.Request       // http请求
 }
 

@@ -16,13 +16,25 @@ import (
 var _client *Client
 
 // GetClient 获取httpx客户端
-func GetClient(strategy ...ClientStrategy) *Client {
-	if len(strategy) > 0 && strategy[0] != nil {
-		return strategy[0].Client()
+func GetClient(category ...ClientCategory) *Client {
+	if len(category) > 0 && category[0] != nil {
+		return category[0].Client()
 	}
 	return newHttpClient()
 }
 
+// 初始化httpx客户端
+func newClient(strategy int, crt, proxy string) *Client {
+	return &Client{
+		strategy: strategy,
+		client: &http.Client{
+			Timeout:   time.Second * 10,
+			Transport: newTransport(crt, proxy),
+		},
+	}
+}
+
+// Client httpx客户端
 type Client struct {
 	strategy int          // 客户端类型
 	client   *http.Client // http客户端
@@ -61,71 +73,38 @@ const (
 
 func newHttpClient() *Client {
 	if _client == nil || _client.strategy != httpStrategyCode {
-		_client = &Client{
-			strategy: httpStrategyCode,
-			client: &http.Client{
-				Timeout:   time.Second * 10,
-				Transport: newTransport(),
-			},
-		}
+		_client = newClient(httpStrategyCode, "", "")
 	}
 	return _client
 }
 
 func newHttpsClient(crt string) *Client {
 	if _client == nil || _client.strategy != httpsStrategyCode {
-		_client = &Client{
-			strategy: httpsStrategyCode,
-			client: &http.Client{
-				Timeout:   time.Second * 10,
-				Transport: newTransport(crt),
-			},
-		}
+		_client = newClient(httpsStrategyCode, crt, "")
 	}
 	return _client
 }
 
-func newHttpProxyClient(proxyUrl string) *Client {
+func newHttpProxyClient(proxy string) *Client {
 	if _client == nil || _client.strategy != proxyStrategyCode {
-		var transport = newTransport()
-		if proxyURL, err := url.Parse(proxyUrl); err == nil {
-			transport.Proxy = http.ProxyURL(proxyURL)
-		}
-		_client = &Client{
-			strategy: proxyStrategyCode,
-			client: &http.Client{
-				Timeout:   time.Second * 10,
-				Transport: transport,
-			},
-		}
+		_client = newClient(proxyStrategyCode, "", proxy)
 	}
 	return _client
 }
 
-func newHttpsProxyClient(proxyUrl string, crt string) *Client {
+func newHttpsProxyClient(crt, proxy string) *Client {
 	if _client == nil || _client.strategy != httpsProxyStrategyCode {
-		var transport = newTransport(crt)
-		if proxyURL, err := url.Parse(proxyUrl); err == nil {
-			transport.Proxy = http.ProxyURL(proxyURL)
-		}
-		_client = &Client{
-			strategy: httpsProxyStrategyCode,
-			client: &http.Client{
-				Timeout:   time.Second * 10,
-				Transport: transport,
-			},
-		}
+		_client = newClient(httpsProxyStrategyCode, crt, proxy)
 	}
 	return _client
 }
 
-func newTransport(crt ...string) *http.Transport {
+func newTransport(crt, proxy string) *http.Transport {
 	dialer := &net.Dialer{
 		Timeout:   time.Second * 10,
 		KeepAlive: time.Second * 10,
 	}
-	var transport = &http.Transport{
-		TLSClientConfig:       newTLSClientConfig(crt...),
+	transport := &http.Transport{
 		DialContext:           dialer.DialContext,
 		Proxy:                 http.ProxyFromEnvironment,
 		MaxIdleConns:          30,
@@ -133,21 +112,36 @@ func newTransport(crt ...string) *http.Transport {
 		TLSHandshakeTimeout:   time.Second * 10,
 		ExpectContinueTimeout: time.Second,
 	}
+	if crt != "" {
+		if pem, err := os.ReadFile(crt); err == nil {
+			pool := x509.NewCertPool()
+			if ok := pool.AppendCertsFromPEM(pem); !ok {
+				transport.TLSClientConfig = &tls.Config{
+					ClientCAs:          pool,
+					InsecureSkipVerify: true,
+				}
+			}
+		} else {
+			panic(err)
+		}
+	}
+	if u, err := url.Parse(proxy); err == nil {
+		transport.Proxy = http.ProxyURL(u)
+	}
 	return transport
 }
 
-func newTLSClientConfig(crt ...string) *tls.Config {
-	if len(crt) > 0 && crt[0] != "" {
-		if pem, err := os.ReadFile(crt[0]); err != nil {
+func newTLSClientConfig(crt string) *tls.Config {
+	if crt != "" {
+		if pem, err := os.ReadFile(crt); err != nil {
 			panic(err)
 		} else {
 			pool := x509.NewCertPool()
 			if ok := pool.AppendCertsFromPEM(pem); !ok {
-				panic(err)
-			}
-			return &tls.Config{
-				ClientCAs:          pool,
-				InsecureSkipVerify: true,
+				return &tls.Config{
+					ClientCAs:          pool,
+					InsecureSkipVerify: true,
+				}
 			}
 		}
 	}
