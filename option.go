@@ -2,9 +2,7 @@ package quanx
 
 import (
 	"github.com/gin-gonic/gin"
-
 	"github.com/go-xuan/quanx/core/configx"
-	"github.com/go-xuan/quanx/core/gormx"
 )
 
 type Option uint
@@ -75,17 +73,17 @@ func AddGinRouter(router ...func(*gin.RouterGroup)) EngineOptionFunc {
 	}
 }
 
-// AddTable 设置 gormx.Tabler 模型
-func AddTable(dst ...gormx.Tabler) EngineOptionFunc {
+// AddTable 添加表结构
+func AddTable(tablers ...interface{}) EngineOptionFunc {
 	return func(e *Engine) {
-		e.AddTable(dst...)
+		e.AddTable(tablers...)
 	}
 }
 
-// AddSourceTable 设置某个数据源的 gormx.Table 模型
-func AddSourceTable(source string, dst ...gormx.Tabler) EngineOptionFunc {
+// AddSourceTable 添加数据源表结构
+func AddSourceTable(source string, tablers ...interface{}) EngineOptionFunc {
 	return func(e *Engine) {
-		e.AddSourceTable(source, dst...)
+		e.AddSourceTable(source, tablers...)
 	}
 }
 

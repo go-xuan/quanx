@@ -72,7 +72,7 @@ func (c *Config) Execute() error {
 			}
 		}
 	}
-	log.Info("nacos connect successfully: ", c.Format())
+	log.Info("nacos connect success: ", c.Format())
 	return nil
 }
 

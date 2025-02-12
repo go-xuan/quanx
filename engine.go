@@ -5,8 +5,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/core/cachex"
 	"github.com/go-xuan/quanx/core/configx"
@@ -23,22 +21,23 @@ import (
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"
+	log "github.com/sirupsen/logrus"
 )
 
 var engine *Engine
 
 // Engine 服务启动器
 type Engine struct {
-	switches       map[Option]bool           // 服务运行开关
-	config         *Config                   // 服务配置数据，使用 initAppConfig()将配置文件加载到此
-	configDir      string                    // 服务配置文件夹, 使用 SetConfigDir()设置配置文件读取路径
-	ginEngine      *gin.Engine               // gin框架引擎实例
-	ginRouters     []func(*gin.RouterGroup)  // gin路由的预加载方法，使用 AddGinRouter()添加自行实现的路由注册方法
-	ginMiddlewares []gin.HandlerFunc         // gin中间件的预加载方法，使用 AddGinRouter()添加gin中间件
-	customFuncs    []func()                  // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
-	configurators  []configx.Configurator    // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
-	gormTables     map[string][]gormx.Tabler // gorm表结构对象，使用 AddTable() / AddSourceTable() 添加至表结构初始化任务列表，需要实现 gormx.Tabler 接口
-	queue          *taskx.QueueScheduler     // Engine启动时的队列任务
+	switches       map[Option]bool          // 服务运行开关
+	config         *Config                  // 服务配置数据，使用 initAppConfig()将配置文件加载到此
+	configDir      string                   // 服务配置文件夹, 使用 SetConfigDir()设置配置文件读取路径
+	ginEngine      *gin.Engine              // gin框架引擎实例
+	ginRouters     []func(*gin.RouterGroup) // gin路由的预加载方法，使用 AddGinRouter()添加自行实现的路由注册方法
+	ginMiddlewares []gin.HandlerFunc        // gin中间件的预加载方法，使用 AddGinRouter()添加gin中间件
+	customFuncs    []func()                 // 自定义初始化函数 使用 AddCustomFunc()添加自定义函数
+	configurators  []configx.Configurator   // 配置器，使用 AddConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
+	gormTablers    map[string][]interface{} // gorm表结构对象，使用 AddTable() / AddSourceTable() 添加至表结构初始化任务列表，需要实现 gormx.Tabler 接口
+	queue          *taskx.QueueScheduler    // Engine启动时的队列任务
 }
 
 // GetEngine 获取当前Engine
@@ -60,7 +59,7 @@ func NewEngine(opts ...EngineOptionFunc) *Engine {
 			customFuncs:    make([]func(), 0),
 			configurators:  make([]configx.Configurator, 0),
 			ginMiddlewares: make([]gin.HandlerFunc, 0),
-			gormTables:     make(map[string][]gormx.Tabler),
+			gormTablers:    make(map[string][]interface{}),
 			switches:       make(map[Option]bool),
 		}
 		gin.SetMode(gin.ReleaseMode)
@@ -191,8 +190,8 @@ func (e *Engine) initInnerConfig() {
 	// 初始化表结构
 	if gormx.IsInitialized() {
 		for _, source := range gormx.Sources() {
-			if dst, ok := e.gormTables[source]; ok {
-				if err := gormx.InitTable(source, dst...); err != nil {
+			if tablers, ok := e.gormTablers[source]; ok {
+				if err := gormx.InitTable(source, tablers...); err != nil {
 					panic(errorx.Wrap(err, "init table struct and data failed"))
 				}
 			}
@@ -387,16 +386,16 @@ func (e *Engine) GetConfigPath(path string) string {
 	}
 }
 
-// AddTable 添加gormx.Tabler模型
-func (e *Engine) AddTable(tablers ...gormx.Tabler) {
+// AddTable 添加表结构
+func (e *Engine) AddTable(tablers ...interface{}) {
 	e.AddSourceTable(constx.DefaultSource, tablers...)
 }
 
-// AddSourceTable 添加某个数据源的gormx.Table模型
-func (e *Engine) AddSourceTable(source string, tablers ...gormx.Tabler) {
+// AddSourceTable 添加数据源表结构
+func (e *Engine) AddSourceTable(source string, tablers ...interface{}) {
 	e.checkRunning()
 	if len(tablers) > 0 {
-		e.gormTables[source] = append(e.gormTables[source], tablers...)
+		e.gormTablers[source] = append(e.gormTablers[source], tablers...)
 	}
 }
 
@@ -425,7 +424,7 @@ func (e *Engine) AddQueueTask(task func(), id string) {
 		e.switches[enableQueue] = true
 		e.enableQueue()
 		e.queue.AddBefore(task, id, stepStartServer)
-		log.Info(`add queue task successfully, task id:`, id)
+		log.Info(`add queue task success, task id:`, id)
 	}
 	return
 }

@@ -73,7 +73,7 @@ func Register(server ServerInstance) error {
 		log.Error("nacos server register failed: ", server.Info())
 		return errorx.Wrap(err, "nacos server register failed")
 	} else {
-		log.Info("nacos server register successfully: ", server.Info())
+		log.Info("nacos server register success: ", server.Info())
 		return nil
 	}
 }
@@ -90,7 +90,7 @@ func Deregister(server ServerInstance) error {
 		log.Error("nacos server deregister failed: ", server.Info())
 		return errorx.Wrap(err, "nacos server deregister failed")
 	} else {
-		log.Info("nacos server deregister successfully: ", server.Info())
+		log.Info("nacos server deregister success: ", server.Info())
 		return nil
 	}
 }

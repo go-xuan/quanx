@@ -18,69 +18,79 @@ package main
 import "github.com/go-xuan/quanx"
 
 func main() {
-	quanx.NewEngine().RUN()
+    quanx.NewEngine().RUN()
 }
 ```
 
 ### 初始化表结构
 
 ```go
-
 func main() {
-    quanx.NewEngine(
-        // 初始化表结构
-        quanx.AddTable(
-            &User{}, // 需要实现gormx.Tabler接口
-        ),
-    ).RUN()
+    engine := quanx.NewEngine()
+
+    // 初始化表结构
+    engine.AddTable(
+        &User{}, // 需要实现gormx.Tabler接口
+    )
+
+    // 启动服务
+    engine.RUN()
 }
 
 // User 用户表结构必须实现gormx.Tabler接口
 type User struct {
     Id           int64     `json:"id" gorm:"type:bigint; not null; comment:用户ID;"`
-    Name         string    `json:"name" gorm:"type:varchar; not null; comment:姓名;"`
+    Name         string    `json:"name" gorm:"type:varchar(100); not null; comment:姓名;"`
     CreateUserId int64     `json:"createUserId" gorm:"type:bigint; not null; comment:创建人ID;"`
-    CreateTime   time.Time `json:"createTime" gorm:"type:timestamp; default:now(); comment:创建时间;"`
+    CreateTime   time.Time `json:"createTime" gorm:"type:timestamp(0); default:now(); comment:创建时间;"`
     UpdateUserId int64     `json:"updateUserId" gorm:"type:bigint; not null; comment:更新人ID;"`
-    UpdateTime   time.Time `json:"updateTime" gorm:"type:timestamp; default:now(); comment:更新时间;"`
+    UpdateTime   time.Time `json:"updateTime" gorm:"type:timestamp(0); default:now(); comment:更新时间;"`
 }
 
 // TableName 定义表名
 func (User) TableName() string {
-    return "t_sys_user"
+    return "user_test"
 }
-
-// TableComment 定义表注释
-func (User) TableComment() string {
-    return "用户信息表"
-}
-
-// InitData 会在初始化表结构之后向目标表里插入初始化数据，为nil表示不做任何写入
-func (User) InitData() any {
-    return nil
-}
-
 ```
 
-### 绑定路由
+### 注册api路由
 
 ```go
 func main() {
-    quanx.NewEngine(
-        // 添加gin的路由加载函数
-        quanx.AddGinRouter(BindApiRouter),
-    ).RUN()
+    engine := quanx.NewEngine()
+
+    // 添加gin的路由加载函数
+    engine.AddGinRouter(BindApiRouter)
+
+    // 初始化表结构
+    engine.AddTable(
+        &User{}, // 需要实现 schema.Tabler 接口
+    )
+
+    // 启动服务
+    engine.RUN()
 }
 
-// 绑定api路由
+// BindApiRouter 绑定api路由
 func BindApiRouter(router *gin.RouterGroup) {
-	// 获取默认数据源
-	db := gormx.DB()
-	// 获取指定数据源
-	// db := gormx.DB("{{数据源名称}}")
+    group := router.Group("/user")
+    // 用户表增删改查接口注册，仅一行代码就可以实现CRUD
+    ginx.NewCrudApi[User](group, gormx.DB())
+}
 
-	// 用户信息表-增删改查，一行代码实现CRUD
-	ginx.NewCrudApi[entity.User](router.Group("user"), db)
+// User 用户表结构必须实现 schema.Tabler 接口
+type User struct {
+    Id           int64     `json:"id" gorm:"type:bigint; not null; comment:用户ID;"`
+    Name         string    `json:"name" gorm:"type:varchar(100); not null; comment:姓名;"`
+    CreateUserId int64     `json:"createUserId" gorm:"type:bigint; not null; comment:创建人ID;"`
+    CreateTime   time.Time `json:"createTime" gorm:"type:timestamp(0); default:now(); comment:创建时间;"`
+    UpdateUserId int64     `json:"updateUserId" gorm:"type:bigint; not null; comment:更新人ID;"`
+    UpdateTime   time.Time `json:"updateTime" gorm:"type:timestamp(0); default:now(); comment:更新时间;"`
+}
+
+// TableName 定义表名
+func (User) TableName() string {
+    return "user_test"
 }
 ```
 
@@ -88,30 +98,27 @@ func BindApiRouter(router *gin.RouterGroup) {
 
 ```go
 func main() {
-	// 初始化服务引擎
-	var engine = quanx.NewEngine(
-	    quanx.UseQueue, // 启用初始化任务队列
-	)
-    
-	// 新增初始化方法
-	engine.AddCustomFunc(Init1)
-	// 或者启用任务队列
-	engine.AddQueueTask(Init2, "init2")
-    
-	// 服务启动
-	engine.RUN()
+    // 初始化服务引擎 
+    var engine = quanx.NewEngine(
+        quanx.EnableQueue(), // 开启任务队列
+    )
+
+    // 按照添加顺序先后执行 
+    engine.AddQueueTask(Init1, "init1")
+    engine.AddQueueTask(Init2, "init2")
+	
+    // 服务启动
+    engine.RUN()
 }
 
-
 func Init1() {
-	fmt.Println("执行初始化任务1")
-	fmt.Println(time.Now().Format("2006-01-02 15:04:05"))
+    fmt.Println("执行初始化任务1", time.Now().Format("2006-01-02 15:04:05"))
 }
 
 func Init2() {
-    fmt.Println("执行初始化任务2")
-	fmt.Println(time.Now().Format("2006-01-02 15:04:05"))
+    fmt.Println("执行初始化任务2", time.Now().Format("2006-01-02 15:04:05"))
 }
+
 
 ```
 
@@ -119,48 +126,39 @@ func Init2() {
 
 ```go
 func main() {
-	// 初始化服务引擎
-	var engine = quanx.NewEngine(
-	    quanx.UseQueue, // 开启任务队列
-	)
+    // 初始化服务引擎
+    var engine = quanx.NewEngine()
 
-	// 添加配置器，Config结构体需要实现Configurator接口
-	engine.AddConfigurator(Config)
+    // 添加配置器，Config结构体需要实现Configurator接口
+    engine.AddConfigurator(Config)
 
-	// 服务启动
-	engine.RUN()
+    // 服务启动
+    engine.RUN()
 }
 
-// Configurator配置器接口
-//type Configurator interface {
-//	Title() string   // 配置器标题
-//	Reader() *Reader // 配置文件读取
-//	Run() error      // 配置器运行
-//}
-
-var Config *config
+var Config = &config{}
 
 // 此配置必须实现Configurator配置器接口
-type config struct {
+type config struct{}
+
+func (c config) Format() string {
+    return "配置项格式化文本输出"
 }
 
-func (c config) Title() string {
-	return "配置项名称标题"
+func (c config) Reader() *configx.Reader {
+    return &configx.Reader{
+        FilePath:    "config.yaml", // 本地配置文件
+        NacosGroup:  "",            // nacos配置分组，默认为服务名
+        NacosDataId: "",            // nacos配置ID
+        Listen:      false,         // 是否监听
+    }
 }
 
-func (c config) Reader() *confx.Reader {
-	return &confx.Reader{
-		FilePath:    "",    // 本地配置文件
-		NacosGroup:  "",    // nacos配置分组，默认为服务名
-		NacosDataId: "",    // nacos配置ID
-		Listen:      false, // 是否监听
-	}
+func (c config) Execute() error {
+    // todo 配置读取后的业务操作
+    return nil
 }
 
-func (c config) Run() error {
-	// todo 配置读取后的实际操作
-	return nil
-}
 ```
 
 ## 服务配置

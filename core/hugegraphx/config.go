@@ -54,7 +54,7 @@ func (c *Config) Execute() error {
 			_handler = &Handler{
 				config: c,
 			}
-			log.Info("hugegraph connect successfully: ", c.Format())
+			log.Info("hugegraph connect success: ", c.Format())
 		} else {
 			log.Error("hugegraph connect failed: ", c.Format())
 		}

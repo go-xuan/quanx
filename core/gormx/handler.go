@@ -1,10 +1,9 @@
 package gormx
 
 import (
-	"gorm.io/gorm"
-
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/os/errorx"
+	"gorm.io/gorm"
 )
 
 var _handler *Handler
@@ -97,8 +96,8 @@ func Sources() []string {
 }
 
 // InitTable 初始化表结构以及表数据
-func InitTable(source string, dst ...Tabler) error {
-	return this().InitTableWithTabler(source, dst...)
+func InitTable(source string, tablers ...interface{}) error {
+	return this().InitTabler(source, tablers...)
 }
 
 // Close 关闭数据库连接
