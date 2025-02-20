@@ -15,11 +15,14 @@ type PageResponse struct {
 
 // BuildPageResp 封装分页结果
 func BuildPageResp(page *modelx.Page, rows any, total int64) *PageResponse {
-	return &PageResponse{
-		PageNo:    page.PageNo,
-		PageSize:  page.PageSize,
-		PageTotal: page.PageTotal(int(total)),
-		Total:     total,
-		Rows:      rows,
+	resp := &PageResponse{
+		Total: total,
+		Rows:  rows,
 	}
+	if page != nil {
+		resp.PageNo = page.PageNo
+		resp.PageSize = page.PageSize
+		resp.PageTotal = page.PageTotal(int(total))
+	}
+	return resp
 }
