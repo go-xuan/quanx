@@ -5,18 +5,17 @@ import (
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
-// 序列化器类型
 const (
-	jsonStrategy       = "json"
-	yamlStrategy       = "yml"
-	ymlStrategy        = "yaml"
-	tomlStrategy       = "toml"
-	propertiesStrategy = "properties"
-	msgpackStrategy    = "msgpack"
+	jsonMethod       = "json"
+	yamlMethod       = "yml"
+	ymlMethod        = "yaml"
+	tomlMethod       = "toml"
+	propertiesMethod = "properties"
+	msgpackMethod    = "msgpack"
 )
 
-// Strategy 序列化策略
-type Strategy interface {
+// Method 序列化方式
+type Method interface {
 	Name() string
 	Marshal(interface{}) ([]byte, error)
 	Unmarshal([]byte, interface{}) error
@@ -24,21 +23,21 @@ type Strategy interface {
 	Write(string, interface{}) error
 }
 
-// Apply 适用序列化策略
-func Apply(name string) Strategy {
+// Apply 适配序列化方式
+func Apply(name string) Method {
 	if stringx.ContainsAny(name, ".", "\\", "/") {
 		name = filex.GetSuffix(name)
 	}
 	switch name {
-	case jsonStrategy:
-		return Json{}
-	case ymlStrategy, yamlStrategy:
+	case jsonMethod:
+		return Json{Indent: "    "}
+	case ymlMethod, yamlMethod:
 		return Yaml{}
-	case tomlStrategy:
+	case tomlMethod:
 		return Toml{}
-	case propertiesStrategy:
+	case propertiesMethod:
 		return Properties{}
-	case msgpackStrategy:
+	case msgpackMethod:
 		return Msgpack{}
 	default:
 		return Json{}

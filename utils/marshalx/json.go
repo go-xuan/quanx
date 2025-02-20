@@ -7,33 +7,38 @@ import (
 	"github.com/go-xuan/quanx/os/filex"
 )
 
-type Json struct{}
-
-func (s Json) Name() string {
-	return jsonStrategy
+type Json struct {
+	Indent string
 }
 
-func (s Json) Marshal(v interface{}) ([]byte, error) {
+func (j Json) Name() string {
+	return jsonMethod
+}
+
+func (j Json) Marshal(v interface{}) ([]byte, error) {
+	if j.Indent != "" {
+		return json.MarshalIndent(v, "", j.Indent)
+	}
 	return json.Marshal(v)
 }
 
-func (s Json) Unmarshal(data []byte, v interface{}) error {
+func (j Json) Unmarshal(data []byte, v interface{}) error {
 	return json.Unmarshal(data, v)
 }
 
-func (s Json) Read(path string, v interface{}) error {
+func (j Json) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %s", path)
+		return errorx.Errorf("the file not exist: %j", path)
 	} else if data, err := filex.ReadFile(path); err != nil {
 		return errorx.Wrap(err, "read file error")
 	} else {
-		return s.Unmarshal(data, v)
+		return j.Unmarshal(data, v)
 	}
 }
 
 // WriteJson 写入json文件
-func (s Json) Write(path string, v interface{}) error {
-	if data, err := json.MarshalIndent(v, "", "	"); err != nil {
+func (j Json) Write(path string, v interface{}) error {
+	if data, err := json.Marshal(v); err != nil {
 		return errorx.Wrap(err, "json marshal error")
 	} else if err = filex.WriteFile(path, data); err != nil {
 		return errorx.Wrap(err, "write file error")

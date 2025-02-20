@@ -26,7 +26,7 @@ type Client interface {
 type LocalClient struct {
 	config  *Config
 	client  *cache.Cache
-	marshal marshalx.Strategy
+	marshal marshalx.Method
 }
 
 func (c *LocalClient) Config() *Config {
@@ -94,7 +94,7 @@ func (c *LocalClient) Expire(ctx context.Context, key string, d time.Duration) e
 type RedisClient struct {
 	config  *Config
 	client  redis.UniversalClient
-	marshal marshalx.Strategy
+	marshal marshalx.Method
 }
 
 func (c *RedisClient) Config() *Config {
