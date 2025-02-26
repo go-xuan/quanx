@@ -16,7 +16,7 @@ func (t *Test) Format() string {
 	return "test show id"
 }
 
-func (t *Test) Reader() *Reader {
+func (t *Test) Reader(from From) Reader {
 	return nil
 }
 
@@ -35,7 +35,7 @@ func (t *Test) Execute() error {
 func TestConfigurator(t *testing.T) {
 	var config = &Test{}
 	fmt.Println("before execute, id:", config.Id)
-	if err := Execute(config); err != nil {
+	if err := config.Execute(); err != nil {
 		fmt.Println(err)
 		return
 	}

@@ -2,6 +2,7 @@ package logx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/core/nacosx"
 	"io"
 	"os"
 	"strings"
@@ -48,10 +49,18 @@ func (c *Config) Format() string {
 		c.Level, c.Formatter, c.Writer)
 }
 
-func (*Config) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "log.yaml",
-		NacosDataId: "log.yaml",
+func (*Config) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "log.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "log.yaml",
+		}
+	default:
+		return nil
 	}
 }
 

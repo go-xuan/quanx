@@ -3,6 +3,7 @@ package elasticx
 import (
 	"context"
 	"fmt"
+	"github.com/go-xuan/quanx/core/nacosx"
 	"strings"
 
 	"github.com/olivere/elastic/v7"
@@ -27,11 +28,18 @@ func (c *Config) Format() string {
 	return fmt.Sprintf("host=%s port=%v", c.Host, c.Port)
 }
 
-func (c *Config) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "elastic.yaml",
-		NacosDataId: "elastic.yaml",
-		Listen:      false,
+func (c *Config) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "elastic.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "elastic.yaml",
+		}
+	default:
+		return nil
 	}
 }
 
@@ -100,11 +108,18 @@ func (m MultiConfig) Format() string {
 	return sb.String()
 }
 
-func (MultiConfig) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "elastic.yaml",
-		NacosDataId: "elastic.yaml",
-		Listen:      false,
+func (MultiConfig) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "elastic.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "elastic.yaml",
+		}
+	default:
+		return nil
 	}
 }
 

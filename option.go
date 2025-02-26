@@ -95,36 +95,35 @@ func AddQueueTask(task func(), id string) EngineOptionFunc {
 	}
 }
 
+// EnableDebug 启用debug
 func EnableDebug() EngineOptionFunc {
 	return func(e *Engine) {
 		e.switches[enableDebug] = true
 	}
 }
 
-func EnableNacos() EngineOptionFunc {
-	return func(e *Engine) {
-		e.switches[enableNacos] = true
-	}
-}
-
+// EnableQueue 队列方式启动
 func EnableQueue() EngineOptionFunc {
 	return func(e *Engine) {
 		e.switches[enableQueue] = true
 	}
 }
 
+// MultiDatabase 多数据源
 func MultiDatabase() EngineOptionFunc {
 	return func(e *Engine) {
 		e.switches[multiDatabase] = true
 	}
 }
 
+// MultiRedis 多redis
 func MultiRedis() EngineOptionFunc {
 	return func(e *Engine) {
 		e.switches[multiRedis] = true
 	}
 }
 
+// MultiCache 多缓存
 func MultiCache() EngineOptionFunc {
 	return func(e *Engine) {
 		e.switches[multiCache] = true

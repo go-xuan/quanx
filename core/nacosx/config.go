@@ -38,37 +38,37 @@ func (c *Config) Format() string {
 		c.AddressUrl(), c.Username, c.Password, c.NameSpace, c.Mode)
 }
 
-func (*Config) Reader() *configx.Reader {
+func (*Config) Reader(from configx.From) configx.Reader {
 	return nil
 }
 
 func (c *Config) Execute() error {
-	if handler == nil {
-		handler = &Handler{config: c}
+	if _handler == nil {
+		_handler = &Handler{config: c}
 		var param = c.ClientParam()
 		switch c.Mode {
 		case OnlyConfig:
 			if configClient, err := c.ConfigClient(param); err != nil {
 				return errorx.Wrap(err, "init nacos config client error")
 			} else {
-				handler.configClient = configClient
+				_handler.configClient = configClient
 			}
 		case OnlyNaming:
 			if namingClient, err := c.NamingClient(param); err != nil {
 				return errorx.Wrap(err, "init nacos naming client error")
 			} else {
-				handler.namingClient = namingClient
+				_handler.namingClient = namingClient
 			}
 		case ConfigAndNaming:
 			if configClient, err := c.ConfigClient(param); err != nil {
 				return errorx.Wrap(err, "init nacos config client error")
 			} else {
-				handler.configClient = configClient
+				_handler.configClient = configClient
 			}
 			if namingClient, err := c.NamingClient(param); err != nil {
 				return errorx.Wrap(err, "init nacos naming client error")
 			} else {
-				handler.namingClient = namingClient
+				_handler.namingClient = namingClient
 			}
 		}
 	}

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github.com/go-xuan/quanx/utils/randx"
 	"testing"
-
-	"github.com/go-xuan/quanx/core/configx"
 )
 
 type Test struct {
@@ -30,7 +28,7 @@ func (t Test) InitData() any {
 
 func TestDatabase(t *testing.T) {
 	// 先初始化redis
-	if err := configx.Execute(&Config{
+	if err := (&Config{
 		Source:   "default",
 		Enable:   true,
 		Type:     "postgres",
@@ -40,7 +38,7 @@ func TestDatabase(t *testing.T) {
 		Password: "postgres",
 		Database: "quanx",
 		Debug:    true,
-	}); err != nil {
+	}).Execute(); err != nil {
 		fmt.Println(err)
 	}
 	if err := InitTable("default", &Test{}); err != nil {

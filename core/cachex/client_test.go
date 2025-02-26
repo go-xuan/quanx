@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-xuan/quanx/core/configx"
 	"github.com/go-xuan/quanx/core/redisx"
 )
 
 func TestHandler(t *testing.T) {
 	// 先初始化redis
-	if err := configx.Execute(&redisx.Config{
+	if err := (&redisx.Config{
 		Source:   "default",
 		Enable:   true,
 		Host:     "localhost",
@@ -20,17 +19,17 @@ func TestHandler(t *testing.T) {
 		Password: "Init@1234",
 		Database: 1,
 		PoolSize: 15,
-	}); err != nil {
+	}).Execute(); err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	// 再初始化缓存客户端
-	if err := configx.Execute(&Config{
+	if err := (&Config{
 		Type:   "redis",
 		Source: "default",
 		Prefix: "test_",
-	}); err != nil {
+	}).Execute(); err != nil {
 		fmt.Println(err)
 		return
 	}

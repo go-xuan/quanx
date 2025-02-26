@@ -3,6 +3,7 @@ package gormx
 import (
 	"database/sql"
 	"fmt"
+	"github.com/go-xuan/quanx/core/nacosx"
 	"strings"
 	"time"
 
@@ -39,11 +40,24 @@ func (c *Config) Format() string {
 		c.Source, c.Type, c.Host, c.Port, c.Database, c.Debug)
 }
 
-func (c *Config) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "database.yaml",
-		NacosDataId: "database.yaml",
-		Listen:      false,
+func (*Config) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "database.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "database.yaml",
+		}
+	default:
+		return nil
+	}
+}
+
+func (c *Config) FileReader() configx.Reader {
+	return &configx.LocalFileReader{
+		Name: "database.yaml",
 	}
 }
 
@@ -87,7 +101,7 @@ func (c *Config) NewGormDB() (*gorm.DB, error) {
 		sqlDB.SetMaxIdleConns(c.MaxIdleConns)
 		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
 		sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
-		
+
 		if c.Debug {
 			// 是否打印SQL
 			db = db.Debug()
@@ -157,11 +171,18 @@ func (m MultiConfig) Format() string {
 	return sb.String()
 }
 
-func (MultiConfig) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "database.yaml",
-		NacosDataId: "database.yaml",
-		Listen:      false,
+func (MultiConfig) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "database.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "database.yaml",
+		}
+	default:
+		return nil
 	}
 }
 

@@ -11,13 +11,13 @@ import (
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
-var handler *Handler
+var _handler *Handler
 
 func this() *Handler {
-	if handler == nil {
-		panic("the nacos handler has not been initialized, please check the relevant config")
+	if _handler == nil {
+		panic("the nacos _handler has not been initialized, please check the relevant config")
 	}
-	return handler
+	return _handler
 }
 
 type Handler struct {
@@ -26,15 +26,20 @@ type Handler struct {
 	namingClient naming_client.INamingClient // nacos服务发现客户端
 }
 
-// ScanConfig 从nacos获取配置并扫描
-func ScanConfig(v any, group, dataId string, listen ...bool) error {
-	var scanner = &Scanner{
+// IsInitialized 是否初始化
+func IsInitialized() bool {
+	return _handler != nil
+}
+
+// ReadConfig 从nacos读取配置
+func ReadConfig(v any, group, dataId string, listen ...bool) error {
+	var reader = &Reader{
 		Group:  group,
 		DataId: dataId,
-		Type:   vo.ConfigType(filex.GetSuffix(dataId)),
+		Type:   filex.GetSuffix(dataId),
 		Listen: anyx.Default(false, listen...),
 	}
-	if err := scanner.Scan(v); err != nil {
+	if err := reader.ReadConfig(v); err != nil {
 		return errorx.Wrap(err, "nacos config scan failed")
 	}
 	return nil

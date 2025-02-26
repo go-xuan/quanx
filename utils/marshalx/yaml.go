@@ -35,7 +35,7 @@ func WriteYaml(path string, v any) error {
 
 func (y Yaml) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %y", path)
+		return errorx.Errorf("the file not exist: %s", path)
 	} else if data, err := filex.ReadFile(path); err != nil {
 		return errorx.Wrap(err, "read file error")
 	} else {

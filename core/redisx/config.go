@@ -3,6 +3,7 @@ package redisx
 import (
 	"context"
 	"fmt"
+	"github.com/go-xuan/quanx/core/nacosx"
 	"net"
 	"strconv"
 	"strings"
@@ -40,11 +41,18 @@ func (c *Config) Format() string {
 		c.Source, c.Mode, c.Host, c.Port, c.Database)
 }
 
-func (*Config) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "redis.yaml",
-		NacosDataId: "redis.yaml",
-		Listen:      false,
+func (*Config) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "redis.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "redis.yaml",
+		}
+	default:
+		return nil
 	}
 }
 
@@ -128,11 +136,18 @@ func (m MultiConfig) Format() string {
 	return sb.String()
 }
 
-func (MultiConfig) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "redis.yaml",
-		NacosDataId: "redis.yaml",
-		Listen:      false,
+func (MultiConfig) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "redis.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "redis.yaml",
+		}
+	default:
+		return nil
 	}
 }
 

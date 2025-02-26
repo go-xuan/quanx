@@ -2,6 +2,7 @@ package hugegraphx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/core/nacosx"
 
 	log "github.com/sirupsen/logrus"
 
@@ -40,11 +41,18 @@ func (c *Config) Format() string {
 	return fmt.Sprintf("host=%s port=%d graph=%s", c.Host, c.Port, c.Graph)
 }
 
-func (c *Config) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "hugegraph.yaml",
-		NacosDataId: "hugegraph.yaml",
-		Listen:      false,
+func (*Config) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "hugegraph.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "hugegraph.yaml",
+		}
+	default:
+		return nil
 	}
 }
 

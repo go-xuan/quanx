@@ -2,6 +2,7 @@ package cachex
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/core/nacosx"
 	"strings"
 	"time"
 
@@ -34,11 +35,18 @@ func (c *Config) Format() string {
 		c.Type, c.Source, c.Prefix, c.Marshal)
 }
 
-func (c *Config) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "cache.yaml",
-		NacosDataId: "cache.yaml",
-		Listen:      false,
+func (c *Config) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "cache.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "cache.yaml",
+		}
+	default:
+		return nil
 	}
 }
 
@@ -119,11 +127,18 @@ func (m MultiConfig) Format() string {
 	return sb.String()
 }
 
-func (MultiConfig) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "cache.yaml",
-		NacosDataId: "cache.yaml",
-		Listen:      false,
+func (MultiConfig) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "cache.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "cache.yaml",
+		}
+	default:
+		return nil
 	}
 }
 

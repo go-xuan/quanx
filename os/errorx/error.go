@@ -89,7 +89,7 @@ func (s *stack) Format(f fmt.State, verb rune) {
 		i, frames := 1, runtime.CallersFrames(*s)
 		for {
 			if pc, more := frames.Next(); more && i <= 5 {
-				_, _ = fmt.Fprintf(f, "\n%d : %s >> %s:%d", i, pc.Func.Name(), pc.File, pc.Line)
+				_, _ = fmt.Fprintf(f, "\n%d : %s >> %s:%d", i, pc.Function, pc.File, pc.Line)
 				i++
 			} else {
 				break

@@ -23,11 +23,18 @@ func (s *Servers) Format() string {
 	return ""
 }
 
-func (s *Servers) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "gateway.yaml",
-		NacosDataId: "gateway.yaml",
-		Listen:      true,
+func (*Servers) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "gateway.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "gateway.yaml",
+		}
+	default:
+		return nil
 	}
 }
 

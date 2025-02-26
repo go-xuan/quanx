@@ -2,6 +2,7 @@ package miniox
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/core/nacosx"
 	"path/filepath"
 	"time"
 
@@ -31,11 +32,18 @@ func (m *Config) Format() string {
 	return fmt.Sprintf("host=%s port=%v accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
 }
 
-func (*Config) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "minio.yaml",
-		NacosDataId: "minio.yaml",
-		Listen:      false,
+func (*Config) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "minio.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "minio.yaml",
+		}
+	default:
+		return nil
 	}
 }
 

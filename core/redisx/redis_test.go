@@ -3,13 +3,12 @@ package redisx
 import (
 	"context"
 	"fmt"
-	"github.com/go-xuan/quanx/core/configx"
 	"testing"
 )
 
 func TestHandler(t *testing.T) {
 	// 先初始化缓存
-	if err := configx.Execute(&Config{
+	if err := (&Config{
 		Source:   "default",
 		Enable:   true,
 		Host:     "localhost",
@@ -18,7 +17,7 @@ func TestHandler(t *testing.T) {
 		Password: "Init@1234",
 		Database: 1,
 		PoolSize: 15,
-	}); err != nil {
+	}).Execute(); err != nil {
 		panic(err)
 	}
 	ctx := context.TODO()

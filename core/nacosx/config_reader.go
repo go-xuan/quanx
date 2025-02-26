@@ -8,48 +8,59 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/os/filex"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
-// Scanner nacos配置扫描器
-type Scanner struct {
-	Type   vo.ConfigType `yaml:"type"`   // 配置类型
-	Group  string        `yaml:"group"`  // 配置分组
-	DataId string        `yaml:"dataId"` // 配置文件ID
-	Listen bool          `yaml:"listen"` // 是否启用监听
+// Reader nacos配置读取器
+type Reader struct {
+	Type   string `yaml:"type"`   // 配置类型
+	Group  string `yaml:"group"`  // 配置分组
+	DataId string `yaml:"dataId"` // 配置文件ID
+	Listen bool   `yaml:"listen"` // 是否启用监听
 }
 
-func (s *Scanner) Info() string {
-	return fmt.Sprintf("group=%s dataId=%s", s.Group, s.DataId)
+func (r *Reader) Info() string {
+	return fmt.Sprintf("group=%s dataId=%s", r.Group, r.DataId)
 }
 
-// Scan nacos配置扫描
-func (s *Scanner) Scan(v any) error {
+func (r *Reader) Location(group ...string) string {
+	if len(group) > 0 && group[0] != "" {
+		r.Group = group[0]
+	}
+	return fmt.Sprintf("%s@%s", r.Group, r.DataId)
+}
+
+// ReadConfig nacos配置读取
+func (r *Reader) ReadConfig(v any) error {
 	// 修改值必须是指针类型否则不可行
 	if ref := reflect.ValueOf(v); ref.Type().Kind() != reflect.Ptr {
 		return errorx.New("the scanned object must be of pointer type")
 	}
+	if r.Type == "" {
+		r.Type = filex.GetSuffix(r.DataId)
+	}
 	var param = vo.ConfigParam{
-		DataId: s.DataId,
-		Group:  s.Group,
-		Type:   s.Type,
+		DataId: r.DataId,
+		Group:  r.Group,
+		Type:   vo.ConfigType(r.Type),
 	}
 	// 读取Nacos配置文本
 	content, err := GetNacosConfigClient().GetConfig(param)
 	if err != nil {
-		log.Error("get nacos config content failed: ", s.Info(), err)
+		log.Error("get nacos config content failed: ", r.Info(), err)
 		return errorx.Wrap(err, "get nacos config content failed")
 	}
 	// 配置文本反序列化
-	if err = marshalx.Apply(s.DataId).Unmarshal([]byte(content), v); err != nil {
-		log.Error("scan nacos config failed: ", s.Info(), err)
+	if err = marshalx.Apply(r.DataId).Unmarshal([]byte(content), v); err != nil {
+		log.Error("scan nacos config failed: ", r.Info(), err)
 		return errorx.Wrap(err, "scan nacos config failed")
 	} else {
-		log.Info("scan nacos config success: ", s.Info())
+		log.Info("scan nacos config success: ", r.Info())
 	}
-	if s.Listen {
+	if r.Listen {
 		// 设置Nacos配置监听
-		GetConfigMonitor().Set(s.Group, s.DataId, content)
+		GetConfigMonitor().Set(r.Group, r.DataId, content)
 		// 配置监听响应方法
 		param.OnChange = func(namespace, group, dataId, data string) {
 			log.WithField("dataId", dataId).
@@ -60,7 +71,7 @@ func (s *Scanner) Scan(v any) error {
 			GetConfigMonitor().Set(group, dataId, data)
 		}
 		if err = GetNacosConfigClient().ListenConfig(param); err != nil {
-			log.Error("listen nacos config failed: ", s.Info(), err)
+			log.Error("listen nacos config failed: ", r.Info(), err)
 			return errorx.Wrap(err, "listen nacos config failed")
 		} else {
 			log.Info("listen nacos config success!")

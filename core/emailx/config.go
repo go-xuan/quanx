@@ -2,6 +2,7 @@ package emailx
 
 import (
 	"fmt"
+	"github.com/go-xuan/quanx/core/nacosx"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
@@ -21,11 +22,18 @@ func (c *Config) Format() string {
 	return fmt.Sprintf("host=%s port=%v username=%s password=%s", c.Host, c.Port, c.Username, c.Password)
 }
 
-func (c *Config) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "mail.yaml",
-		NacosDataId: "mail.yaml",
-		Listen:      false,
+func (c *Config) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "email.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "email.yaml",
+		}
+	default:
+		return nil
 	}
 }
 

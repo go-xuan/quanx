@@ -3,6 +3,7 @@ package mongox
 import (
 	"context"
 	"fmt"
+	"github.com/go-xuan/quanx/core/nacosx"
 	"strings"
 	"time"
 
@@ -35,11 +36,18 @@ func (c *Config) Format() string {
 	return fmt.Sprintf("uri=%s database=%s", c.URI, c.Database)
 }
 
-func (*Config) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "mongo.yaml",
-		NacosDataId: "mongo.yaml",
-		Listen:      false,
+func (*Config) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "mongo.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "mongo.yaml",
+		}
+	default:
+		return nil
 	}
 }
 
@@ -125,11 +133,18 @@ func (m MultiConfig) Format() string {
 	return sb.String()
 }
 
-func (MultiConfig) Reader() *configx.Reader {
-	return &configx.Reader{
-		FilePath:    "mongo.yaml",
-		NacosDataId: "mongo.yaml",
-		Listen:      false,
+func (MultiConfig) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FormNacos:
+		return &nacosx.Reader{
+			DataId: "mongo.yaml",
+		}
+	case configx.FromLocal:
+		return &configx.LocalFileReader{
+			Name: "mongo.yaml",
+		}
+	default:
+		return nil
 	}
 }
 
