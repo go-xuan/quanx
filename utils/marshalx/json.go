@@ -7,26 +7,26 @@ import (
 	"github.com/go-xuan/quanx/os/filex"
 )
 
-type Json struct {
-	Indent string
+type jsonImpl struct {
+	indent string // effective only when Marshal
 }
 
-func (j Json) Name() string {
+func (j jsonImpl) Name() string {
 	return jsonMethod
 }
 
-func (j Json) Marshal(v interface{}) ([]byte, error) {
-	if j.Indent != "" {
-		return json.MarshalIndent(v, "", j.Indent)
+func (j jsonImpl) Marshal(v interface{}) ([]byte, error) {
+	if j.indent != "" {
+		return json.MarshalIndent(v, "", j.indent)
 	}
 	return json.Marshal(v)
 }
 
-func (j Json) Unmarshal(data []byte, v interface{}) error {
+func (j jsonImpl) Unmarshal(data []byte, v interface{}) error {
 	return json.Unmarshal(data, v)
 }
 
-func (j Json) Read(path string, v interface{}) error {
+func (j jsonImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
 		return errorx.Errorf("the file not exist: %j", path)
 	} else if data, err := filex.ReadFile(path); err != nil {
@@ -37,7 +37,7 @@ func (j Json) Read(path string, v interface{}) error {
 }
 
 // WriteJson 写入json文件
-func (j Json) Write(path string, v interface{}) error {
+func (j jsonImpl) Write(path string, v interface{}) error {
 	if data, err := json.Marshal(v); err != nil {
 		return errorx.Wrap(err, "json marshal error")
 	} else if err = filex.WriteFile(path, data); err != nil {

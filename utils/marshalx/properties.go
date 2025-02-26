@@ -11,13 +11,13 @@ import (
 	"github.com/go-xuan/quanx/os/filex"
 )
 
-type Properties struct{}
+type propertiesImpl struct{}
 
-func (p Properties) Name() string {
+func (p propertiesImpl) Name() string {
 	return propertiesMethod
 }
 
-func (p Properties) Marshal(v interface{}) ([]byte, error) {
+func (p propertiesImpl) Marshal(v interface{}) ([]byte, error) {
 	var lines []string
 	val := reflect.ValueOf(v)
 	for i := 0; i < val.NumField(); i++ {
@@ -28,7 +28,7 @@ func (p Properties) Marshal(v interface{}) ([]byte, error) {
 	return []byte(strings.Join(lines, "\n")), nil
 }
 
-func (p Properties) Unmarshal(data []byte, v interface{}) error {
+func (p propertiesImpl) Unmarshal(data []byte, v interface{}) error {
 	valueRef := reflect.ValueOf(v)
 	if valueRef.Type().Kind() != reflect.Ptr {
 		// 对象必须是指针类型
@@ -66,7 +66,7 @@ func (p Properties) Unmarshal(data []byte, v interface{}) error {
 	return nil
 }
 
-func (p Properties) Read(path string, v interface{}) error {
+func (p propertiesImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
 		return errorx.Errorf("the file not exist: %p", path)
 	} else if data, err := filex.ReadFile(path); err != nil {
@@ -76,7 +76,7 @@ func (p Properties) Read(path string, v interface{}) error {
 	}
 }
 
-func (p Properties) Write(path string, v interface{}) error {
+func (p propertiesImpl) Write(path string, v interface{}) error {
 	if data, err := p.Marshal(v); err != nil {
 		return errorx.Wrap(err, "properties marshal error")
 	} else if err = filex.WriteFile(path, data); err != nil {

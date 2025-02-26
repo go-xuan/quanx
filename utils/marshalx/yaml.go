@@ -7,17 +7,17 @@ import (
 	"github.com/go-xuan/quanx/os/filex"
 )
 
-type Yaml struct{}
+type yamlImpl struct{}
 
-func (y Yaml) Name() string {
+func (y yamlImpl) Name() string {
 	return yamlMethod
 }
 
-func (y Yaml) Marshal(v interface{}) ([]byte, error) {
+func (y yamlImpl) Marshal(v interface{}) ([]byte, error) {
 	return yaml.Marshal(v)
 }
 
-func (y Yaml) Unmarshal(data []byte, v interface{}) error {
+func (y yamlImpl) Unmarshal(data []byte, v interface{}) error {
 	return yaml.Unmarshal(data, v)
 }
 
@@ -33,7 +33,7 @@ func WriteYaml(path string, v any) error {
 	return nil
 }
 
-func (y Yaml) Read(path string, v interface{}) error {
+func (y yamlImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
 		return errorx.Errorf("the file not exist: %s", path)
 	} else if data, err := filex.ReadFile(path); err != nil {
@@ -43,7 +43,7 @@ func (y Yaml) Read(path string, v interface{}) error {
 	}
 }
 
-func (y Yaml) Write(path string, v interface{}) error {
+func (y yamlImpl) Write(path string, v interface{}) error {
 	if data, err := y.Marshal(v); err != nil {
 		return errorx.Wrap(err, "yaml marshal error")
 	} else if err = filex.WriteFile(path, data); err != nil {

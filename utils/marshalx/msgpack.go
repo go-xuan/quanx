@@ -7,21 +7,21 @@ import (
 	"github.com/go-xuan/quanx/os/filex"
 )
 
-type Msgpack struct{}
+type msgpackImpl struct{}
 
-func (m Msgpack) Name() string {
+func (m msgpackImpl) Name() string {
 	return msgpackMethod
 }
 
-func (m Msgpack) Marshal(v interface{}) ([]byte, error) {
+func (m msgpackImpl) Marshal(v interface{}) ([]byte, error) {
 	return msgpack.Marshal(v)
 }
 
-func (m Msgpack) Unmarshal(data []byte, v interface{}) error {
+func (m msgpackImpl) Unmarshal(data []byte, v interface{}) error {
 	return msgpack.Unmarshal(data, v)
 }
 
-func (m Msgpack) Read(path string, v interface{}) error {
+func (m msgpackImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
 		return errorx.Errorf("the file not exist: %m", path)
 	} else if data, err := filex.ReadFile(path); err != nil {
@@ -31,7 +31,7 @@ func (m Msgpack) Read(path string, v interface{}) error {
 	}
 }
 
-func (m Msgpack) Write(path string, v interface{}) error {
+func (m msgpackImpl) Write(path string, v interface{}) error {
 	if data, err := m.Marshal(v); err != nil {
 		return errorx.Wrap(err, "msgpack marshal error")
 	} else if err = filex.WriteFile(path, data); err != nil {
