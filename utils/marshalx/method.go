@@ -30,7 +30,7 @@ func Apply(name string) Method {
 	}
 	switch name {
 	case jsonMethod:
-		return Json()
+		return Json("    ")
 	case ymlMethod, yamlMethod:
 		return Yaml()
 	case tomlMethod:
@@ -40,15 +40,15 @@ func Apply(name string) Method {
 	case msgpackMethod:
 		return Msgpack()
 	default:
-		return Default()
+		return Json()
 	}
 }
-func Default() Method {
-	return jsonImpl{}
-}
 
-func Json() Method {
-	return jsonImpl{indent: "    "}
+func Json(indent ...string) Method {
+	if len(indent) > 0 {
+		return jsonImpl{indent: indent[0]}
+	}
+	return jsonImpl{}
 }
 
 func Yaml() Method {
