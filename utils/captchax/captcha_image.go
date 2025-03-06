@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/mojocn/base64Captcha"
 )
 

@@ -4,7 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 
-	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/utils/randx"
 )
 

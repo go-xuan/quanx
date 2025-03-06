@@ -3,8 +3,8 @@ package marshalx
 import (
 	"gopkg.in/yaml.v3"
 
-	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/base/errorx"
+	"github.com/go-xuan/quanx/base/filex"
 )
 
 type yamlImpl struct{}
@@ -35,7 +35,7 @@ func WriteYaml(path string, v any) error {
 
 func (y yamlImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %s", path)
+		return errorx.Errorf("the file not exist: %s", filex.Pwd(path))
 	} else if data, err := filex.ReadFile(path); err != nil {
 		return errorx.Wrap(err, "read file error")
 	} else {

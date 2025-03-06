@@ -2,6 +2,7 @@ package boolx
 
 import (
 	"strconv"
+	"strings"
 )
 
 func NewBool(v ...bool) Bool {
@@ -91,8 +92,8 @@ func (x *Bool) Bool(def ...bool) bool {
 }
 
 func ValueOf(s string, def ...bool) bool {
-	switch s {
-	case "1", "t", "T", "true", "TRUE", "True", "是", "yes", "YES", "Yes":
+	switch strings.ToLower(s) {
+	case "1", "t", "true", "yes", "是":
 		return true
 	default:
 		if len(def) > 0 {

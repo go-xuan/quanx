@@ -1,7 +1,7 @@
 package marshalx
 
 import (
-	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/base/filex"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 

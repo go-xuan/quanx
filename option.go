@@ -3,7 +3,7 @@ package quanx
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/go-xuan/quanx/core/configx"
+	"github.com/go-xuan/quanx/extra/configx"
 )
 
 type Option uint

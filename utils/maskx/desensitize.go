@@ -16,11 +16,10 @@ const (
 
 func (d Desensitize) Desensitize(s string) string {
 	if s != "" {
-		l := len(s)
 		switch {
-		case d == Phone && l == 11:
+		case d == Phone && len(s) == 11:
 			s = s[:3] + strings.Repeat(mask, 4) + s[7:]
-		case d == IdCard && l == 18:
+		case d == IdCard && len(s) == 18:
 			s = s[:4] + strings.Repeat(mask, 11) + s[15:]
 		case d == Name:
 			split := strings.Split(s, "")
@@ -29,7 +28,7 @@ func (d Desensitize) Desensitize(s string) string {
 			i := strings.Index(s, "@")
 			s = strings.Repeat(mask, i) + s[i:]
 		default:
-			s = strings.Repeat(mask, l)
+			s = strings.Repeat(mask, len(s))
 		}
 	}
 	return s

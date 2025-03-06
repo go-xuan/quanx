@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/wenlng/go-captcha/captcha"
 )
 

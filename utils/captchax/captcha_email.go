@@ -3,8 +3,8 @@ package captchax
 import (
 	"context"
 
-	"github.com/go-xuan/quanx/core/emailx"
-	"github.com/go-xuan/quanx/os/errorx"
+	"github.com/go-xuan/quanx/base/errorx"
+	"github.com/go-xuan/quanx/extra/emailx"
 	"github.com/go-xuan/quanx/utils/randx"
 )
 

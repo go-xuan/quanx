@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"github.com/BurntSushi/toml"
 
-	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/base/errorx"
+	"github.com/go-xuan/quanx/base/filex"
 )
 
 type tomlImpl struct{}
@@ -28,7 +28,7 @@ func (t tomlImpl) Unmarshal(data []byte, v interface{}) error {
 
 func (t tomlImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %t", path)
+		return errorx.Errorf("the file not exist: %s", filex.Pwd(path))
 	} else if data, err := filex.ReadFile(path); err != nil {
 		return errorx.Wrap(err, "read file error")
 	} else {

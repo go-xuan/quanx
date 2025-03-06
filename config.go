@@ -3,11 +3,11 @@ package quanx
 import (
 	"strings"
 
-	"github.com/go-xuan/quanx/core/cachex"
-	"github.com/go-xuan/quanx/core/gormx"
-	"github.com/go-xuan/quanx/core/logx"
-	"github.com/go-xuan/quanx/core/nacosx"
-	"github.com/go-xuan/quanx/core/redisx"
+	"github.com/go-xuan/quanx/extra/cachex"
+	"github.com/go-xuan/quanx/extra/gormx"
+	"github.com/go-xuan/quanx/extra/logx"
+	"github.com/go-xuan/quanx/extra/nacosx"
+	"github.com/go-xuan/quanx/extra/redisx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
 

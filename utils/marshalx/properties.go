@@ -7,8 +7,8 @@ import (
 
 	"github.com/magiconair/properties"
 
-	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/base/errorx"
+	"github.com/go-xuan/quanx/base/filex"
 )
 
 type propertiesImpl struct{}
@@ -68,7 +68,7 @@ func (p propertiesImpl) Unmarshal(data []byte, v interface{}) error {
 
 func (p propertiesImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %p", path)
+		return errorx.Errorf("the file not exist: %s", filex.Pwd(path))
 	} else if data, err := filex.ReadFile(path); err != nil {
 		return errorx.Wrap(err, "read file error")
 	} else {
