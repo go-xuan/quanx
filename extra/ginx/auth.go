@@ -17,6 +17,7 @@ var (
 	authCacheClient cachex.Client // token缓存客户端
 )
 
+// AuthValidate 默认使用jwt验证
 func AuthValidate() AuthValidator {
 	return &JwtValidator{}
 }
