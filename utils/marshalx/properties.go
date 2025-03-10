@@ -7,28 +7,28 @@ import (
 
 	"github.com/magiconair/properties"
 
-	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/base/errorx"
+	"github.com/go-xuan/quanx/base/filex"
 )
 
-type Properties struct{}
+type propertiesImpl struct{}
 
-func (s Properties) Name() string {
-	return propertiesStrategy
+func (p propertiesImpl) Name() string {
+	return propertiesMethod
 }
 
-func (s Properties) Marshal(v interface{}) ([]byte, error) {
+func (p propertiesImpl) Marshal(v interface{}) ([]byte, error) {
 	var lines []string
 	val := reflect.ValueOf(v)
 	for i := 0; i < val.NumField(); i++ {
 		key := val.Type().Field(i).Tag.Get("properties")
 		value := val.Field(i).String()
-		lines = append(lines, fmt.Sprintf("%s=%s", key, value))
+		lines = append(lines, fmt.Sprintf("%p=%p", key, value))
 	}
 	return []byte(strings.Join(lines, "\n")), nil
 }
 
-func (s Properties) Unmarshal(data []byte, v interface{}) error {
+func (p propertiesImpl) Unmarshal(data []byte, v interface{}) error {
 	valueRef := reflect.ValueOf(v)
 	if valueRef.Type().Kind() != reflect.Ptr {
 		// 对象必须是指针类型
@@ -66,18 +66,18 @@ func (s Properties) Unmarshal(data []byte, v interface{}) error {
 	return nil
 }
 
-func (s Properties) Read(path string, v interface{}) error {
+func (p propertiesImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %s", path)
+		return errorx.Errorf("the file not exist: %s", filex.Pwd(path))
 	} else if data, err := filex.ReadFile(path); err != nil {
 		return errorx.Wrap(err, "read file error")
 	} else {
-		return s.Unmarshal(data, v)
+		return p.Unmarshal(data, v)
 	}
 }
 
-func (s Properties) Write(path string, v interface{}) error {
-	if data, err := s.Marshal(v); err != nil {
+func (p propertiesImpl) Write(path string, v interface{}) error {
+	if data, err := p.Marshal(v); err != nil {
 		return errorx.Wrap(err, "properties marshal error")
 	} else if err = filex.WriteFile(path, data); err != nil {
 		return errorx.Wrap(err, "write file error")

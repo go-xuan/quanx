@@ -5,11 +5,11 @@ import (
 	"strings"
 )
 
-type Id[T any] struct {
+type Id[T int | int64 | string] struct {
 	Id T `form:"id" json:"id" binding:"required"`
 }
 
-type Ids[T any] struct {
+type Ids[T int | int64 | string] struct {
 	Ids []T `form:"ids" json:"ids" binding:"required"`
 }
 

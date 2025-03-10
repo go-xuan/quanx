@@ -6,6 +6,7 @@ import (
 
 var tireTree *TrieTree
 
+// Trie 字典树
 func Trie() *TrieTree {
 	if tireTree == nil {
 		tireTree = NewTrieTree()

@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// ParseInt 解析数字
 func ParseInt(str string, def ...int) int {
 	if value, err := strconv.Atoi(str); err == nil {
 		return value
@@ -15,6 +16,7 @@ func ParseInt(str string, def ...int) int {
 	return 0
 }
 
+// ParseInt64 解析数字
 func ParseInt64(str string, def ...int64) int64 {
 	if value, err := strconv.ParseInt(str, 10, 64); err == nil {
 		return value
@@ -24,6 +26,7 @@ func ParseInt64(str string, def ...int64) int64 {
 	return 0
 }
 
+// ParseFloat 解析浮点数
 func ParseFloat(str string, def ...float64) float64 {
 	if value, err := strconv.ParseFloat(str, 64); err == nil {
 		return value
@@ -33,6 +36,7 @@ func ParseFloat(str string, def ...float64) float64 {
 	return 0
 }
 
+// ParseBool 解析布尔值
 func ParseBool(str string, def ...bool) bool {
 	switch str {
 	case "1", "t", "T", "true", "TRUE", "True", "是", "yes", "YES", "Yes":
@@ -46,6 +50,7 @@ func ParseBool(str string, def ...bool) bool {
 	}
 }
 
+// ParseTime 解析时间字符串
 func ParseTime(str string, def ...time.Time) time.Time {
 	if len(str) == 10 && str[4:5] == "-" {
 		if location, err := time.ParseInLocation("2006-01-02", str, time.Local); err == nil {
@@ -59,14 +64,17 @@ func ParseTime(str string, def ...time.Time) time.Time {
 	return time.Time{}
 }
 
+// FormatInt 格式化数字
 func FormatInt(i int) string {
 	return strconv.Itoa(i)
 }
 
+// FormatInt64 格式化数字
 func FormatInt64(i int64) string {
 	return strconv.FormatInt(i, 10)
 }
 
+// FormatFloat 格式化浮点数
 func FormatFloat(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
@@ -327,21 +335,27 @@ func Insert(str, insert string, position ...int) string {
 	return str + insert
 }
 
-// Fill 字符以固定长度填充（默认填充左边）
-func Fill(str, fill string, length int, right ...bool) string {
-	strLen, addLen := len(str), len(fill)
-	fillLen := length - strLen
-	if fillLen <= 0 && addLen == 0 {
-		return str
-	}
-	fillStr := strings.Builder{}
-	for i := 0; i < fillLen; i++ {
-		fillStr.WriteString(string(fill[i%addLen]))
-	}
-	if len(right) > 0 && right[0] {
-		return str + fillStr.String()
+// Fill 字符填充
+func Fill(str, fill string, length int) string {
+	if l := len(str); length > 0 {
+		return str + Grow(fill, length-l)
 	} else {
-		return fillStr.String() + str
+		return Grow(fill, -length-l) + str
+	}
+}
+
+// Grow 字符扩充到固定长度
+func Grow(str string, length int) string {
+	if l := len(str); length <= 0 || l == 0 {
+		return str
+	} else if l == 1 {
+		return strings.Repeat(str, length)
+	} else {
+		var sb strings.Builder
+		for i := 0; i < length; i++ {
+			sb.WriteString(string(str[i%l]))
+		}
+		return sb.String()
 	}
 }
 

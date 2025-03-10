@@ -6,22 +6,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	
+
+	"github.com/go-xuan/quanx/base/errorx"
+	"github.com/go-xuan/quanx/base/filex"
+	"github.com/go-xuan/quanx/base/ipx"
+	"github.com/go-xuan/quanx/base/syncx"
+	"github.com/go-xuan/quanx/base/taskx"
 	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/core/cachex"
-	"github.com/go-xuan/quanx/core/configx"
-	"github.com/go-xuan/quanx/core/ginx"
-	"github.com/go-xuan/quanx/core/gormx"
-	"github.com/go-xuan/quanx/core/logx"
-	"github.com/go-xuan/quanx/core/nacosx"
-	"github.com/go-xuan/quanx/core/redisx"
-	"github.com/go-xuan/quanx/net/ipx"
-	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/filex"
-	"github.com/go-xuan/quanx/os/syncx"
-	"github.com/go-xuan/quanx/os/taskx"
+	"github.com/go-xuan/quanx/extra/cachex"
+	"github.com/go-xuan/quanx/extra/configx"
+	"github.com/go-xuan/quanx/extra/ginx"
+	"github.com/go-xuan/quanx/extra/gormx"
+	"github.com/go-xuan/quanx/extra/logx"
+	"github.com/go-xuan/quanx/extra/nacosx"
+	"github.com/go-xuan/quanx/extra/redisx"
 	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
@@ -149,7 +148,7 @@ func (e *Engine) initAppConfig() {
 	}
 
 	// 从nacos加载配置
-	if e.switches[enableNacos] && config.Nacos != nil {
+	if config.Nacos != nil {
 		e.ExecuteConfigurator(config.Nacos, true)
 		if config.Nacos.EnableNaming() {
 			// 注册nacos服务Nacos
@@ -157,8 +156,6 @@ func (e *Engine) initAppConfig() {
 				panic(errorx.Wrap(err, "nacos register error"))
 			}
 		}
-	} else {
-		e.switches[enableNacos] = false
 	}
 	e.config = config
 }
@@ -317,23 +314,25 @@ func (e *Engine) AddConfigurator(configurators ...configx.Configurator) {
 func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...bool) {
 	e.checkRunning()
 	configFrom := "local@" + e.GetConfigPath(constx.DefaultConfigFilename) + " or tag@default"
-	mustRun := anyx.Default(false, must...)
-	if reader := configurator.Reader(); reader != nil {
-		if e.switches[enableNacos] {
-			group := stringx.IfZero(reader.NacosGroup, e.config.Server.Name)
-			reader.NacosGroup = group
-			if err := nacosx.ScanConfig(configurator, group, reader.NacosDataId, reader.Listen); err == nil {
-				configFrom, mustRun = "nacos@"+group+"@"+reader.NacosDataId, true
-			}
+	execute := anyx.Default(false, must...)
+	// 当配置器支持nacos读取并且nacos已经已经初始化
+	if reader := configurator.Reader(configx.FormNacos); reader != nil && nacosx.IsInitialized() {
+		location := reader.Location(e.config.Server.Name)
+		if err := reader.ReadConfig(configurator); err != nil {
+			log.Error("read config failed", err)
 		} else {
-			path := e.GetConfigPath(reader.FilePath)
-			if err := marshalx.Apply(path).Read(path, configurator); err == nil {
-				configFrom, mustRun = "local@"+path, true
-			}
+			configFrom, execute = "nacos@"+location, true
+		}
+	} else if reader = configurator.Reader(configx.FromLocal); reader != nil {
+		location := reader.Location(e.configDir)
+		if err := reader.ReadConfig(configurator); err != nil {
+			log.Error("read config failed", err)
+		} else {
+			configFrom, execute = "local@"+location, true
 		}
 	}
-	if mustRun {
-		if err := configx.Execute(configurator); err != nil {
+	if execute {
+		if err := configurator.Execute(); err != nil {
 			log.WithField("configFrom", configFrom).
 				Error("configurator execute failed ==> ", err)
 		} else {
@@ -353,10 +352,10 @@ func (e *Engine) ReadLocalConfig(v any, path string) {
 	}
 }
 
-// ScanNacosConfig 扫描nacos配置（以自定义函数的形式延迟执行，确保nacos已经提前初始化）
-func (e *Engine) ScanNacosConfig(v any, dataId string, listen ...bool) {
+// ReadNacosConfig 读取nacos配置（以自定义函数的形式延迟执行，确保nacos已经提前初始化）
+func (e *Engine) ReadNacosConfig(v any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() {
-		if err := nacosx.ScanConfig(v, e.config.Server.Name, dataId, listen...); err != nil {
+		if err := nacosx.ReadConfig(v, e.config.Server.Name, dataId, listen...); err != nil {
 			panic(errorx.Wrap(err, "scan nacos config failed"))
 		}
 	})

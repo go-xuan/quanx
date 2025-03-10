@@ -3,21 +3,21 @@ package marshalx
 import (
 	"gopkg.in/yaml.v3"
 
-	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/base/errorx"
+	"github.com/go-xuan/quanx/base/filex"
 )
 
-type Yaml struct{}
+type yamlImpl struct{}
 
-func (s Yaml) Name() string {
-	return yamlStrategy
+func (y yamlImpl) Name() string {
+	return yamlMethod
 }
 
-func (s Yaml) Marshal(v interface{}) ([]byte, error) {
+func (y yamlImpl) Marshal(v interface{}) ([]byte, error) {
 	return yaml.Marshal(v)
 }
 
-func (s Yaml) Unmarshal(data []byte, v interface{}) error {
+func (y yamlImpl) Unmarshal(data []byte, v interface{}) error {
 	return yaml.Unmarshal(data, v)
 }
 
@@ -25,7 +25,7 @@ func (s Yaml) Unmarshal(data []byte, v interface{}) error {
 func WriteYaml(path string, v any) error {
 	bytes, err := yaml.Marshal(v)
 	if err != nil {
-		return errorx.Wrap(err, "yamlStrategy marshal error")
+		return errorx.Wrap(err, "yamlMethod marshal error")
 	}
 	if err = filex.WriteFile(path, bytes); err != nil {
 		return errorx.Wrap(err, "write file error")
@@ -33,18 +33,18 @@ func WriteYaml(path string, v any) error {
 	return nil
 }
 
-func (s Yaml) Read(path string, v interface{}) error {
+func (y yamlImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %s", path)
+		return errorx.Errorf("the file not exist: %s", filex.Pwd(path))
 	} else if data, err := filex.ReadFile(path); err != nil {
 		return errorx.Wrap(err, "read file error")
 	} else {
-		return s.Unmarshal(data, v)
+		return y.Unmarshal(data, v)
 	}
 }
 
-func (s Yaml) Write(path string, v interface{}) error {
-	if data, err := s.Marshal(v); err != nil {
+func (y yamlImpl) Write(path string, v interface{}) error {
+	if data, err := y.Marshal(v); err != nil {
 		return errorx.Wrap(err, "yaml marshal error")
 	} else if err = filex.WriteFile(path, data); err != nil {
 		return errorx.Wrap(err, "write file error")

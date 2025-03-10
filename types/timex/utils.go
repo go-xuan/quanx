@@ -172,13 +172,9 @@ func DayInterval(start, end time.Time) int {
 
 // MonthInterval 间隔月份数
 func MonthInterval(start, end time.Time) int {
-	y1, m1, d1 := start.Date()
-	y2, m2, d2 := end.Date()
-	diff := (y2-y1)*12 + int(m2-m1)
-	if d1 <= d2 {
-		diff++
-	}
-	return diff
+	y1, m1, _ := start.Date()
+	y2, m2, _ := end.Date()
+	return (y2-y1)*12 + int(m2-m1)
 }
 
 // YearInterval 间隔年数

@@ -4,17 +4,17 @@ import (
 	"bytes"
 	"github.com/BurntSushi/toml"
 
-	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/base/errorx"
+	"github.com/go-xuan/quanx/base/filex"
 )
 
-type Toml struct{}
+type tomlImpl struct{}
 
-func (s Toml) Name() string {
-	return tomlStrategy
+func (t tomlImpl) Name() string {
+	return tomlMethod
 }
 
-func (s Toml) Marshal(v interface{}) ([]byte, error) {
+func (t tomlImpl) Marshal(v interface{}) ([]byte, error) {
 	var buffer bytes.Buffer
 	if err := toml.NewEncoder(&buffer).Encode(v); err != nil {
 		return nil, errorx.Wrap(err, "encode toml failed")
@@ -22,22 +22,22 @@ func (s Toml) Marshal(v interface{}) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (s Toml) Unmarshal(data []byte, v interface{}) error {
+func (t tomlImpl) Unmarshal(data []byte, v interface{}) error {
 	return toml.Unmarshal(data, v)
 }
 
-func (s Toml) Read(path string, v interface{}) error {
+func (t tomlImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %s", path)
+		return errorx.Errorf("the file not exist: %s", filex.Pwd(path))
 	} else if data, err := filex.ReadFile(path); err != nil {
 		return errorx.Wrap(err, "read file error")
 	} else {
-		return s.Unmarshal(data, v)
+		return t.Unmarshal(data, v)
 	}
 }
 
-func (s Toml) Write(path string, v interface{}) error {
-	if data, err := s.Marshal(v); err != nil {
+func (t tomlImpl) Write(path string, v interface{}) error {
+	if data, err := t.Marshal(v); err != nil {
 		return errorx.Wrap(err, "toml marshal error")
 	} else if err = filex.WriteFile(path, data); err != nil {
 		return errorx.Wrap(err, "write file error")

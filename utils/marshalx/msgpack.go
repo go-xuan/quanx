@@ -3,36 +3,36 @@ package marshalx
 import (
 	"github.com/vmihailenco/msgpack"
 
-	"github.com/go-xuan/quanx/os/errorx"
-	"github.com/go-xuan/quanx/os/filex"
+	"github.com/go-xuan/quanx/base/errorx"
+	"github.com/go-xuan/quanx/base/filex"
 )
 
-type Msgpack struct{}
+type msgpackImpl struct{}
 
-func (s Msgpack) Name() string {
-	return msgpackStrategy
+func (m msgpackImpl) Name() string {
+	return msgpackMethod
 }
 
-func (s Msgpack) Marshal(v interface{}) ([]byte, error) {
+func (m msgpackImpl) Marshal(v interface{}) ([]byte, error) {
 	return msgpack.Marshal(v)
 }
 
-func (s Msgpack) Unmarshal(data []byte, v interface{}) error {
+func (m msgpackImpl) Unmarshal(data []byte, v interface{}) error {
 	return msgpack.Unmarshal(data, v)
 }
 
-func (s Msgpack) Read(path string, v interface{}) error {
+func (m msgpackImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %s", path)
+		return errorx.Errorf("the file not exist: %s", filex.Pwd(path))
 	} else if data, err := filex.ReadFile(path); err != nil {
 		return errorx.Wrap(err, "read file error")
 	} else {
-		return s.Unmarshal(data, v)
+		return m.Unmarshal(data, v)
 	}
 }
 
-func (s Msgpack) Write(path string, v interface{}) error {
-	if data, err := s.Marshal(v); err != nil {
+func (m msgpackImpl) Write(path string, v interface{}) error {
+	if data, err := m.Marshal(v); err != nil {
 		return errorx.Wrap(err, "msgpack marshal error")
 	} else if err = filex.WriteFile(path, data); err != nil {
 		return errorx.Wrap(err, "write file error")
