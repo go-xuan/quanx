@@ -1,12 +1,12 @@
 package enumx
 
-type Enum[KT any, VT any] struct {
+type Enum[KT comparable, VT any] struct {
 	keys []KT       // 保证有序
 	data map[any]VT // 存储枚举值
 }
 
 // NewEnum 任意KV类型
-func NewEnum[KT any, VT any]() *Enum[KT, VT] {
+func NewEnum[KT comparable, VT any]() *Enum[KT, VT] {
 	return &Enum[KT, VT]{
 		keys: make([]KT, 0),
 		data: make(map[any]VT),
