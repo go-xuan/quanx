@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/extra/cachex"
+	"github.com/go-xuan/quanx/types/anyx"
 )
 
 // AuthValidate 默认使用jwt验证
@@ -25,7 +26,7 @@ type AuthValidator interface {
 type AuthUser interface {
 	Encrypt() (string, error)   // 用户信息加密
 	Decrypt(token string) error // 用户信息解密
-	UserId() string             // 用户ID
+	UserId() anyx.Value         // 用户ID
 	TTL() time.Duration         // 存活时间
 }
 
@@ -42,7 +43,7 @@ func AuthCache() cachex.Client {
 func SetSessionUser(ctx *gin.Context, user AuthUser) {
 	ctx.Set(sessionUserKey, user)
 	// token续命
-	_ = AuthCache().Expire(ctx, user.UserId(), user.TTL())
+	_ = AuthCache().Expire(ctx, user.UserId().String(), user.TTL())
 }
 
 // GetSessionUser 获取会话用户
@@ -79,7 +80,7 @@ func ValidateCookie(ctx *gin.Context, user AuthUser) error {
 	if err = user.Decrypt(cookie); err != nil {
 		return errorx.Wrap(err, "cookie parse failed")
 	}
-	if !AuthCache().Exist(ctx, user.UserId()) {
+	if !AuthCache().Exist(ctx, user.UserId().String()) {
 		return errorx.New("cookie has expired")
 	}
 	SetSessionUser(ctx, user)
@@ -90,7 +91,7 @@ func ValidateCookie(ctx *gin.Context, user AuthUser) error {
 func SetToken(ctx *gin.Context, user AuthUser) (string, error) {
 	if token, err := user.Encrypt(); err != nil {
 		return "", errorx.Wrap(err, "new token error")
-	} else if err = AuthCache().Set(ctx, user.UserId(), token, user.TTL()); err != nil {
+	} else if err = AuthCache().Set(ctx, user.UserId().String(), token, user.TTL()); err != nil {
 		return "", errorx.Wrap(err, "save token to cache error")
 	} else {
 		return token, nil
@@ -111,7 +112,7 @@ func ValidateToken(ctx *gin.Context, user AuthUser) error {
 	if err := user.Decrypt(token); err != nil {
 		return errorx.Wrap(err, "token parse failed")
 	}
-	if !AuthCache().Exist(ctx, user.UserId()) {
+	if !AuthCache().Exist(ctx, user.UserId().String()) {
 		return errorx.New("token has expired")
 	}
 	SetSessionUser(ctx, user)

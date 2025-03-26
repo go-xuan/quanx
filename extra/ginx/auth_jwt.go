@@ -8,8 +8,7 @@ import (
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/respx"
-	"github.com/go-xuan/quanx/types/intx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/types/anyx"
 )
 
 type JwtValidator struct{}
@@ -67,10 +66,10 @@ func (u *JwtUser) Decrypt(token string) error {
 	return nil
 }
 
-func (u *JwtUser) UserId() string {
-	return stringx.FormatInt64(u.Id)
+func (u *JwtUser) UserId() anyx.Value {
+	return anyx.Int64Value(u.Id)
 }
 
 func (u *JwtUser) TTL() time.Duration {
-	return time.Duration(intx.IfZero(u.Age, 3600)) * time.Second
+	return time.Duration(anyx.IfZero(u.Age, 3600)) * time.Second
 }
