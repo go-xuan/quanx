@@ -9,7 +9,7 @@ import (
 )
 
 // NewSmsCaptcha 初始化短信验证码发送
-func NewSmsCaptcha() *SmsCaptcha {
+func NewSmsCaptcha() CodeCaptchaService {
 	return &SmsCaptcha{
 		template: "",
 		store:    DefaultStore(),

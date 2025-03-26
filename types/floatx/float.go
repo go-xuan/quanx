@@ -37,15 +37,15 @@ func (x Float) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (x *Float) Value(def ...float64) float64 {
+func (x Float) Value(def ...float64) float64 {
 	return x.Float64(def...)
 }
 
-func (x *Float) NotNull() bool {
+func (x Float) NotNull() bool {
 	return x.notnull
 }
 
-func (x *Float) String(def ...string) string {
+func (x Float) String(def ...string) string {
 	if x.notnull {
 		return strconv.FormatFloat(x.value, 'f', -1, 64)
 	} else if len(def) > 0 {
@@ -54,7 +54,7 @@ func (x *Float) String(def ...string) string {
 	return ""
 }
 
-func (x *Float) Int(def ...int) int {
+func (x Float) Int(def ...int) int {
 	if x.notnull {
 		return int(x.value)
 	} else if len(def) > 0 {
@@ -63,7 +63,7 @@ func (x *Float) Int(def ...int) int {
 	return 0
 }
 
-func (x *Float) Int64(def ...int64) int64 {
+func (x Float) Int64(def ...int64) int64 {
 	if x.notnull {
 		return int64(int(x.value))
 	} else if len(def) > 0 {
@@ -72,7 +72,7 @@ func (x *Float) Int64(def ...int64) int64 {
 	return 0
 }
 
-func (x *Float) Float64(def ...float64) float64 {
+func (x Float) Float64(def ...float64) float64 {
 	if x.notnull {
 		return x.value
 	} else if len(def) > 0 {
@@ -81,7 +81,7 @@ func (x *Float) Float64(def ...float64) float64 {
 	return 0
 }
 
-func (x *Float) Bool(def ...bool) bool {
+func (x Float) Bool(def ...bool) bool {
 	if x.notnull {
 		return x.value == 1
 	} else if len(def) > 0 {

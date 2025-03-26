@@ -2,7 +2,7 @@ package gormx
 
 import (
 	"gorm.io/gorm"
-	
+
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/common/constx"
 )
@@ -16,7 +16,7 @@ func this() *Handler {
 	return _handler
 }
 
-func addDB(source string, config *Config, db *gorm.DB) {
+func AddDB(config *Config, db *gorm.DB) {
 	if _handler == nil {
 		_handler = &Handler{
 			multi:   false,
@@ -25,11 +25,15 @@ func addDB(source string, config *Config, db *gorm.DB) {
 			configs: make(map[string]*Config),
 			dbs:     make(map[string]*gorm.DB),
 		}
-	} else {
-		_handler.multi = true
+		return
 	}
-	_handler.configs[source] = config
-	_handler.dbs[source] = db
+	_handler.multi = true
+	_handler.configs[config.Source] = config
+	_handler.dbs[config.Source] = db
+	if config.Source == constx.DefaultSource {
+		_handler.config = config
+		_handler.db = db
+	}
 }
 
 // Handler 数据库连接句柄

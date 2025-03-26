@@ -1,4 +1,4 @@
-package encryptx
+package cryptx
 
 import (
 	"encoding/json"

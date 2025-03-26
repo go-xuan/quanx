@@ -9,7 +9,7 @@ import (
 )
 
 // NewEmailCaptcha 初始化邮箱验证码发送
-func NewEmailCaptcha() *EmailCaptcha {
+func NewEmailCaptcha() CodeCaptchaService {
 	return &EmailCaptcha{
 		title:    "",
 		template: "",

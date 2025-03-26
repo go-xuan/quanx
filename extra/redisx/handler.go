@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/redis/go-redis/v9"
-	
+
 	"github.com/go-xuan/quanx/common/constx"
 )
 
@@ -15,6 +15,26 @@ func this() *Handler {
 		panic("the redis handler has not been initialized, please check the relevant config")
 	}
 	return _handler
+}
+
+func AddClient(config *Config, client redis.UniversalClient) {
+	if _handler == nil {
+		_handler = &Handler{
+			multi:   false,
+			config:  config,
+			client:  client,
+			configs: make(map[string]*Config),
+			clients: make(map[string]redis.UniversalClient),
+		}
+		return
+	}
+	_handler.multi = true
+	_handler.configs[config.Source] = config
+	_handler.clients[config.Source] = client
+	if config.Source == constx.DefaultSource {
+		_handler.config = config
+		_handler.client = client
+	}
 }
 
 // Handler redis连接句柄

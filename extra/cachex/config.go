@@ -9,7 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/extra/redisx"
@@ -54,38 +53,33 @@ func (c *Config) Execute() error {
 	if err := anyx.SetDefaultValue(c); err != nil {
 		return errorx.Wrap(err, "set default value error")
 	}
-	var client = c.InitClient()
-	if _handler == nil {
-		_handler = &Handler{
-			multi:     false,
-			client:    client,
-			clientMap: make(map[string]Client),
-		}
+	if client, err := c.NewClient(); err != nil {
+		log.Error("cache init failed: ", c.Format())
+		return errorx.Wrap(err, "new client error")
 	} else {
-		_handler.multi = true
+		log.Info("cache init success: ", c.Format())
+		AddClient(c, client)
 	}
-	_handler.clientMap[c.Source] = client
 	return nil
 }
 
-// InitClient 根据缓存配置初始化缓存客户端
-func (c *Config) InitClient() Client {
+// NewClient 根据缓存配置初始化缓存客户端
+func (c *Config) NewClient() (Client, error) {
 	switch c.Type {
 	case CacheTypeRedis:
 		return &RedisClient{
 			config:  c,
 			client:  redisx.GetClient(c.Source),
 			marshal: marshalx.Apply(c.Marshal),
-		}
+		}, nil
 	case CacheTypeLocal:
 		return &LocalClient{
 			config:  c,
 			client:  cache.New(time.Duration(-1), time.Duration(-1)),
 			marshal: marshalx.Apply(c.Marshal),
-		}
+		}, nil
 	default:
-		log.Error("cache client not support type: ", c.Type)
-		return nil
+		return nil, errorx.New("not support type: " + c.Type)
 	}
 }
 
@@ -112,10 +106,10 @@ func (c *Config) GetKeys(keys []string) []string {
 // MultiConfig 多缓存配置
 type MultiConfig []*Config
 
-func (m MultiConfig) Format() string {
+func (list MultiConfig) Format() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
-	for i, config := range m {
+	for i, config := range list {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
@@ -142,26 +136,17 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (m MultiConfig) Execute() error {
-	if _handler == nil {
-		_handler = &Handler{
-			multi:     true,
-			clientMap: make(map[string]Client),
-		}
-	} else {
-		_handler.multi = true
+func (list MultiConfig) Execute() error {
+	if len(list) == 0 {
+		return errorx.New("cache client not init! cause: cache.yaml is invalid")
 	}
-	multi := anyx.IfZero(m, MultiConfig{&Config{
-		Source:  constx.DefaultSource,
-		Prefix:  "cache",
-		Marshal: "json",
-	}})
-	for i, c := range multi {
-		var client = c.InitClient()
-		_handler.clientMap[c.Source] = client
-		if i == 0 || c.Source == constx.DefaultSource {
-			_handler.client = client
+	for _, config := range list {
+		if err := config.Execute(); err != nil {
+			return errorx.Wrap(err, "cache config execute error")
 		}
+	}
+	if len(_handler.clients) == 0 {
+		log.Error("cache client not init! cause: no enabled source")
 	}
 	return nil
 }

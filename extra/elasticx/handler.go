@@ -20,6 +20,23 @@ func this() *Handler {
 	return _handler
 }
 
+func AddClient(config *Config, client *elastic.Client) {
+	if _handler == nil {
+		_handler = &Handler{
+			multi:   false,
+			client:  client,
+			clients: make(map[string]*elastic.Client),
+		}
+		return
+	}
+	_handler.multi = true
+	_handler.clients[config.Source] = client
+	if config.Source == constx.DefaultSource {
+		_handler.config = config
+		_handler.client = client
+	}
+}
+
 type Handler struct {
 	multi   bool
 	config  *Config

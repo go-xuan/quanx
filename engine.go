@@ -333,11 +333,9 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 	}
 	if execute {
 		if err := configurator.Execute(); err != nil {
-			log.WithField("configFrom", configFrom).
-				Error("configurator execute failed ==> ", err)
+			log.WithField("config_from", configFrom).Error("configurator execute failed ==> ", err)
 		} else {
-			log.WithField("configFrom", configFrom).
-				Info("configurator execute success")
+			log.WithField("config_from", configFrom).Info("configurator execute success")
 		}
 		if e.switches[enableDebug] {
 			log.Info("configurator data: ", configurator.Format())

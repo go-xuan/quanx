@@ -38,8 +38,10 @@ func (c *Config) Format() string {
 		c.AddressUrl(), c.Username, c.Password, c.NameSpace, c.Mode)
 }
 
-func (*Config) Reader(from configx.From) configx.Reader {
-	return nil
+func (*Config) Reader(configx.From) configx.Reader {
+	return &configx.LocalFileReader{
+		Name: "nacos.yaml",
+	}
 }
 
 func (c *Config) Execute() error {
@@ -102,14 +104,14 @@ func (c *Config) ClientConfig() *constant.ClientConfig {
 
 // ServerConfigs nacos服务中间件配置
 func (c *Config) ServerConfigs() []constant.ServerConfig {
-	var adds = strings.Split(c.Address, ",")
-	if len(adds) == 0 {
+	var addrs = strings.Split(c.Address, ",")
+	if len(addrs) == 0 {
 		log.Error("the address of nacos cannot be empty")
 		return nil
 	}
 	var configs []constant.ServerConfig
-	for _, addStr := range adds {
-		host, port, _ := strings.Cut(addStr, ":")
+	for _, addr := range addrs {
+		host, port, _ := strings.Cut(addr, ":")
 		configs = append(configs, constant.ServerConfig{
 			ContextPath: "/nacos",
 			IpAddr:      host,

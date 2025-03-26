@@ -9,7 +9,7 @@ import (
 )
 
 // NewImageCaptcha 初始化图片验证码
-func NewImageCaptcha() *ImageCaptcha {
+func NewImageCaptcha() ImageCaptchaService {
 	var driver = &base64Captcha.DriverString{
 		Height:          100,
 		Width:           200,

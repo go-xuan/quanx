@@ -13,7 +13,6 @@ import (
 	"gorm.io/gorm/schema"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/types/anyx"
@@ -67,23 +66,11 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "set default value error")
 		}
 		if db, err := c.NewGormDB(); err != nil {
+			log.Error("database connect failed: ", c.Format())
 			return errorx.Wrap(err, "new gorm db error")
 		} else {
-			if _handler == nil {
-				_handler = &Handler{
-					multi: false, config: c, db: db,
-					configs: make(map[string]*Config),
-					dbs:     make(map[string]*gorm.DB),
-				}
-			} else {
-				_handler.multi = true
-				if c.Source == constx.DefaultSource {
-					_handler.config = c
-					_handler.db = db
-				}
-			}
-			_handler.configs[c.Source] = c
-			_handler.dbs[c.Source] = db
+			log.Info("database connect success: ", c.Format())
+			AddDB(c, db)
 		}
 	}
 	return nil
@@ -103,8 +90,7 @@ func (c *Config) NewGormDB() (*gorm.DB, error) {
 		sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
 
 		if c.Debug {
-			// 是否打印SQL
-			db = db.Debug()
+			db = db.Debug() // 是否打印SQL
 		}
 		return db, nil
 	}
@@ -156,10 +142,10 @@ func (c *Config) GetGormDB() (*gorm.DB, error) {
 // MultiConfig 数据库多数据源配置
 type MultiConfig []*Config
 
-func (m MultiConfig) Format() string {
+func (list MultiConfig) Format() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
-	for i, config := range m {
+	for i, config := range list {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
@@ -186,36 +172,17 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (m MultiConfig) Execute() error {
-	if len(m) == 0 {
+func (list MultiConfig) Execute() error {
+	if len(list) == 0 {
 		return errorx.New("database not connected! cause: database.yaml is invalid")
 	}
-	if _handler == nil {
-		_handler = &Handler{
-			dbs:     make(map[string]*gorm.DB),
-			configs: make(map[string]*Config),
-		}
-	}
-	_handler.multi = true
-	for i, c := range m {
-		if c.Enable {
-			if err := anyx.SetDefaultValue(c); err != nil {
-				return errorx.Wrap(err, "set default value error")
-			}
-			db, err := c.NewGormDB()
-			if err != nil {
-				return errorx.Wrap(err, "new gorm.Config failed")
-			}
-			_handler.dbs[c.Source] = db
-			_handler.configs[c.Source] = c
-			if i == 0 || c.Source == constx.DefaultSource {
-				_handler.db = db
-				_handler.config = c
-			}
+	for _, config := range list {
+		if err := config.Execute(); err != nil {
+			return errorx.Wrap(err, "gorm config execute error")
 		}
 	}
 	if len(_handler.configs) == 0 {
-		log.Error("database not connected! cause: database.yaml is empty or no enabled source")
+		log.Error("database not connected!  cause: no enabled source")
 	}
 	return nil
 }

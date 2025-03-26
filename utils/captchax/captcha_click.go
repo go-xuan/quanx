@@ -12,7 +12,7 @@ import (
 )
 
 // NewClickCaptcha 初始化点击行为验证码
-func NewClickCaptcha() *ClickCaptcha {
+func NewClickCaptcha() ImageCaptchaService {
 	return &ClickCaptcha{
 		capt:  getClickCaptcha(),
 		store: DefaultStore(),

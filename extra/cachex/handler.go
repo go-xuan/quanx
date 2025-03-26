@@ -13,15 +13,34 @@ func this() *Handler {
 	return _handler
 }
 
+func AddClient(config *Config, client Client) {
+	if _handler == nil {
+		_handler = &Handler{
+			multi:   false,
+			client:  client,
+			clients: make(map[string]Client),
+		}
+		return
+	}
+	_handler.multi = true
+	_handler.clients[config.Source] = client
+	if config.Source == constx.DefaultSource {
+		_handler.config = config
+		_handler.client = client
+	}
+}
+
 type Handler struct {
-	multi     bool // 是否多缓存
-	client    Client
-	clientMap map[string]Client
+	multi   bool // 是否多缓存
+	client  Client
+	config  *Config
+	configs map[string]*Config
+	clients map[string]Client
 }
 
 func (h *Handler) GetClient(source ...string) Client {
 	if len(source) > 0 && source[0] != constx.DefaultSource {
-		if client, ok := h.clientMap[source[0]]; ok {
+		if client, ok := h.clients[source[0]]; ok {
 			return client
 		}
 	}

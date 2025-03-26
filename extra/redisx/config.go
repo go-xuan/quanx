@@ -11,7 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/types/anyx"
@@ -63,23 +62,11 @@ func (c *Config) Execute() error {
 		}
 		client := c.NewRedisClient()
 		if result, err := client.Ping(context.TODO()).Result(); err != nil || result != "PONG" {
+			log.Error("redis client ping failed:", c.Format())
 			return errorx.Wrap(err, "redis client ping error")
 		}
-		if _handler == nil {
-			_handler = &Handler{
-				multi: false, config: c, client: client,
-				configs: make(map[string]*Config),
-				clients: make(map[string]redis.UniversalClient),
-			}
-		} else {
-			_handler.multi = true
-			if c.Source == constx.DefaultSource {
-				_handler.config = c
-				_handler.client = client
-			}
-		}
-		_handler.configs[c.Source] = c
-		_handler.clients[c.Source] = client
+		log.Info("redis connect success: ", c.Format())
+		AddClient(c, client)
 	}
 	return nil
 }
@@ -121,10 +108,10 @@ func (c *Config) NewRedisClient() redis.UniversalClient {
 // MultiConfig redis多连接配置
 type MultiConfig []*Config
 
-func (m MultiConfig) Format() string {
+func (list MultiConfig) Format() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
-	for i, config := range m {
+	for i, config := range list {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
@@ -151,37 +138,17 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (m MultiConfig) Execute() error {
-	if len(m) == 0 {
+func (list MultiConfig) Execute() error {
+	if len(list) == 0 {
 		return errorx.New("redis not connected! cause: redis.yaml is invalid")
 	}
-	if _handler == nil {
-		_handler = &Handler{
-			configs: make(map[string]*Config),
-			clients: make(map[string]redis.UniversalClient),
-		}
-	}
-	_handler.multi = true
-	var ctx = context.Background()
-	for i, c := range m {
-		if c.Enable {
-			if err := anyx.SetDefaultValue(c); err != nil {
-				return errorx.Wrap(err, "set default value error")
-			}
-			var client = c.NewRedisClient()
-			if result, err := client.Ping(ctx).Result(); err != nil || result != "PONG" {
-				return errorx.Wrap(err, "redis client ping error")
-			}
-			_handler.clients[c.Source] = client
-			_handler.configs[c.Source] = c
-			if i == 0 || c.Source == constx.DefaultSource {
-				_handler.client = client
-				_handler.config = c
-			}
+	for _, config := range list {
+		if err := config.Execute(); err != nil {
+			return errorx.Wrap(err, "redis config execute error")
 		}
 	}
 	if len(_handler.configs) == 0 {
-		log.Error("redis connect failed! cause: redis.yaml is empty or no enabled redis configured")
+		log.Error("redis not connected!  cause: no enabled source")
 	}
 	return nil
 }

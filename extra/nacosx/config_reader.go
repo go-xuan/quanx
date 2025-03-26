@@ -31,51 +31,62 @@ func (r *Reader) Location(group ...string) string {
 	return fmt.Sprintf("%s@%s", r.Group, r.DataId)
 }
 
+func (r *Reader) ConfigParam() vo.ConfigParam {
+	return vo.ConfigParam{
+		DataId: r.DataId,
+		Group:  r.Group,
+		Type:   vo.ConfigType(r.Type),
+	}
+}
+
 // ReadConfig nacos配置读取
-func (r *Reader) ReadConfig(v any) error {
-	// 修改值必须是指针类型否则不可行
-	if ref := reflect.ValueOf(v); ref.Type().Kind() != reflect.Ptr {
+func (r *Reader) ReadConfig(config any) error {
+	// 配置值必须是指针类型，否则不允许读取
+	if ref := reflect.ValueOf(config); ref.Type().Kind() != reflect.Ptr {
 		return errorx.New("the scanned object must be of pointer type")
 	}
 	if r.Type == "" {
 		r.Type = filex.GetSuffix(r.DataId)
 	}
-	var param = vo.ConfigParam{
-		DataId: r.DataId,
-		Group:  r.Group,
-		Type:   vo.ConfigType(r.Type),
-	}
 	// 读取Nacos配置文本
-	content, err := GetNacosConfigClient().GetConfig(param)
+	content, err := GetNacosConfigClient().GetConfig(r.ConfigParam())
 	if err != nil {
 		log.Error("get nacos config content failed: ", r.Info(), err)
 		return errorx.Wrap(err, "get nacos config content failed")
 	}
 	// 配置文本反序列化
-	if err = marshalx.Apply(r.DataId).Unmarshal([]byte(content), v); err != nil {
+	if err = marshalx.Apply(r.DataId).Unmarshal([]byte(content), config); err != nil {
 		log.Error("scan nacos config failed: ", r.Info(), err)
 		return errorx.Wrap(err, "scan nacos config failed")
 	} else {
 		log.Info("scan nacos config success: ", r.Info())
 	}
+	if err = r.ListenConfig(config); err != nil {
+		return errorx.Wrap(err, "listen nacos config failed")
+	}
+	return nil
+}
+
+// ListenConfig 监听nacos配置
+func (r *Reader) ListenConfig(config any) error {
 	if r.Listen {
-		// 设置Nacos配置监听
-		GetConfigMonitor().Set(r.Group, r.DataId, content)
+		var param = r.ConfigParam()
 		// 配置监听响应方法
 		param.OnChange = func(namespace, group, dataId, data string) {
 			log.WithField("dataId", dataId).
 				WithField("group", group).
 				WithField("namespace", namespace).
-				WithField("content", content).
-				Error("the nacos config content has changed !!!")
-			GetConfigMonitor().Set(group, dataId, data)
+				WithField("data", data).
+				Info("the nacos config content has changed !!!")
+			if err := marshalx.Apply(dataId).Unmarshal([]byte(data), config); err != nil {
+				log.Errorf("update config error, group: %s; dataId: %s; data: %s", group, dataId, data)
+			}
 		}
-		if err = GetNacosConfigClient().ListenConfig(param); err != nil {
+		if err := GetNacosConfigClient().ListenConfig(param); err != nil {
 			log.Error("listen nacos config failed: ", r.Info(), err)
 			return errorx.Wrap(err, "listen nacos config failed")
-		} else {
-			log.Info("listen nacos config success!")
 		}
+		log.Info("listen nacos config success!")
 	}
 	return nil
 }

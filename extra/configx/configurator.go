@@ -2,7 +2,7 @@ package configx
 
 import (
 	"path/filepath"
-	
+
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
@@ -14,17 +14,17 @@ const (
 	FormNacos             // 从nacos读取配置
 )
 
+// Configurator 配置器
+type Configurator interface {
+	Format() string     // 配置信息格式化
+	Reader(From) Reader // 配置文件读取
+	Execute() error     // 配置器运行
+}
+
 // Reader 配置读取器
 type Reader interface {
 	Location(...string) string // 配置文件定位
 	ReadConfig(any) error      // 配置读取
-}
-
-// Configurator 配置器
-type Configurator interface {
-	Format() string          // 配置信息格式化
-	Reader(from From) Reader // 配置文件读取
-	Execute() error          // 配置器运行
 }
 
 type LocalFileReader struct {
@@ -39,9 +39,9 @@ func (r *LocalFileReader) Location(dir ...string) string {
 	return filepath.Join(r.Dir, r.Name)
 }
 
-func (r *LocalFileReader) ReadConfig(v any) error {
+func (r *LocalFileReader) ReadConfig(config any) error {
 	path, marshal := filepath.Join(r.Dir, r.Name), marshalx.Apply(r.Name)
-	if err := marshal.Read(path, v); err != nil {
+	if err := marshal.Read(path, config); err != nil {
 		return errorx.Wrap(err, "read config from file failed")
 	}
 	return nil
