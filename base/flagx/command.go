@@ -200,7 +200,7 @@ func (c *Command) GetArgs() []string {
 }
 
 func (c *Command) GetArg(index int) string {
-	if index > 0 && index < len(c.args) {
+	if index >= 0 && index < len(c.args) {
 		return c.args[index]
 	}
 	return ""

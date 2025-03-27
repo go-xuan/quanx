@@ -21,10 +21,8 @@ import (
 )
 
 const (
-	Overwrite  = os.O_RDWR | os.O_CREATE | os.O_TRUNC
-	Append     = os.O_RDWR | os.O_CREATE | os.O_APPEND
-	WriteOnly  = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-	AppendOnly = os.O_WRONLY | os.O_CREATE | os.O_APPEND
+	Overwrite = os.O_TRUNC | os.O_CREATE | os.O_RDWR
+	Append    = os.O_APPEND | os.O_CREATE | os.O_RDWR
 )
 
 const (
@@ -43,8 +41,8 @@ func ReadFile(path string) ([]byte, error) {
 }
 
 // ReadFileLine 按行读取
-func ReadFileLine(filePath string) ([]string, error) {
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
+func ReadFileLine(path string) ([]string, error) {
+	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
 	if err != nil {
 		return nil, errorx.Wrap(err, "open file error")
 	}
@@ -62,9 +60,9 @@ func ReadFileLine(filePath string) ([]string, error) {
 	return lines, nil
 }
 
-// ContentReplace 更新文件
-func ContentReplace(filePath string, replaces map[string]string) error {
-	bytes, err := os.ReadFile(filePath)
+// Replace 内容替换
+func Replace(path string, replaces map[string]string) error {
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return errorx.Wrap(err, "read file error")
 	}
@@ -72,24 +70,22 @@ func ContentReplace(filePath string, replaces map[string]string) error {
 	for k, v := range replaces {
 		content = strings.ReplaceAll(content, k, v)
 	}
-	if err = WriteFileString(filePath, content); err != nil {
+	if err = WriteFileString(path, content); err != nil {
 		return errorx.Wrap(err, "write to file error")
 	}
 	return nil
 }
 
 // WriteFile 写入文件
-func WriteFile(filePath string, data []byte, mode ...int) error {
-	CreateIfNotExist(filePath)
-	var flag = intx.Default(Overwrite, mode...)
-	file, err := os.OpenFile(filePath, flag, 0644)
+func WriteFile(path string, data []byte, mode ...int) error {
+	file, err := Open(path, mode...)
 	if err != nil {
 		return errorx.Wrap(err, "open file error")
 	}
 	defer file.Close()
 	writer := bufio.NewWriter(file)
 	if _, err = writer.Write(data); err != nil {
-		return errorx.Wrap(err, "write file with []byte error")
+		return errorx.Wrap(err, "write []byte error")
 	}
 	if err = writer.Flush(); err != nil {
 		return errorx.Wrap(err, "writer flush error")
@@ -98,22 +94,81 @@ func WriteFile(filePath string, data []byte, mode ...int) error {
 }
 
 // WriteFileString 写入文件
-func WriteFileString(filePath, data string, mode ...int) error {
-	CreateIfNotExist(filePath)
-	var flag = intx.Default(Overwrite, mode...)
-	file, err := os.OpenFile(filePath, flag, 0644)
+func WriteFileString(path, data string, mode ...int) error {
+	file, err := Open(path, mode...)
 	if err != nil {
 		return errorx.Wrap(err, "open file error")
 	}
 	defer file.Close()
 	writer := bufio.NewWriter(file)
 	if _, err = writer.WriteString(data); err != nil {
-		return errorx.Wrap(err, "write file with string error")
+		return errorx.Wrap(err, "write string error")
 	}
 	if err = writer.Flush(); err != nil {
 		return errorx.Wrap(err, "writer flush error")
 	}
 	return nil
+}
+
+// WriteFileLine 数组按行写入文件
+func WriteFileLine(path string, content []string, mode ...int) error {
+	file, err := Open(path, mode...)
+	if err != nil {
+		return errorx.Wrap(err, "open file error")
+	}
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+	for _, line := range content {
+		_, _ = writer.WriteString(line)
+		_, _ = writer.WriteString("\n")
+	}
+	if err = writer.Flush(); err != nil {
+		return errorx.Wrap(err, "writer flush error")
+	}
+	return nil
+}
+
+// WriteCSV 写入csv文件
+func WriteCSV(path string, data [][]string) error {
+	file, err := Open(path)
+	if err != nil {
+		return errorx.Wrap(err, "open file error")
+	}
+	defer file.Close()
+	writer := csv.NewWriter(file)
+	writer.Comma = ','
+	writer.UseCRLF = true
+	if err = writer.WriteAll(data); err != nil {
+		return errorx.Wrap(err, "write csv to file error")
+	}
+	writer.Flush()
+	return nil
+}
+
+func Open(filePath string, mode ...int) (*os.File, error) {
+	CreateIfNotExist(filePath)
+	file, err := os.OpenFile(filePath, intx.Default(Overwrite, mode...), 0644)
+	if err != nil {
+		return nil, errorx.Wrap(err, "open file error")
+	}
+	return file, nil
+}
+
+func Clear(filePath string) {
+	file, _ := os.OpenFile(filePath, os.O_TRUNC, 0644)
+	file.Close()
+}
+
+// MustOpen 强制打开文件
+func MustOpen(dir string, name string) (*os.File, error) {
+	path, err := filepath.Abs(filepath.Join(dir, name))
+	if err != nil {
+		return nil, errorx.Wrap(err, "abs path error")
+	}
+	if _, err = os.Stat(path); os.IsPermission(err) {
+		return nil, errorx.Wrap(err, "file permission denied")
+	}
+	return Open(path, Append)
 }
 
 // FileSplit 文件拆分
@@ -155,79 +210,6 @@ func FileSplit(filePath string, size int) ([]string, error) {
 		index++
 	}
 	return paths, nil
-}
-
-// WriteFileLine 数组按行写入文件
-func WriteFileLine(filePath string, content []string, mode ...int) error {
-	var flag = intx.Default(Overwrite, mode...)
-	file, err := os.OpenFile(filePath, flag, 0644)
-	if err != nil {
-		return errorx.Wrap(err, "open file error")
-	}
-	defer file.Close()
-	writer := bufio.NewWriter(file)
-	for _, line := range content {
-		_, _ = writer.WriteString(line)
-		_, _ = writer.WriteString("\n")
-	}
-	if err = writer.Flush(); err != nil {
-		return errorx.Wrap(err, "writer flush error")
-	}
-	return nil
-}
-
-// WriteCSV 写入csv文件
-func WriteCSV(filePath string, data [][]string) error {
-	CreateIfNotExist(filePath)
-	file, err := os.OpenFile(filePath, Overwrite, 0644)
-	if err != nil {
-		return errorx.Wrap(err, "open file error")
-	}
-	defer file.Close()
-	writer := csv.NewWriter(file)
-	writer.Comma = ','
-	writer.UseCRLF = true
-	if err = writer.WriteAll(data); err != nil {
-		return errorx.Wrap(err, "write csv to file error")
-	}
-	writer.Flush()
-	return nil
-}
-
-type File struct {
-	Path string
-	Info os.FileInfo
-}
-
-// FileScan 获取目录下所有文件路径
-func FileScan(dir string, suffix string) ([]*File, error) {
-	var files []*File
-	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		file := File{path, info}
-		switch suffix {
-		case DirAndFile:
-			files = append(files, &file)
-		case OnlyDir:
-			if info.IsDir() {
-				files = append(files, &file)
-			}
-		case OnlyFile:
-			if !info.IsDir() {
-				files = append(files, &file)
-			}
-		default:
-			if info.Name() == suffix {
-				files = append(files, &file)
-			}
-		}
-		return nil
-	}); err != nil {
-		os.Exit(1)
-	}
-	return files, nil
 }
 
 // Pwd 获取绝对路径
@@ -283,9 +265,10 @@ func Create(path string) error {
 
 // CreateIfNotExist 创建文件
 func CreateIfNotExist(path string) {
-	dir, _ := filepath.Split(path)
-	CreateDir(dir)
-	_ = Create(path)
+	if !Exists(path) {
+		CreateDir(path)
+		_ = Create(path)
+	}
 }
 
 // CreateDir 创建文件夹
@@ -305,10 +288,10 @@ func CreateDir(path string) {
 // IsEmptyDir 检查给定的目录是否为空
 func IsEmptyDir(dir string) bool {
 	f, err := os.Open(dir)
-	defer f.Close()
 	if err != nil {
 		return false
 	}
+	defer f.Close()
 	// 读取目录内容
 	var names []string
 	if names, err = f.Readdirnames(0); err != nil {
@@ -370,55 +353,40 @@ func FileName(path string) string {
 	return strings.TrimSuffix(fullName, filepath.Ext(fullName))
 }
 
-// MustOpen 强制打开文件
-func MustOpen(filePath string, fileName string) (*os.File, error) {
-	path, err := filepath.Abs(filepath.Join(filePath, fileName))
-	if err != nil {
-		return nil, errorx.Wrap(err, "abs path error")
-	}
-	if perm := CheckPermission(path); perm == true {
-		return nil, errorx.Errorf("file permission denied: %s", path)
-	}
-	if err = CreateIsNotExist(path); err != nil {
-		return nil, errorx.Wrap(err, "create file error")
-	}
-	var file *os.File
-	if file, err = Open(path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644); err != nil {
-		return nil, errorx.Wrap(err, "open file error")
-	}
-	return file, nil
+type File struct {
+	Path string
+	Info os.FileInfo
 }
 
-// Open 打开文件
-func Open(name string, flag int, perm os.FileMode) (*os.File, error) {
-	if f, err := os.OpenFile(name, flag, perm); err != nil {
-		return nil, err
-	} else {
-		return f, nil
-	}
-}
-
-// CheckPermission 检查是否有权限
-func CheckPermission(src string) bool {
-	_, err := os.Stat(src)
-	return os.IsPermission(err)
-}
-
-// CreateIsNotExist 不存在即创建
-func CreateIsNotExist(src string) error {
-	_, err := os.Stat(src)
-	if notExist := os.IsNotExist(err); notExist == true {
-		if _, err = os.Create(src); err != nil {
+// FileScan 获取目录下所有文件路径
+func FileScan(dir string, suffix string) ([]*File, error) {
+	var files []*File
+	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
 			return err
 		}
-	} else {
-		if err = os.Remove(src); err == nil {
-			if _, err = os.Create(src); err != nil {
-				return err
+		file := File{path, info}
+		switch suffix {
+		case DirAndFile:
+			files = append(files, &file)
+		case OnlyDir:
+			if info.IsDir() {
+				files = append(files, &file)
+			}
+		case OnlyFile:
+			if !info.IsDir() {
+				files = append(files, &file)
+			}
+		default:
+			if info.Name() == suffix {
+				files = append(files, &file)
 			}
 		}
+		return nil
+	}); err != nil {
+		os.Exit(1)
 	}
-	return nil
+	return files, nil
 }
 
 // GetFileBytesByUrl 通过url获取文件字节
