@@ -1,6 +1,6 @@
 package enumx
 
-// NewStringEnum K为string，v为任意类型
+// NewStringEnum key为string类型，value为任意类型
 func NewStringEnum[T any]() *Enum[string, T] {
 	return &Enum[string, T]{
 		keys: make([]string, 0),
@@ -8,7 +8,7 @@ func NewStringEnum[T any]() *Enum[string, T] {
 	}
 }
 
-// NewIntEnum K为int，v为任意类型
+// NewIntEnum key为int类型，value为任意类型
 func NewIntEnum[T any]() *Enum[int, T] {
 	return &Enum[int, T]{
 		keys: make([]int, 0),
@@ -16,7 +16,7 @@ func NewIntEnum[T any]() *Enum[int, T] {
 	}
 }
 
-// NewEnum 任意KV类型
+// NewEnum key为comparable类型，value为任意类型
 func NewEnum[KT comparable, VT any]() *Enum[KT, VT] {
 	return &Enum[KT, VT]{
 		keys: make([]KT, 0),
