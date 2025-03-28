@@ -129,7 +129,7 @@ func (c *Command) Execute(args []string) error {
 		c.args = args
 	}
 	if executor := c.executor; executor != nil {
-		fmtx.Cyan.XPrintf("======当前执行命令: %s======\n", c.name)
+		fmtx.Cyan.PrintfX("======当前执行命令: %s======\n", c.name)
 		if c.NeedHelp() {
 			c.OptionsHelp()
 			return nil
@@ -137,7 +137,7 @@ func (c *Command) Execute(args []string) error {
 			return errorx.Wrap(err, fmt.Sprintf("执行[%s]命令失败", c.name))
 		}
 	} else {
-		fmtx.Red.XPrintf("[%s]命令未设置执行器！", c.name)
+		fmtx.Red.PrintfX("[%s]命令未设置执行器！", c.name)
 	}
 	return nil
 }
@@ -214,7 +214,7 @@ func (c *Command) addDefaultOption() {
 
 // OptionsHelp 命令参数的帮助说明
 func (c *Command) OptionsHelp() {
-	fmtx.Cyan.XPrintf("%s命令可选项：\n", c.name)
+	fmtx.Cyan.PrintfX("%s命令可选项：\n", c.name)
 	for _, optName := range c.optNames {
 		option := c.options[optName]
 		fmt.Printf("%-50s %s\n", fmtx.Magenta.String("-"+option.Name()), option.Usage())

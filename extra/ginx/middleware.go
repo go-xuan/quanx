@@ -39,7 +39,7 @@ func JsonLogFormatter(ctx *gin.Context) {
 func Log(ctx *gin.Context) *log.Entry {
 	entry := log.WithField("traceId", TraceId(ctx)).WithField("clientIp", ClientIP(ctx))
 	if user := GetSessionUser(ctx); user != nil {
-		entry = entry.WithField("userId", user.UserId()).WithField("userName", user.Username())
+		entry = entry.WithField("userId", user.UserId())
 	}
 	return entry
 }

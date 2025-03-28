@@ -43,11 +43,14 @@ func jwtKeyFunc(*jwt.Token) (interface{}, error) {
 
 // JwtUser jwt-TokenUser实现
 type JwtUser struct {
-	Id  int64 `json:"id"`  // 用户ID
-	Age int   `json:"age"` // 存活时长
+	Id     int64 `json:"id"`     // 用户ID
+	Expire int64 `json:"expire"` // 存活时长
 }
 
 func (u *JwtUser) Valid() error {
+	if u.Expire < time.Now().Unix() {
+		return errorx.New("claims valid failed: current user expired")
+	}
 	return nil
 }
 
@@ -71,5 +74,5 @@ func (u *JwtUser) UserId() anyx.Value {
 }
 
 func (u *JwtUser) TTL() time.Duration {
-	return time.Duration(anyx.IfZero(u.Age, 3600)) * time.Second
+	return 3600 * time.Second
 }

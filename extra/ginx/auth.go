@@ -61,7 +61,7 @@ func SetAuthCookie(ctx *gin.Context, user AuthUser) error {
 	if cookie, err := user.Encrypt(); err != nil {
 		return errorx.Wrap(err, "new cookie error")
 	} else {
-		ctx.SetCookie(userCookieKey, cookie, int(user.TTL().Seconds()), "", ctx.Request.Host, false, true)
+		ctx.SetCookie(userCookieKey, cookie, int(user.TTL().Seconds()), "", "", false, true)
 	}
 	return nil
 }
