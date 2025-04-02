@@ -59,7 +59,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 func (c *Config) Execute() error {
 	if c.Host != "" && _handler == nil {
 		if c.Ping() {
-			_handler = &Handler{
+			_handler = &Client{
 				config: c,
 			}
 			log.Info("hugegraph connect success: ", c.Format())

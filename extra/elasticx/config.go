@@ -118,7 +118,7 @@ func (list MultiConfig) Execute() error {
 			return errorx.Wrap(err, "elastic config execute error")
 		}
 	}
-	if len(_handler.configs) == 0 {
+	if !Initialized() {
 		log.Error("elastic-search not connected! cause: no enabled source")
 	}
 	return nil

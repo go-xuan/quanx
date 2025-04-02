@@ -11,6 +11,11 @@ type Page struct {
 	PageSize int `json:"pageSize"` // 分页大小
 }
 
+type Order struct {
+	Column string `json:"column"` // 排序字段
+	Type   string `json:"type"`   // 排序方式(asc/desc)
+}
+
 // PageTotal 计算分页数量
 func (page *Page) PageTotal(total int) int {
 	if total != 0 && page.PageSize != 0 {

@@ -52,7 +52,7 @@ func (m *Config) Execute() error {
 		log.Error("minio connect failed: ", m.Format(), err)
 		return errorx.Wrap(err, "new minio client failed")
 	} else {
-		_handler = &Handler{config: m, client: client}
+		_client = &Client{config: m, client: client}
 		log.Info("minio connect success: ", m.Format())
 		return nil
 	}

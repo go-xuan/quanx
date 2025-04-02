@@ -25,7 +25,7 @@ const (
 type Config struct {
 	Type    string `json:"type" yaml:"type" default:"redis"`         // 缓存类型（local/redis）
 	Source  string `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称
-	Prefix  string `json:"prefix" yaml:"prefix" default:"default"`   // 缓存KEY前缀前缀
+	Prefix  string `json:"prefix" yaml:"prefix" default:"default"`   // 缓存key前缀前缀
 	Marshal string `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
 }
 
@@ -55,7 +55,7 @@ func (c *Config) Execute() error {
 	}
 	if client, err := c.NewClient(); err != nil {
 		log.Error("cache init failed: ", c.Format())
-		return errorx.Wrap(err, "new client error")
+		return errorx.Wrap(err, "new cache error")
 	} else {
 		log.Info("cache init success: ", c.Format())
 		AddClient(c, client)
@@ -69,13 +69,13 @@ func (c *Config) NewClient() (Client, error) {
 	case CacheTypeRedis:
 		return &RedisClient{
 			config:  c,
-			client:  redisx.GetClient(c.Source),
+			client:  redisx.GetInstance(c.Source),
 			marshal: marshalx.Apply(c.Marshal),
 		}, nil
 	case CacheTypeLocal:
 		return &LocalClient{
 			config:  c,
-			client:  cache.New(time.Duration(-1), time.Duration(-1)),
+			cache:   cache.New(time.Duration(-1), time.Duration(-1)),
 			marshal: marshalx.Apply(c.Marshal),
 		}, nil
 	default:
@@ -138,15 +138,15 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 
 func (list MultiConfig) Execute() error {
 	if len(list) == 0 {
-		return errorx.New("cache client not init! cause: cache.yaml is invalid")
+		return errorx.New("cache cache not init! cause: cache.yaml is invalid")
 	}
 	for _, config := range list {
 		if err := config.Execute(); err != nil {
 			return errorx.Wrap(err, "cache config execute error")
 		}
 	}
-	if len(_handler.clients) == 0 {
-		log.Error("cache client not init! cause: no enabled source")
+	if this().Len() == 0 {
+		log.Error("cache cache not init! cause: no enabled source")
 	}
 	return nil
 }

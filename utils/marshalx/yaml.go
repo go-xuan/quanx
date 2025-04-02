@@ -25,7 +25,7 @@ func (y yamlImpl) Unmarshal(data []byte, v interface{}) error {
 func WriteYaml(path string, v any) error {
 	bytes, err := yaml.Marshal(v)
 	if err != nil {
-		return errorx.Wrap(err, "yamlMethod marshal error")
+		return errorx.Wrap(err, "yaml marshal error")
 	}
 	if err = filex.WriteFile(path, bytes); err != nil {
 		return errorx.Wrap(err, "write file error")
@@ -35,9 +35,9 @@ func WriteYaml(path string, v any) error {
 
 func (y yamlImpl) Read(path string, v interface{}) error {
 	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %s", filex.Pwd(path))
+		return errorx.Errorf("the yaml file not exist: %s", filex.Pwd(path))
 	} else if data, err := filex.ReadFile(path); err != nil {
-		return errorx.Wrap(err, "read file error")
+		return errorx.Wrap(err, "read yaml file error")
 	} else {
 		return y.Unmarshal(data, v)
 	}

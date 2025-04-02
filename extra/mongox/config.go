@@ -165,7 +165,7 @@ func (list MultiConfig) Execute() error {
 			return errorx.Wrap(err, "mongo config execute error")
 		}
 	}
-	if len(_handler.configs) == 0 {
+	if !Initialized() {
 		log.Error("mongo not connected! cause: no enabled source")
 	}
 	return nil

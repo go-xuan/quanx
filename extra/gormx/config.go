@@ -34,6 +34,24 @@ type Config struct {
 	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
 }
 
+func (c *Config) Copy() *Config {
+	return &Config{
+		Source:          c.Source,
+		Enable:          c.Enable,
+		Type:            c.Type,
+		Host:            c.Host,
+		Port:            c.Port,
+		Username:        c.Username,
+		Password:        c.Password,
+		Database:        c.Database,
+		Schema:          c.Schema,
+		Debug:           c.Debug,
+		MaxIdleConns:    c.MaxIdleConns,
+		MaxOpenConns:    c.MaxOpenConns,
+		ConnMaxLifetime: c.ConnMaxLifetime,
+	}
+}
+
 func (c *Config) Format() string {
 	return fmt.Sprintf("source=%s type=%s host=%s port=%v database=%s debug=%v",
 		c.Source, c.Type, c.Host, c.Port, c.Database, c.Debug)
@@ -69,8 +87,8 @@ func (c *Config) Execute() error {
 			log.Error("database connect failed: ", c.Format())
 			return errorx.Wrap(err, "new gorm db error")
 		} else {
+			AddClient(c, db)
 			log.Info("database connect success: ", c.Format())
-			AddDB(c, db)
 		}
 	}
 	return nil
@@ -128,12 +146,11 @@ func (c *Config) GetGormDB() (*gorm.DB, error) {
 		return nil, errorx.Errorf("database type only support : %v", []string{MYSQL, POSTGRES, PGSQL})
 	}
 	if db, err := gorm.Open(dial, &gorm.Config{
-		// 模型命名策略
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true, // 表名单数命名
-		},
+		}, // 模型命名策略
 	}); err != nil {
-		return nil, errorx.Wrap(err, "gorm open dialector failed")
+		return nil, errorx.Wrap(err, "open dialector failed")
 	} else {
 		return db, nil
 	}
@@ -181,8 +198,8 @@ func (list MultiConfig) Execute() error {
 			return errorx.Wrap(err, "gorm config execute error")
 		}
 	}
-	if len(_handler.configs) == 0 {
-		log.Error("database not connected!  cause: no enabled source")
+	if !Initialized() {
+		log.Error("database not connected! cause: no enabled source")
 	}
 	return nil
 }

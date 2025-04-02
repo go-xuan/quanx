@@ -8,34 +8,38 @@ import (
 	"github.com/go-xuan/quanx/base/errorx"
 )
 
-var handler *Handler
+var _client *Client
 
-func this() *Handler {
-	if handler == nil {
-		panic("the mail handler has not been initialized, please check the relevant config")
+func this() *Client {
+	if _client == nil {
+		panic("email client not initialized, please check the relevant config")
 	}
-	return handler
+	return _client
 }
 
-type Handler struct {
+type Client struct {
 	config *Config
 	dialer *gomail.Dialer
 }
 
-func (h *Handler) GetConfig() *Config {
-	return h.config
+func (c *Client) GetConfig() *Config {
+	return c.config
 }
 
-func (h *Handler) SendMail(send Send) error {
+func (c *Client) Instance() *gomail.Dialer {
+	return c.dialer
+}
+
+func (c *Client) SendMail(send Send) error {
 	msg := gomail.NewMessage()
-	msg.SetHeader("From", h.config.Username)
+	msg.SetHeader("From", c.config.Username)
 	msg.SetHeader("To", send.To...)
 	msg.SetHeader("Cc", send.Cc...)
 	msg.SetHeader("Subject", send.Title)
 	msg.SetDateHeader("X-Date", time.Now())
 	msg.SetBody("text/plain", send.Content)
 	// 请注意 DialAndSend() 方法是一次性的，也就是连接邮件服务器，发送邮件，然后关闭连接
-	if err := h.dialer.DialAndSend(msg); err != nil {
+	if err := c.Instance().DialAndSend(msg); err != nil {
 		return errorx.Wrap(err, "send email error")
 	}
 	return nil

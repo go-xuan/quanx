@@ -2,6 +2,7 @@ package redisx
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -35,6 +36,21 @@ type Config struct {
 	PoolSize   int    `json:"poolSize" yaml:"poolSize"`               // 池大小
 }
 
+func (c *Config) Copy() *Config {
+	return &Config{
+		Source:     c.Source,
+		Enable:     c.Enable,
+		Mode:       c.Mode,
+		Host:       c.Host,
+		Port:       c.Port,
+		Username:   c.Username,
+		Password:   c.Password,
+		Database:   c.Database,
+		MasterName: c.MasterName,
+		PoolSize:   c.PoolSize,
+	}
+}
+
 func (c *Config) Format() string {
 	return fmt.Sprintf("source=%s mode=%v host=%s port=%v database=%v",
 		c.Source, c.Mode, c.Host, c.Port, c.Database)
@@ -60,13 +76,13 @@ func (c *Config) Execute() error {
 		if err := anyx.SetDefaultValue(c); err != nil {
 			return errorx.Wrap(err, "set default value error")
 		}
-		client := c.NewRedisClient()
-		if result, err := client.Ping(context.TODO()).Result(); err != nil || result != "PONG" {
-			log.Error("redis client ping failed:", c.Format())
-			return errorx.Wrap(err, "redis client ping error")
+		if redisClient, err := c.NewRedisClient(); err != nil {
+			log.Error("redis connect failed:", c.Format())
+			return errorx.Wrap(err, "redis init error")
+		} else {
+			AddClient(c, redisClient)
+			log.Info("redis connect success: ", c.Format())
 		}
-		log.Info("redis connect success: ", c.Format())
-		AddClient(c, client)
 	}
 	return nil
 }
@@ -80,7 +96,7 @@ func (c *Config) Address() string {
 // 1、如果指定了MasterName选项，则返回redis.FailoverClient哨兵客户端。
 // 2、如果Addrs是2个以上的地址，则返回redis.ClusterClient集群客户端。
 // 3、其他情况，返回redis.Client单节点客户端。
-func (c *Config) NewRedisClient() redis.UniversalClient {
+func (c *Config) NewRedisClient() (redis.UniversalClient, error) {
 	var opts = &redis.UniversalOptions{
 		ClientName: c.Source,
 		Username:   c.Username,
@@ -88,21 +104,27 @@ func (c *Config) NewRedisClient() redis.UniversalClient {
 		PoolSize:   c.PoolSize,
 		DB:         c.Database,
 	}
+	var client redis.UniversalClient
 	switch c.Mode {
 	case StandAlone:
 		opts.Addrs = []string{net.JoinHostPort(c.Host, strconv.Itoa(c.Port))}
-		return redis.NewClient(opts.Simple())
+		client = redis.NewClient(opts.Simple())
 	case Cluster:
 		opts.Addrs = strings.Split(c.Host, ",")
-		return redis.NewClusterClient(opts.Cluster())
+		client = redis.NewClusterClient(opts.Cluster())
 	case Sentinel:
 		opts.Addrs = []string{net.JoinHostPort(c.Host, strconv.Itoa(c.Port))}
 		opts.MasterName = c.MasterName
-		return redis.NewFailoverClient(opts.Failover())
+		client = redis.NewFailoverClient(opts.Failover())
 	default:
 		log.Warn("redis mode is invalid: ")
-		return nil
+		return nil, errors.New("redis mode is invalid")
 	}
+	if result, err := client.Ping(context.TODO()).Result(); err != nil || result != "PONG" {
+		log.Error("client ping failed:", c.Format())
+		return client, errorx.Wrap(err, "client ping error")
+	}
+	return client, nil
 }
 
 // MultiConfig redis多连接配置
@@ -147,8 +169,8 @@ func (list MultiConfig) Execute() error {
 			return errorx.Wrap(err, "redis config execute error")
 		}
 	}
-	if len(_handler.configs) == 0 {
-		log.Error("redis not connected!  cause: no enabled source")
+	if !Initialized() {
+		log.Error("redis not connected! cause: no enabled source")
 	}
 	return nil
 }

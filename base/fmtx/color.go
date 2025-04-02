@@ -40,8 +40,8 @@ func (c Color) Printf(s string, v ...any) {
 	fmt.Print(c.String(fmt.Sprintf(s, v...)))
 }
 
-// PrintfX 仅变量文本颜色打印
-func (c Color) PrintfX(s string, v ...any) {
+// XPrintf 仅变量文本颜色打印
+func (c Color) XPrintf(s string, v ...any) {
 	if len(v) > 0 {
 		for i, a := range v {
 			v[i] = c.String(fmt.Sprint(a))
@@ -57,8 +57,8 @@ func (c Color) Sprintf(s string, v ...any) string {
 	return c.String(fmt.Sprintf(s, v...))
 }
 
-// SprintfX 仅变量文本颜色格式化
-func (c Color) SprintfX(s string, v ...any) string {
+// XSprintf 仅变量文本颜色格式化
+func (c Color) XSprintf(s string, v ...any) string {
 	if len(v) > 0 {
 		for i, a := range v {
 			v[i] = c.String(fmt.Sprint(a))

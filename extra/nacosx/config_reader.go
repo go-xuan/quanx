@@ -51,18 +51,18 @@ func (r *Reader) ReadConfig(config any) error {
 	// 读取Nacos配置文本
 	content, err := GetNacosConfigClient().GetConfig(r.ConfigParam())
 	if err != nil {
-		log.Error("get nacos config content failed: ", r.Info(), err)
-		return errorx.Wrap(err, "get nacos config content failed")
+		log.Error("read nacos config content failed: ", r.Info(), err)
+		return errorx.Wrap(err, "read config from nacos failed")
 	}
 	// 配置文本反序列化
 	if err = marshalx.Apply(r.DataId).Unmarshal([]byte(content), config); err != nil {
-		log.Error("scan nacos config failed: ", r.Info(), err)
-		return errorx.Wrap(err, "scan nacos config failed")
+		log.Error("unmarshal nacos config failed: ", r.Info(), err)
+		return errorx.Wrap(err, "unmarshal config from nacos failed")
 	} else {
-		log.Info("scan nacos config success: ", r.Info())
+		log.Info("unmarshal nacos config success: ", r.Info())
 	}
 	if err = r.ListenConfig(config); err != nil {
-		return errorx.Wrap(err, "listen nacos config failed")
+		return errorx.Wrap(err, "listen config failed")
 	}
 	return nil
 }

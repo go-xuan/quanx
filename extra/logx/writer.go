@@ -78,7 +78,7 @@ func NewMongoWriter(collection string) (io.Writer, error) {
 		return &MongoWriter{
 			database:   mongox.GetConfig(logWriterSource).Database,
 			collection: collection,
-			client:     client,
+			client:     client.Instance(),
 		}, nil
 	}
 	return nil, nil
@@ -87,12 +87,12 @@ func NewMongoWriter(collection string) (io.Writer, error) {
 func NewElasticSearchWriter(index string) (io.Writer, error) {
 	if client := elasticx.GetClient(logWriterSource); client != nil {
 		ctx := context.TODO()
-		if exist, err := client.IndexExists(index).Do(ctx); err != nil || !exist {
-			_, _ = client.CreateIndex(index).Do(ctx)
+		if exist, err := client.Instance().IndexExists(index).Do(ctx); err != nil || !exist {
+			_, _ = client.CreateIndex(ctx, index)
 		}
 		return &ElasticSearchWriter{
 			index:  index,
-			client: client,
+			client: client.Instance(),
 		}, nil
 	}
 	return nil, nil

@@ -3,7 +3,7 @@ package gormx
 import (
 	"fmt"
 	"testing"
-	
+
 	"github.com/go-xuan/quanx/utils/randx"
 )
 
@@ -46,14 +46,14 @@ func TestDatabase(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	DB().Model(Test{}).Create(&Test{
+	GetInstance().Model(Test{}).Create(&Test{
 		Id:   randx.UUID(),
 		Type: randx.IntRange(1, 100),
 		Name: randx.Name(),
 	})
 
 	var tt2 = &Test{}
-	DB().Model(Test{}).First(tt2)
+	GetInstance().Model(Test{}).First(tt2)
 
 	fmt.Println(tt2)
 }

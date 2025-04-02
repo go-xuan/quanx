@@ -186,7 +186,7 @@ func (e *Engine) initInnerConfig() {
 	}
 
 	// 初始化表结构
-	if gormx.IsInitialized() {
+	if gormx.Initialized() {
 		for _, source := range gormx.Sources() {
 			if tablers, ok := e.gormTablers[source]; ok {
 				if err := gormx.InitTable(source, tablers...); err != nil {
@@ -210,7 +210,7 @@ func (e *Engine) initInnerConfig() {
 	}
 
 	// 初始化缓存
-	if redisx.IsInitialized() {
+	if redisx.Initialized() {
 		if e.config.Cache != nil {
 			e.ExecuteConfigurator(e.config.Cache)
 		} else if e.switches[multiCache] {
@@ -316,7 +316,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 	configFrom := "local@" + e.GetConfigPath(constx.DefaultConfigFilename) + " or tag@default"
 	execute := anyx.Default(false, must...)
 	// 当配置器支持nacos读取并且nacos已经已经初始化
-	if reader := configurator.Reader(configx.FormNacos); reader != nil && nacosx.IsInitialized() {
+	if reader := configurator.Reader(configx.FormNacos); reader != nil && nacosx.Initialized() {
 		location := reader.Location(e.config.Server.Name)
 		if err := reader.ReadConfig(configurator); err != nil {
 			log.Error("read config failed", err)

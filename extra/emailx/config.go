@@ -38,7 +38,7 @@ func (c *Config) Reader(from configx.From) configx.Reader {
 }
 
 func (c *Config) Execute() error {
-	handler = &Handler{
+	_client = &Client{
 		config: c,
 		dialer: gomail.NewDialer(c.Host, c.Port, c.Username, c.Password),
 	}
