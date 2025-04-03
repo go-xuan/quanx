@@ -29,7 +29,7 @@ func (c *Config) Reader(from configx.From) configx.Reader {
 			DataId: "email.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "email.yaml",
 		}
 	default:

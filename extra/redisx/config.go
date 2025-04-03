@@ -52,8 +52,8 @@ func (c *Config) Copy() *Config {
 }
 
 func (c *Config) Format() string {
-	return fmt.Sprintf("source=%s mode=%v host=%s port=%v database=%v",
-		c.Source, c.Mode, c.Host, c.Port, c.Database)
+	return fmt.Sprintf("source=%s host=%s port=%d database=%d mode=%d",
+		c.Source, c.Host, c.Port, c.Database, c.Mode)
 }
 
 func (*Config) Reader(from configx.From) configx.Reader {
@@ -63,7 +63,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 			DataId: "redis.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "redis.yaml",
 		}
 	default:
@@ -76,11 +76,11 @@ func (c *Config) Execute() error {
 		if err := anyx.SetDefaultValue(c); err != nil {
 			return errorx.Wrap(err, "set default value error")
 		}
-		if redisClient, err := c.NewRedisClient(); err != nil {
+		if client, err := c.NewRedisClient(); err != nil {
 			log.Error("redis connect failed:", c.Format())
 			return errorx.Wrap(err, "redis init error")
 		} else {
-			AddClient(c, redisClient)
+			AddClient(c, client)
 			log.Info("redis connect success: ", c.Format())
 		}
 	}
@@ -152,7 +152,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 			DataId: "redis.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "redis.yaml",
 		}
 	default:
@@ -162,7 +162,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 
 func (list MultiConfig) Execute() error {
 	if len(list) == 0 {
-		return errorx.New("redis not connected! cause: redis.yaml is invalid")
+		return errorx.New("redis not initialized! cause: redis.yaml is invalid")
 	}
 	for _, config := range list {
 		if err := config.Execute(); err != nil {
@@ -170,7 +170,7 @@ func (list MultiConfig) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("redis not connected! cause: no enabled source")
+		log.Error("redis not initialized! cause: no enabled source")
 	}
 	return nil
 }

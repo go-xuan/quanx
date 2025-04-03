@@ -31,7 +31,7 @@ func (*Servers) Reader(from configx.From) configx.Reader {
 			Listen: true,
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "gateway.yaml",
 		}
 	default:

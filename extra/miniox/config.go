@@ -39,7 +39,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 			DataId: "minio.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "minio.yaml",
 		}
 	default:

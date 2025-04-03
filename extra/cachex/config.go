@@ -41,7 +41,7 @@ func (c *Config) Reader(from configx.From) configx.Reader {
 			DataId: "cache.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "cache.yaml",
 		}
 	default:
@@ -128,7 +128,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 			DataId: "cache.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "cache.yaml",
 		}
 	default:
@@ -138,15 +138,15 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 
 func (list MultiConfig) Execute() error {
 	if len(list) == 0 {
-		return errorx.New("cache cache not init! cause: cache.yaml is invalid")
+		return errorx.New("cache not initialized! cause: cache.yaml is invalid")
 	}
 	for _, config := range list {
 		if err := config.Execute(); err != nil {
 			return errorx.Wrap(err, "cache config execute error")
 		}
 	}
-	if this().Len() == 0 {
-		log.Error("cache cache not init! cause: no enabled source")
+	if !Initialized() {
+		log.Error("cache not initialized! cause: no enabled source")
 	}
 	return nil
 }

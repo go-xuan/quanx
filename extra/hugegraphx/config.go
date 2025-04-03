@@ -48,7 +48,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 			DataId: "hugegraph.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "hugegraph.yaml",
 		}
 	default:

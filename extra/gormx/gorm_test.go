@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/utils/randx"
 )
 
@@ -20,28 +21,14 @@ func (t Test) TableName() string {
 }
 
 func (t Test) TableComment() string {
-	return "quanx_test"
-}
-
-func (t Test) InitData() any {
-	return nil
+	return "测试"
 }
 
 func TestDatabase(t *testing.T) {
-	// 先初始化redis
-	if err := (&Config{
-		Source:   "default",
-		Enable:   true,
-		Type:     "postgres",
-		Host:     "localhost",
-		Port:     5432,
-		Username: "postgres",
-		Password: "postgres",
-		Database: "quanx",
-		Debug:    true,
-	}).Execute(); err != nil {
-		fmt.Println(err)
+	if err := configx.ReadAndExecute(&Config{}, configx.FromLocal, "conf"); err != nil {
+		panic(err)
 	}
+
 	if err := InitTable("default", &Test{}); err != nil {
 		fmt.Println(err)
 	}
@@ -49,11 +36,12 @@ func TestDatabase(t *testing.T) {
 	GetInstance().Model(Test{}).Create(&Test{
 		Id:   randx.UUID(),
 		Type: randx.IntRange(1, 100),
-		Name: randx.Name(),
+		Name: randx.String(),
 	})
 
 	var tt2 = &Test{}
-	GetInstance().Model(Test{}).First(tt2)
+
+	GetInstance().First(tt2)
 
 	fmt.Println(tt2)
 }

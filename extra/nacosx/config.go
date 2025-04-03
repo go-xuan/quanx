@@ -39,7 +39,7 @@ func (c *Config) Format() string {
 }
 
 func (*Config) Reader(configx.From) configx.Reader {
-	return &configx.LocalFileReader{
+	return &configx.LocalReader{
 		Name: "nacos.yaml",
 	}
 }

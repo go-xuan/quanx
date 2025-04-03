@@ -44,7 +44,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 			DataId: "mongo.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "mongo.yaml",
 		}
 	default:
@@ -148,7 +148,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 			DataId: "mongo.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "mongo.yaml",
 		}
 	default:
@@ -158,7 +158,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 
 func (list MultiConfig) Execute() error {
 	if len(list) == 0 {
-		return errorx.New("mongo not connected! cause: mongo.yaml is invalid")
+		return errorx.New("mongo not initialized! cause: mongo.yaml is invalid")
 	}
 	for _, config := range list {
 		if err := config.Execute(); err != nil {
@@ -166,7 +166,7 @@ func (list MultiConfig) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("mongo not connected! cause: no enabled source")
+		log.Error("mongo not initialized! cause: no enabled source")
 	}
 	return nil
 }

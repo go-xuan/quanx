@@ -2,13 +2,13 @@ package redisx
 
 import (
 	"context"
+	"errors"
 
-	"github.com/redis/go-redis/v9"
-	log "github.com/sirupsen/logrus"
-
+	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/types/enumx"
 	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/redis/go-redis/v9"
 )
 
 var pool *enumx.Enum[string, *Client]
@@ -57,22 +57,17 @@ func Ping(ctx context.Context, source ...string) (bool, error) {
 }
 
 // CopyDatabase 复制redis数据库
-func CopyDatabase(source, target string, database int) {
+func CopyDatabase(source, target string, database int) error {
 	if source != "" && target != "" {
-		logger := log.WithField("source", source).
-			WithField("target", target).
-			WithField("database", database)
-		if client := this().Get(source); client != nil {
-			config := client.Config().Copy()
-			config.Source = target
-			config.Database = database
-			if redisClient, err := config.NewRedisClient(); err == nil {
-				AddClient(config, redisClient)
+		if sourceClient := this().Get(source); sourceClient != nil {
+			if targetClient, err := sourceClient.Copy(target, database); err == nil {
+				this().Add(target, targetClient)
 			} else {
-				logger.WithError(err).Error("copy redis connection failed")
+				return errorx.Wrap(err, "copy redis client failed")
 			}
 		} else {
-			logger.Error("redis config not found")
+			return errors.New("redis source client not exist")
 		}
 	}
+	return nil
 }

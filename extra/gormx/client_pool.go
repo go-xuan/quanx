@@ -1,7 +1,6 @@
 package gormx
 
 import (
-	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
 	"github.com/go-xuan/quanx/base/errorx"
@@ -67,22 +66,17 @@ func InitTable(source string, tablers ...interface{}) error {
 }
 
 // CopyDatabase 复制数据库
-func CopyDatabase(source, target, database string) {
+func CopyDatabase(source, target, database string) error {
 	if source != "" && target != "" {
-		logger := log.WithField("source", source).
-			WithField("target", target).
-			WithField("database", database)
-		if client := this().Get(source); client != nil {
-			config := client.Config().Copy()
-			config.Source = target
-			config.Database = database
-			if db, err := config.NewGormDB(); err == nil {
-				AddClient(config, db)
+		if sourceClient := this().Get(source); sourceClient != nil {
+			if targetClient, err := sourceClient.Copy(target, database); err == nil {
+				this().Add(target, targetClient)
 			} else {
-				logger.WithError(err).Error("copy database connection failed")
+				return errorx.Wrap(err, "copy database client failed")
 			}
 		} else {
-			logger.Error("database config not found")
+			return errorx.New("database source client config not exist")
 		}
 	}
+	return nil
 }

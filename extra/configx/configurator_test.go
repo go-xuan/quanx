@@ -21,25 +21,23 @@ func (t *Test) Reader(from From) Reader {
 }
 
 func (t *Test) Execute() error {
+	fmt.Println("==============test run logic start============")
 	// 设置默认值
 	if err := anyx.SetDefaultValue(t); err != nil {
 		return err
 	}
-	fmt.Println("test run logic start")
 	// 自定义设置
 	t.Name = "hello world"
-	fmt.Println("test run logic end")
+	fmt.Println("==============test run logic end============")
 	return nil
 }
 
 func TestConfigurator(t *testing.T) {
 	var config = &Test{}
-	fmt.Println("before execute, id:", config.Id)
+	fmt.Println("before execute :", config)
 	if err := config.Execute(); err != nil {
-		fmt.Println(err)
+		t.Error(err)
 		return
 	}
-	fmt.Println("==========================")
-	fmt.Println("after execute, id:", config.Id)
-	fmt.Println(config)
+	fmt.Println("after execute :", config)
 }

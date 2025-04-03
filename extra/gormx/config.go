@@ -64,7 +64,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 			DataId: "database.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "database.yaml",
 		}
 	default:
@@ -73,7 +73,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 }
 
 func (c *Config) FileReader() configx.Reader {
-	return &configx.LocalFileReader{
+	return &configx.LocalReader{
 		Name: "database.yaml",
 	}
 }
@@ -181,7 +181,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 			DataId: "database.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "database.yaml",
 		}
 	default:
@@ -191,7 +191,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 
 func (list MultiConfig) Execute() error {
 	if len(list) == 0 {
-		return errorx.New("database not connected! cause: database.yaml is invalid")
+		return errorx.New("database not initialized! cause: database.yaml is invalid")
 	}
 	for _, config := range list {
 		if err := config.Execute(); err != nil {
@@ -199,7 +199,7 @@ func (list MultiConfig) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("database not connected! cause: no enabled source")
+		log.Error("database not initialized! cause: no enabled source")
 	}
 	return nil
 }

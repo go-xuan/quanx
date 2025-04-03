@@ -8,6 +8,11 @@ import (
 
 var pool *enumx.Enum[string, Client]
 
+// Initialized 是否初始化
+func Initialized() bool {
+	return pool != nil && pool.Len() > 0
+}
+
 func this() *enumx.Enum[string, Client] {
 	if pool == nil {
 		panic("cache cache not initialized, please check the relevant config")

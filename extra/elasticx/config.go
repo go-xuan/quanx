@@ -34,7 +34,7 @@ func (c *Config) Reader(from configx.From) configx.Reader {
 			DataId: "elastic.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "elastic.yaml",
 		}
 	default:
@@ -101,7 +101,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 			DataId: "elastic.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "elastic.yaml",
 		}
 	default:
@@ -111,7 +111,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 
 func (list MultiConfig) Execute() error {
 	if len(list) == 0 {
-		return errorx.New("elastic-search not connected! cause: elastic.yaml is invalid")
+		return errorx.New("elastic-search not initialized! cause: elastic.yaml is invalid")
 	}
 	for _, config := range list {
 		if err := config.Execute(); err != nil {
@@ -119,7 +119,7 @@ func (list MultiConfig) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("elastic-search not connected! cause: no enabled source")
+		log.Error("elastic-search not initialized! cause: no enabled source")
 	}
 	return nil
 }
