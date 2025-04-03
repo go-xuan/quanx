@@ -1,7 +1,6 @@
 package nacosx
 
 import (
-	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/nacos-group/nacos-sdk-go/clients/config_client"
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/vo"
@@ -46,7 +45,7 @@ func (c *Client) NamingClient() naming_client.INamingClient {
 
 // ReadConfig 从nacos读取配置
 func ReadConfig(v any, group, dataId string, listen ...bool) error {
-	var reader = &configx.Reader{
+	var reader = &Reader{
 		Group:  group,
 		DataId: dataId,
 		Type:   filex.GetSuffix(dataId),

@@ -25,7 +25,12 @@ func (t Test) TableComment() string {
 }
 
 func TestDatabase(t *testing.T) {
-	if err := configx.ReadAndExecute(&Config{}, configx.FromLocal, "conf"); err != nil {
+	if err := configx.ReadAndExecute(&Config{
+		Enable:   true,
+		Type:     "mysql",
+		Port:     3306,
+		Database: "quanx",
+	}, configx.FromDefault); err != nil {
 		panic(err)
 	}
 
@@ -33,15 +38,13 @@ func TestDatabase(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	GetInstance().Model(Test{}).Create(&Test{
+	GetInstance().Create(&Test{
 		Id:   randx.UUID(),
 		Type: randx.IntRange(1, 100),
 		Name: randx.String(),
 	})
 
 	var tt2 = &Test{}
-
 	GetInstance().First(tt2)
-
 	fmt.Println(tt2)
 }

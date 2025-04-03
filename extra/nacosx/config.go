@@ -26,11 +26,11 @@ const (
 
 // Config nacos连接配置
 type Config struct {
-	Address   string `yaml:"address" json:"address" default:"127.0.0.1"`  // nacos服务地址,多个以英文逗号分割
-	Username  string `yaml:"username" json:"username" default:"nacos"`    // 用户名
-	Password  string `yaml:"password" json:"password" default:"nacos"`    // 密码
-	NameSpace string `yaml:"nameSpace" json:"nameSpace" default:"public"` // 命名空间
-	Mode      int    `yaml:"mode" json:"mode" default:"2"`                // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
+	Address   string `yaml:"address" json:"address" default:"localhost:8848"` // nacos服务地址,多个以英文逗号分割
+	Username  string `yaml:"username" json:"username" default:"nacos"`        // 用户名
+	Password  string `yaml:"password" json:"password" default:"nacos"`        // 密码
+	NameSpace string `yaml:"nameSpace" json:"nameSpace" default:"public"`     // 命名空间
+	Mode      int    `yaml:"mode" json:"mode" default:"2"`                    // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 }
 
 func (c *Config) Format() string {
@@ -38,7 +38,10 @@ func (c *Config) Format() string {
 		c.AddressUrl(), c.Username, c.Password, c.NameSpace, c.Mode)
 }
 
-func (*Config) Reader(configx.From) configx.Reader {
+func (*Config) Reader(from configx.From) configx.Reader {
+	if from == configx.FromDefault {
+		return nil
+	}
 	return &configx.LocalReader{
 		Name: "nacos.yaml",
 	}

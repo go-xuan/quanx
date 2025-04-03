@@ -7,20 +7,20 @@ import (
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
-type Test struct {
+type test struct {
 	Id   string `json:"id" default:"123"`
 	Name string `json:"name" default:"test"`
 }
 
-func (t *Test) Format() string {
+func (t *test) Format() string {
 	return "test show id"
 }
 
-func (t *Test) Reader(from From) Reader {
+func (t *test) Reader(from From) Reader {
 	return nil
 }
 
-func (t *Test) Execute() error {
+func (t *test) Execute() error {
 	fmt.Println("==============test run logic start============")
 	// 设置默认值
 	if err := anyx.SetDefaultValue(t); err != nil {
@@ -33,7 +33,7 @@ func (t *Test) Execute() error {
 }
 
 func TestConfigurator(t *testing.T) {
-	var config = &Test{}
+	var config = &test{}
 	fmt.Println("before execute :", config)
 	if err := config.Execute(); err != nil {
 		t.Error(err)

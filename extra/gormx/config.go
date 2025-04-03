@@ -24,8 +24,8 @@ type Config struct {
 	Type            string `json:"type" yaml:"type"`                                    // 数据库类型
 	Host            string `json:"host" yaml:"host" default:"localhost"`                // 数据库Host
 	Port            int    `json:"port" yaml:"port"`                                    // 数据库端口
-	Username        string `json:"username" yaml:"username"`                            // 用户名
-	Password        string `json:"password" yaml:"password"`                            // 密码
+	Username        string `json:"username" yaml:"username" default:"root"`             // 用户名
+	Password        string `json:"password" yaml:"password" default:"root"`             // 密码
 	Database        string `json:"database" yaml:"database"`                            // 数据库名
 	Schema          string `json:"schema" yaml:"schema"`                                // schema模式名
 	Debug           bool   `json:"debug" yaml:"debug" default:"false"`                  // 开启debug（打印SQL以及初始化模型建表）

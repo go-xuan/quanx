@@ -60,11 +60,6 @@ func Close(source ...string) error {
 	return nil
 }
 
-// InitTable 初始化表结构以及表数据
-func InitTable(source string, tablers ...interface{}) error {
-	return initTablers(source, tablers...)
-}
-
 // CopyDatabase 复制数据库
 func CopyDatabase(source, target, database string) error {
 	if source != "" && target != "" {

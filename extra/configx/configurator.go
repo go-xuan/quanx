@@ -2,11 +2,12 @@ package configx
 
 import "github.com/go-xuan/quanx/base/errorx"
 
-type From string
+type From string // 配置读取来源
 
 const (
-	FromLocal From = "local" // 从本地文件读取配置
-	FormNacos      = "nacos" // 从nacos读取配置
+	FromLocal   From = "local"   // 从本地文件读取配置
+	FormNacos        = "nacos"   // 从nacos读取配置
+	FromDefault      = "default" // 以默认值（tag）生成配置
 )
 
 // ReadAndExecute 读取配置文件并运行

@@ -23,9 +23,9 @@ const (
 )
 
 type Config struct {
-	Type    string `json:"type" yaml:"type" default:"redis"`         // 缓存类型（local/redis）
+	Type    string `json:"type" yaml:"type" default:"local"`         // 缓存类型（local/redis）
 	Source  string `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称
-	Prefix  string `json:"prefix" yaml:"prefix" default:"default"`   // 缓存key前缀前缀
+	Prefix  string `json:"prefix" yaml:"prefix" default:"local"`     // 缓存key前缀前缀
 	Marshal string `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
 }
 

@@ -2,18 +2,18 @@ package hugegraphx
 
 import (
 	"encoding/json"
-
+	
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/httpx"
 )
 
-var _handler *Client
+var _client *Client
 
 func this() *Client {
-	if _handler == nil {
+	if _client == nil {
 		panic("hugegraph client not initialized, please check the relevant config")
 	}
-	return _handler
+	return _client
 }
 
 // Client hugegraph处理器
@@ -49,7 +49,7 @@ func GetConfig() *Config {
 
 // GremlinGet gremlin查询API-get请求
 func GremlinGet[T any](result T, gremlin string) (string, error) {
-	res, err := httpx.Get(GetConfig().GremlinUrl() + `?gremlin=` + gremlin).Do()
+	res, err := httpx.Get(this().gremlinUrl + `?gremlin=` + gremlin).Do()
 	if err != nil {
 		return "", errorx.Wrap(err, "do gremlin query failed")
 	}
@@ -73,7 +73,7 @@ func GremlinPost[T any](result T, gremlin string) (string, error) {
 	var bindings, aliases any // 构建绑定参数和图别名
 	_ = json.Unmarshal([]byte(`{}`), &bindings)
 	_ = json.Unmarshal([]byte(`{"graph": "hugegraph","g": "__g_hugegraph"}`), &aliases)
-	res, err := httpx.Post(GetConfig().GremlinUrl()).Body(Param{
+	res, err := httpx.Post(this().gremlinUrl).Body(Param{
 		Gremlin:  gremlin,
 		Bindings: bindings,
 		Language: "gremlin-groovy",

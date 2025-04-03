@@ -9,11 +9,11 @@ import (
 )
 
 func TestRedis(t *testing.T) {
-	if err := configx.ReadAndExecute(&MultiConfig{}, configx.FromLocal, "conf"); err != nil {
+	if err := configx.ReadAndExecute(&Config{Enable: true}, configx.FromDefault); err != nil {
 		panic(err)
 	}
-	
-	if err := CopyDatabase("source", "target", 1); err != nil {
+
+	if err := CopyDatabase("default", "target", 1); err != nil {
 		panic(err)
 	}
 

@@ -19,8 +19,8 @@ type CommentTabler interface {
 	TableComment() string
 }
 
-// 初始化表
-func initTablers(source string, tablers ...interface{}) error {
+// InitTable 初始化表
+func InitTable(source string, tablers ...interface{}) error {
 	if client := this().Get(source); client != nil {
 		if db, conf := client.Instance(), client.Config(); db != nil && conf != nil && len(tablers) > 0 {
 			migrator := db.Migrator()

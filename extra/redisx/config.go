@@ -24,16 +24,16 @@ const (
 )
 
 type Config struct {
-	Source     string `json:"source" yaml:"source" default:"default"` // 数据源名称
-	Enable     bool   `json:"enable" yaml:"enable"`                   // 数据源启用
-	Mode       int    `json:"mode" yaml:"mode" default:"0"`           // 模式（0-单机；1-集群；3-哨兵。默认单机模式）
-	Host       string `json:"host" yaml:"host"`                       // 主机（单机模式使用）
-	Port       int    `json:"port" yaml:"port" default:"6379"`        // 端口
-	Username   string `json:"username" yaml:"username"`               // 用户名
-	Password   string `json:"password" yaml:"password"`               // 密码
-	Database   int    `json:"database" yaml:"database" default:"0"`   // 数据库，默认0
-	MasterName string `json:"masterName" yaml:"masterName"`           // 哨兵模式主服务器名称
-	PoolSize   int    `json:"poolSize" yaml:"poolSize"`               // 池大小
+	Source     string `json:"source" yaml:"source" default:"default"`  // 数据源名称
+	Enable     bool   `json:"enable" yaml:"enable"`                    // 数据源启用
+	Mode       int    `json:"mode" yaml:"mode" default:"0"`            // 模式（0-单机；1-集群；3-哨兵。默认单机模式）
+	Host       string `json:"host" yaml:"host" default:"localhost"`    // 主机（单机模式使用）
+	Port       int    `json:"port" yaml:"port" default:"6379"`         // 端口
+	Username   string `json:"username" yaml:"username" default:"root"` // 用户名
+	Password   string `json:"password" yaml:"password" default:"root"` // 密码
+	Database   int    `json:"database" yaml:"database" default:"0"`    // 数据库，默认0
+	MasterName string `json:"masterName" yaml:"masterName"`            // 哨兵模式主服务器名称
+	PoolSize   int    `json:"poolSize" yaml:"poolSize"`                // 池大小
 }
 
 func (c *Config) Copy() *Config {
@@ -77,7 +77,7 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "set default value error")
 		}
 		if client, err := c.NewRedisClient(); err != nil {
-			log.Error("redis connect failed:", c.Format())
+			log.Error("redis connect failed: ", c.Format())
 			return errorx.Wrap(err, "redis init error")
 		} else {
 			AddClient(c, client)
@@ -117,11 +117,11 @@ func (c *Config) NewRedisClient() (redis.UniversalClient, error) {
 		opts.MasterName = c.MasterName
 		client = redis.NewFailoverClient(opts.Failover())
 	default:
-		log.Warn("redis mode is invalid: ")
+		log.Warn("redis mode is invalid")
 		return nil, errors.New("redis mode is invalid")
 	}
 	if result, err := client.Ping(context.TODO()).Result(); err != nil || result != "PONG" {
-		log.Error("client ping failed:", c.Format())
+		log.Error("client ping failed: ", c.Format())
 		return client, errorx.Wrap(err, "client ping error")
 	}
 	return client, nil

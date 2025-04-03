@@ -2,13 +2,12 @@ package elasticx
 
 import (
 	"testing"
+
+	"github.com/go-xuan/quanx/extra/configx"
 )
 
 func TestElastic(t *testing.T) {
-	if err := (&Config{
-		Host: "localhost",
-		Port: 9200,
-	}).Execute(); err != nil {
-		t.Error(err)
+	if err := configx.ReadAndExecute(&Config{}, configx.FromDefault); err != nil {
+		panic(err)
 	}
 }
