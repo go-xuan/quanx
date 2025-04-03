@@ -19,7 +19,7 @@ type Config struct {
 }
 
 func (c *Config) Format() string {
-	return fmt.Sprintf("host=%s port=%v username=%s password=%s", c.Host, c.Port, c.Username, c.Password)
+	return fmt.Sprintf("host=%s port=%d username=%s password=%s", c.Host, c.Port, c.Username, c.Password)
 }
 
 func (c *Config) Reader(from configx.From) configx.Reader {

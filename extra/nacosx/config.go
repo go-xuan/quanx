@@ -27,14 +27,14 @@ const (
 // Config nacos连接配置
 type Config struct {
 	Address   string `yaml:"address" json:"address" default:"localhost:8848"` // nacos服务地址,多个以英文逗号分割
-	Username  string `yaml:"username" json:"username" default:"nacos"`        // 用户名
-	Password  string `yaml:"password" json:"password" default:"nacos"`        // 密码
+	Username  string `yaml:"username" json:"username"`                        // 用户名
+	Password  string `yaml:"password" json:"password"`                        // 密码
 	NameSpace string `yaml:"nameSpace" json:"nameSpace" default:"public"`     // 命名空间
 	Mode      int    `yaml:"mode" json:"mode" default:"2"`                    // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 }
 
 func (c *Config) Format() string {
-	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%v",
+	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%d",
 		c.AddressUrl(), c.Username, c.Password, c.NameSpace, c.Mode)
 }
 

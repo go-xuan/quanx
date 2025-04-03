@@ -29,6 +29,8 @@ func TestDatabase(t *testing.T) {
 		Enable:   true,
 		Type:     "mysql",
 		Port:     3306,
+		Username: "root",
+		Password: "root",
 		Database: "quanx",
 	}, configx.FromDefault); err != nil {
 		panic(err)
