@@ -2,54 +2,54 @@ package hugegraphx
 
 import (
 	"encoding/json"
-
+	
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/httpx"
 )
 
-var _handler *Handler
+var _client *Client
 
-func this() *Handler {
-	if _handler == nil {
-		panic("the hugegraph handler has not been initialized, please check the relevant config")
+func this() *Client {
+	if _client == nil {
+		panic("hugegraph client not initialized, please check the relevant config")
 	}
-	return _handler
+	return _client
 }
 
-// Handler hugegraph处理器
-type Handler struct {
+// Client hugegraph处理器
+type Client struct {
 	config     *Config // hugegraph配置
 	gremlinUrl string  // gremlin查询接口URL
 	schemaUrl  string  // schema操作接口URL
 }
 
-func (h *Handler) GetConfig() *Config {
-	return h.config
+func (c *Client) Config() *Config {
+	return c.config
 }
 
-func (h *Handler) PropertykeysUrl() string {
-	return h.schemaUrl + Propertykeys
+func (c *Client) PropertykeysUrl() string {
+	return c.schemaUrl + Propertykeys
 }
 
-func (h *Handler) VertexlabelsUrl() string {
-	return h.schemaUrl + Vertexlabels
+func (c *Client) VertexlabelsUrl() string {
+	return c.schemaUrl + Vertexlabels
 }
 
-func (h *Handler) EdgelabelsUrl() string {
-	return h.schemaUrl + Edgelabels
+func (c *Client) EdgelabelsUrl() string {
+	return c.schemaUrl + Edgelabels
 }
 
-func (h *Handler) IndexlabelsUrl() string {
-	return h.schemaUrl + Indexlabels
+func (c *Client) IndexlabelsUrl() string {
+	return c.schemaUrl + Indexlabels
 }
 
 func GetConfig() *Config {
-	return this().GetConfig()
+	return this().Config()
 }
 
 // GremlinGet gremlin查询API-get请求
 func GremlinGet[T any](result T, gremlin string) (string, error) {
-	res, err := httpx.Get(this().GetConfig().GremlinUrl() + `?gremlin=` + gremlin).Do()
+	res, err := httpx.Get(this().gremlinUrl + `?gremlin=` + gremlin).Do()
 	if err != nil {
 		return "", errorx.Wrap(err, "do gremlin query failed")
 	}
@@ -73,7 +73,7 @@ func GremlinPost[T any](result T, gremlin string) (string, error) {
 	var bindings, aliases any // 构建绑定参数和图别名
 	_ = json.Unmarshal([]byte(`{}`), &bindings)
 	_ = json.Unmarshal([]byte(`{"graph": "hugegraph","g": "__g_hugegraph"}`), &aliases)
-	res, err := httpx.Post(GetConfig().GremlinUrl()).Body(Param{
+	res, err := httpx.Post(this().gremlinUrl).Body(Param{
 		Gremlin:  gremlin,
 		Bindings: bindings,
 		Language: "gremlin-groovy",

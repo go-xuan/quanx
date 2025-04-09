@@ -4,24 +4,25 @@ import (
 	"context"
 	"fmt"
 	"testing"
+
+	"github.com/go-xuan/quanx/extra/configx"
 )
 
-func TestHandler(t *testing.T) {
-	// 先初始化缓存
-	if err := (&Config{
-		Source:   "default",
+func TestRedis(t *testing.T) {
+	if err := configx.ReadAndExecute(&Config{
 		Enable:   true,
-		Host:     "localhost",
-		Port:     6379,
-		Username: "",
-		Password: "Init@1234",
-		Database: 1,
-		PoolSize: 15,
-	}).Execute(); err != nil {
+		Password: "Init@123",
+	}, configx.FromDefault); err != nil {
 		panic(err)
 	}
-	ctx := context.TODO()
-	GetClient().Set(ctx, "test_1", "111", -1)
-	value := GetClient().Get(ctx, "test_1").Val()
-	fmt.Println(value)
+
+	if err := CopyDatabase("default", "target", 1); err != nil {
+		panic(err)
+	}
+
+	if ok, err := Ping(context.TODO(), "target"); err != nil {
+		panic(err)
+	} else {
+		fmt.Println(ok)
+	}
 }

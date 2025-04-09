@@ -2,8 +2,9 @@ package jsonx
 
 import (
 	"fmt"
-	"github.com/tidwall/gjson"
 	"testing"
+	
+	"github.com/tidwall/gjson"
 )
 
 func TestJsonGet(t *testing.T) {

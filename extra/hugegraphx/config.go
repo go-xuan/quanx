@@ -2,12 +2,13 @@ package hugegraphx
 
 import (
 	"fmt"
-
 	log "github.com/sirupsen/logrus"
 
+	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/httpx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
+	"github.com/go-xuan/quanx/types/anyx"
 )
 
 // 常量配置
@@ -32,9 +33,9 @@ const (
 
 // Config hugegraph配置
 type Config struct {
-	Host  string `json:"host" yaml:"host" nacos:"hugegraph.host"`    // 主机
-	Port  int    `json:"port" yaml:"port" nacos:"hugegraph.port"`    // 端口
-	Graph string `json:"graph" yaml:"graph" nacos:"hugegraph.graph"` // 图名称
+	Host  string `json:"host" yaml:"host" default:"localhost"`   // 主机
+	Port  int    `json:"port" yaml:"port" default:"8881"`        // 端口
+	Graph string `json:"graph" yaml:"graph" default:"hugegraph"` // 图名称
 }
 
 func (c *Config) Format() string {
@@ -48,7 +49,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 			DataId: "hugegraph.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "hugegraph.yaml",
 		}
 	default:
@@ -57,39 +58,44 @@ func (*Config) Reader(from configx.From) configx.Reader {
 }
 
 func (c *Config) Execute() error {
-	if c.Host != "" && _handler == nil {
-		if c.Ping() {
-			_handler = &Handler{
-				config: c,
-			}
-			log.Info("hugegraph connect success: ", c.Format())
-		} else {
-			log.Error("hugegraph connect failed: ", c.Format())
-		}
+	if err := anyx.SetDefaultValue(c); err != nil {
+		return errorx.Wrap(err, "set default value error")
 	}
+	if ok, err := c.Ping(); !ok || err != nil {
+		log.WithError(err).Error("hugegraph connect failed: ", c.Format())
+		return err
+	}
+	_client = &Client{
+		config:     c,
+		gremlinUrl: fmt.Sprintf("http://%s:%d/gremlin", c.Host, c.Port),
+		schemaUrl:  fmt.Sprintf("http://%s:%d/graphs/%s/schema/", c.Host, c.Port, c.Graph),
+	}
+	log.Info("hugegraph connect success: ", c.Format())
 	return nil
 }
 
-func (c *Config) GremlinUrl() string {
-	return fmt.Sprintf("http://%s:%d/gremlin", c.Host, c.Port)
-}
-
-func (c *Config) SchemaUrl(uri string) string {
-	return fmt.Sprintf("http://%s:%d/graphs/%s/schema/%s", c.Host, c.Port, c.Graph, uri)
-}
-
 // Ping gremlin查询API-get请求
-func (c *Config) Ping() bool {
-	if res, err := httpx.Get(fmt.Sprintf("http://%s:%d/versions", c.Host, c.Port)).Do(); err != nil {
-		return false
-	} else if res.StatusOK() {
-		var resp = &PingResp{}
-		if err = res.Unmarshal(resp); err != nil {
-			return false
+func (c *Config) Ping() (bool, error) {
+	pingUrl := fmt.Sprintf("http://%s:%d/versions", c.Host, c.Port)
+	if res, err := httpx.Get(pingUrl).Do(); err != nil || !res.StatusOK() {
+		return false, errorx.Wrap(err, "ping request failed")
+	} else {
+		var resp = struct {
+			Versions struct {
+				Version string `json:"version"`
+				Core    string `json:"core"`
+				Gremlin string `json:"gremlin"`
+				Api     string `json:"api"`
+			} `json:"versions"` // 请求ID
+		}{}
+		if err = res.Unmarshal(&resp); err != nil {
+			return false, errorx.Wrap(err, "resp unmarshal failed")
 		}
-		if resp.Versions != nil && resp.Versions.Version != "" {
-			return true
-		}
+		log.WithField("version", resp.Versions.Version).
+			WithField("core", resp.Versions.Core).
+			WithField("gremlin", resp.Versions.Gremlin).
+			WithField("api", resp.Versions.Api).
+			Info("ping success: ", c.Format())
+		return true, nil
 	}
-	return false
 }

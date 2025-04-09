@@ -2,6 +2,7 @@ package redisx
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -11,7 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/types/anyx"
@@ -27,7 +27,7 @@ type Config struct {
 	Source     string `json:"source" yaml:"source" default:"default"` // 数据源名称
 	Enable     bool   `json:"enable" yaml:"enable"`                   // 数据源启用
 	Mode       int    `json:"mode" yaml:"mode" default:"0"`           // 模式（0-单机；1-集群；3-哨兵。默认单机模式）
-	Host       string `json:"host" yaml:"host"`                       // 主机（单机模式使用）
+	Host       string `json:"host" yaml:"host" default:"localhost"`   // 主机（单机模式使用）
 	Port       int    `json:"port" yaml:"port" default:"6379"`        // 端口
 	Username   string `json:"username" yaml:"username"`               // 用户名
 	Password   string `json:"password" yaml:"password"`               // 密码
@@ -36,9 +36,24 @@ type Config struct {
 	PoolSize   int    `json:"poolSize" yaml:"poolSize"`               // 池大小
 }
 
+func (c *Config) Copy() *Config {
+	return &Config{
+		Source:     c.Source,
+		Enable:     c.Enable,
+		Mode:       c.Mode,
+		Host:       c.Host,
+		Port:       c.Port,
+		Username:   c.Username,
+		Password:   c.Password,
+		Database:   c.Database,
+		MasterName: c.MasterName,
+		PoolSize:   c.PoolSize,
+	}
+}
+
 func (c *Config) Format() string {
-	return fmt.Sprintf("source=%s mode=%v host=%s port=%v database=%v",
-		c.Source, c.Mode, c.Host, c.Port, c.Database)
+	return fmt.Sprintf("source=%s host=%s port=%d database=%d mode=%d",
+		c.Source, c.Host, c.Port, c.Database, c.Mode)
 }
 
 func (*Config) Reader(from configx.From) configx.Reader {
@@ -48,7 +63,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 			DataId: "redis.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "redis.yaml",
 		}
 	default:
@@ -61,25 +76,13 @@ func (c *Config) Execute() error {
 		if err := anyx.SetDefaultValue(c); err != nil {
 			return errorx.Wrap(err, "set default value error")
 		}
-		client := c.NewRedisClient()
-		if result, err := client.Ping(context.TODO()).Result(); err != nil || result != "PONG" {
-			return errorx.Wrap(err, "redis client ping error")
-		}
-		if _handler == nil {
-			_handler = &Handler{
-				multi: false, config: c, client: client,
-				configs: make(map[string]*Config),
-				clients: make(map[string]redis.UniversalClient),
-			}
+		if client, err := c.NewRedisClient(); err != nil {
+			log.Error("redis connect failed: ", c.Format())
+			return errorx.Wrap(err, "redis init error")
 		} else {
-			_handler.multi = true
-			if c.Source == constx.DefaultSource {
-				_handler.config = c
-				_handler.client = client
-			}
+			AddClient(c, client)
+			log.Info("redis connect success: ", c.Format())
 		}
-		_handler.configs[c.Source] = c
-		_handler.clients[c.Source] = client
 	}
 	return nil
 }
@@ -93,7 +96,7 @@ func (c *Config) Address() string {
 // 1、如果指定了MasterName选项，则返回redis.FailoverClient哨兵客户端。
 // 2、如果Addrs是2个以上的地址，则返回redis.ClusterClient集群客户端。
 // 3、其他情况，返回redis.Client单节点客户端。
-func (c *Config) NewRedisClient() redis.UniversalClient {
+func (c *Config) NewRedisClient() (redis.UniversalClient, error) {
 	var opts = &redis.UniversalOptions{
 		ClientName: c.Source,
 		Username:   c.Username,
@@ -101,30 +104,36 @@ func (c *Config) NewRedisClient() redis.UniversalClient {
 		PoolSize:   c.PoolSize,
 		DB:         c.Database,
 	}
+	var client redis.UniversalClient
 	switch c.Mode {
 	case StandAlone:
 		opts.Addrs = []string{net.JoinHostPort(c.Host, strconv.Itoa(c.Port))}
-		return redis.NewClient(opts.Simple())
+		client = redis.NewClient(opts.Simple())
 	case Cluster:
 		opts.Addrs = strings.Split(c.Host, ",")
-		return redis.NewClusterClient(opts.Cluster())
+		client = redis.NewClusterClient(opts.Cluster())
 	case Sentinel:
 		opts.Addrs = []string{net.JoinHostPort(c.Host, strconv.Itoa(c.Port))}
 		opts.MasterName = c.MasterName
-		return redis.NewFailoverClient(opts.Failover())
+		client = redis.NewFailoverClient(opts.Failover())
 	default:
-		log.Warn("redis mode is invalid: ")
-		return nil
+		log.Warn("redis mode is invalid")
+		return nil, errors.New("redis mode is invalid")
 	}
+	if result, err := client.Ping(context.TODO()).Result(); err != nil || result != "PONG" {
+		log.Error("client ping failed: ", c.Format())
+		return client, errorx.Wrap(err, "client ping error")
+	}
+	return client, nil
 }
 
 // MultiConfig redis多连接配置
 type MultiConfig []*Config
 
-func (m MultiConfig) Format() string {
+func (list MultiConfig) Format() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
-	for i, config := range m {
+	for i, config := range list {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
@@ -143,7 +152,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 			DataId: "redis.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "redis.yaml",
 		}
 	default:
@@ -151,37 +160,17 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (m MultiConfig) Execute() error {
-	if len(m) == 0 {
-		return errorx.New("redis not connected! cause: redis.yaml is invalid")
+func (list MultiConfig) Execute() error {
+	if len(list) == 0 {
+		return errorx.New("redis not initialized! cause: redis.yaml is invalid")
 	}
-	if _handler == nil {
-		_handler = &Handler{
-			configs: make(map[string]*Config),
-			clients: make(map[string]redis.UniversalClient),
+	for _, config := range list {
+		if err := config.Execute(); err != nil {
+			return errorx.Wrap(err, "redis config execute error")
 		}
 	}
-	_handler.multi = true
-	var ctx = context.Background()
-	for i, c := range m {
-		if c.Enable {
-			if err := anyx.SetDefaultValue(c); err != nil {
-				return errorx.Wrap(err, "set default value error")
-			}
-			var client = c.NewRedisClient()
-			if result, err := client.Ping(ctx).Result(); err != nil || result != "PONG" {
-				return errorx.Wrap(err, "redis client ping error")
-			}
-			_handler.clients[c.Source] = client
-			_handler.configs[c.Source] = c
-			if i == 0 || c.Source == constx.DefaultSource {
-				_handler.client = client
-				_handler.config = c
-			}
-		}
-	}
-	if len(_handler.configs) == 0 {
-		log.Error("redis connect failed! cause: redis.yaml is empty or no enabled redis configured")
+	if !Initialized() {
+		log.Error("redis not initialized! cause: no enabled source")
 	}
 	return nil
 }

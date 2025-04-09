@@ -2,7 +2,7 @@ package gormx
 
 import (
 	"strings"
-	
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 
@@ -19,36 +19,37 @@ type CommentTabler interface {
 	TableComment() string
 }
 
-// InitTabler 初始化表
-func (h *Handler) InitTabler(source string, tablers ...interface{}) error {
-	var db, conf = h.dbs[source], h.configs[source]
-	if db != nil && conf != nil && len(tablers) > 0 {
-		migrator := db.Migrator()
-		for _, tabler := range tablers {
-			if schemaTabler, ok := tabler.(schema.Tabler); ok {
-				if migrator.HasTable(tabler) {
-					if err := db.Migrator().AutoMigrate(tabler); err != nil {
-						if err.Error() != "insufficient arguments" {
-							return errorx.Wrap(err, "table auto migrate error")
+// InitTable 初始化表
+func InitTable(source string, tablers ...interface{}) error {
+	if client := this().Get(source); client != nil {
+		if db, conf := client.Instance(), client.Config(); db != nil && conf != nil && len(tablers) > 0 {
+			migrator := db.Migrator()
+			for _, tabler := range tablers {
+				if schemaTabler, ok := tabler.(schema.Tabler); ok {
+					if migrator.HasTable(tabler) {
+						if err := db.Migrator().AutoMigrate(tabler); err != nil {
+							if err.Error() != "insufficient arguments" {
+								return errorx.Wrap(err, "table auto migrate error")
+							}
+						}
+						if err := initTableData(db, tabler); err != nil {
+							return errorx.Wrap(err, "table init data error")
+						}
+					} else {
+						if err := db.Migrator().CreateTable(tabler); err != nil {
+							return errorx.Wrap(err, "table create error")
+						}
+						if err := alterTableComment(db, schemaTabler, conf.Type); err != nil {
+							return errorx.Wrap(err, "alter table comment error")
+						}
+						if err := initTableData(db, tabler); err != nil {
+							return errorx.Wrap(err, "table init data error")
 						}
 					}
-					if err := initTableData(db, tabler); err != nil {
-						return errorx.Wrap(err, "table init data error")
-					}
 				} else {
-					if err := db.Migrator().CreateTable(tabler); err != nil {
+					if err := migrator.AutoMigrate(tabler); err != nil {
 						return errorx.Wrap(err, "table create error")
 					}
-					if err := alterTableComment(db, schemaTabler, conf.Type); err != nil {
-						return errorx.Wrap(err, "alter table comment error")
-					}
-					if err := initTableData(db, tabler); err != nil {
-						return errorx.Wrap(err, "table init data error")
-					}
-				}
-			} else {
-				if err := migrator.AutoMigrate(tabler); err != nil {
-					return errorx.Wrap(err, "table create error")
 				}
 			}
 		}

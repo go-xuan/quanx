@@ -5,7 +5,7 @@ import (
 )
 
 // Contains 字符串是否包含
-func Contains[T string | int | int64 | float64](slice []T, v T) bool {
+func Contains[T comparable](slice []T, v T) bool {
 	for _, item := range slice {
 		if item == v {
 			return true
@@ -15,7 +15,7 @@ func Contains[T string | int | int64 | float64](slice []T, v T) bool {
 }
 
 // ContainsAny 数组是否包含
-func ContainsAny[T string | int | int64 | float64](slice []T, args ...T) bool {
+func ContainsAny[T comparable](slice []T, args ...T) bool {
 	if args != nil && len(args) > 0 {
 		m := make(map[T]struct{})
 		for _, item := range slice {
@@ -31,7 +31,7 @@ func ContainsAny[T string | int | int64 | float64](slice []T, args ...T) bool {
 }
 
 // ContainsAll 数组是否包含
-func ContainsAll[T string | int | int64 | float64](slice []T, args ...T) bool {
+func ContainsAll[T comparable](slice []T, args ...T) bool {
 	if args != nil && len(args) > 0 {
 		var m = make(map[T]struct{})
 		for _, k := range slice {
@@ -46,7 +46,7 @@ func ContainsAll[T string | int | int64 | float64](slice []T, args ...T) bool {
 	return true
 }
 
-func Distinct[T string | int | int64 | float64](slices ...[]T) []T {
+func Distinct[T comparable](slices ...[]T) []T {
 	if len(slices) > 0 {
 		var m = make(map[T]struct{})
 		for _, slice := range slices {
@@ -64,7 +64,7 @@ func Distinct[T string | int | int64 | float64](slices ...[]T) []T {
 }
 
 // RetainAll 取交集
-func RetainAll[T string | int | int64 | float64](slices ...[]T) []T {
+func RetainAll[T comparable](slices ...[]T) []T {
 	if len(slices) > 0 {
 		var m = make(map[T]int)
 		for _, slice := range slices {
@@ -84,7 +84,7 @@ func RetainAll[T string | int | int64 | float64](slices ...[]T) []T {
 }
 
 // Exclude 移除
-func Exclude[T string | int | int64 | float64](target []T, exclude []T) []T {
+func Exclude[T comparable](target []T, exclude []T) []T {
 	if len(target) > 0 && len(exclude) > 0 {
 		m := make(map[T]struct{})
 		for _, item := range exclude {

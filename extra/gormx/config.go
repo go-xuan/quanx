@@ -13,7 +13,6 @@ import (
 	"gorm.io/gorm/schema"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/types/anyx"
@@ -35,8 +34,26 @@ type Config struct {
 	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
 }
 
+func (c *Config) Copy() *Config {
+	return &Config{
+		Source:          c.Source,
+		Enable:          c.Enable,
+		Type:            c.Type,
+		Host:            c.Host,
+		Port:            c.Port,
+		Username:        c.Username,
+		Password:        c.Password,
+		Database:        c.Database,
+		Schema:          c.Schema,
+		Debug:           c.Debug,
+		MaxIdleConns:    c.MaxIdleConns,
+		MaxOpenConns:    c.MaxOpenConns,
+		ConnMaxLifetime: c.ConnMaxLifetime,
+	}
+}
+
 func (c *Config) Format() string {
-	return fmt.Sprintf("source=%s type=%s host=%s port=%v database=%s debug=%v",
+	return fmt.Sprintf("source=%s type=%s host=%s port=%d database=%s debug=%v",
 		c.Source, c.Type, c.Host, c.Port, c.Database, c.Debug)
 }
 
@@ -47,7 +64,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 			DataId: "database.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "database.yaml",
 		}
 	default:
@@ -56,7 +73,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 }
 
 func (c *Config) FileReader() configx.Reader {
-	return &configx.LocalFileReader{
+	return &configx.LocalReader{
 		Name: "database.yaml",
 	}
 }
@@ -67,23 +84,11 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "set default value error")
 		}
 		if db, err := c.NewGormDB(); err != nil {
+			log.Error("database connect failed: ", c.Format())
 			return errorx.Wrap(err, "new gorm db error")
 		} else {
-			if _handler == nil {
-				_handler = &Handler{
-					multi: false, config: c, db: db,
-					configs: make(map[string]*Config),
-					dbs:     make(map[string]*gorm.DB),
-				}
-			} else {
-				_handler.multi = true
-				if c.Source == constx.DefaultSource {
-					_handler.config = c
-					_handler.db = db
-				}
-			}
-			_handler.configs[c.Source] = c
-			_handler.dbs[c.Source] = db
+			AddClient(c, db)
+			log.Info("database connect success: ", c.Format())
 		}
 	}
 	return nil
@@ -103,8 +108,7 @@ func (c *Config) NewGormDB() (*gorm.DB, error) {
 		sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
 
 		if c.Debug {
-			// 是否打印SQL
-			db = db.Debug()
+			db = db.Debug() // 是否打印SQL
 		}
 		return db, nil
 	}
@@ -142,12 +146,11 @@ func (c *Config) GetGormDB() (*gorm.DB, error) {
 		return nil, errorx.Errorf("database type only support : %v", []string{MYSQL, POSTGRES, PGSQL})
 	}
 	if db, err := gorm.Open(dial, &gorm.Config{
-		// 模型命名策略
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true, // 表名单数命名
-		},
+		}, // 模型命名策略
 	}); err != nil {
-		return nil, errorx.Wrap(err, "gorm open dialector failed")
+		return nil, errorx.Wrap(err, "open dialector failed")
 	} else {
 		return db, nil
 	}
@@ -156,10 +159,10 @@ func (c *Config) GetGormDB() (*gorm.DB, error) {
 // MultiConfig 数据库多数据源配置
 type MultiConfig []*Config
 
-func (m MultiConfig) Format() string {
+func (list MultiConfig) Format() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
-	for i, config := range m {
+	for i, config := range list {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
@@ -178,7 +181,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 			DataId: "database.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "database.yaml",
 		}
 	default:
@@ -186,36 +189,17 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (m MultiConfig) Execute() error {
-	if len(m) == 0 {
-		return errorx.New("database not connected! cause: database.yaml is invalid")
+func (list MultiConfig) Execute() error {
+	if len(list) == 0 {
+		return errorx.New("database not initialized! cause: database.yaml is invalid")
 	}
-	if _handler == nil {
-		_handler = &Handler{
-			dbs:     make(map[string]*gorm.DB),
-			configs: make(map[string]*Config),
+	for _, config := range list {
+		if err := config.Execute(); err != nil {
+			return errorx.Wrap(err, "gorm config execute error")
 		}
 	}
-	_handler.multi = true
-	for i, c := range m {
-		if c.Enable {
-			if err := anyx.SetDefaultValue(c); err != nil {
-				return errorx.Wrap(err, "set default value error")
-			}
-			db, err := c.NewGormDB()
-			if err != nil {
-				return errorx.Wrap(err, "new gorm.Config failed")
-			}
-			_handler.dbs[c.Source] = db
-			_handler.configs[c.Source] = c
-			if i == 0 || c.Source == constx.DefaultSource {
-				_handler.db = db
-				_handler.config = c
-			}
-		}
-	}
-	if len(_handler.configs) == 0 {
-		log.Error("database not connected! cause: database.yaml is empty or no enabled source")
+	if !Initialized() {
+		log.Error("database not initialized! cause: no enabled source")
 	}
 	return nil
 }

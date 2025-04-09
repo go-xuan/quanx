@@ -1,11 +1,11 @@
-package encryptx
+package cryptx
 
 import (
 	"encoding/base64"
 	"fmt"
 	"os"
 	"testing"
-	
+
 	"github.com/farmerx/gorsa"
 )
 

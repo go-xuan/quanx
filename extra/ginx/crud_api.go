@@ -65,37 +65,37 @@ func (m *Model[T]) Update(ctx *gin.Context) {
 
 func (m *Model[T]) Delete(ctx *gin.Context) {
 	var err error
-	var form modelx.Id[string]
-	if err = ctx.ShouldBindQuery(&form); err != nil {
+	var id modelx.Id[string]
+	if err = ctx.ShouldBindQuery(&id); err != nil {
 		respx.ParamError(ctx, err)
 		return
 	}
 	var t T
-	err = m.DB.Where("id = ? ", form.Id).Delete(&t).Error
+	err = m.DB.Where("id = ? ", id.Id).Delete(&t).Error
 	respx.Response(ctx, nil, err)
 }
 
 func (m *Model[T]) Detail(ctx *gin.Context) {
 	var err error
-	var form modelx.Id[string]
-	if err = ctx.ShouldBindQuery(&form); err != nil {
+	var id modelx.Id[string]
+	if err = ctx.ShouldBindQuery(&id); err != nil {
 		respx.ParamError(ctx, err)
 		return
 	}
 	var result T
-	err = m.DB.Where("id = ? ", form.Id).Find(&result).Error
-	respx.Response(ctx, nil, err)
+	err = m.DB.Where("id = ? ", id.Id).Find(&result).Error
+	respx.Response(ctx, result, err)
 }
 
 func (m *Model[T]) Import(ctx *gin.Context) {
 	var err error
-	var form modelx.File
-	if err = ctx.ShouldBind(&form); err != nil {
+	var file modelx.File
+	if err = ctx.ShouldBind(&file); err != nil {
 		respx.ParamError(ctx, err)
 		return
 	}
-	var filePath = filepath.Join(constx.DefaultResourceDir, form.File.Filename)
-	if err = ctx.SaveUploadedFile(form.File, filePath); err != nil {
+	var filePath = filepath.Join(constx.DefaultResourceDir, file.File.Filename)
+	if err = ctx.SaveUploadedFile(file.File, filePath); err != nil {
 		respx.ParamError(ctx, err)
 		return
 	}

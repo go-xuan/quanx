@@ -41,7 +41,7 @@ func (x Date) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (x *Date) Value(def ...time.Time) time.Time {
+func (x Date) Value(def ...time.Time) time.Time {
 	if x.notnull {
 		return x.value
 	} else if len(def) > 0 {
@@ -51,6 +51,6 @@ func (x *Date) Value(def ...time.Time) time.Time {
 	return time.Time{}
 }
 
-func (x *Date) NotNull() bool {
+func (x Date) NotNull() bool {
 	return x.notnull
 }

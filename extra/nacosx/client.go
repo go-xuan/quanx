@@ -11,24 +11,36 @@ import (
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
-var _handler *Handler
+var _client *Client
 
-func this() *Handler {
-	if _handler == nil {
-		panic("the nacos _handler has not been initialized, please check the relevant config")
-	}
-	return _handler
+// Initialized 是否初始化
+func Initialized() bool {
+	return _client != nil
 }
 
-type Handler struct {
+func this() *Client {
+	if _client == nil {
+		panic("nacos client not initialized, please check the relevant config")
+	}
+	return _client
+}
+
+type Client struct {
 	config       *Config                     // nacos配置
 	configClient config_client.IConfigClient // nacos配置中心客户端
 	namingClient naming_client.INamingClient // nacos服务发现客户端
 }
 
-// IsInitialized 是否初始化
-func IsInitialized() bool {
-	return _handler != nil
+func (c *Client) Config() *Config {
+	return c.config
+}
+
+func (c *Client) ConfigClient() config_client.IConfigClient {
+	return c.configClient
+}
+
+func (c *Client) NamingClient() naming_client.INamingClient {
+	return c.namingClient
 }
 
 // ReadConfig 从nacos读取配置
@@ -47,7 +59,7 @@ func ReadConfig(v any, group, dataId string, listen ...bool) error {
 
 // GetNacosConfigClient 获取配置中心客户端
 func GetNacosConfigClient() config_client.IConfigClient {
-	if client := this().configClient; client == nil {
+	if client := this().ConfigClient(); client == nil {
 		panic("the nacos config client has not been initialized")
 	} else {
 		return client
@@ -56,7 +68,7 @@ func GetNacosConfigClient() config_client.IConfigClient {
 
 // GetNacosNamingClient 获取服务中心客户端
 func GetNacosNamingClient() naming_client.INamingClient {
-	if client := this().namingClient; client == nil {
+	if client := this().NamingClient(); client == nil {
 		panic("the nacos naming client has not been initialized")
 	} else {
 		return client

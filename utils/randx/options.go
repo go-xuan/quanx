@@ -3,9 +3,7 @@ package randx
 import (
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/go-xuan/quanx/types/intx"
 	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/types/timex"
 )
@@ -32,7 +30,7 @@ const (
 // Options 随机生成
 type Options struct {
 	Type    string   // 数据类型
-	Args    *Args    // 约束条件参数
+	Param   *Param   // 约束条件参数
 	Default string   // 默认值
 	Offset  int      // 偏移量
 	Enums   []string // 枚举
@@ -65,7 +63,7 @@ func (o *Options) NewString() string {
 // NewInt 生成随机数字
 func (o *Options) NewInt() int {
 	if o.Default == "" {
-		return o.Args.Int()
+		return o.Param.Int()
 	} else {
 		return stringx.ParseInt(o.Default)
 	}
@@ -74,7 +72,7 @@ func (o *Options) NewInt() int {
 // NewFloat 生成随机浮点数
 func (o *Options) NewFloat() float64 {
 	if o.Default == "" {
-		return o.Args.Float()
+		return o.Param.Float()
 	} else {
 		return stringx.ParseFloat(o.Default)
 	}
@@ -83,7 +81,7 @@ func (o *Options) NewFloat() float64 {
 // 生成随机字符串
 func (o *Options) newString() string {
 	var value string
-	if param, def := o.Args, o.Default; param != nil && def == "" {
+	if param, def := o.Param, o.Default; param != nil && def == "" {
 		if o.Type == typeSequence {
 			value = strconv.Itoa(stringx.ParseInt(param.Min) + o.Offset)
 		} else {
@@ -135,100 +133,15 @@ func (o *Options) randString() string {
 	case typeCity:
 		return City()
 	case typePassword:
-		return o.Args.Password()
+		return o.Param.Password()
 	case typeDate:
-		return o.Args.TimeFmt(timex.DateFmt)
+		return o.Param.TimeFmt(timex.DateFmt)
 	case typeTime:
-		return o.Args.TimeFmt()
+		return o.Param.TimeFmt()
 	case typeEnum:
-		from := append(o.Enums, o.Args.Enums...)
+		from := append(o.Enums, o.Param.Enums...)
 		return StringFrom(from...)
 	default:
-		return String(o.Args.Length)
+		return String(o.Param.Length)
 	}
-}
-
-// Args 随机数生成参数
-type Args struct {
-	Min    string   // 最小值
-	Max    string   // 最大值
-	Prefix string   // 前缀
-	Suffix string   // 后缀
-	Upper  bool     // 转大写
-	Lower  bool     // 转小写
-	Old    string   // 替换旧字符
-	New    string   // 替换新字符
-	Format string   // 时间格式
-	Length int      // 长度
-	Prec   int      // 小数位精度
-	Level  int      // 级别
-	Enums  []string // 枚举选项，多个以逗号分割
-}
-
-func NewArgs(args map[string]string) *Args {
-	return &Args{
-		Min:    args["min"],
-		Max:    args["max"],
-		Prefix: args["prefix"],
-		Suffix: args["suffix"],
-		Upper:  args["upper"] == "true",
-		Lower:  args["lower"] == "true",
-		Old:    args["old"],
-		New:    args["new"],
-		Format: args["format"],
-		Length: stringx.ParseInt(args["length"]),
-		Prec:   stringx.ParseInt(args["prec"]),
-		Level:  stringx.ParseInt(args["level"]),
-		Enums:  strings.Split(args["enums"], ","),
-	}
-}
-
-func (c *Args) Password() string {
-	switch c.Level {
-	case 2:
-		return StringUse(UseNumber|UseLowerLetter|UseUpperLetter, c.Length)
-	case 3:
-		return StringUse(UseNumber|UseLowerLetter|UseUpperLetter|UseSpecialSymbols, c.Length)
-	default:
-		return StringUse(UseNumber, c.Length)
-	}
-}
-
-func (c *Args) Int() int {
-	minv := stringx.ParseInt(c.Min, 1)
-	maxv := stringx.ParseInt(c.Max, 999)
-	return IntRange(minv, maxv)
-}
-
-func (c *Args) Float() float64 {
-	minv := stringx.ParseFloat(c.Min, 1)
-	maxv := stringx.ParseFloat(c.Max, 999)
-	prec := intx.IfZero(c.Prec, 6)
-	return Float64Range(minv, maxv, prec)
-}
-
-func (c *Args) Time() time.Time {
-	end := stringx.ParseTime(c.Max, time.Now())
-	start := stringx.ParseTime(c.Min, end.Add(time.Hour*-24*30))
-	return TimeRange(start, end)
-}
-
-func (c *Args) TimeFmt(format ...string) string {
-	end := stringx.ParseTime(c.Max, time.Now())
-	start := stringx.ParseTime(c.Min, end.Add(time.Hour*-24*30))
-	var layout = timex.TimeFmt
-	if len(format) > 0 {
-		layout = format[0]
-	} else if c.Format != "" {
-		layout = c.Format
-	}
-	return TimeRange(start, start).Format(layout)
-}
-
-func (c *Args) Enum() string {
-	return StringFrom(c.Enums...)
-}
-
-func (c *Args) String() string {
-	return String(c.Length)
 }

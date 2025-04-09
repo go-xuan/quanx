@@ -6,15 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/base/respx"
 	"github.com/go-xuan/quanx/extra/cachex"
-	"github.com/go-xuan/quanx/types/intx"
-	"github.com/go-xuan/quanx/utils/encryptx"
-)
-
-var (
-	tokenSecret     = "123456"    // token加解密密钥，可通过 SetSecret() 方法更改值
-	authCacheClient cachex.Client // token缓存客户端
+	"github.com/go-xuan/quanx/types/anyx"
 )
 
 // AuthValidate 默认使用jwt验证
@@ -31,12 +24,13 @@ type AuthValidator interface {
 
 // AuthUser 鉴权用户
 type AuthUser interface {
-	NewToken(secret string) (string, error) // 生成token
-	ParseToken(token, secret string) error  // 解析token
-	UserId() int64                          // 用户ID
-	Username() string                       // 用户名（唯一）
-	Duration() time.Duration                // 缓存时间
+	Encrypt() (string, error)   // 用户信息加密
+	Decrypt(token string) error // 用户信息解密
+	UserId() anyx.Value         // 用户ID
+	TTL() time.Duration         // 存活时间
 }
+
+var authCacheClient cachex.Client // token缓存客户端
 
 func AuthCache() cachex.Client {
 	if authCacheClient == nil {
@@ -49,7 +43,7 @@ func AuthCache() cachex.Client {
 func SetSessionUser(ctx *gin.Context, user AuthUser) {
 	ctx.Set(sessionUserKey, user)
 	// token续命
-	_ = AuthCache().Expire(ctx, user.Username(), user.Duration())
+	_ = AuthCache().Expire(ctx, user.UserId().String(), user.TTL())
 }
 
 // GetSessionUser 获取会话用户
@@ -63,35 +57,41 @@ func GetSessionUser(ctx *gin.Context) AuthUser {
 }
 
 // SetAuthCookie 设置身份验证cookie
-func SetAuthCookie(ctx *gin.Context, username string, expire ...int) {
-	if cookie, err := encryptx.RSA().Encrypt(username); err != nil {
-		ctx.Abort()
-		respx.Error(ctx, err.Error())
+func SetAuthCookie(ctx *gin.Context, user AuthUser) error {
+	if cookie, err := user.Encrypt(); err != nil {
+		return errorx.Wrap(err, "new cookie error")
 	} else {
-		var maxAge = intx.Default(3600, expire...)
-		ctx.SetCookie(cookieUserKey, cookie, maxAge, "", "", false, true)
+		ctx.SetCookie(userCookieKey, cookie, int(user.TTL().Seconds()), "", "", false, true)
 	}
-	return
+	return nil
 }
 
 // RemoveAuthCookie 移除身份验证cookie maxAge=-1即可移除cookie
 func RemoveAuthCookie(ctx *gin.Context) {
-	ctx.SetCookie(cookieUserKey, "", -1, "", "", false, true)
+	ctx.SetCookie(userCookieKey, "", -1, "", "", false, true)
 }
 
-func getSecret() string {
-	return tokenSecret
-}
-
-func SetSecret(secret string) {
-	tokenSecret = secret
+// ValidateCookie cookie鉴权
+func ValidateCookie(ctx *gin.Context, user AuthUser) error {
+	var cookie, err = ctx.Cookie(userCookieKey)
+	if err != nil || cookie == "" {
+		return errorx.Wrap(err, "get request cookie failed")
+	}
+	if err = user.Decrypt(cookie); err != nil {
+		return errorx.Wrap(err, "cookie parse failed")
+	}
+	if !AuthCache().Exist(ctx, user.UserId().String()) {
+		return errorx.New("cookie has expired")
+	}
+	SetSessionUser(ctx, user)
+	return nil
 }
 
 // SetToken 生成并缓存token
 func SetToken(ctx *gin.Context, user AuthUser) (string, error) {
-	if token, err := user.NewToken(getSecret()); err != nil {
+	if token, err := user.Encrypt(); err != nil {
 		return "", errorx.Wrap(err, "new token error")
-	} else if err = AuthCache().Set(ctx, user.Username(), token, user.Duration()); err != nil {
+	} else if err = AuthCache().Set(ctx, user.UserId().String(), token, user.TTL()); err != nil {
 		return "", errorx.Wrap(err, "save token to cache error")
 	} else {
 		return token, nil
@@ -99,41 +99,21 @@ func SetToken(ctx *gin.Context, user AuthUser) (string, error) {
 }
 
 // RemoveToken 移除token
-func RemoveToken(ctx *gin.Context, username string) {
-	AuthCache().Delete(ctx, username)
+func RemoveToken(ctx *gin.Context, userId string) {
+	AuthCache().Delete(ctx, userId)
 }
 
-// token方式鉴权
-func authValidateWithToken(ctx *gin.Context, user AuthUser) error {
-	var token string
-	if token = ctx.Request.Header.Get(tokenHeaderKey); token == "" {
-		return errorx.New("token is required")
+// ValidateToken token鉴权
+func ValidateToken(ctx *gin.Context, user AuthUser) error {
+	var token = ctx.Request.Header.Get("Authorization")
+	if token == "" {
+		return errorx.New("get request token failed")
 	}
-	if err := user.ParseToken(token, getSecret()); err != nil {
-		return errorx.Wrap(err, "parse token failed")
+	if err := user.Decrypt(token); err != nil {
+		return errorx.Wrap(err, "token parse failed")
 	}
-	if exist := AuthCache().Exist(ctx, user.Username()); !exist {
+	if !AuthCache().Exist(ctx, user.UserId().String()) {
 		return errorx.New("token has expired")
-	}
-	SetSessionUser(ctx, user)
-	return nil
-}
-
-// cookie方式鉴权
-func authValidateWithCookie(ctx *gin.Context, user AuthUser) error {
-	var cookie, username, token string
-	var err error
-	if cookie, err = ctx.Cookie(cookieUserKey); err != nil || cookie == "" {
-		return errorx.Wrap(err, "get request cookie failed")
-	}
-	if username, err = encryptx.RSA().Decrypt(cookie); err != nil {
-		return errorx.Wrap(err, "cookie is invalid")
-	}
-	if exist := AuthCache().Get(ctx, username, &token); !exist || token == "" {
-		return errorx.Errorf("cookie has expired: %s", username)
-	}
-	if err = user.ParseToken(token, getSecret()); err != nil {
-		return errorx.Wrap(err, "parse token failed")
 	}
 	SetSessionUser(ctx, user)
 	return nil

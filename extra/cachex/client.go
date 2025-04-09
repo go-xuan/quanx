@@ -25,8 +25,12 @@ type Client interface {
 // LocalClient 本地缓存客户端
 type LocalClient struct {
 	config  *Config
-	client  *cache.Cache
+	cache   *cache.Cache
 	marshal marshalx.Method
+}
+
+func (c *LocalClient) Instance() *cache.Cache {
+	return c.cache
 }
 
 func (c *LocalClient) Config() *Config {
@@ -37,7 +41,7 @@ func (c *LocalClient) Set(ctx context.Context, key string, value any, d time.Dur
 	if bytes, err := c.marshal.Marshal(value); err != nil {
 		return errorx.Wrap(err, "marshal value error")
 	} else {
-		c.client.Set(c.config.GetKey(key), string(bytes), d)
+		c.Instance().Set(c.config.GetKey(key), string(bytes), d)
 		return nil
 	}
 }
@@ -52,7 +56,7 @@ func (c *LocalClient) Get(ctx context.Context, key string, value any) bool {
 }
 
 func (c *LocalClient) GetString(ctx context.Context, key string) string {
-	if result, ok := c.client.Get(c.config.GetKey(key)); ok {
+	if result, ok := c.Instance().Get(c.config.GetKey(key)); ok {
 		return result.(string)
 	}
 	return ""
@@ -61,7 +65,7 @@ func (c *LocalClient) GetString(ctx context.Context, key string) string {
 func (c *LocalClient) Delete(ctx context.Context, keys ...string) int64 {
 	if len(keys) > 0 {
 		for _, key := range keys {
-			c.client.Delete(c.config.GetKey(key))
+			c.Instance().Delete(c.config.GetKey(key))
 		}
 		return int64(len(keys))
 	}
@@ -71,7 +75,7 @@ func (c *LocalClient) Delete(ctx context.Context, keys ...string) int64 {
 func (c *LocalClient) Exist(ctx context.Context, keys ...string) bool {
 	if len(keys) > 0 {
 		for _, k := range keys {
-			if _, ok := c.client.Get(c.config.GetKey(k)); !ok {
+			if _, ok := c.Instance().Get(c.config.GetKey(k)); !ok {
 				return false
 			}
 		}
@@ -82,10 +86,10 @@ func (c *LocalClient) Exist(ctx context.Context, keys ...string) bool {
 
 func (c *LocalClient) Expire(ctx context.Context, key string, d time.Duration) error {
 	key = c.config.GetKey(key)
-	if result, ok := c.client.Get(key); !ok {
+	if result, ok := c.Instance().Get(key); !ok {
 		return errorx.New("key not found")
 	} else {
-		c.client.Set(key, result, d)
+		c.Instance().Set(key, result, d)
 		return nil
 	}
 }
@@ -97,6 +101,10 @@ type RedisClient struct {
 	marshal marshalx.Method
 }
 
+func (c *RedisClient) Instance() redis.UniversalClient {
+	return c.client
+}
+
 func (c *RedisClient) Config() *Config {
 	return c.config
 }
@@ -104,7 +112,7 @@ func (c *RedisClient) Config() *Config {
 func (c *RedisClient) Set(ctx context.Context, key string, value any, d time.Duration) error {
 	if bytes, err := c.marshal.Marshal(value); err != nil {
 		return errorx.Wrap(err, "marshal value error")
-	} else if err = c.client.Set(ctx, c.config.GetKey(key), bytes, d).Err(); err != nil {
+	} else if err = c.Instance().Set(ctx, c.config.GetKey(key), bytes, d).Err(); err != nil {
 		return errorx.Wrap(err, "set value error")
 	}
 	return nil
@@ -121,7 +129,7 @@ func (c *RedisClient) Get(ctx context.Context, key string, value any) bool {
 }
 
 func (c *RedisClient) GetString(ctx context.Context, key string) string {
-	if result, err := c.client.Get(ctx, c.config.GetKey(key)).Result(); err == nil {
+	if result, err := c.Instance().Get(ctx, c.config.GetKey(key)).Result(); err == nil {
 		return result
 	}
 	return ""
@@ -130,7 +138,7 @@ func (c *RedisClient) GetString(ctx context.Context, key string) string {
 func (c *RedisClient) Delete(ctx context.Context, keys ...string) int64 {
 	var sum int64
 	_ = taskx.ExecWithBatches(len(keys), 100, func(x int, y int) error {
-		if s, err := c.client.Del(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
+		if s, err := c.Instance().Del(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
 			return errorx.Wrap(err, "delete redis keys error")
 		} else {
 			sum += s
@@ -143,7 +151,7 @@ func (c *RedisClient) Delete(ctx context.Context, keys ...string) int64 {
 func (c *RedisClient) Exist(ctx context.Context, keys ...string) bool {
 	var sum int64
 	_ = taskx.ExecWithBatches(len(keys), 100, func(x int, y int) error {
-		if n, err := c.client.Exists(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
+		if n, err := c.Instance().Exists(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
 			return errorx.Wrap(err, "redis exists error")
 		} else {
 			sum += n
@@ -154,7 +162,7 @@ func (c *RedisClient) Exist(ctx context.Context, keys ...string) bool {
 }
 
 func (c *RedisClient) Expire(ctx context.Context, key string, d time.Duration) error {
-	if err := c.client.Expire(ctx, c.config.GetKey(key), d).Err(); err != nil {
+	if err := c.Instance().Expire(ctx, c.config.GetKey(key), d).Err(); err != nil {
 		return errorx.Wrap(err, "redis expire error")
 	}
 	return nil

@@ -8,91 +8,71 @@ import (
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/respx"
-	"github.com/go-xuan/quanx/types/intx"
+	"github.com/go-xuan/quanx/types/anyx"
 )
 
-// JwtValidator JWT鉴权验证器
 type JwtValidator struct{}
 
-func (v *JwtValidator) Token(ctx *gin.Context) {
-	if err := authValidateWithToken(ctx, &JwtUser{}); err != nil {
+func (v JwtValidator) Token(ctx *gin.Context) {
+	if err := ValidateToken(ctx, &JwtUser{}); err != nil {
 		respx.Forbidden(ctx, err)
 		ctx.Abort()
-	} else {
-		ctx.Next()
 	}
-	return
 }
 
-func (v *JwtValidator) Cookie(ctx *gin.Context) {
-	if err := authValidateWithCookie(ctx, &JwtUser{}); err != nil {
+func (v JwtValidator) Cookie(ctx *gin.Context) {
+	if err := ValidateCookie(ctx, &JwtUser{}); err != nil {
 		respx.Forbidden(ctx, err)
 		ctx.Abort()
-	} else {
-		ctx.Next()
 	}
-	return
 }
 
-func (v *JwtValidator) Debug(ctx *gin.Context) {
-	SetSessionUser(ctx, &JwtUser{
-		Id:      999999999,
-		Account: "debug",
-		Name:    "debug",
-		Phone:   "110",
-	})
-	ctx.Next()
-	return
+func (v JwtValidator) Debug(ctx *gin.Context) {
+	SetSessionUser(ctx, &JwtUser{Id: 999999999})
+}
+
+var jwtSecret = "123456" // token加解密密钥，可通过 SetSecret() 方法更改值
+
+func getJwtSecret() interface{} {
+	return []byte(jwtSecret)
+}
+
+func jwtKeyFunc(*jwt.Token) (interface{}, error) {
+	return getJwtSecret(), nil
 }
 
 // JwtUser jwt-TokenUser实现
 type JwtUser struct {
-	Id      int64  `json:"id"`      // 用户ID
-	Account string `json:"account"` // 用户账号
-	Name    string `json:"name"`    // 用户姓名
-	Phone   string `json:"phone"`   // 登录手机
-	Ip      string `json:"ip"`      // 登录IP
-	Domain  string `json:"domain"`  // 域名
-	TTL     int    `json:"ttl"`     // 有效时长
+	Id     int64 `json:"id"`     // 用户ID
+	Expire int64 `json:"expire"` // 存活时长
 }
 
 func (u *JwtUser) Valid() error {
+	if u.Expire < time.Now().Unix() {
+		return errorx.New("claims valid failed: current user expired")
+	}
 	return nil
 }
 
-func (u *JwtUser) NewToken(secret string) (string, error) {
-	if token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, u).SignedString([]byte(secret)); err != nil {
-		return "", errorx.Wrap(err, "token sign failed")
+func (u *JwtUser) Encrypt() (string, error) {
+	if token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, u).SignedString(getJwtSecret()); err != nil {
+		return "", errorx.Wrap(err, "jwt encrypt error")
 	} else {
 		return token, nil
 	}
 }
 
-func (u *JwtUser) ParseToken(token, secret string) error {
-	if jwtToken, err := jwt.ParseWithClaims(token, &JwtUser{}, func(*jwt.Token) (any, error) {
-		return []byte(secret), nil
-	}); err != nil {
-		return errorx.Wrap(err, "parse token error")
-	} else if user, ok := jwtToken.Claims.(*JwtUser); ok {
-		u.Id = user.Id
-		u.Account = user.Account
-		u.Name = user.Name
-		u.Phone = user.Phone
-		u.Ip = user.Ip
-		u.Domain = user.Domain
-		u.TTL = user.TTL
+func (u *JwtUser) Decrypt(token string) error {
+	if jt, err := jwt.ParseWithClaims(token, u, jwtKeyFunc); err != nil || !jt.Valid {
+		return errorx.Wrap(err, "jwt decrypt error")
 	}
 	return nil
 }
 
-func (u *JwtUser) Username() string {
-	return u.Phone
+func (u *JwtUser) UserId() anyx.Value {
+	return anyx.Int64Value(u.Id)
 }
 
-func (u *JwtUser) UserId() int64 {
-	return u.Id
-}
-
-func (u *JwtUser) Duration() time.Duration {
-	return time.Duration(intx.IfZero(u.TTL, 3600)) * time.Second
+func (u *JwtUser) TTL() time.Duration {
+	return 3600 * time.Second
 }

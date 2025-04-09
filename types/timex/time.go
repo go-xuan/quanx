@@ -55,7 +55,7 @@ func (x Time) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (x *Time) Value(def ...time.Time) time.Time {
+func (x Time) Value(def ...time.Time) time.Time {
 	if x.notnull {
 		return x.value
 	} else if len(def) > 0 {
@@ -64,6 +64,6 @@ func (x *Time) Value(def ...time.Time) time.Time {
 	return time.Time{}
 }
 
-func (x *Time) NotNull() bool {
+func (x Time) NotNull() bool {
 	return x.notnull
 }

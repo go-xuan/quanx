@@ -19,7 +19,7 @@ type Config struct {
 }
 
 func (c *Config) Format() string {
-	return fmt.Sprintf("host=%s port=%v username=%s password=%s", c.Host, c.Port, c.Username, c.Password)
+	return fmt.Sprintf("host=%s port=%d username=%s password=%s", c.Host, c.Port, c.Username, c.Password)
 }
 
 func (c *Config) Reader(from configx.From) configx.Reader {
@@ -29,7 +29,7 @@ func (c *Config) Reader(from configx.From) configx.Reader {
 			DataId: "email.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "email.yaml",
 		}
 	default:
@@ -38,7 +38,7 @@ func (c *Config) Reader(from configx.From) configx.Reader {
 }
 
 func (c *Config) Execute() error {
-	handler = &Handler{
+	_client = &Client{
 		config: c,
 		dialer: gomail.NewDialer(c.Host, c.Port, c.Username, c.Password),
 	}

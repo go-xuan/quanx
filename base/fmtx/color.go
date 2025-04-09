@@ -35,13 +35,13 @@ func (c Color) Println(s string) {
 	fmt.Println(c.String(s))
 }
 
-// Printf 打印
+// Printf 全文本颜色打印
 func (c Color) Printf(s string, v ...any) {
 	fmt.Print(c.String(fmt.Sprintf(s, v...)))
 }
 
-// XPrintf 打印时，颜色仅对占位符对应的参数生效
-func (c Color) XPrintf(s string, v ...any) {
+// Xprintf 仅变量文本颜色打印
+func (c Color) Xprintf(s string, v ...any) {
 	if len(v) > 0 {
 		for i, a := range v {
 			v[i] = c.String(fmt.Sprint(a))
@@ -52,13 +52,13 @@ func (c Color) XPrintf(s string, v ...any) {
 	}
 }
 
-// Sprintf 格式化
+// Sprintf 全文本颜色格式化
 func (c Color) Sprintf(s string, v ...any) string {
 	return c.String(fmt.Sprintf(s, v...))
 }
 
-// XSPrintf 格式化，颜色仅对占位符对应的参数生效
-func (c Color) XSPrintf(s string, v ...any) string {
+// Xsprintf 仅变量文本颜色格式化
+func (c Color) Xsprintf(s string, v ...any) string {
 	if len(v) > 0 {
 		for i, a := range v {
 			v[i] = c.String(fmt.Sprint(a))

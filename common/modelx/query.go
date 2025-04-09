@@ -1,8 +1,9 @@
 package modelx
 
 import (
+	"fmt"
+	"gorm.io/gorm"
 	"mime/multipart"
-	"strings"
 )
 
 type Id[T int | int64 | string] struct {
@@ -17,41 +18,52 @@ type File struct {
 	File *multipart.FileHeader `form:"file"`
 }
 
+// Between 条件范围
+type Between struct {
+	Start interface{} `json:"start"` // 开始时间
+	End   interface{} `json:"end"`   // 结束时间
+}
+
+func (b Between) DoBetween(db *gorm.DB, field string) *gorm.DB {
+	if b.Start != nil {
+		db = db.Where(field+"", " >= ?", b.Start)
+	}
+	if b.End != nil {
+		db = db.Where(field+"", " <= ?", b.End)
+	}
+	return db
+}
+
 // Query 分页参数
 type Query struct {
-	Keyword string `json:"keyword"` // 关键字
-	Order   Orders `json:"order"`   // 排序参数
-	TimeRange
-	Page
+	Keyword string   `json:"keyword"` // 关键字
+	OrderBy []*Order `json:"orderBy"` // 排序参数
+	*Page
 }
 
-// TimeRange 时间范围
-type TimeRange struct {
-	StartTime string `json:"startTime"` // 开始时间
-	EndTime   string `json:"endTime"`   // 结束时间
-}
-
-// Orders 排序
-type Orders []*Order
-type Order struct {
-	Column string `json:"column"` // 排序字段
-	Type   string `json:"type"`   // 排序方式(asc/desc)
-}
-
-// GetOrderBySql 计算分页数量
-func (orders Orders) GetOrderBySql() string {
-	if orders != nil && len(orders) > 0 {
-		s := strings.Builder{}
-		s.WriteString(` order by `)
-		for i, order := range orders {
-			if i > 1 {
-				s.WriteString(",")
-			}
-			s.WriteString(order.Column)
-			s.WriteString(" ")
-			s.WriteString(order.Type)
+func (q *Query) DoLike(db *gorm.DB, fields ...string) *gorm.DB {
+	if q.Keyword != "" && len(fields) > 0 {
+		for _, field := range fields {
+			db = db.Where(fmt.Sprintf("%s LIKE '%%%s%%'", field, q.Keyword))
 		}
-		return s.String()
 	}
-	return ""
+	return db
+}
+
+func (q *Query) DoPage(db *gorm.DB) *gorm.DB {
+	if q.Page != nil && q.Page.PageSize > 0 {
+		db = db.Limit(q.Page.PageSize).Offset(q.Page.Offset())
+	}
+	return db
+}
+
+func (q *Query) DoOrder(db *gorm.DB, def string) *gorm.DB {
+	if q.OrderBy != nil {
+		for _, order := range q.OrderBy {
+			db.Order(order.Column + " " + order.Type)
+		}
+	} else {
+		db.Order(def)
+	}
+	return db
 }

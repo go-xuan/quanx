@@ -8,62 +8,24 @@ import (
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/taskx"
-	"github.com/go-xuan/quanx/common/constx"
 )
 
-var _handler *Handler
-
-func this() *Handler {
-	if _handler == nil {
-		panic("the elastic handler has not been initialized, please check the relevant config")
-	}
-	return _handler
+type Client struct {
+	config *Config
+	client *elastic.Client
 }
 
-type Handler struct {
-	multi   bool
-	config  *Config
-	client  *elastic.Client
-	configs map[string]*Config
-	clients map[string]*elastic.Client
+func (c *Client) Instance() *elastic.Client {
+	return c.client
 }
 
-func (h *Handler) GetConfig(source ...string) *Config {
-	if h.multi && len(source) > 0 && source[0] != constx.DefaultSource {
-		if conf, ok := h.configs[source[0]]; ok {
-			return conf
-		}
-	}
-	return h.config
-}
-
-func (h *Handler) GetClient(source ...string) *elastic.Client {
-	if h.multi && len(source) > 0 && source[0] != constx.DefaultSource {
-		if client, ok := h.clients[source[0]]; ok {
-			return client
-		}
-	}
-	return h.client
-}
-
-// IsInitialized 是否初始化
-func IsInitialized() bool {
-	return _handler != nil
-}
-
-// GetConfig 获取配置
-func GetConfig(source ...string) *Config {
-	return this().GetConfig(source...)
-}
-
-// GetClient 获取客户端
-func GetClient(source ...string) *elastic.Client {
-	return this().GetClient(source...)
+func (c *Client) Config() *Config {
+	return c.config
 }
 
 // CreateIndex 创建索引
-func CreateIndex(ctx context.Context, index string) (bool, error) {
-	if resp, err := GetClient().CreateIndex(index).Do(ctx); err != nil {
+func (c *Client) CreateIndex(ctx context.Context, index string) (bool, error) {
+	if resp, err := c.Instance().CreateIndex(index).Do(ctx); err != nil {
 		log.WithField("index", index).Error("create index failed: ", err)
 		return false, errorx.Wrap(err, "create index failed")
 	} else {
@@ -73,8 +35,8 @@ func CreateIndex(ctx context.Context, index string) (bool, error) {
 }
 
 // AllIndices 查询所有索引
-func AllIndices(ctx context.Context) ([]string, error) {
-	if resp, err := GetClient().CatIndices().Do(ctx); err != nil {
+func (c *Client) AllIndices(ctx context.Context) ([]string, error) {
+	if resp, err := c.Instance().CatIndices().Do(ctx); err != nil {
 		return nil, errorx.Wrap(err, "cat indices failed")
 	} else {
 		var indices []string
@@ -86,8 +48,8 @@ func AllIndices(ctx context.Context) ([]string, error) {
 }
 
 // DeleteIndex 删除索引
-func DeleteIndex(ctx context.Context, index string) (bool, error) {
-	if resp, err := GetClient().DeleteIndex(index).Do(ctx); err != nil {
+func (c *Client) DeleteIndex(ctx context.Context, index string) (bool, error) {
+	if resp, err := c.Instance().DeleteIndex(index).Do(ctx); err != nil {
 		log.WithField("index", index).Error("delete index failed: ", err)
 		return false, errorx.Wrap(err, "delete index failed")
 	} else {
@@ -97,11 +59,11 @@ func DeleteIndex(ctx context.Context, index string) (bool, error) {
 }
 
 // DeleteIndices 批量索引
-func DeleteIndices(ctx context.Context, indices []string) (bool, error) {
+func (c *Client) DeleteIndices(ctx context.Context, indices []string) (bool, error) {
 	var ok bool
 	if err := taskx.ExecWithBatches(len(indices), 100, func(start int, end int) error {
 		deleteIndices := indices[start:end]
-		if resp, err := GetClient().DeleteIndex(deleteIndices...).Do(ctx); err != nil {
+		if resp, err := c.Instance().DeleteIndex(deleteIndices...).Do(ctx); err != nil {
 			log.WithField("deleteIndices", deleteIndices).Error("delete indices failed: ", err)
 			return err
 		} else {
@@ -115,8 +77,8 @@ func DeleteIndices(ctx context.Context, indices []string) (bool, error) {
 	return ok, nil
 }
 
-func Create(ctx context.Context, index, id string, body any) error {
-	if resp, err := GetClient().Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
+func (c *Client) Create(ctx context.Context, index, id string, body any) error {
+	if resp, err := c.Instance().Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
 		log.WithField("index", index).WithField("id", id).
 			Error("create failed: ", err)
 		return err
@@ -127,8 +89,8 @@ func Create(ctx context.Context, index, id string, body any) error {
 	}
 }
 
-func Update(ctx context.Context, index, id string, body any) error {
-	if resp, err := GetClient().Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
+func (c *Client) Update(ctx context.Context, index, id string, body any) error {
+	if resp, err := c.Instance().Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
 		log.WithField("index", index).WithField("id", id).
 			Error("update failed: ", err)
 		return errorx.Wrap(err, "update index failed")
@@ -139,8 +101,8 @@ func Update(ctx context.Context, index, id string, body any) error {
 	}
 }
 
-func Delete(ctx context.Context, index, id string) error {
-	if resp, err := GetClient().Delete().Index(index).Id(id).Do(ctx); err != nil {
+func (c *Client) Delete(ctx context.Context, index, id string) error {
+	if resp, err := c.Instance().Delete().Index(index).Id(id).Do(ctx); err != nil {
 		log.WithField("index", index).WithField("id", id).
 			Error("delete failed: ", err)
 		return errorx.Wrap(err, "delete index failed")
@@ -151,22 +113,22 @@ func Delete(ctx context.Context, index, id string) error {
 	}
 }
 
-func Get(ctx context.Context, index, id string) (*elastic.GetResult, error) {
-	return GetClient().Get().Index(index).Id(id).Do(ctx)
+func (c *Client) Get(ctx context.Context, index, id string) (*elastic.GetResult, error) {
+	return c.Instance().Get().Index(index).Id(id).Do(ctx)
 }
 
-func Search(ctx context.Context, index string, query elastic.Query) (*elastic.SearchResult, error) {
-	return GetClient().Search().Index(index).Query(query).Do(ctx)
+func (c *Client) Search(ctx context.Context, index string, query elastic.Query) (*elastic.SearchResult, error) {
+	return c.Instance().Search().Index(index).Query(query).Do(ctx)
 }
 
 // AllDocId 获取索引中全部文档ID，sortField字段必须支持排序
-func AllDocId(ctx context.Context, index string, query elastic.Query, sortField string) ([]string, error) {
+func (c *Client) AllDocId(ctx context.Context, index string, query elastic.Query, sortField string) ([]string, error) {
 	var total, offset int64
 	var sortValue float64
 	var ids []string
 	for offset <= total {
 		var server *elastic.SearchService
-		server = GetClient().Search().Index(index).
+		server = c.Instance().Search().Index(index).
 			Query(query).
 			TrackTotalHits(true).
 			Sort(sortField, true).

@@ -26,49 +26,54 @@ const (
 
 // Config nacos连接配置
 type Config struct {
-	Address   string `yaml:"address" json:"address" default:"127.0.0.1"`  // nacos服务地址,多个以英文逗号分割
-	Username  string `yaml:"username" json:"username" default:"nacos"`    // 用户名
-	Password  string `yaml:"password" json:"password" default:"nacos"`    // 密码
-	NameSpace string `yaml:"nameSpace" json:"nameSpace" default:"public"` // 命名空间
-	Mode      int    `yaml:"mode" json:"mode" default:"2"`                // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
+	Address   string `yaml:"address" json:"address" default:"localhost:8848"` // nacos服务地址,多个以英文逗号分割
+	Username  string `yaml:"username" json:"username"`                        // 用户名
+	Password  string `yaml:"password" json:"password"`                        // 密码
+	NameSpace string `yaml:"nameSpace" json:"nameSpace" default:"public"`     // 命名空间
+	Mode      int    `yaml:"mode" json:"mode" default:"2"`                    // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 }
 
 func (c *Config) Format() string {
-	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%v",
+	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%d",
 		c.AddressUrl(), c.Username, c.Password, c.NameSpace, c.Mode)
 }
 
 func (*Config) Reader(from configx.From) configx.Reader {
-	return nil
+	if from == configx.FromDefault {
+		return nil
+	}
+	return &configx.LocalReader{
+		Name: "nacos.yaml",
+	}
 }
 
 func (c *Config) Execute() error {
-	if _handler == nil {
-		_handler = &Handler{config: c}
+	if _client == nil {
+		_client = &Client{config: c}
 		var param = c.ClientParam()
 		switch c.Mode {
 		case OnlyConfig:
 			if configClient, err := c.ConfigClient(param); err != nil {
 				return errorx.Wrap(err, "init nacos config client error")
 			} else {
-				_handler.configClient = configClient
+				_client.configClient = configClient
 			}
 		case OnlyNaming:
 			if namingClient, err := c.NamingClient(param); err != nil {
 				return errorx.Wrap(err, "init nacos naming client error")
 			} else {
-				_handler.namingClient = namingClient
+				_client.namingClient = namingClient
 			}
 		case ConfigAndNaming:
 			if configClient, err := c.ConfigClient(param); err != nil {
 				return errorx.Wrap(err, "init nacos config client error")
 			} else {
-				_handler.configClient = configClient
+				_client.configClient = configClient
 			}
 			if namingClient, err := c.NamingClient(param); err != nil {
 				return errorx.Wrap(err, "init nacos naming client error")
 			} else {
-				_handler.namingClient = namingClient
+				_client.namingClient = namingClient
 			}
 		}
 	}
@@ -102,14 +107,14 @@ func (c *Config) ClientConfig() *constant.ClientConfig {
 
 // ServerConfigs nacos服务中间件配置
 func (c *Config) ServerConfigs() []constant.ServerConfig {
-	var adds = strings.Split(c.Address, ",")
-	if len(adds) == 0 {
+	var addrs = strings.Split(c.Address, ",")
+	if len(addrs) == 0 {
 		log.Error("the address of nacos cannot be empty")
 		return nil
 	}
 	var configs []constant.ServerConfig
-	for _, addStr := range adds {
-		host, port, _ := strings.Cut(addStr, ":")
+	for _, addr := range addrs {
+		host, port, _ := strings.Cut(addr, ":")
 		configs = append(configs, constant.ServerConfig{
 			ContextPath: "/nacos",
 			IpAddr:      host,

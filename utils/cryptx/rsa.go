@@ -1,4 +1,4 @@
-package encryptx
+package cryptx
 
 import (
 	"crypto/rand"
@@ -20,53 +20,17 @@ const (
 
 var _rsa *Rsa
 
-type Rsa struct {
-	privateKey  *rsa.PrivateKey // rsa私钥
-	privatePath string          // 秘钥存放路径
-	privateData []byte          // 秘钥
-	publicPath  string          // 公钥存放路径
-	publicData  []byte          // 公钥
-}
-
-type RsaData struct {
-	path  string // 秘钥存放路径
-	bytes []byte // 秘钥
-}
-
 func RSA() *Rsa {
 	if _rsa == nil {
 		var err error
-		if _rsa, err = newRSA(defaultDir); err != nil {
+		if _rsa, err = NewRSA(defaultDir); err != nil {
 			panic(err)
 		}
 	}
 	return _rsa
 }
 
-// Encrypt 公钥加密
-func (m *Rsa) Encrypt(plaintext string) (string, error) {
-	if ciphertext, err := rsa.EncryptPKCS1v15(rand.Reader, &m.privateKey.PublicKey, []byte(plaintext)); err != nil {
-		return "", errorx.Wrap(err, "pkcs1v15 encrypt error")
-	} else {
-		return Base64Encode(ciphertext, true), nil
-	}
-}
-
-// Decrypt 私钥解密
-func (m *Rsa) Decrypt(ciphertext string) (string, error) {
-	if base64, err := Base64Decode(ciphertext, true); err != nil {
-		return "", errorx.Wrap(err, "base64 decode error")
-	} else {
-		var plaintext []byte
-		if plaintext, err = rsa.DecryptPKCS1v15(rand.Reader, m.privateKey, base64); err != nil {
-			return "", errorx.Wrap(err, "pkcs1v15 decrypt error")
-		}
-		return string(plaintext), nil
-	}
-}
-
-// 自动生成密钥对并保存到文件
-func newRSA(dir string) (*Rsa, error) {
+func NewRSA(dir string) (*Rsa, error) {
 	priPath, pubPath := filepath.Join(dir, privateKeyPem), filepath.Join(dir, publicKeyPem)
 	if filex.Exists(priPath) && filex.Exists(pubPath) {
 		var priBytes = pemDecode(priPath)
@@ -101,6 +65,36 @@ func newRSA(dir string) (*Rsa, error) {
 				publicData:  pubBytes,
 			}, nil
 		}
+	}
+}
+
+type Rsa struct {
+	privateKey  *rsa.PrivateKey // rsa私钥
+	privatePath string          // 秘钥存放路径
+	privateData []byte          // 秘钥
+	publicPath  string          // 公钥存放路径
+	publicData  []byte          // 公钥
+}
+
+// Encrypt 公钥加密
+func (m *Rsa) Encrypt(plaintext string) (string, error) {
+	if ciphertext, err := rsa.EncryptPKCS1v15(rand.Reader, &m.privateKey.PublicKey, []byte(plaintext)); err != nil {
+		return "", errorx.Wrap(err, "pkcs1v15 encrypt error")
+	} else {
+		return Base64Encode(ciphertext, true), nil
+	}
+}
+
+// Decrypt 私钥解密
+func (m *Rsa) Decrypt(ciphertext string) (string, error) {
+	if base64, err := Base64Decode(ciphertext, true); err != nil {
+		return "", errorx.Wrap(err, "base64 decode error")
+	} else {
+		var plaintext []byte
+		if plaintext, err = rsa.DecryptPKCS1v15(rand.Reader, m.privateKey, base64); err != nil {
+			return "", errorx.Wrap(err, "pkcs1v15 decrypt error")
+		}
+		return string(plaintext), nil
 	}
 }
 

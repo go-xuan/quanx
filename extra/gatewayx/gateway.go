@@ -28,9 +28,10 @@ func (*Servers) Reader(from configx.From) configx.Reader {
 	case configx.FormNacos:
 		return &nacosx.Reader{
 			DataId: "gateway.yaml",
+			Listen: true,
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "gateway.yaml",
 		}
 	default:
@@ -59,9 +60,6 @@ func (s Server) Format() string {
 
 // GetServerProxyAddr 获取微服务addr
 func GetServerProxyAddr(group, dataId, url string) (string, string, error) {
-	if err := ListenConfigChanged(group, dataId); err != nil {
-		return "", "", errorx.Wrap(err, "监听微服务网关配置失败")
-	}
 	var auth string
 	for _, server := range *Gateway {
 		if MatchUrl(url, server.Router) {
@@ -84,19 +82,6 @@ func GetServerProxyAddr(group, dataId, url string) (string, string, error) {
 	}
 	return "", "", errorx.Errorf("未找到对应的网关路由配置，请检查微服务配置文件，或者确认请求接口[%s]是否正确", url)
 
-}
-
-// ListenConfigChanged 校验nacos配置
-func ListenConfigChanged(group, dataId string) error {
-	if data, ok := nacosx.GetConfigMonitor().Get(group, dataId); ok {
-		// 将当前最新的content数据同步到servers
-		if err := data.Unmarshal(Gateway); err != nil {
-			return errorx.Wrap(err, "unmarshal error")
-		}
-		// 更新nacos监控中配置值
-		data.SetChanged(false)
-	}
-	return nil
 }
 
 // MatchUrl URL匹配

@@ -29,7 +29,7 @@ type Config struct {
 }
 
 func (m *Config) Format() string {
-	return fmt.Sprintf("host=%s port=%v accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
+	return fmt.Sprintf("host=%s port=%d accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
 }
 
 func (*Config) Reader(from configx.From) configx.Reader {
@@ -39,7 +39,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 			DataId: "minio.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "minio.yaml",
 		}
 	default:
@@ -52,7 +52,7 @@ func (m *Config) Execute() error {
 		log.Error("minio connect failed: ", m.Format(), err)
 		return errorx.Wrap(err, "new minio client failed")
 	} else {
-		_handler = &Handler{config: m, client: client}
+		_client = &Client{config: m, client: client}
 		log.Info("minio connect success: ", m.Format())
 		return nil
 	}

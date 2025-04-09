@@ -35,15 +35,15 @@ func (x Int) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (x *Int) Value(def ...int) int {
+func (x Int) Value(def ...int) int {
 	return x.Int(def...)
 }
 
-func (x *Int) NotNull() bool {
+func (x Int) NotNull() bool {
 	return x.notnull
 }
 
-func (x *Int) String(def ...string) string {
+func (x Int) String(def ...string) string {
 	if x.notnull {
 		return strconv.Itoa(x.value)
 	} else if len(def) > 0 {
@@ -52,7 +52,7 @@ func (x *Int) String(def ...string) string {
 	return ""
 }
 
-func (x *Int) Int(def ...int) int {
+func (x Int) Int(def ...int) int {
 	if x.notnull {
 		return x.value
 	} else if len(def) > 0 {
@@ -61,7 +61,7 @@ func (x *Int) Int(def ...int) int {
 	return 0
 }
 
-func (x *Int) Int64(def ...int64) int64 {
+func (x Int) Int64(def ...int64) int64 {
 	if x.notnull {
 		return int64(x.value)
 	} else if len(def) > 0 {
@@ -70,7 +70,7 @@ func (x *Int) Int64(def ...int64) int64 {
 	return 0
 }
 
-func (x *Int) Float64(def ...float64) float64 {
+func (x Int) Float64(def ...float64) float64 {
 	if x.notnull {
 		return float64(x.value)
 	} else if len(def) > 0 {
@@ -79,7 +79,7 @@ func (x *Int) Float64(def ...float64) float64 {
 	return 0
 }
 
-func (x *Int) Bool(def ...bool) bool {
+func (x Int) Bool(def ...bool) bool {
 	if x.notnull {
 		return x.value == 1
 	} else if len(def) > 0 {

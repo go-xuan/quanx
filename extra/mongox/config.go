@@ -7,12 +7,12 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/types/anyx"
@@ -29,7 +29,8 @@ type Config struct {
 	Database        string `json:"database" yaml:"database"`                                 // 数据库名
 	MaxPoolSize     uint64 `json:"maxPoolSize" yaml:"maxPoolSize"`                           // 连接池最大连接数
 	MinPoolSize     uint64 `json:"minPoolSize" yaml:"minPoolSize"`                           // 连接池最小连接数
-	MaxConnIdleTime int64  `json:"maxConnIdleTime" yaml:"maxConnIdleTime"`                   // 连接池保持空闲连接的最长时间
+	MaxConnIdleTime uint64 `json:"maxConnIdleTime" yaml:"maxConnIdleTime"`                   // 连接池保持空闲连接的最长时间
+	Timeout         uint64 `json:"timeout" yaml:"timeout"`                                   // 超时时间
 }
 
 func (c *Config) Format() string {
@@ -43,7 +44,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 			DataId: "mongo.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "mongo.yaml",
 		}
 	default:
@@ -61,30 +62,19 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "mongo init client error")
 		} else {
 			log.Info("mongo connect success: ", c.Format())
-			if _handler == nil {
-				_handler = &Handler{
-					multi: false, config: c, client: client,
-					configs: make(map[string]*Config),
-					clients: make(map[string]*mongo.Client),
-				}
-			} else {
-				_handler.multi = true
-				if c.Source == constx.DefaultSource {
-					_handler.config = c
-					_handler.client = client
-				}
-			}
-			_handler.configs[c.Source] = c
-			_handler.clients[c.Source] = client
+			AddClient(c, client)
 		}
 	}
 	return nil
 }
 
 func (c *Config) NewClient() (*mongo.Client, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
-	defer cancel()
-
+	ctx := context.TODO()
+	if c.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(c.Timeout)*time.Millisecond)
+		defer cancel()
+	}
 	// 设置连接选项
 	opts := options.Client().ApplyURI(c.URI)
 	if c.Username != "" && c.Password != "" {
@@ -102,9 +92,27 @@ func (c *Config) NewClient() (*mongo.Client, error) {
 		opts.SetMinPoolSize(c.MinPoolSize)
 	}
 	if c.MaxConnIdleTime > 0 {
-		opts.SetMaxConnIdleTime(time.Second * time.Duration(c.MaxConnIdleTime))
+		opts.SetMaxConnIdleTime(time.Duration(c.MaxConnIdleTime) * time.Millisecond)
 	}
 	opts.SetReadPreference(readpref.PrimaryPreferred())
+
+	opts.SetMonitor(&event.CommandMonitor{
+		Started: func(ctx context.Context, startedEvent *event.CommandStartedEvent) {
+			if startedEvent.CommandName != "ping" {
+				log.Info("current mongo command: ", startedEvent.Command)
+			}
+		},
+		Succeeded: func(ctx context.Context, succeededEvent *event.CommandSucceededEvent) {
+			if succeededEvent.CommandName != "ping" {
+				log.Infof("command %s success in %v", succeededEvent.CommandName, succeededEvent.Duration)
+			}
+		},
+		Failed: func(ctx context.Context, failedEvent *event.CommandFailedEvent) {
+			if failedEvent.CommandName != "ping" {
+				log.Errorf("command %s Failed in %v", failedEvent.CommandName, failedEvent.Duration)
+			}
+		},
+	})
 
 	// 建立连接
 	if client, err := mongo.Connect(ctx, opts); err != nil {
@@ -118,10 +126,10 @@ func (c *Config) NewClient() (*mongo.Client, error) {
 
 type MultiConfig []*Config
 
-func (m MultiConfig) Format() string {
+func (list MultiConfig) Format() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
-	for i, config := range m {
+	for i, config := range list {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
@@ -140,7 +148,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 			DataId: "mongo.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "mongo.yaml",
 		}
 	default:
@@ -148,36 +156,17 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (m MultiConfig) Execute() error {
-	if len(m) == 0 {
-		return errorx.New("mongo not connected! cause: mongo.yaml is invalid")
+func (list MultiConfig) Execute() error {
+	if len(list) == 0 {
+		return errorx.New("mongo not initialized! cause: mongo.yaml is invalid")
 	}
-	if _handler == nil {
-		_handler = &Handler{
-			configs: make(map[string]*Config),
-			clients: make(map[string]*mongo.Client),
+	for _, config := range list {
+		if err := config.Execute(); err != nil {
+			return errorx.Wrap(err, "mongo config execute error")
 		}
 	}
-	_handler.multi = true
-	for i, c := range m {
-		if c.Enable {
-			if err := anyx.SetDefaultValue(c); err != nil {
-				return errorx.Wrap(err, "set default value error")
-			}
-			if client, err := c.NewClient(); err != nil {
-				return errorx.Wrap(err, "new mongo client failed")
-			} else {
-				_handler.clients[c.Source] = client
-				_handler.configs[c.Source] = c
-				if i == 0 || c.Source == constx.DefaultSource {
-					_handler.client = client
-					_handler.config = c
-				}
-			}
-		}
-	}
-	if len(_handler.configs) == 0 {
-		log.Error("mongo not connected! cause: mongo.yaml is empty or no enabled source")
+	if !Initialized() {
+		log.Error("mongo not initialized! cause: no enabled source")
 	}
 	return nil
 }

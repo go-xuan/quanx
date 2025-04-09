@@ -9,7 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/types/anyx"
@@ -25,7 +24,7 @@ type Config struct {
 }
 
 func (c *Config) Format() string {
-	return fmt.Sprintf("host=%s port=%v", c.Host, c.Port)
+	return fmt.Sprintf("host=%s port=%d", c.Host, c.Port)
 }
 
 func (c *Config) Reader(from configx.From) configx.Reader {
@@ -35,7 +34,7 @@ func (c *Config) Reader(from configx.From) configx.Reader {
 			DataId: "elastic.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "elastic.yaml",
 		}
 	default:
@@ -49,24 +48,11 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "set default value error")
 		}
 		if client, err := c.NewClient(); err != nil {
-			return errorx.Wrap(err, "elasticx new client error")
+			log.Error("elastic-search connect failed: ", c.Format())
+			return errorx.Wrap(err, "new elasticx client error")
 		} else {
-			log.Info("elastic-search connect success: ", c.Format())
-			if _handler == nil {
-				_handler = &Handler{
-					multi: false, config: c, client: client,
-					configs: make(map[string]*Config),
-					clients: make(map[string]*elastic.Client),
-				}
-			} else {
-				_handler.multi = true
-				if c.Source == constx.DefaultSource {
-					_handler.config = c
-					_handler.client = client
-				}
-			}
-			_handler.configs[c.Source] = c
-			_handler.clients[c.Source] = client
+			log.Info("elastic-search connect success:", c.Format())
+			AddClient(c, client)
 		}
 	}
 	return nil
@@ -85,7 +71,7 @@ func (c *Config) NewClient() (*elastic.Client, error) {
 	var result *elastic.PingResult
 	var code int
 	if result, code, err = client.Ping(url).Do(context.Background()); err != nil || code != 200 {
-		return nil, errorx.Wrap(err, "elastic ping failed")
+		return nil, errorx.Wrap(err, "elastic-search ping failed")
 	}
 	log.Info("elastic-search version: ", result.Version.Number)
 	return client, nil
@@ -93,10 +79,10 @@ func (c *Config) NewClient() (*elastic.Client, error) {
 
 type MultiConfig []*Config
 
-func (m MultiConfig) Format() string {
+func (list MultiConfig) Format() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
-	for i, config := range m {
+	for i, config := range list {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
@@ -115,7 +101,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 			DataId: "elastic.yaml",
 		}
 	case configx.FromLocal:
-		return &configx.LocalFileReader{
+		return &configx.LocalReader{
 			Name: "elastic.yaml",
 		}
 	default:
@@ -123,36 +109,17 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (m MultiConfig) Execute() error {
-	if len(m) == 0 {
-		return errorx.New("elastic not connected! cause: elastic.yaml is invalid")
+func (list MultiConfig) Execute() error {
+	if len(list) == 0 {
+		return errorx.New("elastic-search not initialized! cause: elastic.yaml is invalid")
 	}
-	if _handler == nil {
-		_handler = &Handler{
-			configs: make(map[string]*Config),
-			clients: make(map[string]*elastic.Client),
+	for _, config := range list {
+		if err := config.Execute(); err != nil {
+			return errorx.Wrap(err, "elastic config execute error")
 		}
 	}
-	_handler.multi = true
-	for i, c := range m {
-		if c.Enable {
-			if err := anyx.SetDefaultValue(c); err != nil {
-				return errorx.Wrap(err, "set default value error")
-			}
-			if client, err := c.NewClient(); err != nil {
-				return errorx.Wrap(err, "new elastic client failed")
-			} else {
-				_handler.clients[c.Source] = client
-				_handler.configs[c.Source] = c
-				if i == 0 || c.Source == constx.DefaultSource {
-					_handler.client = client
-					_handler.config = c
-				}
-			}
-		}
-	}
-	if len(_handler.configs) == 0 {
-		log.Error("elastic not connected! cause: elastic.yaml is empty or no enabled source")
+	if !Initialized() {
+		log.Error("elastic-search not initialized! cause: no enabled source")
 	}
 	return nil
 }

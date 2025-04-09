@@ -1,4 +1,4 @@
-package encryptx
+package cryptx
 
 import (
 	"crypto/aes"
@@ -27,7 +27,8 @@ type Aes struct {
 
 func AES() *Aes {
 	if _aes == nil {
-		if _, err := NewAes(randx.String(aes.BlockSize), randx.String(aes.BlockSize)); err != nil {
+		key, iv := randx.String(aes.BlockSize), randx.String(aes.BlockSize)
+		if _, err := NewAes(key, iv); err != nil {
 			panic(err)
 		}
 	}
@@ -39,8 +40,8 @@ func NewAes(key, iv string) (*Aes, error) {
 	if err != nil {
 		return nil, errorx.Wrap(err, "new cipher error")
 	}
-	if size := block.BlockSize(); size != len(iv) {
-		return nil, errorx.Errorf("iv length must equal to the block size: %d", size)
+	if size := block.BlockSize(); size != aes.BlockSize {
+		return nil, errorx.Errorf("the block size error:%d", size)
 	}
 	if _aes == nil {
 		_aes = &Aes{

@@ -46,7 +46,11 @@ func (opt *stringOption) Name() string {
 }
 
 func (opt *stringOption) Usage() string {
-	return fmt.Sprintf("%s | default: %s", opt.usage, opt.def)
+	if opt.def != "" {
+		return fmt.Sprintf("%s | default: %s", opt.usage, opt.def)
+	} else {
+		return opt.usage
+	}
 }
 
 func (opt *stringOption) Add(fs *flag.FlagSet) {
@@ -69,7 +73,11 @@ func (opt *intOption) Name() string {
 }
 
 func (opt *intOption) Usage() string {
-	return fmt.Sprintf("%s | default: %d", opt.usage, opt.def)
+	if opt.def == 0 {
+		return fmt.Sprintf("%s | default: %d", opt.usage, opt.def)
+	} else {
+		return opt.usage
+	}
 }
 
 func (opt *intOption) Add(fs *flag.FlagSet) {
@@ -92,7 +100,11 @@ func (opt *int64Option) Name() string {
 }
 
 func (opt *int64Option) Usage() string {
-	return fmt.Sprintf("%s | default: %d", opt.usage, opt.def)
+	if opt.def == 0 {
+		return fmt.Sprintf("%s | default: %d", opt.usage, opt.def)
+	} else {
+		return opt.usage
+	}
 }
 
 func (opt *int64Option) Add(fs *flag.FlagSet) {
@@ -115,7 +127,11 @@ func (opt *boolOption) Name() string {
 }
 
 func (opt *boolOption) Usage() string {
-	return fmt.Sprintf("%s | default: %v", opt.usage, opt.def)
+	if opt.def {
+		return fmt.Sprintf("%s | default: %v", opt.usage, opt.def)
+	} else {
+		return opt.usage
+	}
 }
 
 func (opt *boolOption) Add(fs *flag.FlagSet) {
@@ -138,7 +154,11 @@ func (opt *floatOption) Name() string {
 }
 
 func (opt *floatOption) Usage() string {
-	return fmt.Sprintf("%s | default: %f", opt.usage, opt.def)
+	if opt.def == float64(0) {
+		return fmt.Sprintf("%s | default: %f", opt.usage, opt.def)
+	} else {
+		return opt.usage
+	}
 }
 
 func (opt *floatOption) Add(fs *flag.FlagSet) {

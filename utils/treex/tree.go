@@ -1,7 +1,10 @@
 package treex
 
+import "github.com/go-xuan/quanx/types/stringx"
+
 // NodeList 树形结构
 type NodeList[T any] []*Node[T]
+
 type Node[T any] struct {
 	Id    string      `json:"id"`
 	Pid   string      `json:"pid"`
@@ -10,11 +13,8 @@ type Node[T any] struct {
 }
 
 // Convert2Tree 数组转树形结构
-func (list NodeList[T]) Convert2Tree(rootId ...string) NodeList[T] {
-	var pid = "0"
-	if len(rootId) > 0 {
-		pid = rootId[0]
-	}
+func (list NodeList[T]) Convert2Tree(root ...string) NodeList[T] {
+	var pid = stringx.Default("0", root...)
 	nodeMap := make(map[string]NodeList[T])
 	for _, item := range list {
 		nodeMap[item.Pid] = append(nodeMap[item.Pid], item)
