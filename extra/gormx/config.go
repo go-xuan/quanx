@@ -52,7 +52,7 @@ func (c *Config) Copy() *Config {
 	}
 }
 
-func (c *Config) Format() string {
+func (c *Config) Info() string {
 	return fmt.Sprintf("source=%s type=%s host=%s port=%d database=%s debug=%v",
 		c.Source, c.Type, c.Host, c.Port, c.Database, c.Debug)
 }
@@ -72,23 +72,17 @@ func (*Config) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (c *Config) FileReader() configx.Reader {
-	return &configx.LocalReader{
-		Name: "database.yaml",
-	}
-}
-
 func (c *Config) Execute() error {
 	if c.Enable {
 		if err := anyx.SetDefaultValue(c); err != nil {
 			return errorx.Wrap(err, "set default value error")
 		}
 		if db, err := c.NewGormDB(); err != nil {
-			log.Error("database connect failed: ", c.Format())
+			log.Error("database connect failed: ", c.Info())
 			return errorx.Wrap(err, "new gorm db error")
 		} else {
 			AddClient(c, db)
-			log.Info("database connect success: ", c.Format())
+			log.Info("database connect success: ", c.Info())
 		}
 	}
 	return nil
@@ -159,7 +153,7 @@ func (c *Config) GetGormDB() (*gorm.DB, error) {
 // MultiConfig 数据库多数据源配置
 type MultiConfig []*Config
 
-func (list MultiConfig) Format() string {
+func (list MultiConfig) Info() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
 	for i, config := range list {
@@ -167,7 +161,7 @@ func (list MultiConfig) Format() string {
 			sb.WriteString(", ")
 		}
 		sb.WriteString("{")
-		sb.WriteString(config.Format())
+		sb.WriteString(config.Info())
 		sb.WriteString("}")
 	}
 	sb.WriteString("]")
@@ -191,7 +185,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 
 func (list MultiConfig) Execute() error {
 	if len(list) == 0 {
-		return errorx.New("database not initialized! cause: database.yaml is invalid")
+		return errorx.New("database not initialized! database.yaml is invalid")
 	}
 	for _, config := range list {
 		if err := config.Execute(); err != nil {
@@ -199,7 +193,7 @@ func (list MultiConfig) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("database not initialized! cause: no enabled source")
+		log.Error("database not initialized! no enabled source")
 	}
 	return nil
 }

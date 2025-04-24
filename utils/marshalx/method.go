@@ -1,6 +1,7 @@
 package marshalx
 
 import (
+	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/filex"
 	"github.com/go-xuan/quanx/types/stringx"
 )
@@ -29,8 +30,6 @@ func Apply(name string) Method {
 		name = filex.GetSuffix(name)
 	}
 	switch name {
-	case jsonMethod:
-		return Json("    ")
 	case ymlMethod, yamlMethod:
 		return Yaml()
 	case tomlMethod:
@@ -39,6 +38,8 @@ func Apply(name string) Method {
 		return Properties()
 	case msgpackMethod:
 		return Msgpack()
+	case jsonMethod:
+		return Json("    ")
 	default:
 		return Json()
 	}
@@ -65,4 +66,14 @@ func Properties() Method {
 
 func Msgpack() Method {
 	return msgpackImpl{}
+}
+
+func readFile(path string) ([]byte, error) {
+	if !filex.Exists(path) {
+		return nil, errorx.Errorf("the file not exist: %s", filex.Pwd(path))
+	} else if data, err := filex.ReadFile(path); err != nil {
+		return nil, errorx.Wrap(err, "read file error")
+	} else {
+		return data, nil
+	}
 }

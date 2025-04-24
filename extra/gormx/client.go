@@ -23,10 +23,10 @@ func (c *Client) Copy(target, database string) (*Client, error) {
 	config.Source = target
 	config.Database = database
 	if db, err := config.NewGormDB(); err != nil {
-		log.Error("database connect failed: ", config.Format())
+		log.Error("database connect failed: ", config.Info())
 		return nil, err
 	} else {
-		log.Info("database connect success: ", config.Format())
+		log.Info("database connect success: ", config.Info())
 		return &Client{config: config, db: db}, nil
 	}
 }

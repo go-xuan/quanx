@@ -33,17 +33,21 @@ type Config struct {
 	Mode      int    `yaml:"mode" json:"mode" default:"2"`                    // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 }
 
-func (c *Config) Format() string {
+func (c *Config) Info() string {
 	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%d",
 		c.AddressUrl(), c.Username, c.Password, c.NameSpace, c.Mode)
 }
 
 func (*Config) Reader(from configx.From) configx.Reader {
-	if from == configx.FromDefault {
+	switch from {
+	case configx.FromEnv:
+		return &configx.EnvReader{}
+	case configx.FromLocal:
+		return &configx.LocalReader{
+			Name: "nacos.yaml",
+		}
+	default:
 		return nil
-	}
-	return &configx.LocalReader{
-		Name: "nacos.yaml",
 	}
 }
 
@@ -77,7 +81,7 @@ func (c *Config) Execute() error {
 			}
 		}
 	}
-	log.Info("nacos connect success: ", c.Format())
+	log.Info("nacos connect success: ", c.Info())
 	return nil
 }
 
@@ -134,7 +138,7 @@ func (c *Config) ClientParam() vo.NacosClientParam {
 // ConfigClient 初始化Nacos配置中心客户端
 func (c *Config) ConfigClient(param vo.NacosClientParam) (config_client.IConfigClient, error) {
 	if client, err := clients.NewConfigClient(param); err != nil {
-		log.WithField("format", c.Format()).Error("nacos config client init failed: ", err)
+		log.WithField("format", c.Info()).Error("nacos config client init failed: ", err)
 		return nil, errorx.Wrap(err, "nacos config client init failed")
 	} else {
 		return client, nil
@@ -144,7 +148,7 @@ func (c *Config) ConfigClient(param vo.NacosClientParam) (config_client.IConfigC
 // NamingClient 初始化Nacos服务发现客户端
 func (c *Config) NamingClient(param vo.NacosClientParam) (naming_client.INamingClient, error) {
 	if client, err := clients.NewNamingClient(param); err != nil {
-		log.WithField("format", c.Format()).Error("nacos naming client init failed: ", err)
+		log.WithField("format", c.Info()).Error("nacos naming client init failed: ", err)
 		return nil, errorx.Wrap(err, "nacos naming client init failed")
 	} else {
 		return client, nil

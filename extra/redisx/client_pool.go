@@ -7,7 +7,6 @@ import (
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/types/enumx"
-	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -34,7 +33,12 @@ func AddClient(config *Config, client redis.UniversalClient) {
 
 // GetClient 获取客户端
 func GetClient(source ...string) *Client {
-	return this().Get(stringx.Default(constx.DefaultSource, source...))
+	if len(source) > 0 && source[0] != "" {
+		if client := this().Get(source[0]); client != nil {
+			return client
+		}
+	}
+	return this().Get(constx.DefaultSource)
 }
 
 // GetConfig 获取配置

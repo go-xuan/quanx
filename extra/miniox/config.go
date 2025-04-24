@@ -28,7 +28,7 @@ type Config struct {
 	Expire       int64  `yaml:"expire" json:"expire"`             // 下载链接有效时长(分钟)
 }
 
-func (m *Config) Format() string {
+func (m *Config) Info() string {
 	return fmt.Sprintf("host=%s port=%d accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
 }
 
@@ -49,11 +49,11 @@ func (*Config) Reader(from configx.From) configx.Reader {
 
 func (m *Config) Execute() error {
 	if client, err := m.NewClient(); err != nil {
-		log.Error("minio connect failed: ", m.Format(), err)
+		log.Error("minio connect failed: ", m.Info(), err)
 		return errorx.Wrap(err, "new minio client failed")
 	} else {
 		_client = &Client{config: m, client: client}
-		log.Info("minio connect success: ", m.Format())
+		log.Info("minio connect success: ", m.Info())
 		return nil
 	}
 }

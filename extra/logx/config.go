@@ -16,20 +16,29 @@ import (
 
 // 日志级别
 const (
-	TraceLevel = "trace"
-	DebugLevel = "debug"
-	InfoLevel  = "info"
-	ErrorLevel = "error"
-	FatalLevel = "fatal"
-	PanicLevel = "panic"
+	LevelTrace = "trace"
+	LevelDebug = "debug"
+	LevelInfo  = "info"
+	LevelError = "error"
+	LevelFatal = "fatal"
+	LevelPanic = "panic"
 
-	defaultWriterType = "default" // Console
-	fileWriterType    = "file"    // file
-	mongoWriterType   = "mongo"   // Mongo
-	eSOutWriterType   = "es"      // Elasticsearch
+	WriterDefault = "default" // Console
+	WriterFile    = "file"    // file
+	WriterMongo   = "mongo"   // Mongo
+	WriterES      = "es"      // Elasticsearch
 
 	logWriterSource = "log"
+
+	FormatterText = "text"
+	FormatterJson = "json"
 )
+
+func init() {
+	if err := (&Config{}).Execute(); err != nil {
+		panic(err)
+	}
+}
 
 // Config 日志配置
 type Config struct {
@@ -44,9 +53,8 @@ type Config struct {
 	File       *FileWriterConfig `json:"file" yaml:"file"`                                               // 日志输出到文件
 }
 
-func (c *Config) Format() string {
-	return fmt.Sprintf("level=%s formatter=%s writer=%s",
-		c.Level, c.Formatter, c.Writer)
+func (c *Config) Info() string {
+	return fmt.Sprintf("level=%s formatter=%s writer=%s writers=%v", c.Level, c.Formatter, c.Writer, c.Writers)
 }
 
 func (*Config) Reader(from configx.From) configx.Reader {
@@ -78,11 +86,11 @@ func (c *Config) Execute() error {
 
 func (c *Config) initFile() {
 	var needFile bool
-	if c.Writer == fileWriterType {
+	if c.Writer == WriterFile {
 		needFile = true
 	} else if len(c.Writers) > 0 {
 		for _, writer := range c.Writers {
-			if writer == fileWriterType {
+			if writer == WriterFile {
 				needFile = true
 			}
 		}
@@ -96,7 +104,7 @@ func (c *Config) initFile() {
 func (c *Config) LogFormatter() log.Formatter {
 	host, _ := os.Hostname()
 	switch c.Formatter {
-	case "json":
+	case FormatterJson:
 		return &jsonFormatter{
 			timeFormat: c.TimeFormat,
 			hostname:   host,
@@ -105,20 +113,20 @@ func (c *Config) LogFormatter() log.Formatter {
 		return &textFormatter{
 			timeFormat: c.TimeFormat,
 			hostname:   host,
-			color:      c.Writer == defaultWriterType && c.Color,
+			color:      c.Writer == WriterDefault && c.Color,
 		}
 	}
 }
 
 func (c *Config) NewWriter() io.Writer {
 	switch c.Writer {
-	case fileWriterType:
+	case WriterFile:
 		return NewFileWriter(c.File)
-	case mongoWriterType:
+	case WriterMongo:
 		if writer, err := NewMongoWriter(c.Name); writer != nil && err == nil {
 			return writer
 		}
-	case eSOutWriterType:
+	case WriterES:
 		if writer, err := NewElasticSearchWriter(c.Name); writer != nil && err == nil {
 			return writer
 		}
@@ -134,20 +142,16 @@ func (c *Config) NewWriters() map[log.Level]io.Writer {
 		}
 		level := ToLogrusLevel(lv)
 		switch writerType {
-		case fileWriterType:
+		case WriterFile:
 			writers[level] = NewFileWriter(c.File, lv)
-		case mongoWriterType:
+		case WriterMongo:
 			if writer, err := NewMongoWriter(c.Name); writer != nil && err == nil {
 				writers[level] = writer
 			}
-		case eSOutWriterType:
+		case WriterES:
 			if writer, err := NewElasticSearchWriter(c.Name); writer != nil && err == nil {
 				writers[level] = writer
 			}
-		}
-		// 保底
-		if _, ok := writers[level]; !ok {
-			writers[level] = DefaultWriter()
 		}
 	}
 	return writers
@@ -168,17 +172,17 @@ func (c *Config) GetLogrusLevel() log.Level {
 // ToLogrusLevel 日志级别映射，默认debug
 func ToLogrusLevel(level string) log.Level {
 	switch strings.ToLower(level) {
-	case TraceLevel:
+	case LevelTrace:
 		return log.TraceLevel
-	case DebugLevel:
+	case LevelDebug:
 		return log.DebugLevel
-	case InfoLevel:
+	case LevelInfo:
 		return log.InfoLevel
-	case ErrorLevel:
+	case LevelError:
 		return log.ErrorLevel
-	case FatalLevel:
+	case LevelFatal:
 		return log.FatalLevel
-	case PanicLevel:
+	case LevelPanic:
 		return log.PanicLevel
 	default:
 		return log.DebugLevel

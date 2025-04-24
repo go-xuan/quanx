@@ -6,7 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/base/ipx"
+	"github.com/go-xuan/quanx/base/osx"
 	"github.com/go-xuan/quanx/extra/redisx"
 )
 
@@ -19,7 +19,7 @@ func LockWarp(name, spec string, job func(context.Context)) func(context.Context
 		var logger = log.WithField("job_name", name).WithField("job_spec", spec)
 		var key = "cron_job_lock:" + name
 		var expiration = ParseDurationBySpec(spec) - time.Millisecond
-		var host = ipx.GetLocalIP()
+		var host = osx.GetLocalIP()
 		if ok, err := redisx.GetInstance().SetNX(ctx, key, host, expiration).Result(); ok && err == nil { // 获取到锁才执行
 			logger.WithField("host", host).Info("ready to execute")
 			job(ctx) // 执行

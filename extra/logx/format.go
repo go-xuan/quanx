@@ -4,19 +4,25 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/base/fmtx"
+	"github.com/go-xuan/quanx/base/osx"
 )
 
+func DefaultJsonFormatter() log.Formatter {
+	return &jsonFormatter{
+		timeFormat: "2006-01-02 15:04:05.999", // 默认2006-01-02 15:04:05.999
+		hostname:   osx.Hostname(),            // 默认当前主机名
+	}
+}
+
 func DefaultFormatter() log.Formatter {
-	hostname, _ := os.Hostname()
 	return &textFormatter{
 		timeFormat: "2006-01-02 15:04:05.999", // 默认2006-01-02 15:04:05.999
-		hostname:   hostname,                  // 默认当前主机名
+		hostname:   osx.Hostname(),            // 默认当前主机名
 		color:      true,                      // 默认使用颜色
 	}
 }

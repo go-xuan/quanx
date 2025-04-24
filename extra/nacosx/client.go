@@ -44,15 +44,18 @@ func (c *Client) NamingClient() naming_client.INamingClient {
 }
 
 // ReadConfig 从nacos读取配置
-func ReadConfig(v any, group, dataId string, listen ...bool) error {
+func ReadConfig(config any, group, dataId string, listen ...bool) error {
 	var reader = &Reader{
 		Group:  group,
 		DataId: dataId,
 		Type:   filex.GetSuffix(dataId),
 		Listen: anyx.Default(false, listen...),
 	}
-	if err := reader.ReadConfig(v); err != nil {
-		return errorx.Wrap(err, "nacos config scan failed")
+	if err := reader.Check(config); err != nil {
+		return errorx.Wrap(err, "check nacos config error")
+	}
+	if err := reader.Read(config); err != nil {
+		return errorx.Wrap(err, "read nacos config error")
 	}
 	return nil
 }

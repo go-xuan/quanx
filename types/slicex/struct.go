@@ -70,7 +70,7 @@ func PtrSliceGroupByField[T any](PtrSlice []*T, field string) map[string][]*T {
 		return nil
 	}
 	if reflect.ValueOf(PtrSlice[0]).Kind() != reflect.Pointer {
-		panic("the type of the slice element must be pointer")
+		panic("the slice element kind must be pointer")
 	}
 	var result = make(map[string][]*T)
 	for _, ptr := range PtrSlice {
@@ -87,7 +87,7 @@ func PtrSliceGroupByIndex[T any](PtrSlice []*T, index int) map[string][]*T {
 		return nil
 	}
 	if reflect.ValueOf(PtrSlice[0]).Kind() != reflect.Pointer {
-		panic("the type of the slice element must be pointer")
+		panic("the slice element kind must be pointer")
 	}
 	var result = make(map[string][]*T)
 	for _, ptr := range PtrSlice {

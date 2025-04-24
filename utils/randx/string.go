@@ -81,8 +81,7 @@ func UUID() string {
 // Name 随机姓名
 func Name() string {
 	second := StringFrom(numberCn, shengXiao)
-	name := Split(surname, ",")
-	name = name + Split(second, ",")
+	name := Split(surname, ",") + Split(second, ",")
 	if Bool() {
 		third := StringFrom(numberCn, shengXiao)
 		name = name + Split(third, ",")
@@ -146,7 +145,11 @@ func Email() string {
 }
 
 func IP() string {
-	return fmt.Sprintf("%d.%d.%d.%d", IntRange(1, 255), IntRange(0, 255), IntRange(0, 255), IntRange(0, 255))
+	return fmt.Sprintf("%d.%d.%d.%d",
+		IntRange(1, 255),
+		IntRange(0, 255),
+		IntRange(0, 255),
+		IntRange(0, 255))
 }
 
 func Province() string {

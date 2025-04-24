@@ -74,26 +74,30 @@ func (w *MongoWriter) Write(bytes []byte) (int, error) {
 
 // NewMongoWriter 初始化mongo写入
 func NewMongoWriter(collection string) (io.Writer, error) {
-	if client := mongox.GetClient(logWriterSource); client != nil {
-		return &MongoWriter{
-			database:   mongox.GetConfig(logWriterSource).Database,
-			collection: collection,
-			client:     client.Instance(),
-		}, nil
+	if mongox.Initialized() {
+		if client := mongox.GetClient(logWriterSource); client != nil {
+			return &MongoWriter{
+				database:   client.Config().Database,
+				collection: collection,
+				client:     client.Instance(),
+			}, nil
+		}
 	}
 	return nil, nil
 }
 
 func NewElasticSearchWriter(index string) (io.Writer, error) {
-	if client := elasticx.GetClient(logWriterSource); client != nil {
-		ctx := context.TODO()
-		if exist, err := client.Instance().IndexExists(index).Do(ctx); err != nil || !exist {
-			_, _ = client.CreateIndex(ctx, index)
+	if elasticx.Initialized() {
+		if client := elasticx.GetClient(logWriterSource); client != nil {
+			ctx := context.TODO()
+			if exist, err := client.Instance().IndexExists(index).Do(ctx); err != nil || !exist {
+				_, _ = client.CreateIndex(ctx, index)
+			}
+			return &ElasticSearchWriter{
+				index:  index,
+				client: client.Instance(),
+			}, nil
 		}
-		return &ElasticSearchWriter{
-			index:  index,
-			client: client.Instance(),
-		}, nil
 	}
 	return nil, nil
 }

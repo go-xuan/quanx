@@ -38,7 +38,7 @@ type Config struct {
 	Graph string `json:"graph" yaml:"graph" default:"hugegraph"` // 图名称
 }
 
-func (c *Config) Format() string {
+func (c *Config) Info() string {
 	return fmt.Sprintf("host=%s port=%d graph=%s", c.Host, c.Port, c.Graph)
 }
 
@@ -62,7 +62,7 @@ func (c *Config) Execute() error {
 		return errorx.Wrap(err, "set default value error")
 	}
 	if ok, err := c.Ping(); !ok || err != nil {
-		log.WithError(err).Error("hugegraph connect failed: ", c.Format())
+		log.WithError(err).Error("hugegraph connect failed: ", c.Info())
 		return err
 	}
 	_client = &Client{
@@ -70,7 +70,7 @@ func (c *Config) Execute() error {
 		gremlinUrl: fmt.Sprintf("http://%s:%d/gremlin", c.Host, c.Port),
 		schemaUrl:  fmt.Sprintf("http://%s:%d/graphs/%s/schema/", c.Host, c.Port, c.Graph),
 	}
-	log.Info("hugegraph connect success: ", c.Format())
+	log.Info("hugegraph connect success: ", c.Info())
 	return nil
 }
 
@@ -95,7 +95,7 @@ func (c *Config) Ping() (bool, error) {
 			WithField("core", resp.Versions.Core).
 			WithField("gremlin", resp.Versions.Gremlin).
 			WithField("api", resp.Versions.Api).
-			Info("ping success: ", c.Format())
+			Info("ping success: ", c.Info())
 		return true, nil
 	}
 }

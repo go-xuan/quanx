@@ -1,27 +1,36 @@
 package anyx
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
-	
+
+	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/types/boolx"
+	"github.com/go-xuan/quanx/types/stringx"
 )
+
+func MustStructPointer(v any) error {
+	var typeOf = reflect.TypeOf(v)
+	if typeOf.Kind() != reflect.Pointer {
+		return errorx.New("the kind must be pointer")
+	} else if typeOf.Elem().Kind() == reflect.Slice {
+		return errorx.New("the kind cannot be slice")
+	}
+	return nil
+}
 
 // SetDefaultValue 设置默认值
 func SetDefaultValue(v interface{}, tag ...string) error {
-	valueRef, key := reflect.ValueOf(v), "default"
-	if len(tag) > 0 && tag[0] != "" {
-		key = tag[0]
+	if err := MustStructPointer(v); err != nil {
+		return errorx.New("the kind must be struct pointer")
 	}
-	if valueRef.Type().Kind() != reflect.Ptr {
-		return errors.New("param must be pointer type")
-	}
-	for i := 0; i < valueRef.Elem().NumField(); i++ {
-		field := valueRef.Elem().Field(i)
+	var elem = reflect.ValueOf(v).Elem()
+	key := stringx.Default("default", tag...)
+	for i := 0; i < elem.NumField(); i++ {
+		field := elem.Field(i)
 		if field.IsZero() {
-			if value := valueRef.Elem().Type().Field(i).Tag.Get(key); value != "" {
+			if value := elem.Type().Field(i).Tag.Get(key); value != "" {
 				switch field.Kind() {
 				case reflect.String:
 					field.SetString(value)

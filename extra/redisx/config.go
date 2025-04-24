@@ -51,7 +51,7 @@ func (c *Config) Copy() *Config {
 	}
 }
 
-func (c *Config) Format() string {
+func (c *Config) Info() string {
 	return fmt.Sprintf("source=%s host=%s port=%d database=%d mode=%d",
 		c.Source, c.Host, c.Port, c.Database, c.Mode)
 }
@@ -77,11 +77,11 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "set default value error")
 		}
 		if client, err := c.NewRedisClient(); err != nil {
-			log.Error("redis connect failed: ", c.Format())
+			log.Error("redis connect failed: ", c.Info())
 			return errorx.Wrap(err, "redis init error")
 		} else {
 			AddClient(c, client)
-			log.Info("redis connect success: ", c.Format())
+			log.Info("redis connect success: ", c.Info())
 		}
 	}
 	return nil
@@ -121,7 +121,7 @@ func (c *Config) NewRedisClient() (redis.UniversalClient, error) {
 		return nil, errors.New("redis mode is invalid")
 	}
 	if result, err := client.Ping(context.TODO()).Result(); err != nil || result != "PONG" {
-		log.Error("client ping failed: ", c.Format())
+		log.Error("client ping failed: ", c.Info())
 		return client, errorx.Wrap(err, "client ping error")
 	}
 	return client, nil
@@ -130,7 +130,7 @@ func (c *Config) NewRedisClient() (redis.UniversalClient, error) {
 // MultiConfig redis多连接配置
 type MultiConfig []*Config
 
-func (list MultiConfig) Format() string {
+func (list MultiConfig) Info() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
 	for i, config := range list {
@@ -138,7 +138,7 @@ func (list MultiConfig) Format() string {
 			sb.WriteString(", ")
 		}
 		sb.WriteString("{")
-		sb.WriteString(config.Format())
+		sb.WriteString(config.Info())
 		sb.WriteString("}")
 	}
 	sb.WriteString("]")
@@ -162,7 +162,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 
 func (list MultiConfig) Execute() error {
 	if len(list) == 0 {
-		return errorx.New("redis not initialized! cause: redis.yaml is invalid")
+		return errorx.New("redis not initialized, redis.yaml is invalid")
 	}
 	for _, config := range list {
 		if err := config.Execute(); err != nil {
@@ -170,7 +170,7 @@ func (list MultiConfig) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("redis not initialized! cause: no enabled source")
+		log.Error("redis not initialized,  no enabled source")
 	}
 	return nil
 }

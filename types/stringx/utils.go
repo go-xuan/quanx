@@ -269,10 +269,10 @@ func HasEmpty(str ...string) bool {
 
 // Default 用于函数中的不定参数取默认值
 func Default(def string, x ...string) string {
-	if len(x) == 0 {
-		return def
-	} else {
+	if len(x) > 0 && x[0] != "" {
 		return x[0]
+	} else {
+		return def
 	}
 }
 
@@ -468,4 +468,22 @@ func minInThree(a, b, c int) int {
 		return b
 	}
 	return c
+}
+
+// MatchUrl URL匹配
+func MatchUrl(uri, rule string) bool {
+	if rule == "*" || rule == "/*" {
+		return true
+	} else if strings.HasSuffix(rule, `/**`) {
+		return strings.HasPrefix(uri, rule[:len(rule)-3])
+	} else if strings.HasSuffix(rule, `/*`) {
+		prefix := rule[:len(rule)-2]
+		if strings.HasPrefix(uri, prefix) {
+			uri = uri[len(prefix):]
+			return Index(uri, `/`) < 0
+		}
+	} else {
+		return Index(uri, rule) >= 0
+	}
+	return false
 }

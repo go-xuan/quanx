@@ -206,7 +206,7 @@ func (e *CornEntry) Run() {
 
 // Info 获取定时任务信息
 func (e *CornEntry) Info() string {
-	return fmt.Sprintf("id:%-50s spec:%-20s prev:%s   next:%s",
+	return fmt.Sprintf("name:%-50s spec:%-20s prev:%s next:%s",
 		e.name, e.spec,
 		e.Prev.Format("2006-01-02 15:04:05"),
 		e.Next.Format("2006-01-02 15:04:05"),

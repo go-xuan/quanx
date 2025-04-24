@@ -27,16 +27,14 @@ func (j jsonImpl) Unmarshal(data []byte, v interface{}) error {
 }
 
 func (j jsonImpl) Read(path string, v interface{}) error {
-	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %s", filex.Pwd(path))
-	} else if data, err := filex.ReadFile(path); err != nil {
+	if data, err := readFile(path); err != nil {
 		return errorx.Wrap(err, "read file error")
 	} else {
 		return j.Unmarshal(data, v)
 	}
 }
 
-// WriteJson 写入json文件
+// Write 写入json文件
 func (j jsonImpl) Write(path string, v interface{}) error {
 	if data, err := json.Marshal(v); err != nil {
 		return errorx.Wrap(err, "json marshal error")

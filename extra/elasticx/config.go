@@ -23,7 +23,7 @@ type Config struct {
 	Index  []string `yaml:"index" json:"index"`                     // 索引
 }
 
-func (c *Config) Format() string {
+func (c *Config) Info() string {
 	return fmt.Sprintf("host=%s port=%d", c.Host, c.Port)
 }
 
@@ -48,10 +48,10 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "set default value error")
 		}
 		if client, err := c.NewClient(); err != nil {
-			log.Error("elastic-search connect failed: ", c.Format())
+			log.Error("elastic-search connect failed: ", c.Info())
 			return errorx.Wrap(err, "new elasticx client error")
 		} else {
-			log.Info("elastic-search connect success:", c.Format())
+			log.Info("elastic-search connect success:", c.Info())
 			AddClient(c, client)
 		}
 	}
@@ -79,7 +79,7 @@ func (c *Config) NewClient() (*elastic.Client, error) {
 
 type MultiConfig []*Config
 
-func (list MultiConfig) Format() string {
+func (list MultiConfig) Info() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
 	for i, config := range list {
@@ -87,7 +87,7 @@ func (list MultiConfig) Format() string {
 			sb.WriteString(", ")
 		}
 		sb.WriteString("{")
-		sb.WriteString(config.Format())
+		sb.WriteString(config.Info())
 		sb.WriteString("}")
 	}
 	sb.WriteString("]")
@@ -111,7 +111,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 
 func (list MultiConfig) Execute() error {
 	if len(list) == 0 {
-		return errorx.New("elastic-search not initialized! cause: elastic.yaml is invalid")
+		return errorx.New("elastic-search not initialized, elastic.yaml is invalid")
 	}
 	for _, config := range list {
 		if err := config.Execute(); err != nil {
@@ -119,7 +119,7 @@ func (list MultiConfig) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("elastic-search not initialized! cause: no enabled source")
+		log.Error("elastic-search not initialized, no enabled source")
 	}
 	return nil
 }
