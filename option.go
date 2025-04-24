@@ -9,14 +9,9 @@ import (
 type Option uint
 
 const (
-	enableDebug   Option = iota // debug模式
-	enableNacos                 // 启用nacos
-	multiDatabase               // 开启多数据源
-	multiRedis                  // 开启多redis源
-	multiCache                  // 开启多缓存源
-	enableQueue                 // 使用队列任务启动
-	customPort                  // 自定义端口
-	running                     // 正在运行中
+	enableDebug Option = iota // debug模式
+	customPort                // 自定义端口
+	running                   // 正在运行中
 )
 
 type EngineOptionFunc = func(e *Engine)
@@ -40,9 +35,9 @@ func SetConfigDir(dir string) EngineOptionFunc {
 }
 
 // SetConfig 自定义应用配置
-func SetConfig(cof *Config) EngineOptionFunc {
+func SetConfig(config *Config) EngineOptionFunc {
 	return func(e *Engine) {
-		e.config = cof
+		e.config = config
 	}
 }
 
@@ -54,7 +49,7 @@ func AddConfigurator(configurators ...configx.Configurator) EngineOptionFunc {
 }
 
 // AddCustomFunc 设置自定义函数
-func AddCustomFunc(funcs ...func()) EngineOptionFunc {
+func AddCustomFunc(funcs ...func() error) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddCustomFunc(funcs...)
 	}
@@ -88,10 +83,10 @@ func AddSourceTable(source string, tablers ...interface{}) EngineOptionFunc {
 	}
 }
 
-// AddQueueTask 使用后，会自动以队列方式来启动服务，且本次添加的任务会放在 taskStartServer 之前执行
-func AddQueueTask(task func(), id string) EngineOptionFunc {
+// AddQueueTask 使用后，会自动以队列方式来启动服务
+func AddQueueTask(task func() error, name, before string) EngineOptionFunc {
 	return func(e *Engine) {
-		e.AddQueueTask(task, id)
+		e.AddTaskBefore(task, name, before)
 	}
 }
 
@@ -99,33 +94,5 @@ func AddQueueTask(task func(), id string) EngineOptionFunc {
 func EnableDebug() EngineOptionFunc {
 	return func(e *Engine) {
 		e.switches[enableDebug] = true
-	}
-}
-
-// EnableQueue 队列方式启动
-func EnableQueue() EngineOptionFunc {
-	return func(e *Engine) {
-		e.switches[enableQueue] = true
-	}
-}
-
-// MultiDatabase 多数据源
-func MultiDatabase() EngineOptionFunc {
-	return func(e *Engine) {
-		e.switches[multiDatabase] = true
-	}
-}
-
-// MultiRedis 多redis
-func MultiRedis() EngineOptionFunc {
-	return func(e *Engine) {
-		e.switches[multiRedis] = true
-	}
-}
-
-// MultiCache 多缓存
-func MultiCache() EngineOptionFunc {
-	return func(e *Engine) {
-		e.switches[multiCache] = true
 	}
 }

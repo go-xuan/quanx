@@ -31,9 +31,10 @@ type Config struct {
 	MinPoolSize     uint64 `json:"minPoolSize" yaml:"minPoolSize"`                           // 连接池最小连接数
 	MaxConnIdleTime uint64 `json:"maxConnIdleTime" yaml:"maxConnIdleTime"`                   // 连接池保持空闲连接的最长时间
 	Timeout         uint64 `json:"timeout" yaml:"timeout"`                                   // 超时时间
+	Debug           bool   `json:"debug" yaml:"debug"`                                       // debug模式（日志打印）
 }
 
-func (c *Config) Format() string {
+func (c *Config) Info() string {
 	return fmt.Sprintf("uri=%s database=%s", c.URI, c.Database)
 }
 
@@ -58,10 +59,10 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "set default value error")
 		}
 		if client, err := c.NewClient(); err != nil {
-			log.Error("mongo connect failed: ", c.Format())
+			log.Error("mongo connect failed: ", c.Info())
 			return errorx.Wrap(err, "mongo init client error")
 		} else {
-			log.Info("mongo connect success: ", c.Format())
+			log.Info("mongo connect success: ", c.Info())
 			AddClient(c, client)
 		}
 	}
@@ -96,23 +97,25 @@ func (c *Config) NewClient() (*mongo.Client, error) {
 	}
 	opts.SetReadPreference(readpref.PrimaryPreferred())
 
-	opts.SetMonitor(&event.CommandMonitor{
-		Started: func(ctx context.Context, startedEvent *event.CommandStartedEvent) {
-			if startedEvent.CommandName != "ping" {
-				log.Info("current mongo command: ", startedEvent.Command)
-			}
-		},
-		Succeeded: func(ctx context.Context, succeededEvent *event.CommandSucceededEvent) {
-			if succeededEvent.CommandName != "ping" {
-				log.Infof("command %s success in %v", succeededEvent.CommandName, succeededEvent.Duration)
-			}
-		},
-		Failed: func(ctx context.Context, failedEvent *event.CommandFailedEvent) {
-			if failedEvent.CommandName != "ping" {
-				log.Errorf("command %s Failed in %v", failedEvent.CommandName, failedEvent.Duration)
-			}
-		},
-	})
+	if c.Debug {
+		opts.SetMonitor(&event.CommandMonitor{
+			Started: func(ctx context.Context, startedEvent *event.CommandStartedEvent) {
+				if startedEvent.CommandName != "ping" {
+					log.Info("current mongo command: ", startedEvent.Command)
+				}
+			},
+			Succeeded: func(ctx context.Context, succeededEvent *event.CommandSucceededEvent) {
+				if succeededEvent.CommandName != "ping" {
+					log.Infof("mongo command success: %s ==> %v", succeededEvent.CommandName, succeededEvent.Duration)
+				}
+			},
+			Failed: func(ctx context.Context, failedEvent *event.CommandFailedEvent) {
+				if failedEvent.CommandName != "ping" {
+					log.Errorf("mongo command failed: %s ==> %v", failedEvent.CommandName, failedEvent.Duration)
+				}
+			},
+		})
+	}
 
 	// 建立连接
 	if client, err := mongo.Connect(ctx, opts); err != nil {
@@ -126,7 +129,7 @@ func (c *Config) NewClient() (*mongo.Client, error) {
 
 type MultiConfig []*Config
 
-func (list MultiConfig) Format() string {
+func (list MultiConfig) Info() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
 	for i, config := range list {
@@ -134,7 +137,7 @@ func (list MultiConfig) Format() string {
 			sb.WriteString(", ")
 		}
 		sb.WriteString("{")
-		sb.WriteString(config.Format())
+		sb.WriteString(config.Info())
 		sb.WriteString("}")
 	}
 	sb.WriteString("]")
@@ -158,7 +161,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 
 func (list MultiConfig) Execute() error {
 	if len(list) == 0 {
-		return errorx.New("mongo not initialized! cause: mongo.yaml is invalid")
+		return errorx.New("mongo not initialized, mongo.yaml is invalid")
 	}
 	for _, config := range list {
 		if err := config.Execute(); err != nil {
@@ -166,7 +169,7 @@ func (list MultiConfig) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("mongo not initialized! cause: no enabled source")
+		log.Error("mongo not initialized, no enabled source")
 	}
 	return nil
 }

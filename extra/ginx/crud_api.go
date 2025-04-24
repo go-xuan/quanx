@@ -37,8 +37,11 @@ type Model[T any] struct {
 func (m *Model[T]) List(ctx *gin.Context) {
 	var err error
 	var result []*T
-	err = m.DB.Find(&result).Error
-	respx.Response(ctx, result, err)
+	if err = m.DB.Find(&result).Error; err != nil {
+		respx.Error(ctx, err)
+	} else {
+		respx.Success(ctx, result)
+	}
 }
 
 func (m *Model[T]) Create(ctx *gin.Context) {
@@ -48,8 +51,11 @@ func (m *Model[T]) Create(ctx *gin.Context) {
 		respx.ParamError(ctx, err)
 		return
 	}
-	err = m.DB.Create(&in).Error
-	respx.Response(ctx, nil, err)
+	if err = m.DB.Create(&in).Error; err != nil {
+		respx.Error(ctx, err)
+	} else {
+		respx.Success(ctx, nil)
+	}
 }
 
 func (m *Model[T]) Update(ctx *gin.Context) {
@@ -59,8 +65,11 @@ func (m *Model[T]) Update(ctx *gin.Context) {
 		respx.ParamError(ctx, err)
 		return
 	}
-	err = m.DB.Updates(&in).Error
-	respx.Response(ctx, nil, err)
+	if err = m.DB.Updates(&in).Error; err != nil {
+		respx.Error(ctx, err)
+	} else {
+		respx.Success(ctx, nil)
+	}
 }
 
 func (m *Model[T]) Delete(ctx *gin.Context) {
@@ -71,8 +80,11 @@ func (m *Model[T]) Delete(ctx *gin.Context) {
 		return
 	}
 	var t T
-	err = m.DB.Where("id = ? ", id.Id).Delete(&t).Error
-	respx.Response(ctx, nil, err)
+	if err = m.DB.Where("id = ? ", id.Id).Delete(&t).Error; err != nil {
+		respx.Error(ctx, err)
+	} else {
+		respx.Success(ctx, nil)
+	}
 }
 
 func (m *Model[T]) Detail(ctx *gin.Context) {
@@ -83,8 +95,11 @@ func (m *Model[T]) Detail(ctx *gin.Context) {
 		return
 	}
 	var result T
-	err = m.DB.Where("id = ? ", id.Id).Find(&result).Error
-	respx.Response(ctx, result, err)
+	if err = m.DB.Where("id = ? ", id.Id).Find(&result).Error; err != nil {
+		respx.Error(ctx, err)
+	} else {
+		respx.Success(ctx, nil)
+	}
 }
 
 func (m *Model[T]) Import(ctx *gin.Context) {
@@ -105,8 +120,11 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 		respx.Custom(ctx, http.StatusBadRequest, respx.NewResponseData(respx.ExportFailedCode, err.Error()))
 		return
 	}
-	err = m.DB.Model(obj).Create(&data).Error
-	respx.Response(ctx, nil, err)
+	if err = m.DB.Model(obj).Create(&data).Error; err != nil {
+		respx.Error(ctx, err)
+	} else {
+		respx.Success(ctx, nil)
+	}
 }
 
 func (m *Model[T]) Export(ctx *gin.Context) {

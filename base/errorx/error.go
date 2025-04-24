@@ -18,7 +18,7 @@ func (err *Error) Error() string {
 	if err.source == nil {
 		return err.msg
 	} else {
-		return err.msg + " ==> " + err.source.Error()
+		return err.msg + " | " + err.source.Error()
 	}
 }
 

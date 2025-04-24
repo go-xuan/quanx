@@ -29,9 +29,8 @@ type Config struct {
 	Marshal string `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
 }
 
-func (c *Config) Format() string {
-	return fmt.Sprintf("type=%s source=%s prefix=%s marshal=%s",
-		c.Type, c.Source, c.Prefix, c.Marshal)
+func (c *Config) Info() string {
+	return fmt.Sprintf("type=%s source=%s prefix=%s marshal=%s", c.Type, c.Source, c.Prefix, c.Marshal)
 }
 
 func (c *Config) Reader(from configx.From) configx.Reader {
@@ -54,10 +53,10 @@ func (c *Config) Execute() error {
 		return errorx.Wrap(err, "set default value error")
 	}
 	if client, err := c.NewClient(); err != nil {
-		log.Error("cache init failed: ", c.Format())
+		log.Error("cache init failed: ", c.Info())
 		return errorx.Wrap(err, "new cache error")
 	} else {
-		log.Info("cache init success: ", c.Format())
+		log.Info("cache init success: ", c.Info())
 		AddClient(c, client)
 	}
 	return nil
@@ -106,7 +105,7 @@ func (c *Config) GetKeys(keys []string) []string {
 // MultiConfig 多缓存配置
 type MultiConfig []*Config
 
-func (list MultiConfig) Format() string {
+func (list MultiConfig) Info() string {
 	sb := &strings.Builder{}
 	sb.WriteString("[")
 	for i, config := range list {
@@ -114,7 +113,7 @@ func (list MultiConfig) Format() string {
 			sb.WriteString(", ")
 		}
 		sb.WriteString("{")
-		sb.WriteString(config.Format())
+		sb.WriteString(config.Info())
 		sb.WriteString("}")
 	}
 	sb.WriteString("]")
@@ -138,7 +137,7 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 
 func (list MultiConfig) Execute() error {
 	if len(list) == 0 {
-		return errorx.New("cache not initialized! cause: cache.yaml is invalid")
+		return errorx.New("cache not initialized, cache.yaml is invalid")
 	}
 	for _, config := range list {
 		if err := config.Execute(); err != nil {
@@ -146,7 +145,7 @@ func (list MultiConfig) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("cache not initialized! cause: no enabled source")
+		log.Error("cache not initialized, no enabled source")
 	}
 	return nil
 }

@@ -27,9 +27,7 @@ func (t tomlImpl) Unmarshal(data []byte, v interface{}) error {
 }
 
 func (t tomlImpl) Read(path string, v interface{}) error {
-	if !filex.Exists(path) {
-		return errorx.Errorf("the file not exist: %s", filex.Pwd(path))
-	} else if data, err := filex.ReadFile(path); err != nil {
+	if data, err := readFile(path); err != nil {
 		return errorx.Wrap(err, "read file error")
 	} else {
 		return t.Unmarshal(data, v)

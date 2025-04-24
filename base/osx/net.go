@@ -1,4 +1,4 @@
-package ipx
+package osx
 
 import (
 	"net"

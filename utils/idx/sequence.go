@@ -2,20 +2,20 @@ package idx
 
 import (
 	"sync"
+
+	"github.com/go-xuan/quanx/types/enumx"
 )
 
 var seqManager *SeqManager
 
 type SeqManager struct {
-	m map[string]*sequence
-	l []*sequence
+	Pool *enumx.Enum[string, *sequence]
 }
 
 func Sequence() *SeqManager {
 	if seqManager == nil {
 		seqManager = &SeqManager{
-			m: make(map[string]*sequence),
-			l: make([]*sequence, 0),
+			Pool: enumx.NewStringEnum[*sequence](),
 		}
 	}
 	return seqManager
@@ -23,14 +23,18 @@ func Sequence() *SeqManager {
 
 // Create 创建序列
 func (m *SeqManager) Create(name string, start int, incr int) {
-	var seq = &sequence{new(sync.RWMutex), name, start, incr, start}
-	m.m[name] = seq
-	m.l = append(m.l, seq)
+	m.Pool.Add(name, &sequence{
+		new(sync.RWMutex),
+		name,
+		start,
+		incr,
+		start},
+	)
 }
 
 // CurrVal 获取序列当前值
 func (m *SeqManager) CurrVal(name string) int {
-	if seq, ok := m.m[name]; ok {
+	if seq := m.Pool.Get(name); seq != nil {
 		return seq.curr()
 	} else {
 		m.Create(name, 0, 1)
@@ -40,7 +44,7 @@ func (m *SeqManager) CurrVal(name string) int {
 
 // NextVal 获取序列下值
 func (m *SeqManager) NextVal(name string) int {
-	if seq, ok := m.m[name]; ok {
+	if seq := m.Pool.Get(name); seq != nil {
 		return seq.next()
 	} else {
 		m.Create(name, 1, 1)
@@ -50,7 +54,7 @@ func (m *SeqManager) NextVal(name string) int {
 
 // NextBatch 获取序列当前值
 func (m *SeqManager) NextBatch(name string, n int) int {
-	if seq, ok := m.m[name]; ok {
+	if seq := m.Pool.Get(name); seq != nil {
 		var next = seq.next()
 		seq.set(next + (n-1)*seq.increment)
 		return next
@@ -62,7 +66,7 @@ func (m *SeqManager) NextBatch(name string, n int) int {
 
 // Set 设置序列当前值
 func (m *SeqManager) Set(name string, value int) {
-	if seq, ok := m.m[name]; ok {
+	if seq := m.Pool.Get(name); seq != nil {
 		seq.set(value)
 	} else {
 		m.Create(name, value, 1)
@@ -71,7 +75,7 @@ func (m *SeqManager) Set(name string, value int) {
 
 // Reset 序列重置
 func (m *SeqManager) Reset(name string) {
-	if seq, ok := m.m[name]; ok {
+	if seq := m.Pool.Get(name); seq != nil {
 		seq.reset()
 	} else {
 		m.Create(name, 0, 1)

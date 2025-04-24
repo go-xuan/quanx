@@ -15,7 +15,7 @@ var Gateway = &Servers{}
 
 type Servers []*Server
 
-func (s *Servers) Format() string {
+func (s *Servers) Info() string {
 	if s != nil && len(*s) > 0 {
 		b, _ := json.Marshal(s)
 		return string(b)
@@ -62,7 +62,7 @@ func (s Server) Format() string {
 func GetServerProxyAddr(group, dataId, url string) (string, string, error) {
 	var auth string
 	for _, server := range *Gateway {
-		if MatchUrl(url, server.Router) {
+		if stringx.MatchUrl(url, server.Router) {
 			if len(server.Ignore) > 0 {
 				for _, item := range server.Ignore {
 					if stringx.Index(url, strings.TrimSpace(item)) >= 0 {
@@ -82,30 +82,4 @@ func GetServerProxyAddr(group, dataId, url string) (string, string, error) {
 	}
 	return "", "", errorx.Errorf("未找到对应的网关路由配置，请检查微服务配置文件，或者确认请求接口[%s]是否正确", url)
 
-}
-
-// MatchUrl URL匹配
-func MatchUrl(uri, rule string) bool {
-	if rule == "*" || rule == "/*" {
-		return true
-	} else if stringx.Index(rule, ",") >= 0 {
-		var list = strings.Split(rule, ",")
-		for _, item := range list {
-			if stringx.Index(uri, strings.TrimSpace(item)) >= 0 {
-				return true
-			}
-		}
-	} else if strings.HasSuffix(rule, `/**`) {
-		prefix := rule[:len(rule)-3]
-		return strings.HasPrefix(uri, prefix)
-	} else if strings.HasSuffix(rule, `/*`) {
-		prefix := rule[:len(rule)-2]
-		if strings.HasPrefix(uri, prefix) {
-			uri = uri[len(prefix):]
-			return stringx.Index(uri, `/`) < 0
-		}
-	} else {
-		return stringx.Index(uri, rule) >= 0
-	}
-	return false
 }

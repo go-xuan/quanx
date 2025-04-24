@@ -102,7 +102,7 @@ type Command struct {
 	args     []string          // 当前输入参数
 	optNames []string          // 选项名，有序
 	options  map[string]Option // 选项列表
-	flagSet  *flag.FlagSet     //
+	flagSet  *flag.FlagSet     // FlagSet
 	executor func() error      // 命令执行函数
 }
 

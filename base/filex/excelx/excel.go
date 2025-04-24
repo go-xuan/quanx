@@ -1,46 +1,25 @@
 package excelx
 
 import (
-	"encoding/json"
 	"reflect"
 	"strings"
-
-	"github.com/tealeg/xlsx"
-	"github.com/tidwall/gjson"
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/tealeg/xlsx"
 )
 
-type SheetInfo struct {
-	Name     string `json:"sheetName"`
-	StartRow int    `json:"startRow"`
-	EndRow   int    `json:"endRow"`
-}
+const (
+	timeFormat = "yyyy-mm-dd h:mm:ss"
+	dateFmt    = "yyyy-mm-dd"
+)
 
-// Header 表头映射
-type Header struct {
-	Key  string
-	Name string
-}
-
-func HeaderStyle() *xlsx.Style {
-	return &xlsx.Style{
-		Border:    xlsx.Border{Left: "thin", Right: "thin", Top: "thin", Bottom: "thin"},
-		Fill:      xlsx.Fill{FgColor: "FF92D050", PatternType: "solid"},
-		Font:      xlsx.Font{Size: 14, Name: "微软雅黑", Charset: 134, Bold: true},
-		Alignment: xlsx.Alignment{Horizontal: "center", Vertical: "center"},
-	}
-}
-
-func DefaultStyle() *xlsx.Style {
-	return &xlsx.Style{
-		Border:    xlsx.Border{Left: "thin", Right: "thin", Top: "thin", Bottom: "thin"},
-		Fill:      xlsx.Fill{PatternType: "none"},
-		Font:      xlsx.Font{Size: 12, Name: "微软雅黑", Charset: 134},
-		Alignment: xlsx.Alignment{Horizontal: "left", Vertical: "center"},
-	}
+type Sheet struct {
+	Name     string      `json:"name"`
+	StartRow int         `json:"startRow"`
+	EndRow   int         `json:"endRow"`
+	Sheet    *xlsx.Sheet `json:"-"`
 }
 
 // GetHeadersByReflect 通过反射获取excel标签
@@ -48,84 +27,74 @@ func GetHeadersByReflect(v any) []*Header {
 	var result []*Header
 	var typeRef = reflect.TypeOf(v)
 	for i := 0; i < typeRef.NumField(); i++ {
-		if typeRef.Field(i).Tag.Get("excel") != "" {
+		field := typeRef.Field(i)
+		if field.Tag.Get("excel") != "" {
 			result = append(result, &Header{
-				Key:  typeRef.Field(i).Tag.Get("json"),
-				Name: typeRef.Field(i).Tag.Get("excel"),
+				Key:  field.Tag.Get("json"),
+				Name: field.Tag.Get("excel"),
 			})
 		}
 	}
 	return result
 }
 
-func GetSheet(path string, sheet string) (*xlsx.Sheet, error) {
+func GetSheet(path string, sheetName string) (*xlsx.Sheet, error) {
 	if file, err := xlsx.OpenFile(path); err != nil {
-		return nil, errorx.Wrap(err, "xlsx.OpenFile error")
+		return nil, errorx.Wrap(err, "open xlsx file error")
 	} else {
-		return anyx.IfZero(file.Sheet[sheet], file.Sheets[0]), nil
+		return anyx.IfZero(file.Sheet[sheetName], file.Sheets[0]), nil
 	}
 }
 
 // SplitXlsx 在目标sheet页中，根据【具有合并单元格的行】进行横向拆分，并取【合并单元格的值】作为拆分出的新sheet名
-func SplitXlsx(path, sheet string) (string, error) {
+func SplitXlsx(path, sheetName string) (string, error) {
 	// 读取excel
-	xlsxFile, err := xlsx.OpenFile(path)
+	readSheet, err := GetSheet(path, sheetName)
 	if err != nil {
-		return "", errorx.Wrap(err, "xlsx.OpenFile error")
+		return "", errorx.Wrap(err, "get sheetName error")
 	}
-	// 读取目标sheet
-	readSheet := anyx.IfZero(xlsxFile.Sheet[sheet], xlsxFile.Sheets[0])
 	// 新增sheet页
 	var newFile = xlsx.NewFile()
-	var addSheetList []*SheetInfo
-	for rowNo, rowData := range readSheet.Rows {
+	var sheets []*Sheet
+	for i, row := range readSheet.Rows {
 		// 如果是合并单元格
-		if rowData.Cells == nil || len(rowData.Cells) == 0 {
-			continue
-		} else if rowData.Cells[0].HMerge > 0 {
-			newSheetName := rowData.Cells[0].Value
-			if len(newSheetName) > 30 {
-				newSheetName = newSheetName[:30]
+		if len(row.Cells) > 0 && row.Cells[0].HMerge > 0 {
+			name := row.Cells[0].Value
+			if len(name) > 30 {
+				name = name[:30]
 			}
-			newFile.AddSheet(newSheetName)
-			addSheetList = append(addSheetList, &SheetInfo{newSheetName, rowNo, 0})
+			sheet, _ := newFile.AddSheet(name)
+			sheets = append(sheets, &Sheet{Name: name, StartRow: i, Sheet: sheet})
 		} else {
 			continue
 		}
 	}
-	for i, item := range addSheetList {
-		item.StartRow = item.StartRow + 1
-		if i < len(addSheetList)-1 {
-			item.EndRow = addSheetList[i+1].StartRow - 2
-		} else {
-			item.EndRow = len(readSheet.Rows) - 1
+
+	for i, sheet := range sheets {
+		start, end := sheet.StartRow+1, len(readSheet.Rows)-1
+		if i < len(sheets)-1 {
+			end = sheets[i+1].StartRow - 2
 		}
-	}
-	for _, item := range addSheetList {
-		if newFile.Sheet[item.Name] != nil {
-			for rowNo, rowData := range readSheet.Rows {
-				if rowNo >= item.StartRow && rowNo <= item.EndRow {
-					row := newFile.Sheet[item.Name].AddRow()
-					for _, cell := range rowData.Cells {
-						row.AddCell().Value = cell.Value
-					}
-				}
+		for _, row := range readSheet.Rows[start:end] {
+			newRow := sheet.Sheet.AddRow()
+			for _, cell := range row.Cells {
+				newRow.AddCell().Value = cell.Value
 			}
 		}
 	}
-	resultPath := stringx.Insert(path, "_split", strings.LastIndex(path, ".")-1)
-	if err = newFile.Save(resultPath); err != nil {
-		return "", errorx.Wrap(err, "xlsx.SaveFile error")
+	path = stringx.Insert(path, "_split", strings.LastIndex(path, ".")-1)
+	if err = newFile.Save(path); err != nil {
+		return "", errorx.Wrap(err, "save xlsx file error")
 	}
-	return resultPath, nil
+	return path, nil
 }
 
 // ReadXlsxWithMapping 根据映射读取excel
-func ReadXlsxWithMapping(path, sheet string, mapping map[string]string) ([]map[string]string, error) {
+func ReadXlsxWithMapping(path, sheetName string, mapping map[string]string) ([]map[string]string, error) {
 	// 读取目标sheet
-	readSheet, err := GetSheet(path, sheet)
+	readSheet, err := GetSheet(path, sheetName)
 	if err != nil {
-		return nil, errorx.Wrap(err, "GetSheet error")
+		return nil, errorx.Wrap(err, "get sheetName error")
 	}
 	// 读取表头
 	var headers []string
@@ -146,7 +115,7 @@ func ReadXlsxWithMapping(path, sheet string, mapping map[string]string) ([]map[s
 					break
 				}
 				if cell.IsTime() {
-					cell.SetFormat("yyyy-mm-dd h:mm:ss")
+					cell.SetFormat(timeFormat)
 				}
 				rowMap[headers[x]] = cell.String()
 			}
@@ -157,11 +126,11 @@ func ReadXlsxWithMapping(path, sheet string, mapping map[string]string) ([]map[s
 }
 
 // ReadXlsxWithStruct 根据结构体读取excel
-func ReadXlsxWithStruct[T any](path, sheet string, t T) ([]*T, error) {
+func ReadXlsxWithStruct[T any](path, sheetName string, t T) ([]*T, error) {
 	// 读取目标sheet
-	readSheet, err := GetSheet(path, sheet)
+	readSheet, err := GetSheet(path, sheetName)
 	if err != nil {
-		return nil, errorx.Wrap(err, "GetSheet error")
+		return nil, errorx.Wrap(err, "get sheetName error")
 	}
 	// 读取表头
 	var mapping = make(map[string]string)
@@ -188,39 +157,10 @@ func ReadXlsxWithStruct[T any](path, sheet string, t T) ([]*T, error) {
 			}
 			var item *T
 			if err = anyx.MapToStruct(rowMap, item); err != nil {
-				return nil, errorx.Wrap(err, "anyx.MapToStruct error")
+				return nil, errorx.Wrap(err, "convert map to struct error")
 			}
 			data = append(data, item)
 		}
 	}
 	return data, nil
-}
-
-// WriteXlsx 将数据写入excel
-func WriteXlsx(path string, data any, headers []*Header) error {
-	var xlsxFile = xlsx.NewFile()
-	sheet, err := xlsxFile.AddSheet("Sheet1")
-	if err != nil {
-		return errorx.Wrap(err, "xlsxFile.AddSheet error")
-	}
-	// 写入表头
-	var headerRow = sheet.AddRow()
-	for _, header := range headers {
-		headerRow.AddCell().Value = header.Name
-	}
-	// 写入数据
-	var bytes, _ = json.Marshal(data)
-	var array = gjson.ParseBytes(bytes).Array()
-	for _, item := range array {
-		var dataMap = item.Map()
-		var row = sheet.AddRow()
-		for _, header := range headers {
-			row.AddCell().Value = dataMap[header.Key].String()
-		}
-	}
-	// 这里重新生成
-	if err = xlsxFile.Save(path); err != nil {
-		return errorx.Wrap(err, "xlsxFile.Save error")
-	}
-	return nil
 }

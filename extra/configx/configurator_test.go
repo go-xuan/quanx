@@ -12,7 +12,7 @@ type test struct {
 	Name string `json:"name" default:"test"`
 }
 
-func (t *test) Format() string {
+func (t *test) Info() string {
 	return "test show id"
 }
 

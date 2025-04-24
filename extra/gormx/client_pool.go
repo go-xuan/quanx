@@ -6,7 +6,6 @@ import (
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/types/enumx"
-	"github.com/go-xuan/quanx/types/stringx"
 )
 
 var pool *enumx.Enum[string, *Client]
@@ -32,7 +31,12 @@ func AddClient(config *Config, db *gorm.DB) {
 
 // GetClient 获取客户端
 func GetClient(source ...string) *Client {
-	return this().Get(stringx.Default(constx.DefaultSource, source...))
+	if len(source) > 0 && source[0] != "" {
+		if client := this().Get(source[0]); client != nil {
+			return client
+		}
+	}
+	return this().Get(constx.DefaultSource)
 }
 
 // GetConfig 获取配置
