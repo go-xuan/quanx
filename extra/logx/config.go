@@ -3,12 +3,12 @@ package logx
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/base/errorx"
+	"github.com/go-xuan/quanx/base/osx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/types/anyx"
@@ -23,38 +23,42 @@ const (
 	LevelFatal = "fatal"
 	LevelPanic = "panic"
 
-	WriterDefault = "default" // Console
-	WriterFile    = "file"    // file
-	WriterMongo   = "mongo"   // Mongo
-	WriterES      = "es"      // Elasticsearch
+	WriterToConsole = "console" // 控制台打印
+	WriterToFile    = "file"    // 写入日志文件
+	WriterToMongo   = "mongo"   // 写入Mongo
+	WriterToES      = "es"      // 写入ES
+
+	FormatterText = "text" // 文本格式化
+	FormatterJson = "json" // json格式化
+
+	TimeFormat = "2006-01-02 15:04:05.999"
 
 	logWriterSource = "log"
-
-	FormatterText = "text"
-	FormatterJson = "json"
 )
 
 func init() {
+	log.SetOutput(DefaultWriter()) // 设置默认日志输出
 	if err := (&Config{}).Execute(); err != nil {
 		panic(err)
 	}
 }
 
+type HookWriterMapping map[string]string
+
 // Config 日志配置
 type Config struct {
-	Name       string            `json:"name" yaml:"name" default:"app"`                                 // 日志文件名
-	Level      string            `json:"level" yaml:"level" default:"info"`                              // 默认日志级别
-	Formatter  string            `json:"formatter" yaml:"formatter" default:"json"`                      // 日志格式
-	Writer     string            `json:"writer" yaml:"writer" default:"file"`                            // 默认日志输出
-	Writers    map[string]string `json:"writers" yaml:"writers"`                                         // 日志级别日志输出
-	TimeFormat string            `json:"timeFormat" yaml:"timeFormat" default:"2006-01-02 15:04:05.999"` // 时间格式化
-	Color      bool              `json:"color" yaml:"color" default:"false"`                             // 使用颜色
-	Caller     bool              `json:"caller" yaml:"caller" default:"false"`                           // caller开关
-	File       *FileWriterConfig `json:"file" yaml:"file"`                                               // 日志输出到文件
+	Name       string              `json:"name" yaml:"name" default:"app"`                                 // 日志文件名
+	Level      string              `json:"level" yaml:"level" default:"info"`                              // 默认日志级别
+	Formatter  string              `json:"formatter" yaml:"formatter" default:"json"`                      // 默认日志格式
+	Writer     string              `json:"writer" yaml:"writer" default:"console"`                         // 默认日志输出
+	Hook       []HookWriterMapping `json:"hook" yaml:"hook"`                                               // 日志钩子
+	TimeFormat string              `json:"timeFormat" yaml:"timeFormat" default:"2006-01-02 15:04:05.999"` // 时间格式化
+	Color      bool                `json:"color" yaml:"color" default:"false"`                             // 使用颜色
+	Caller     bool                `json:"caller" yaml:"caller" default:"false"`                           // caller开关
 }
 
 func (c *Config) Info() string {
-	return fmt.Sprintf("level=%s formatter=%s writer=%s writers=%v", c.Level, c.Formatter, c.Writer, c.Writers)
+	return fmt.Sprintf("level=%s formatter=%s writer=%s", c.Level, c.Formatter, c.Writer)
 }
 
 func (*Config) Reader(from configx.From) configx.Reader {
@@ -76,93 +80,54 @@ func (c *Config) Execute() error {
 	if err := anyx.SetDefaultValue(c); err != nil {
 		return errorx.Wrap(err, "set default value error")
 	}
-	c.initFile()
-	log.AddHook(c.NewHook())           // 添加hook
-	log.SetFormatter(c.LogFormatter()) // 设置formatter
+	// 添加hook钩子
+	if len(c.Hook) > 0 {
+		for _, mapping := range c.Hook {
+			hook := NewHook()
+			hook.SetFormatter(c.GetFormatter())
+			for level, writerTo := range mapping {
+				if writer := GetWriter(writerTo, c.Name, level); writer != nil {
+					hook.SetWriter(ToLogrusLevel(level), writer)
+				}
+			}
+			log.AddHook(hook)
+		}
+	}
+	log.SetOutput(c.GetWriter())       // 设置默认日志输出
+	log.SetFormatter(c.GetFormatter()) // 设置默认日志格式
 	log.SetLevel(c.GetLogrusLevel())   // 设置默认日志级别
-	log.SetReportCaller(c.Caller)
+	log.SetReportCaller(c.Caller)      // 设置caller开关
 	return nil
 }
 
-func (c *Config) initFile() {
-	var needFile bool
-	if c.Writer == WriterFile {
-		needFile = true
-	} else if len(c.Writers) > 0 {
-		for _, writer := range c.Writers {
-			if writer == WriterFile {
-				needFile = true
-			}
-		}
-	}
-	if needFile && c.File == nil {
-		c.File = &FileWriterConfig{Name: c.Name}
-	}
-	_ = anyx.SetDefaultValue(c.File)
-}
-
-func (c *Config) LogFormatter() log.Formatter {
-	host, _ := os.Hostname()
+func (c *Config) GetFormatter() log.Formatter {
 	switch c.Formatter {
 	case FormatterJson:
 		return &jsonFormatter{
 			timeFormat: c.TimeFormat,
-			hostname:   host,
+			hostname:   osx.Hostname(),
+		}
+	case FormatterText:
+		return &textFormatter{
+			timeFormat: TimeFormat,
+			hostname:   osx.Hostname(),
+			color:      c.Writer == WriterToConsole && c.Color,
 		}
 	default:
-		return &textFormatter{
-			timeFormat: c.TimeFormat,
-			hostname:   host,
-			color:      c.Writer == WriterDefault && c.Color,
-		}
+		return nil
 	}
 }
 
-func (c *Config) NewWriter() io.Writer {
+func (c *Config) GetWriter() io.Writer {
 	switch c.Writer {
-	case WriterFile:
-		return NewFileWriter(c.File)
-	case WriterMongo:
-		if writer, err := NewMongoWriter(c.Name); writer != nil && err == nil {
-			return writer
-		}
-	case WriterES:
-		if writer, err := NewElasticSearchWriter(c.Name); writer != nil && err == nil {
-			return writer
-		}
+	case WriterToFile:
+		return NewFileWriter(c.Name, "")
+	case WriterToMongo:
+		return NewMongoWriter(c.Name)
+	case WriterToES:
+		return NewElasticSearchWriter(c.Name)
 	}
 	return DefaultWriter()
-}
-
-func (c *Config) NewWriters() map[log.Level]io.Writer {
-	var writers = make(map[log.Level]io.Writer)
-	for lv, writerType := range c.Writers {
-		if lv == c.Level {
-			continue
-		}
-		level := ToLogrusLevel(lv)
-		switch writerType {
-		case WriterFile:
-			writers[level] = NewFileWriter(c.File, lv)
-		case WriterMongo:
-			if writer, err := NewMongoWriter(c.Name); writer != nil && err == nil {
-				writers[level] = writer
-			}
-		case WriterES:
-			if writer, err := NewElasticSearchWriter(c.Name); writer != nil && err == nil {
-				writers[level] = writer
-			}
-		}
-	}
-	return writers
-}
-
-func (c *Config) NewHook() *Hook {
-	hook := newHook()
-	hook.InitWriter(c.NewWriter())
-	hook.SetFormatter(c.LogFormatter())
-	hook.SetWriters(c.NewWriters())
-	return hook
 }
 
 func (c *Config) GetLogrusLevel() log.Level {
@@ -186,18 +151,5 @@ func ToLogrusLevel(level string) log.Level {
 		return log.PanicLevel
 	default:
 		return log.DebugLevel
-	}
-}
-
-// AllLogrusLevels 所有日志级别
-func AllLogrusLevels() []log.Level {
-	return []log.Level{
-		log.TraceLevel,
-		log.DebugLevel,
-		log.InfoLevel,
-		log.WarnLevel,
-		log.ErrorLevel,
-		log.FatalLevel,
-		log.PanicLevel,
 	}
 }

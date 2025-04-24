@@ -13,18 +13,34 @@ import (
 )
 
 func DefaultJsonFormatter() log.Formatter {
-	return &jsonFormatter{
-		timeFormat: "2006-01-02 15:04:05.999", // 默认2006-01-02 15:04:05.999
-		hostname:   osx.Hostname(),            // 默认当前主机名
+	return &jsonFormatter{TimeFormat, osx.Hostname()}
+}
+
+type jsonFormatter struct {
+	timeFormat string
+	hostname   string
+}
+
+// Format 日志格式化,用以实现logrus.Formatter接口
+func (f *jsonFormatter) Format(entry *log.Entry) ([]byte, error) {
+	var buffer = bytes.Buffer{}
+	if marshal, err := json.Marshal(LogRecord{
+		Time:     entry.Time.Format(f.timeFormat),
+		Level:    LevelString(entry.Level, 5),
+		Hostname: f.hostname,
+		Message:  entry.Message,
+		Data:     entry.Data,
+	}); err != nil {
+		return nil, err
+	} else {
+		buffer.Write(marshal)
 	}
+	buffer.WriteString("\n")
+	return buffer.Bytes(), nil
 }
 
 func DefaultFormatter() log.Formatter {
-	return &textFormatter{
-		timeFormat: "2006-01-02 15:04:05.999", // 默认2006-01-02 15:04:05.999
-		hostname:   osx.Hostname(),            // 默认当前主机名
-		color:      true,                      // 默认使用颜色
-	}
+	return &textFormatter{TimeFormat, osx.Hostname(), true}
 }
 
 type textFormatter struct {
@@ -88,33 +104,10 @@ func LevelString(level log.Level, length ...int) string {
 	return str
 }
 
-type jsonFormatter struct {
-	timeFormat string
-	hostname   string
-}
-
 type LogRecord struct {
-	Time     string      `json:"create_time"`
-	Level    string      `json:"level"`
-	Hostname string      `json:"hostname"`
-	Message  string      `json:"message"`
-	Data     interface{} `json:"data"`
-}
-
-// Format 日志格式化,用以实现logrus.Formatter接口
-func (f *jsonFormatter) Format(entry *log.Entry) ([]byte, error) {
-	var buffer = bytes.Buffer{}
-	if marshal, err := json.Marshal(LogRecord{
-		Time:     entry.Time.Format(f.timeFormat),
-		Level:    LevelString(entry.Level, 5),
-		Hostname: f.hostname,
-		Message:  entry.Message,
-		Data:     entry.Data,
-	}); err != nil {
-		return nil, err
-	} else {
-		buffer.Write(marshal)
-	}
-	buffer.WriteString("\n")
-	return buffer.Bytes(), nil
+	Time     string      `json:"create_time" bson:"create_time"`
+	Level    string      `json:"level" bson:"level"`
+	Hostname string      `json:"hostname" bson:"hostname"`
+	Message  string      `json:"message" bson:"message"`
+	Data     interface{} `json:"data" bson:"data"`
 }

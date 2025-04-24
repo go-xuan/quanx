@@ -11,13 +11,21 @@ import (
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
-func newHook() *Hook {
+func NewHook() *Hook {
 	return &Hook{
 		lock:    new(sync.Mutex),
 		writers: make(map[log.Level]io.Writer),
+		levels:  make([]log.Level, 0),
+		formatter: &log.TextFormatter{
+			DisableColors:          true,
+			DisableTimestamp:       true,
+			DisableLevelTruncation: true,
+			DisableSorting:         false,
+		},
 	}
 }
 
+// Hook 日志钩子
 type Hook struct {
 	lock      *sync.Mutex
 	writers   map[log.Level]io.Writer
@@ -36,75 +44,51 @@ func (hook *Hook) Fire(entry *log.Entry) error {
 	entry.WithField("position", fmt.Sprintf("%s:%04d:%s()", fileName, caller.Line, funcName))
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
-	return hook.Write(entry)
+	if writer, ok := hook.writers[entry.Level]; ok {
+		if bytes, err := hook.formatter.Format(entry); err != nil {
+			return err
+		} else if _, err = writer.Write(bytes); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (hook *Hook) SetFormatter(formatter log.Formatter) {
+	if formatter == nil {
+		return
+	}
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
-	if formatter == nil {
-		formatter = &log.TextFormatter{
-			DisableColors:          true,
-			DisableTimestamp:       true,
-			DisableLevelTruncation: true,
-			DisableSorting:         false,
-		}
-	} else if f, ok := formatter.(*log.TextFormatter); ok {
+	if f, ok := formatter.(*log.TextFormatter); ok {
 		f.DisableColors = true
 	}
 	hook.formatter = formatter
 }
 
-func (hook *Hook) InitWriter(writer io.Writer) {
-	hook.lock.Lock()
-	defer hook.lock.Unlock()
-	hook.levels = AllLogrusLevels()
-	for _, level := range hook.levels {
-		hook.writers[level] = writer
-	}
-}
-
-func (hook *Hook) InitWriters(writers map[log.Level]io.Writer) {
-	hook.lock.Lock()
-	defer hook.lock.Unlock()
-	hook.writers = writers
-	for level := range writers {
-		hook.levels = append(hook.levels, level)
-	}
-}
-
 func (hook *Hook) SetWriter(level log.Level, writer io.Writer) {
+	if writer == nil {
+		return
+	}
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
-	hook.writers[level] = writer
 	if _, ok := hook.writers[level]; !ok {
 		hook.levels = append(hook.levels, level)
 	}
+	hook.writers[level] = writer
 }
 
 func (hook *Hook) SetWriters(writers map[log.Level]io.Writer) {
 	hook.lock.Lock()
 	defer hook.lock.Unlock()
 	for level, writer := range writers {
-		hook.writers[level] = writer
-		if _, ok := hook.writers[level]; !ok {
-			hook.levels = append(hook.levels, level)
-		}
-	}
-}
-
-// 输出到ioWriter
-func (hook *Hook) Write(entry *log.Entry) error {
-	if hook.writers != nil {
-		if writer, ok := hook.writers[entry.Level]; ok {
-			if bytes, err := hook.formatter.Format(entry); err != nil {
-				return err
-			} else if _, err = writer.Write(bytes); err != nil {
-				return err
+		if writer != nil {
+			if _, ok := hook.writers[level]; !ok {
+				hook.levels = append(hook.levels, level)
 			}
+			hook.writers[level] = writer
 		}
 	}
-	return nil
 }
 
 var (

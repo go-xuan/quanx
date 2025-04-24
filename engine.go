@@ -80,7 +80,6 @@ func NewEngine(opts ...EngineOptionFunc) *Engine {
 		engine.queue.Add(engine.runCustomFunction, TaskRunCustomFunction) // 4.运行自定义函数
 		engine.queue.Add(engine.runServer, TaskRunServer)                 // 5.运行服务
 	}
-	logrus.SetOutput(logx.DefaultWriter()) // 设置默认日志输出
 	return engine
 }
 
