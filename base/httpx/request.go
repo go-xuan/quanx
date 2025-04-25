@@ -44,14 +44,23 @@ type Request struct {
 }
 
 func (r *Request) Params(params map[string]string) *Request {
+	if len(params) == 0 {
+		return r
+	}
 	sb := strings.Builder{}
 	for k, v := range params {
-		sb.WriteString("&")
+		if len(params) == 0 {
+			return r
+		}
 		sb.WriteString(url.QueryEscape(k))
 		sb.WriteString("=")
 		sb.WriteString(url.QueryEscape(v))
 	}
-	r.url = r.url + "?" + sb.String()[1:]
+	if strings.Contains(r.url, "?") {
+		r.url = r.url + "&" + sb.String()
+	} else {
+		r.url = r.url + "?" + sb.String()
+	}
 	return r
 }
 
@@ -84,13 +93,10 @@ func (r *Request) Headers(headers map[string]string) *Request {
 }
 
 func (r *Request) SetHeader(key, value string) *Request {
-	if r.headers != nil && len(r.headers) > 0 {
-		r.headers[key] = value
-	} else {
-		var header = make(map[string]string)
-		header[key] = value
-		r.headers = header
+	if r.headers == nil {
+		r.headers = make(map[string]string)
 	}
+	r.headers[key] = value
 	return r
 }
 
@@ -112,10 +118,7 @@ func (r *Request) Do(uses ...ClientUse) (*Response, error) {
 	if err != nil {
 		return &Response{trace: r.trace}, errorx.Wrap(err, "new request error")
 	}
-	if r.headers != nil && len(r.headers) > 0 {
-		if _, ok := r.headers["Content-Type"]; !ok {
-			r.headers["Content-Type"] = "application/json"
-		}
+	if r.headers != nil {
 		for key, val := range r.headers {
 			request.Header.Set(key, val)
 		}

@@ -84,8 +84,7 @@ type stack []uintptr
 
 // Format 打印调用栈信息（fmt实现）
 func (s *stack) Format(f fmt.State, verb rune) {
-	switch verb {
-	case 'v':
+	if verb == 'v' {
 		i, frames := 1, runtime.CallersFrames(*s)
 		for {
 			if pc, more := frames.Next(); more && i <= 5 {
@@ -102,5 +101,5 @@ func (s *stack) Format(f fmt.State, verb rune) {
 func getStack() []uintptr {
 	var pcs [32]uintptr
 	n := runtime.Callers(3, pcs[:])
-	return pcs[:n-1]
+	return pcs[:n]
 }

@@ -1,12 +1,16 @@
 package osx
 
 import (
-	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/types/stringx"
 	"os"
 	"reflect"
 	"strings"
+
+	"github.com/go-xuan/quanx/base/errorx"
+	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/types/boolx"
+	"github.com/go-xuan/quanx/types/floatx"
+	"github.com/go-xuan/quanx/types/intx"
+	"github.com/go-xuan/quanx/types/stringx"
 )
 
 func Hostname() string {
@@ -54,7 +58,22 @@ func SetEnvFromValue(v any) error {
 	for i := 0; i < elem.NumField(); i++ {
 		field := elem.Field(i)
 		tag := elem.Type().Field(i).Tag.Get("env")
-		key, value := strings.ToUpper(tag), field.String()
+		key := strings.ToUpper(tag)
+		var value string
+		switch field.Kind() {
+		case reflect.String:
+			value = field.String()
+		case reflect.Bool:
+			value = boolx.NewBool(field.Bool()).String()
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			value = intx.NewInt64(field.Int()).String()
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			value = intx.NewInt64(int64(field.Uint())).String()
+		case reflect.Float32, reflect.Float64:
+			value = floatx.NewFloat64(field.Float()).String()
+		default:
+			continue // 忽略不支持的类型
+		}
 		if err := os.Setenv(key, value); err != nil {
 			return errorx.Wrap(err, "set environment variable error")
 		}

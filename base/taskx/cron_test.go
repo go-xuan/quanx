@@ -23,8 +23,8 @@ func task4() {
 
 func TestCron(t *testing.T) {
 	// 初始化
-	scheduler := Corn(
-		DurationWarp,
+	scheduler := Cron(
+		DurationWrap,
 	)
 
 	//scheduler.Add("task1", "@every 5s", task1)

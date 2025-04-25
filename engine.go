@@ -1,12 +1,10 @@
 package quanx
 
 import (
-	"path/filepath"
-	"strconv"
-	"strings"
-
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"path/filepath"
+	"strconv"
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/filex"
@@ -74,21 +72,18 @@ func NewEngine(opts ...EngineOptionFunc) *Engine {
 		}
 		gin.SetMode(gin.ReleaseMode)
 		engine.doOptionFuncs(opts...)
-		engine.queue.Add(engine.initServer, TaskInitServer)               // 1.初始化服务
-		engine.queue.Add(engine.initNacos, TaskInitNacos)                 // 2.初始化Nacos
-		engine.queue.Add(engine.initConfig, TaskInitConfig)               // 3.初始化配置
-		engine.queue.Add(engine.runCustomFunction, TaskRunCustomFunction) // 4.运行自定义函数
-		engine.queue.Add(engine.runServer, TaskRunServer)                 // 5.运行服务
+		engine.queue.Add(TaskInitServer, engine.initServer)               // 1.初始化服务
+		engine.queue.Add(TaskInitNacos, engine.initNacos)                 // 2.初始化Nacos
+		engine.queue.Add(TaskInitConfig, engine.initConfig)               // 3.初始化配置
+		engine.queue.Add(TaskRunCustomFunction, engine.runCustomFunction) // 4.运行自定义函数
+		engine.queue.Add(TaskRunServer, engine.runServer)                 // 5.运行服务
 	}
 	return engine
 }
 
 // RUN 服务运行
 func (e *Engine) RUN() {
-	if e.switches[enableDebug] {
-		tasks := e.queue.Names()
-		logrus.Info("queue task execute order: ", strings.Join(tasks, " ==> "))
-	}
+	defer PanicRecover()
 	if err := e.queue.Execute(); err != nil {
 		panic(err)
 	}
@@ -151,12 +146,17 @@ func (e *Engine) initNacos() error {
 func (e *Engine) initConfig() error {
 	e.checkRunning()
 
+	// 初始化日志配置器
 	if err := e.initLogConfigurator(); err != nil {
 		return errorx.Wrap(err, "init log configurator error")
 	}
+
+	// 初始化数据库配置器
 	if err := e.initDatabaseConfigurator(); err != nil {
 		return errorx.Wrap(err, "init database configurator error")
 	}
+
+	// 初始化 Redis 缓存配置器
 	if err := e.initRedisCacheConfigurator(); err != nil {
 		return errorx.Wrap(err, "init cache configurator error")
 	}
@@ -184,7 +184,6 @@ func (e *Engine) runCustomFunction() error {
 // 启动服务
 func (e *Engine) runServer() error {
 	e.checkRunning()
-	defer PanicRecover()
 	if e.switches[enableDebug] {
 		gin.SetMode(gin.DebugMode)
 	}
@@ -440,27 +439,15 @@ func (e *Engine) AddGinRouter(router ...func(*gin.RouterGroup)) {
 }
 
 // AddTaskBefore 前插队添加任务
-func (e *Engine) AddTaskBefore(task func() error, name, before string) {
+func (e *Engine) AddTaskBefore(name, before string, task func() error) {
 	e.checkRunning()
-	if name == "" {
-		logrus.Error(`queue task add error! task name is required`)
-		return
-	}
-	e.queue.AddBefore(task, name, before)
-	logrus.Info(`queue task add success! task name: `, name)
-	return
+	e.queue.AddBefore(name, before, task)
 }
 
 // AddTaskAfter 后插队添加任务
-func (e *Engine) AddTaskAfter(task func() error, name, before string) {
+func (e *Engine) AddTaskAfter(name, after string, task func() error) {
 	e.checkRunning()
-	if name == "" {
-		logrus.Error(`queue task add error! the task name is required`)
-		return
-	}
-	e.queue.AddAfter(task, name, before)
-	logrus.Info(`queue task add success! task name: `, name)
-	return
+	e.queue.AddAfter(name, after, task)
 }
 
 // PanicRecover 服务保活
@@ -469,5 +456,4 @@ func PanicRecover() {
 		logrus.Error("server run panic: ", err)
 		return
 	}
-	select {}
 }

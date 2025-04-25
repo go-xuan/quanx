@@ -4,6 +4,8 @@ import (
 	"sync"
 )
 
+const defaultConcurrency = 10 // 默认并发数
+
 // NewAsyncRequest 初始化异步请求器
 func NewAsyncRequest(concurrency int) *AsyncRequester {
 	return &AsyncRequester{
@@ -28,7 +30,7 @@ func (a *AsyncRequester) Do() (success, failed []*AsyncResponse) {
 	// 初始化管道和wg
 	var total = len(a.requests)
 	if a.concurrency < 1 {
-		a.concurrency = 10 // 默认10个并发
+		a.concurrency = defaultConcurrency
 	}
 	var chanBuffer = total / a.concurrency // 用于接收的并发管道缓冲
 	if r := total % a.concurrency; r > 0 {
@@ -38,11 +40,13 @@ func (a *AsyncRequester) Do() (success, failed []*AsyncResponse) {
 	var respChan = make(chan *AsyncResponse, chanBuffer)
 	var wg = &sync.WaitGroup{}
 
-	// 将所有请求添加进管道
-	for _, request := range a.requests {
-		reqChan <- request
-	}
-	close(reqChan)
+	// 使用单独的协程将所有请求添加进管道，避免阻塞
+	go func() {
+		for _, request := range a.requests {
+			reqChan <- request
+		}
+		close(reqChan)
+	}()
 
 	// 并发处理异步请求
 	for i := 0; i < a.concurrency; i++ {

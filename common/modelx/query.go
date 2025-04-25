@@ -1,7 +1,6 @@
 package modelx
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 	"mime/multipart"
 )
@@ -26,10 +25,10 @@ type Between struct {
 
 func (b Between) DoBetween(db *gorm.DB, field string) *gorm.DB {
 	if b.Start != nil {
-		db = db.Where(field+"", " >= ?", b.Start)
+		db = db.Where(field+" >= ?", b.Start)
 	}
 	if b.End != nil {
-		db = db.Where(field+"", " <= ?", b.End)
+		db = db.Where(field+" <= ?", b.End)
 	}
 	return db
 }
@@ -43,8 +42,9 @@ type Query struct {
 
 func (q *Query) DoLike(db *gorm.DB, fields ...string) *gorm.DB {
 	if q.Keyword != "" && len(fields) > 0 {
+		likeKeyword := "%" + q.Keyword + "%"
 		for _, field := range fields {
-			db = db.Where(fmt.Sprintf("%s LIKE '%%%s%%'", field, q.Keyword))
+			db = db.Where(field+" LIKE ?", likeKeyword)
 		}
 	}
 	return db
@@ -60,10 +60,10 @@ func (q *Query) DoPage(db *gorm.DB) *gorm.DB {
 func (q *Query) DoOrder(db *gorm.DB, def string) *gorm.DB {
 	if q.OrderBy != nil {
 		for _, order := range q.OrderBy {
-			db.Order(order.Column + " " + order.Type)
+			db = db.Order(order.Column + " " + order.Type)
 		}
 	} else {
-		db.Order(def)
+		db = db.Order(def)
 	}
 	return db
 }

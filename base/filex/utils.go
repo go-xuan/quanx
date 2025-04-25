@@ -384,7 +384,7 @@ func FileScan(dir string, suffix string) ([]*File, error) {
 		}
 		return nil
 	}); err != nil {
-		os.Exit(1)
+		return nil, errorx.Wrap(err, "file scan error")
 	}
 	return files, nil
 }

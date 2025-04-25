@@ -30,10 +30,9 @@ func Retry(times, index int, interval time.Duration, f func() error) error {
 		if err := f(); err != nil {
 			fmt.Printf("execute failed after %d times retries\n", index)
 			return Retry(times-1, index, interval, f)
-		} else {
-			fmt.Printf("execute success after %d times retries\n", index)
-			return nil
 		}
+		fmt.Printf("execute success after %d times retries\n", index)
+		return nil
 	}
 	return errorx.New("retry failed")
 }
