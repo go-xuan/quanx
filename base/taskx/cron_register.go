@@ -22,7 +22,7 @@ type FunctionCronJob struct {
 
 // Register 任务注册
 func (t *FunctionCronJob) Register() {
-	if err := Corn().Add(t.Name, t.Spec, t.Do); err != nil {
+	if err := Cron().Add(t.Name, t.Spec, t.Do); err != nil {
 		log.WithField("job_name", t.Name).WithField("job_spec", t.Spec).
 			Error("register function cron job failed: " + err.Error())
 	}
@@ -38,7 +38,7 @@ type RequestCronJob struct {
 
 // Register 任务注册
 func (t *RequestCronJob) Register() {
-	if err := Corn().Add(t.Name, t.Spec, func(context.Context) {
+	if err := Cron().Add(t.Name, t.Spec, func(context.Context) {
 		if _, err := t.Request.Do(t.ClientUses...); err != nil {
 			log.Error("do request failed: ", err)
 		}

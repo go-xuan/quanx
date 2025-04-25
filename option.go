@@ -84,9 +84,9 @@ func AddSourceTable(source string, tablers ...interface{}) EngineOptionFunc {
 }
 
 // AddQueueTask 使用后，会自动以队列方式来启动服务
-func AddQueueTask(task func() error, name, before string) EngineOptionFunc {
+func AddQueueTask(name, before string, task func() error) EngineOptionFunc {
 	return func(e *Engine) {
-		e.AddTaskBefore(task, name, before)
+		e.AddTaskBefore(name, before, task)
 	}
 }
 

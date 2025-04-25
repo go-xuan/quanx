@@ -3,6 +3,7 @@ package logx
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -37,12 +38,13 @@ const (
 )
 
 func init() {
-	log.SetOutput(DefaultWriter()) // 设置默认日志输出
+	log.SetOutput(NewConsoleWriter()) // 设置默认日志输出
 	if err := (&Config{}).Execute(); err != nil {
 		panic(err)
 	}
 }
 
+// HookWriterMapping 定义一个映射类型，用于将日志级别（字符串类型）映射到对应的Writer（字符串类型）
 type HookWriterMapping map[string]string
 
 // Config 日志配置
@@ -86,7 +88,19 @@ func (c *Config) Execute() error {
 			hook := NewHook()
 			hook.SetFormatter(c.GetFormatter())
 			for level, writerTo := range mapping {
-				if writer := GetWriter(writerTo, c.Name, level); writer != nil {
+				var writer io.Writer
+				switch writerTo {
+				case WriterToConsole:
+					writer = NewConsoleWriter()
+				case WriterToFile:
+					filename := filepath.Join("log", fmt.Sprintf("%s_%s.log", c.Name, level))
+					writer = NewFileWriter(filename)
+				case WriterToMongo:
+					writer = NewMongoWriter(c.Name)
+				case WriterToES:
+					writer = NewElasticSearchWriter(c.Name)
+				}
+				if writer != nil {
 					hook.SetWriter(ToLogrusLevel(level), writer)
 				}
 			}
@@ -109,7 +123,7 @@ func (c *Config) GetFormatter() log.Formatter {
 		}
 	case FormatterText:
 		return &textFormatter{
-			timeFormat: TimeFormat,
+			timeFormat: c.TimeFormat,
 			hostname:   osx.Hostname(),
 			color:      c.Writer == WriterToConsole && c.Color,
 		}
@@ -119,15 +133,20 @@ func (c *Config) GetFormatter() log.Formatter {
 }
 
 func (c *Config) GetWriter() io.Writer {
+	var writer io.Writer
 	switch c.Writer {
 	case WriterToFile:
-		return NewFileWriter(c.Name, "")
+		filename := filepath.Join("log", c.Name+".log")
+		writer = NewFileWriter(filename)
 	case WriterToMongo:
-		return NewMongoWriter(c.Name)
+		writer = NewMongoWriter(c.Name)
 	case WriterToES:
-		return NewElasticSearchWriter(c.Name)
+		writer = NewElasticSearchWriter(c.Name)
 	}
-	return DefaultWriter()
+	if writer == nil {
+		writer = NewConsoleWriter()
+	}
+	return writer
 }
 
 func (c *Config) GetLogrusLevel() log.Level {

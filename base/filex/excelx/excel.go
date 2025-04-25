@@ -155,7 +155,7 @@ func ReadXlsxWithStruct[T any](path, sheetName string, t T) ([]*T, error) {
 				}
 				rowMap[headers[i]] = cell.String()
 			}
-			var item *T
+			item := new(T)
 			if err = anyx.MapToStruct(rowMap, item); err != nil {
 				return nil, errorx.Wrap(err, "convert map to struct error")
 			}

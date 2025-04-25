@@ -31,8 +31,6 @@ func (x *Bool) UnmarshalJSON(bytes []byte) error {
 func (x Bool) MarshalJSON() ([]byte, error) {
 	if x.notnull && x.value {
 		return []byte("true"), nil
-	} else if x.notnull {
-		return []byte("false"), nil
 	} else {
 		return []byte("false"), nil
 	}

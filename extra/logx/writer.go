@@ -5,49 +5,34 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/olivere/elastic/v7"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/extra/elasticx"
 	"github.com/go-xuan/quanx/extra/mongox"
 )
 
-func DefaultWriter() io.Writer {
+// NewConsoleWriter 创建控制台日志写入器
+func NewConsoleWriter() io.Writer {
 	return &ConsoleWriter{
 		writer: os.Stdout, // 标准输出
 	}
 }
 
-func GetWriter(writerTo string, name, level string) io.Writer {
-	switch writerTo {
-	case WriterToFile:
-		return NewFileWriter(name, level)
-	case WriterToMongo:
-		return NewMongoWriter(name)
-	case WriterToES:
-		return NewElasticSearchWriter(name)
-	}
-	return nil
-}
-
-func NewFileWriter(name string, level string) io.Writer {
-	if level != "" {
-		name = name + "_" + level
-	}
+// NewFileWriter 创建本地文件日志写入器
+func NewFileWriter(filename string) io.Writer {
 	return &lumberjack.Logger{
-		Filename:   filepath.Join(constx.DefaultResourceDir, "log", name+".log"),
-		MaxSize:    100,
-		MaxAge:     7,
-		MaxBackups: 10,
-		Compress:   true,
+		Filename:   filename, // 日志文件路径
+		MaxSize:    100,      // 日志文件最大大小（MB）
+		MaxAge:     7,        // 日志保留天数
+		MaxBackups: 10,       // 日志备份数量
+		Compress:   true,     // 是否压缩
 	}
 }
 
-// NewMongoWriter 初始化mongo写入
+// NewMongoWriter 创建MongoDB日志写入器
 func NewMongoWriter(collection string) io.Writer {
 	if mongox.Initialized() {
 		client := mongox.GetClient(logWriterSource)
@@ -60,6 +45,7 @@ func NewMongoWriter(collection string) io.Writer {
 	return nil
 }
 
+// NewElasticSearchWriter 创建ES日志写入器
 func NewElasticSearchWriter(index string) io.Writer {
 	if elasticx.Initialized() {
 		client := elasticx.GetClient(logWriterSource)

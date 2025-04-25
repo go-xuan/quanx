@@ -53,18 +53,8 @@ func NewCommand(name, usage string, options ...Option) *Command {
 }
 
 func Register(commands ...*Command) {
-	initManager()
 	for _, command := range commands {
-		var commandName = command.name
-		if command.executor == nil {
-			panic(fmt.Sprintf("[%s]命令未设置执行器！", command.name))
-		}
-		if _, ok := _manager.commands[command.name]; ok {
-			panic(fmt.Sprintf("[%s]命令重复注册", commandName))
-		}
-		command.addDefaultOption()
-		_manager.names = append(_manager.names, commandName)
-		_manager.commands[commandName] = command
+		command.Register()
 	}
 }
 

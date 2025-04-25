@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"os/exec"
 	"runtime"
 )
@@ -27,19 +26,17 @@ func (c *Cmd) Dir(dir string) *Cmd {
 }
 
 func (c *Cmd) Stdin(in io.Reader) *Cmd {
-	c.cmd.Stdin = ioutil.NopCloser(in)
+	c.cmd.Stdin = io.NopCloser(in)
 	return c
 }
 
 func (c *Cmd) Run() (string, string, error) {
-	if cmd := c.cmd; cmd != nil {
-		var stdout, stderr = &bytes.Buffer{}, &bytes.Buffer{}
-		cmd.Stdout, cmd.Stderr = stdout, stderr
-		if err := cmd.Run(); err != nil {
-			return stdout.String(), stderr.String(), err
-		} else {
-			return stdout.String(), stderr.String(), nil
-		}
+	if c.cmd == nil {
+		return "", "", errors.New("command instance is nil") // 更合适的错误信息
 	}
-	return "", "", errors.New("command not found")
+
+	var stdout, stderr = &bytes.Buffer{}, &bytes.Buffer{}
+	c.cmd.Stdout, c.cmd.Stderr = stdout, stderr
+	err := c.cmd.Run()
+	return stdout.String(), stderr.String(), err
 }

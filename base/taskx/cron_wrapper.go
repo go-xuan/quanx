@@ -13,8 +13,8 @@ import (
 // CronJobWrapper 定时任务包装器
 type CronJobWrapper func(name, spec string, job func(context.Context)) func(context.Context)
 
-// LockWarp 分布式锁装饰器，定时任务执行时必须争抢到锁才执行
-func LockWarp(name, spec string, job func(context.Context)) func(context.Context) {
+// LockWrap 分布式锁装饰器，定时任务执行时必须争抢到锁才执行
+func LockWrap(name, spec string, job func(context.Context)) func(context.Context) {
 	return func(ctx context.Context) {
 		var logger = log.WithField("job_name", name).WithField("job_spec", spec)
 		var key = "cron_job_lock:" + name
@@ -30,8 +30,8 @@ func LockWarp(name, spec string, job func(context.Context)) func(context.Context
 	}
 }
 
-// DurationWarp 执行耗时装饰器，计算定时任务执行耗费时间，单位：毫秒/ms
-func DurationWarp(name, spec string, job func(context.Context)) func(context.Context) {
+// DurationWrap 执行耗时装饰器，计算定时任务执行耗费时间，单位：毫秒/ms
+func DurationWrap(name, spec string, job func(context.Context)) func(context.Context) {
 	return func(ctx context.Context) {
 		var logger = log.WithField("job_name", name).WithField("job_spec", spec)
 		var start = time.Now()

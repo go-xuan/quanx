@@ -8,12 +8,16 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/go-xuan/quanx/base/errorx"
 )
 
-var _client *Client
+var (
+	_client *Client    // http客户端
+	mu      sync.Mutex // 互斥锁
+)
 
 // GetClient 获取httpx客户端
 func GetClient(uses ...ClientUse) *Client {
@@ -80,6 +84,8 @@ const (
 )
 
 func newHttpClient() *Client {
+	mu.Lock()
+	defer mu.Unlock()
 	if _client == nil || _client.strategy != httpStrategyCode {
 		_client = newClient(httpStrategyCode, "", "")
 	}
@@ -87,6 +93,8 @@ func newHttpClient() *Client {
 }
 
 func newHttpsClient(crt string) *Client {
+	mu.Lock()
+	defer mu.Unlock()
 	if _client == nil || _client.strategy != httpsStrategyCode {
 		_client = newClient(httpsStrategyCode, crt, "")
 	}
@@ -94,6 +102,8 @@ func newHttpsClient(crt string) *Client {
 }
 
 func newHttpProxyClient(proxy string) *Client {
+	mu.Lock()
+	defer mu.Unlock()
 	if _client == nil || _client.strategy != proxyStrategyCode {
 		_client = newClient(proxyStrategyCode, "", proxy)
 	}
@@ -101,6 +111,8 @@ func newHttpProxyClient(proxy string) *Client {
 }
 
 func newHttpsProxyClient(crt, proxy string) *Client {
+	mu.Lock()
+	defer mu.Unlock()
 	if _client == nil || _client.strategy != httpsProxyStrategyCode {
 		_client = newClient(httpsProxyStrategyCode, crt, proxy)
 	}
@@ -123,7 +135,7 @@ func newTransport(crt, proxy string) *http.Transport {
 	if crt != "" {
 		if pem, err := os.ReadFile(crt); err == nil {
 			pool := x509.NewCertPool()
-			if ok := pool.AppendCertsFromPEM(pem); !ok {
+			if !pool.AppendCertsFromPEM(pem) {
 				transport.TLSClientConfig = &tls.Config{
 					ClientCAs:          pool,
 					InsecureSkipVerify: true,
@@ -141,21 +153,4 @@ func newTransport(crt, proxy string) *http.Transport {
 		}
 	}
 	return transport
-}
-
-func newTLSClientConfig(crt string) *tls.Config {
-	if crt != "" {
-		if pem, err := os.ReadFile(crt); err != nil {
-			panic(err)
-		} else {
-			pool := x509.NewCertPool()
-			if ok := pool.AppendCertsFromPEM(pem); !ok {
-				return &tls.Config{
-					ClientCAs:          pool,
-					InsecureSkipVerify: true,
-				}
-			}
-		}
-	}
-	return nil
 }

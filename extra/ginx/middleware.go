@@ -37,7 +37,7 @@ func JsonLogFormatter(ctx *gin.Context) {
 
 // Log 日志包装
 func Log(ctx *gin.Context) *log.Entry {
-	entry := log.WithField("traceId", TraceId(ctx)).WithField("clientIp", ClientIP(ctx))
+	entry := log.WithContext(ctx).WithField("traceId", TraceId(ctx)).WithField("clientIp", ClientIP(ctx))
 	if user := GetSessionUser(ctx); user != nil {
 		entry = entry.WithField("userId", user.UserId())
 	}

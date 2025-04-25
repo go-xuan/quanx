@@ -18,10 +18,6 @@ const (
 	stopStatus                  // 停止
 )
 
-var (
-	_scheduler *CronScheduler
-)
-
 // DefaultParser 默认的定时任务表达式解析器
 func DefaultParser() cron.Parser {
 	return cron.NewParser(
@@ -29,25 +25,21 @@ func DefaultParser() cron.Parser {
 	)
 }
 
-// Corn 定时任务调度器
-func Corn(warps ...CronJobWrapper) *CronScheduler {
-	if _scheduler == nil {
-		var options = []cron.Option{
-			cron.WithParser(DefaultParser()),
-			cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger)),
-			cron.WithLogger(cron.DefaultLogger),
-		}
-		//初始化一个定时任务调度程序
-		_scheduler = &CronScheduler{
-			mutex:   new(sync.Mutex),
-			status:  initializationStatus,
-			cron:    cron.New(options...),
-			names:   []string{},
-			entries: make(map[string]*CornEntry),
-			wraps:   warps,
-		}
+// Cron 定时任务调度器
+func Cron(warps ...CronJobWrapper) *CronScheduler {
+	var options = []cron.Option{
+		cron.WithParser(DefaultParser()),
+		cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger)),
+		cron.WithLogger(cron.DefaultLogger),
 	}
-	return _scheduler
+	return &CronScheduler{
+		mutex:   new(sync.Mutex),
+		status:  initializationStatus,
+		cron:    cron.New(options...),
+		names:   []string{},
+		entries: make(map[string]*CornEntry),
+		wraps:   warps,
+	}
 }
 
 // ParseDurationBySpec 解析表达式，计算当前时间和下次执行时间的时间差
@@ -201,7 +193,7 @@ type CornEntry struct {
 }
 
 func (e *CornEntry) Run() {
-	e.do(context.TODO())
+	e.do(context.Background())
 }
 
 // Info 获取定时任务信息

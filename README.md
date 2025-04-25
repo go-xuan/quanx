@@ -99,24 +99,24 @@ func (User) TableName() string {
 ```go
 func main() {
     // 初始化服务引擎 
-    var engine = quanx.NewEngine(
-        quanx.EnableQueue(), // 开启任务队列
-    )
+    engine := quanx.NewEngine()
 
     // 按照添加顺序先后执行 
-    engine.AddQueueTask(Init1, "init1")
-    engine.AddQueueTask(Init2, "init2")
+    engine.AddTaskBefore(Init1, "init1", quanx.TaskRunServer)
+    engine.AddTaskAfter(Init2, "init2", "init1")
 	
     // 服务启动
     engine.RUN()
 }
 
-func Init1() {
+func Init1() error {
     fmt.Println("执行初始化任务1", time.Now().Format("2006-01-02 15:04:05"))
+    return nil
 }
 
 func Init2() {
     fmt.Println("执行初始化任务2", time.Now().Format("2006-01-02 15:04:05"))
+    return nil
 }
 
 
@@ -127,7 +127,7 @@ func Init2() {
 ```go
 func main() {
     // 初始化服务引擎
-    var engine = quanx.NewEngine()
+	engine := quanx.NewEngine()
 
     // 添加配置器，Config结构体需要实现Configurator接口
     engine.AddConfigurator(Config)
@@ -169,9 +169,9 @@ func (c config) Execute() error {
 
 quanx框架本身已实现了一些常规配置项的读取和初始化，开发者仅需要在项目代码中添加必要配置文件（默认yaml格式）即可。
 
-#### 应用配置
+#### 主配置
 
-配置文件路径：conf/config.yaml，此配置必须添加。
+主配置文件路径：conf/config.yaml，此配置必须添加。
 
 ```yaml
 server:
@@ -182,7 +182,7 @@ server:
 
 #### nacos配置
 
-配置文件路径：conf/nacos.yaml，不使用nacos可不添加。
+nacos配置文件路径：conf/nacos.yaml，不使用nacos可不添加。
 
 ```yaml
 address: "127.0.0.1:8848"     # string nacos服务地址,多个以英文逗号分割
@@ -194,7 +194,7 @@ mode: 2                       # int 模式（0-仅配置中心；1-仅服务发�
 
 #### 数据库配置
 
-配置文件路径：conf/database.yaml，默认单数据库。
+数据库配置文件路径：conf/database.yaml
 
 ```yaml
 source: "default"             # string 数据源名称
@@ -209,22 +209,9 @@ schema: ""                    # string 模式名（postgres）
 debug: false                  # bool 开启debug模式以及初始化表结构以及数据
 ```
 
-##### 多数据源
+##### 多数据库
 
-如果想要连接多个数据库，需要在启动时开启多数据源：
-
-```go
-func main() {
-	var engine = quanx.NewEngine(
-	    quanx.MultiDatabase, // 开启多数据源
-	)
-    
-    // 服务启动
-    engine.RUN()
-}
-```
-
-同时更新conf/database.yaml配置文件内容为：
+如果想要连接多个数据库，将conf/database.yaml配置文件内容修改为多配置即可
 
 ```yaml
 - name: default
@@ -245,12 +232,11 @@ func main() {
   password: root
   database: demo
   debug: true
-......
 ```
 
 #### redis配置
 
-配置文件路径：conf/redis.yaml，默认单redis数据库。
+redis配置文件路径：conf/redis.yaml
 
 ```yaml
 source: "default"             # string 数据源名称
@@ -264,20 +250,7 @@ mode: 0                       # int 模式（0-单机；1-集群），默认单�
 
 ##### 多redis源
 
-如果需要连接多个redis数据源，需要在启动时开启多数据源：
-
-```go
-func main() {
-	var engine = quanx.NewEngine(
-	    quanx.MultiRedis, // 开启多redis数据源
-	)
-	
-    // 服务启动
-    engine.RUN()
-}
-```
-
-更新conf/redis.yaml配置文件内容为：
+如果需要连接多个redis数据源，更新conf/redis.yaml配置文件内容修改为多配置即可
 
 ```yaml
 - name: default
@@ -299,7 +272,7 @@ func main() {
 
 #### 自定义配置
 
-每一项配置都需要在go代码中使用struct进行声明，而且该结构体需要实现Configurator配置器接口
+每一项配置都需要在代码中使用struct结构体进行声明，并且实现Configurator配置器接口
 
 demo.yaml：
 
@@ -321,20 +294,28 @@ type demo struct {
 	Key3 []string `json:"key3" yaml:"key3"`
 }
 
-func (d demo) Title() string {
+func (d *demo) Info() string {
 	return "demo配置"
 }
 
-func (d demo) Reader() *confx.Reader {
-	return &confx.Reader{
-		FilePath:    "demo.yaml", // 本地配置文件
-		NacosGroup:  "demo",      // nacos配置分组，默认为服务名
-		NacosDataId: "demo.yaml", // nacos配置ID
-		Listen:      false,       // 是否监听
-	}
+func (d *demo) Reader(from configx.From) confx.Reader {
+    switch from {
+    case configx.FormNacos: 
+        // nacos配置文件读取器
+        return &nacosx.Reader{
+            DataId: "demo.yaml",
+        }
+    case configx.FromLocal: 
+        // 本地配置文件读取器
+        return &configx.LocalReader{
+            Name: "demo.yaml",
+        }
+    default:
+        return nil
+    }
 }
 
-func (d demo) Run() error {
+func (d *demo) Execute() error {
 	// todo 完成配置读取后需要进行的操作
 	fmt.Println(c.Key1)
 	fmt.Println(c.Key2)
@@ -343,43 +324,4 @@ func (d demo) Run() error {
 }
 ```
 
-##### 本地配置
-
-当服务未启用nacos，配置结构体在实现Configurator接口时，Reader()方法返回的Reader.FilePath不为空，确保能够从本地读取到响应配置文件。
-
-```go
-func main() {
-	// 初始化服务启动引擎
-	// 启动参数不加app.EnableNacos即表示不使用nacos
-	var engine = quanx.NewEngine()
-}
-
-func (d demo) Reader() *confx.Reader {
-	return &confx.Reader{
-		FilePath:    "demo.yaml", // 本地配置文件
-	}
-}
-
-```
-
-##### Nacos配置
-
-当服务可以连接nacos，配置结构体在实现Configurator接口时，则Reader()方法返回的Reader.NacosDataId不能为空。
-
-```go
-func main() {
-	// 初始化服务启动引擎
-	var engine = quanx.NewEngine(
-	    quanx.EnableNacos, // 启用nacos
-	)
-}
-
-func (d demo) Reader() *confx.Reader {
-	return &confx.Reader{
-		NacosGroup:  "demo",      // nacos配置分组，默认为服务名
-		NacosDataId: "demo.yaml", // nacos配置ID
-		Listen:      false,       // 是否监听
-	}
-}
-```
 
