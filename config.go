@@ -32,6 +32,7 @@ type Server struct {
 	Host   string `yaml:"host" default:"127.0.0.1"` // 服务host
 	Port   int    `yaml:"port" default:"8888"`      // 服务端口
 	Prefix string `yaml:"prefix"`                   // api prefix（接口根路由）
+	Debug  bool   `yaml:"debug" default:"false"`    // debug模式
 }
 
 // ApiPrefix API路由前缀

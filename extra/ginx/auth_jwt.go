@@ -69,7 +69,7 @@ func (v *JwtValidator) Ignore(ctx *gin.Context) bool {
 }
 
 func (v *JwtValidator) tokenValidate(ctx *gin.Context) error {
-	if token := ctx.Request.Header.Get("Authorization"); token != "" {
+	if token := ctx.Request.Header.Get("Authorization"); token == "" {
 		return errorx.New("request token required")
 	} else if user, err := v.validate(ctx, token); err != nil {
 		return errorx.Wrap(err, "validate cookie error")
@@ -80,7 +80,7 @@ func (v *JwtValidator) tokenValidate(ctx *gin.Context) error {
 }
 
 func (v *JwtValidator) cookieValidate(ctx *gin.Context) error {
-	if cookie, _ := ctx.Cookie(userCookieKey); cookie == "" {
+	if cookie, err := ctx.Cookie(userCookieKey); err != nil || cookie == "" {
 		return errorx.New("request cookie required")
 	} else if user, err := v.validate(ctx, cookie); err != nil {
 		return errorx.Wrap(err, "validate cookie error")

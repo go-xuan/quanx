@@ -15,6 +15,20 @@ import (
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
+var _config *Config
+
+func GetConfig() *Config {
+	return _config
+}
+
+func init() {
+	log.SetOutput(NewConsoleWriter()) // 设置默认日志输出
+	_config = &Config{}
+	if err := _config.Execute(); err != nil {
+		panic(err)
+	}
+}
+
 // 日志级别
 const (
 	LevelTrace = "trace"
@@ -36,13 +50,6 @@ const (
 
 	logWriterSource = "log"
 )
-
-func init() {
-	log.SetOutput(NewConsoleWriter()) // 设置默认日志输出
-	if err := (&Config{}).Execute(); err != nil {
-		panic(err)
-	}
-}
 
 // HookWriterMapping 定义一个映射类型，用于将日志级别（字符串类型）映射到对应的Writer（字符串类型）
 type HookWriterMapping map[string]string

@@ -114,6 +114,9 @@ func (e *Engine) initServer() error {
 		if e.switches[customPort] {
 			e.config.Server.Port = server.Port
 		}
+		if e.config.Server.Debug {
+			e.switches[enableDebug] = true
+		}
 	} else {
 		e.config.Server = server
 		if err := marshalx.Apply(path).Write(path, e.config); err != nil {
@@ -192,7 +195,7 @@ func (e *Engine) runServer() error {
 	}
 
 	// 初始化中间件
-	e.ginEngine.Use(gin.Recovery(), ginx.Trace)
+	e.ginEngine.Use(gin.Recovery())
 	if e.config.Log.Formatter == logx.FormatterJson {
 		e.ginEngine.Use(ginx.JsonLogFormatter)
 	} else {
@@ -221,14 +224,15 @@ func (e *Engine) runServer() error {
 
 // 初始化日志
 func (e *Engine) initLogConfigurator() error {
-	if log := e.config.Log; log != nil {
-		if log.Name == "" {
-			log.Name = e.config.Server.Name
-		}
-		if err := e.ExecuteConfigurator(log, true); err != nil {
-			return errorx.Wrap(err, "execute log configurator error")
-		}
-		e.config.Log = log
+	if e.config.Log == nil {
+		e.config.Log = logx.GetConfig()
+		return nil
+	}
+	if e.config.Log.Name == "" {
+		e.config.Log.Name = e.config.Server.Name
+	}
+	if err := e.ExecuteConfigurator(e.config.Log, true); err != nil {
+		return errorx.Wrap(err, "execute log configurator error")
 	}
 	return nil
 }
