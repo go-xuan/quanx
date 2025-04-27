@@ -98,7 +98,7 @@ func (m *Model[T]) Detail(ctx *gin.Context) {
 	if err = m.DB.Where("id = ? ", id.Id).Find(&result).Error; err != nil {
 		respx.Error(ctx, err)
 	} else {
-		respx.Success(ctx, nil)
+		respx.Success(ctx, result)
 	}
 }
 

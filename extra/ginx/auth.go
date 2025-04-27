@@ -15,6 +15,13 @@ var (
 	authCacheClient cachex.Client // token缓存客户端
 )
 
+// SetAuthValidator 设置鉴权验证器
+func SetAuthValidator(validator AuthValidator) {
+	if validator != nil {
+		authValidator = validator
+	}
+}
+
 // AuthValidate 身份验证器
 func AuthValidate() AuthValidator {
 	if authValidator == nil {
