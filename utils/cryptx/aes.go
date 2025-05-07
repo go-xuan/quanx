@@ -1,8 +1,10 @@
 package cryptx
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"fmt"
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/utils/randx"
@@ -20,52 +22,32 @@ var _aes *Aes
 
 type Aes struct {
 	mode  mode         // 加密模式
-	key   string       // 秘钥
-	iv    string       // 初始化向量
+	key   string       // 秘钥, 长度必须为16, 24或32字节
+	iv    []byte       // 初始化向量, 长度必须和加密块大小相等
 	block cipher.Block // 加密块
 }
 
 func AES() *Aes {
 	if _aes == nil {
-		key, iv := randx.String(aes.BlockSize), randx.String(aes.BlockSize)
-		if _, err := NewAes(key, iv); err != nil {
+		if newAes, err := NewAes(randx.String(aes.BlockSize), randx.String(aes.BlockSize)); err != nil {
 			panic(err)
+		} else {
+			_aes = newAes
 		}
 	}
 	return _aes
 }
 
+// NewAes 创建AES对象（默认CBC模式）
 func NewAes(key, iv string) (*Aes, error) {
 	block, err := aes.NewCipher([]byte(key))
 	if err != nil {
 		return nil, errorx.Wrap(err, "new cipher error")
 	}
-	if size := block.BlockSize(); size != aes.BlockSize {
-		return nil, errorx.Errorf("the block size error:%d", size)
+	if ivl, bs := len(iv), block.BlockSize(); ivl != bs {
+		return nil, errorx.Errorf("iv length must equal block size: %d != %d", ivl, bs)
 	}
-	if _aes == nil {
-		_aes = &Aes{
-			mode:  CBC,
-			key:   key,
-			iv:    iv,
-			block: block}
-	} else {
-		_aes.key = key
-		_aes.iv = iv
-		_aes.block = block
-	}
-	return _aes, nil
-}
-
-func addPadding(text []byte) []byte {
-	if len(text)%16 == 0 {
-		return text
-	}
-	padding := 16 - (len(text) % 16)
-	for i := 0; i < padding; i++ {
-		text = append(text, byte(padding))
-	}
-	return text
+	return &Aes{mode: CBC, key: key, iv: []byte(iv), block: block}, nil
 }
 
 // Mode 加密模式
@@ -75,70 +57,63 @@ func (a *Aes) Mode(m mode) *Aes {
 }
 
 // Encrypt 加密
-func (a *Aes) Encrypt(plaintext []byte) []byte {
-	plaintext = addPadding(plaintext)
+func (a *Aes) Encrypt(plaintext []byte) ([]byte, error) {
+	plaintext = pkcs7Padding(plaintext, a.block.BlockSize())
+	var ciphertext = make([]byte, len(plaintext))
 	switch a.mode {
 	case CBC:
-		return a.encryptCBC(plaintext)
+		cipher.NewCBCEncrypter(a.block, a.iv).CryptBlocks(ciphertext, plaintext)
 	case CFB:
-		return a.encryptCFB(plaintext)
+		cipher.NewCFBEncrypter(a.block, a.iv).XORKeyStream(ciphertext, plaintext)
 	case ECB:
-		return a.encryptECB(plaintext)
+		size, blockSize := len(plaintext), a.block.BlockSize()
+		for i := 0; i < size; i += blockSize {
+			a.block.Encrypt(ciphertext[i:i+blockSize], plaintext[i:i+blockSize])
+		}
+	default:
+		return nil, errorx.New("unsupported mode")
 	}
-	return nil
+	return ciphertext, nil
 }
 
 // Decrypt 解密
-func (a *Aes) Decrypt(ciphertext []byte) []byte {
+func (a *Aes) Decrypt(ciphertext []byte) ([]byte, error) {
+	size, blockSize := len(ciphertext), a.block.BlockSize()
+	if size%blockSize != 0 {
+		return nil, errorx.Errorf("the ciphertext size error: %d/%d", size, blockSize)
+	}
+	var plaintext = make([]byte, size)
 	switch a.mode {
 	case CBC:
-		return a.decryptCBC(ciphertext)
+		cipher.NewCBCDecrypter(a.block, a.iv).CryptBlocks(plaintext, ciphertext)
 	case CFB:
-		return a.decryptCFB(ciphertext)
+		cipher.NewCFBDecrypter(a.block, a.iv).XORKeyStream(plaintext, ciphertext)
 	case ECB:
-		return a.decryptECB(ciphertext)
+		for i := 0; i < size; i += blockSize {
+			a.block.Decrypt(plaintext[i:i+blockSize], ciphertext[i:i+blockSize])
+		}
+	default:
+		return nil, errorx.New("unsupported mode")
 	}
-	return nil
+	return pkcs7UnPadding(plaintext)
 }
 
-// encryptCBC CBC加密
-func (a *Aes) encryptCBC(plaintext []byte) []byte {
-	var ciphertext = make([]byte, len(plaintext))
-	cipher.NewCBCEncrypter(a.block, []byte(a.iv)).CryptBlocks(ciphertext, plaintext)
-	return ciphertext
+// pkcs7Padding 使用 PKCS7 进行填充
+func pkcs7Padding(data []byte, blockSize int) []byte {
+	padding := blockSize - len(data)%blockSize
+	padText := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(data, padText...)
 }
 
-// decryptCBC CBC解密
-func (a *Aes) decryptCBC(ciphertext []byte) []byte {
-	var plaintext = make([]byte, len(ciphertext))
-	cipher.NewCBCDecrypter(a.block, []byte(a.iv)).CryptBlocks(plaintext, ciphertext)
-	return plaintext
-}
-
-// encryptCFB CBC加密
-func (a *Aes) encryptCFB(plaintext []byte) []byte {
-	var ciphertext = make([]byte, len(plaintext))
-	cipher.NewCFBEncrypter(a.block, []byte(a.iv)).XORKeyStream(ciphertext, plaintext)
-	return ciphertext
-}
-
-// decryptCFB CBC解密
-func (a *Aes) decryptCFB(ciphertext []byte) []byte {
-	var plaintext = make([]byte, len(ciphertext))
-	cipher.NewCFBDecrypter(a.block, []byte(a.iv)).XORKeyStream(plaintext, ciphertext)
-	return plaintext
-}
-
-// encryptECB ECB加密
-func (a *Aes) encryptECB(plaintext []byte) []byte {
-	var ciphertext = make([]byte, len(plaintext))
-	a.block.Encrypt(ciphertext, plaintext)
-	return ciphertext
-}
-
-// decryptECB ECB解密
-func (a *Aes) decryptECB(ciphertext []byte) []byte {
-	var plaintext = make([]byte, len(ciphertext))
-	a.block.Encrypt(plaintext, ciphertext)
-	return plaintext
+// pkcs7UnPadding 移除 PKCS7 填充
+func pkcs7UnPadding(data []byte) ([]byte, error) {
+	length := len(data)
+	if length == 0 {
+		return nil, fmt.Errorf("empty data")
+	}
+	padding := int(data[length-1])
+	if padding > length || padding == 0 {
+		return nil, fmt.Errorf("invalid padding")
+	}
+	return data[:length-padding], nil
 }

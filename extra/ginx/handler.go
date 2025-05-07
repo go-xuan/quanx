@@ -39,3 +39,34 @@ type OptionsHandler interface {
 type AnyHandler interface {
 	Any(ctx *gin.Context)
 }
+
+// BindRouter 绑定路由
+// handler必须实现 Handler 接口，按需实现 GetHandler, PostHandler ... 等接口
+func BindRouter(router *gin.RouterGroup, handler Handler, middleware ...gin.HandlerFunc) {
+	// 设置路由和中间件
+	group := router.Group(handler.RelativePath(), middleware...)
+	if impl, ok := handler.(GetHandler); ok {
+		group.GET("", impl.Get)
+	}
+	if impl, ok := handler.(PostHandler); ok {
+		group.POST("", impl.Post)
+	}
+	if impl, ok := handler.(PutHandler); ok {
+		group.PUT("", impl.Put)
+	}
+	if impl, ok := handler.(DeleteHandler); ok {
+		group.DELETE("", impl.Delete)
+	}
+	if impl, ok := handler.(PatchHandler); ok {
+		group.PATCH("", impl.Patch)
+	}
+	if impl, ok := handler.(HeadHandler); ok {
+		group.HEAD("", impl.Head)
+	}
+	if impl, ok := handler.(OptionsHandler); ok {
+		group.OPTIONS("", impl.Options)
+	}
+	if impl, ok := handler.(AnyHandler); ok {
+		group.Any("", impl.Any)
+	}
+}

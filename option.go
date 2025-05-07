@@ -48,45 +48,52 @@ func AddConfigurator(configurators ...configx.Configurator) EngineOptionFunc {
 	}
 }
 
-// AddCustomFunc 设置自定义函数
+// AddCustomFunc 添加自定义函数
 func AddCustomFunc(funcs ...func() error) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddCustomFunc(funcs...)
 	}
 }
 
-// AddGinMiddleware 设置gin中间件
-func AddGinMiddleware(funcs ...gin.HandlerFunc) EngineOptionFunc {
+// AddGinMiddleware 添加gin中间件
+func AddGinMiddleware(middleware ...gin.HandlerFunc) EngineOptionFunc {
 	return func(e *Engine) {
-		e.AddGinMiddleware(funcs...)
+		e.AddGinMiddleware(middleware...)
 	}
 }
 
-// AddGinRouter 设置gin的路由加载函数
+// AddGinRouter 添加gin的路由加载函数
 func AddGinRouter(router ...func(*gin.RouterGroup)) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddGinRouter(router...)
 	}
 }
 
-// AddTable 添加表结构
+// AddTable 添加表结构（默认数据源）
 func AddTable(tablers ...interface{}) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddTable(tablers...)
 	}
 }
 
-// AddSourceTable 添加数据源表结构
+// AddSourceTable 添加表结构（指定数据源）
 func AddSourceTable(source string, tablers ...interface{}) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddSourceTable(source, tablers...)
 	}
 }
 
-// AddQueueTask 使用后，会自动以队列方式来启动服务
-func AddQueueTask(name, before string, task func() error) EngineOptionFunc {
+// AddTaskBefore 前插队添加任务
+func AddTaskBefore(name, before string, task func() error) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddTaskBefore(name, before, task)
+	}
+}
+
+// AddTaskAfter 后插队添加任务
+func AddTaskAfter(name, after string, task func() error) EngineOptionFunc {
+	return func(e *Engine) {
+		e.AddTaskAfter(name, after, task)
 	}
 }
 

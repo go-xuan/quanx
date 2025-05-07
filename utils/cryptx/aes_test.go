@@ -12,21 +12,18 @@ func TestAES(t *testing.T) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	type SignData struct {
+	bytes, _ := json.Marshal(struct {
 		AppID     string `json:"app_id"`
-		SecretKey string `json:"secret_key"`
 		Timestamp int64  `json:"timestamp"`
-	}
-	bytes, _ := json.Marshal(SignData{
-		AppID:     "e9e97231-d009-4d39-b50f-bc8fc9008300",
-		SecretKey: "fd6d1c1fb333a9ab4e17ce683c988d75",
+	}{
+		AppID:     "1234567890",
 		Timestamp: time.Now().Unix(),
 	})
 	// 加密
-	ciphertext := aes.Encrypt(bytes)
-	fmt.Println(Base64Encode(ciphertext))
+	ciphertext, _ := aes.Encrypt(bytes)
+	fmt.Println("加密：", Base64Encode(ciphertext))
 
 	// 解密
-	plaintext := aes.Decrypt(ciphertext)
-	fmt.Println(string(plaintext))
+	plaintext, _ := aes.Decrypt(ciphertext)
+	fmt.Println("解密：", string(plaintext))
 }
