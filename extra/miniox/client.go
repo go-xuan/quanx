@@ -79,10 +79,10 @@ func (c *Client) UploadFile(ctx context.Context, bucketName string, minioPath st
 		if f, err = file.Open(); err != nil {
 			return errorx.Wrap(err, "open file error")
 		}
-		defer f.Close()
 		if err = c.PutObject(ctx, bucketName, minioPath, f); err != nil {
 			return errorx.Wrap(err, "put object error")
 		}
+		_ = f.Close()
 	}
 	return nil
 }

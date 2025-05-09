@@ -42,7 +42,7 @@ func (c *CodeCaptcha) Send(ctx context.Context, reciver string) (string, int, er
 	}
 
 	// 发送验证码
-	if err := c.sender.AddReceiver(reciver).AddContent(buf.String()).Send(); err != nil {
+	if err := c.sender.AddReceiver(reciver).SetContent(buf.String()).Send(); err != nil {
 		return "", 0, errorx.Wrap(err, "send captcha error")
 	}
 

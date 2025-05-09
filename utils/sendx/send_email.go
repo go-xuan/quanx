@@ -20,7 +20,7 @@ func (e *Email) AddReceiver(reciver ...string) Sender {
 	return e
 }
 
-func (e *Email) AddContent(content string) Sender {
+func (e *Email) SetContent(content string) Sender {
 	e.Content = content
 	return e
 }

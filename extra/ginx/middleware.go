@@ -1,12 +1,27 @@
 package ginx
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
+
+// Cors 跨域处理
+func Cors(ctx *gin.Context) {
+	ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	ctx.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+	ctx.Writer.Header().Set("Access-Control-Allow-Headers", "Content-type, Authorization, Origin, Accept, User-Agent")
+	ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	if ctx.Request.Method == "OPTIONS" {
+		ctx.AbortWithStatus(http.StatusNoContent)
+		return
+	}
+	ctx.Next()
+}
 
 // DefaultLogFormatter gin请求日志格式化
 func DefaultLogFormatter(ctx *gin.Context) {

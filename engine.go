@@ -1,10 +1,11 @@
 package quanx
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/filex"
@@ -374,6 +375,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 // ReadLocalConfig 读取本地配置项（立即执行）
 func (e *Engine) ReadLocalConfig(config any, path string) {
 	if err := marshalx.Apply(path).Read(path, config); err != nil {
+		logrus.WithField("path", path).WithError(err).Error("read local config error")
 		panic(errorx.Wrap(err, "read local config error"))
 	}
 }
@@ -381,6 +383,11 @@ func (e *Engine) ReadLocalConfig(config any, path string) {
 // ReadNacosConfig 读取nacos配置（以自定义函数的形式延迟执行，需确保nacos已经提前初始化）
 func (e *Engine) ReadNacosConfig(config any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() error {
+		if !nacosx.Initialized() {
+			var err = errorx.New("nacos not initialized")
+			logrus.WithField("dataId", dataId).WithError(err).Error("read nacos config error")
+			return err
+		}
 		if err := nacosx.ReadConfig(config, e.config.Server.Name, dataId, listen...); err != nil {
 			return errorx.Wrap(err, "read nacos config error")
 		}
@@ -405,20 +412,20 @@ func (e *Engine) SetConfigDir(dir string) {
 }
 
 // GetConfigPath 获取配置文件
-func (e *Engine) GetConfigPath(path string) string {
+func (e *Engine) GetConfigPath(filename string) string {
 	if dir := e.configDir; dir != "" {
-		return filepath.Join(dir, path)
+		return filepath.Join(dir, filename)
 	} else {
-		return path
+		return filename
 	}
 }
 
-// AddTable 添加表结构
+// AddTable 添加表结构（默认数据源）
 func (e *Engine) AddTable(tablers ...interface{}) {
 	e.AddSourceTable(constx.DefaultSource, tablers...)
 }
 
-// AddSourceTable 添加数据源表结构
+// AddSourceTable 添加表结构（指定数据源）
 func (e *Engine) AddSourceTable(source string, tablers ...interface{}) {
 	e.checkRunning()
 	if len(tablers) > 0 {

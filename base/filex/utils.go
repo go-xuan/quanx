@@ -2,6 +2,7 @@ package filex
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/tls"
 	"encoding/csv"
 	"encoding/hex"
@@ -21,8 +22,8 @@ import (
 )
 
 const (
-	Overwrite = os.O_TRUNC | os.O_CREATE | os.O_RDWR
-	Append    = os.O_APPEND | os.O_CREATE | os.O_RDWR
+	Overwrite = os.O_RDWR | os.O_CREATE | os.O_TRUNC
+	Append    = os.O_RDWR | os.O_CREATE | os.O_APPEND
 )
 
 const (
@@ -46,7 +47,6 @@ func ReadFileLine(path string) ([]string, error) {
 	if err != nil {
 		return nil, errorx.Wrap(err, "open file error")
 	}
-	defer file.Close()
 	// 按行处理txt
 	reader := bufio.NewReader(file)
 	var lines []string
@@ -57,66 +57,63 @@ func ReadFileLine(path string) ([]string, error) {
 		}
 		lines = append(lines, string(line))
 	}
+	if err = file.Close(); err != nil {
+		return nil, errorx.Wrap(err, "close file error")
+	}
 	return lines, nil
 }
 
 // Replace 内容替换
 func Replace(path string, replaces map[string]string) error {
-	bytes, err := os.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return errorx.Wrap(err, "read file error")
 	}
-	content := string(bytes)
 	for k, v := range replaces {
-		content = strings.ReplaceAll(content, k, v)
+		content = bytes.ReplaceAll(content, []byte(k), []byte(v))
 	}
-	if err = WriteFileString(path, content); err != nil {
+	if err = WriteFile(path, content); err != nil {
 		return errorx.Wrap(err, "write to file error")
 	}
 	return nil
 }
 
 // WriteFile 写入文件
-func WriteFile(path string, data []byte, mode ...int) error {
-	file, err := Open(path, mode...)
+func WriteFile(path string, data []byte, flag ...int) error {
+	file, err := Open(path, flag...)
 	if err != nil {
 		return errorx.Wrap(err, "open file error")
 	}
-	defer file.Close()
-	writer := bufio.NewWriter(file)
-	if _, err = writer.Write(data); err != nil {
-		return errorx.Wrap(err, "write []byte error")
+	if _, err = file.Write(data); err != nil {
+		return errorx.Wrap(err, "file write error")
 	}
-	if err = writer.Flush(); err != nil {
-		return errorx.Wrap(err, "writer flush error")
+	if err = file.Close(); err != nil {
+		return errorx.Wrap(err, "close file error")
 	}
 	return nil
 }
 
 // WriteFileString 写入文件
-func WriteFileString(path, data string, mode ...int) error {
-	file, err := Open(path, mode...)
+func WriteFileString(path, data string, flag ...int) error {
+	file, err := Open(path, flag...)
 	if err != nil {
 		return errorx.Wrap(err, "open file error")
 	}
-	defer file.Close()
-	writer := bufio.NewWriter(file)
-	if _, err = writer.WriteString(data); err != nil {
+	if _, err = file.WriteString(data); err != nil {
 		return errorx.Wrap(err, "write string error")
 	}
-	if err = writer.Flush(); err != nil {
-		return errorx.Wrap(err, "writer flush error")
+	if err = file.Close(); err != nil {
+		return errorx.Wrap(err, "close file error")
 	}
 	return nil
 }
 
 // WriteFileLine 数组按行写入文件
-func WriteFileLine(path string, content []string, mode ...int) error {
-	file, err := Open(path, mode...)
+func WriteFileLine(path string, content []string, flag ...int) error {
+	file, err := Open(path, flag...)
 	if err != nil {
 		return errorx.Wrap(err, "open file error")
 	}
-	defer file.Close()
 	writer := bufio.NewWriter(file)
 	for _, line := range content {
 		_, _ = writer.WriteString(line)
@@ -124,6 +121,9 @@ func WriteFileLine(path string, content []string, mode ...int) error {
 	}
 	if err = writer.Flush(); err != nil {
 		return errorx.Wrap(err, "writer flush error")
+	}
+	if err = file.Close(); err != nil {
+		return errorx.Wrap(err, "close file error")
 	}
 	return nil
 }
@@ -134,7 +134,6 @@ func WriteCSV(path string, data [][]string) error {
 	if err != nil {
 		return errorx.Wrap(err, "open file error")
 	}
-	defer file.Close()
 	writer := csv.NewWriter(file)
 	writer.Comma = ','
 	writer.UseCRLF = true
@@ -142,12 +141,15 @@ func WriteCSV(path string, data [][]string) error {
 		return errorx.Wrap(err, "write csv to file error")
 	}
 	writer.Flush()
+	if err = file.Close(); err != nil {
+		return errorx.Wrap(err, "close file error")
+	}
 	return nil
 }
 
-func Open(filePath string, mode ...int) (*os.File, error) {
+func Open(filePath string, flag ...int) (*os.File, error) {
 	CreateIfNotExist(filePath)
-	file, err := os.OpenFile(filePath, intx.Default(Overwrite, mode...), 0644)
+	file, err := os.OpenFile(filePath, intx.Default(Overwrite, flag...), 0644)
 	if err != nil {
 		return nil, errorx.Wrap(err, "open file error")
 	}
@@ -156,7 +158,7 @@ func Open(filePath string, mode ...int) (*os.File, error) {
 
 func Clear(filePath string) {
 	file, _ := os.OpenFile(filePath, os.O_TRUNC, 0644)
-	file.Close()
+	_ = file.Close()
 }
 
 // MustOpen 强制打开文件
@@ -177,7 +179,6 @@ func FileSplit(filePath string, size int) ([]string, error) {
 	if err != nil {
 		return nil, errorx.Wrap(err, "open file error")
 	}
-	defer file.Close()
 	dir, filename, suffix := Analyse(filePath)
 	dir = filepath.Join(dir, filename)
 	reader := bufio.NewReader(file)
@@ -208,6 +209,9 @@ func FileSplit(filePath string, size int) ([]string, error) {
 			count++
 		}
 		index++
+	}
+	if err = file.Close(); err != nil {
+		return nil, errorx.Wrap(err, "close file error")
 	}
 	return paths, nil
 }
@@ -259,7 +263,9 @@ func Create(path string) error {
 	if err != nil {
 		return errorx.Wrap(err, "create error")
 	}
-	defer file.Close()
+	if err = file.Close(); err != nil {
+		return errorx.Wrap(err, "close file error")
+	}
 	return nil
 }
 
@@ -287,16 +293,16 @@ func CreateDir(path string) {
 
 // IsEmptyDir 检查给定的目录是否为空
 func IsEmptyDir(dir string) bool {
-	f, err := os.Open(dir)
+	file, err := os.Open(dir)
 	if err != nil {
 		return false
 	}
-	defer f.Close()
 	// 读取目录内容
 	var names []string
-	if names, err = f.Readdirnames(0); err != nil {
+	if names, err = file.Readdirnames(0); err != nil {
 		return false
 	}
+	_ = file.Close()
 	// 如果目录内容为空，则目录为空
 	return len(names) == 0
 }
@@ -405,11 +411,12 @@ func GetFileBytesByUrl(fileUrl string) ([]byte, error) {
 	if err != nil {
 		return nil, errorx.Wrap(err, "get http client error")
 	}
-	var body = resp.Body
-	defer body.Close()
 	var bytes []byte
-	if bytes, err = io.ReadAll(body); err != nil {
-		return nil, errorx.Wrap(err, "http response body read error")
+	if bytes, err = io.ReadAll(resp.Body); err != nil {
+		return nil, errorx.Wrap(err, "response body read error")
+	}
+	if err = resp.Body.Close(); err != nil {
+		return nil, errorx.Wrap(err, "response body close error")
 	}
 	return bytes, nil
 }
