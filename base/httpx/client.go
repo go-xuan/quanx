@@ -67,12 +67,10 @@ func (c *Client) Do(request *http.Request) (*Response, error) {
 		status:  response.StatusCode,
 		cookies: response.Cookies(),
 	}
-	defer response.Body.Close()
-	var body []byte
-	if body, err = io.ReadAll(response.Body); err != nil {
+	if resp.body, err = io.ReadAll(response.Body); err != nil {
 		return resp, errorx.Wrap(err, "read http response body error")
 	}
-	resp.body = body
+	_ = response.Body.Close()
 	return resp, nil
 }
 

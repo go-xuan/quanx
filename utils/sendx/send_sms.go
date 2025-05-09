@@ -10,7 +10,7 @@ func (s *SMS) AddReceiver(reciver ...string) Sender {
 	return s
 }
 
-func (s *SMS) AddContent(content string) Sender {
+func (s *SMS) SetContent(content string) Sender {
 	s.Content = content
 	return s
 }

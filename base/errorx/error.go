@@ -101,5 +101,5 @@ func (s *stack) Format(f fmt.State, verb rune) {
 func getStack() []uintptr {
 	var pcs [32]uintptr
 	n := runtime.Callers(3, pcs[:])
-	return pcs[:n]
+	return pcs[:n-1]
 }
