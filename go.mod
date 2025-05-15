@@ -4,17 +4,16 @@ go 1.18
 
 require (
 	github.com/BurntSushi/toml v1.5.0
-	github.com/farmerx/gorsa v0.0.0-20161211100049-3ae06f674f40
 	github.com/gin-gonic/gin v1.9.0 // 1.9.1以上版本需要升级go 1.20
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/magiconair/properties v1.8.6 // 1.8.7以上版本需要升级go 1.19
-	github.com/minio/minio-go/v7 v7.0.61 // v7.0.61以上版本需要检查github.com/klauspost/compress 的版本不超过1.17.2
+	github.com/minio/minio-go/v7 v7.0.61 // v7.0.62以上版本需要检查github.com/klauspost/compress 的版本不超过1.17.2
 	github.com/mojocn/base64Captcha v1.3.8
 	github.com/nacos-group/nacos-sdk-go v1.1.5
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/redis/go-redis/v9 v9.7.3
+	github.com/redis/go-redis/v9 v9.8.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tealeg/xlsx v1.0.5
@@ -22,7 +21,6 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/wenlng/go-captcha v1.2.5
 	go.mongodb.org/mongo-driver v1.16.1 // v0.17.0以上版本依赖golang.org/x/crypto的版本v0.22.0需要升级go 1.20
-	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.7
@@ -34,7 +32,7 @@ require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.18 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/bytedance/sonic v1.8.0 // indirect
-	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -89,6 +87,5 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
-	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )

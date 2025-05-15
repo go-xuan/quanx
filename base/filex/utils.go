@@ -34,10 +34,10 @@ const (
 
 // ReadFile 读取文件内容
 func ReadFile(path string) ([]byte, error) {
-	if bytes, err := os.ReadFile(path); err != nil {
+	if content, err := os.ReadFile(path); err != nil {
 		return nil, errorx.Wrap(err, "read file error")
 	} else {
-		return bytes, nil
+		return content, nil
 	}
 }
 
