@@ -12,6 +12,6 @@ type ImageCaptchaService interface {
 
 // CodeCaptchaService code验证码
 type CodeCaptchaService interface {
-	Send(ctx context.Context, receiver string) (captcha string, expired int, err error)
+	Send(ctx context.Context, receiver ...string) (captcha string, expired int, err error)
 	Verify(ctx context.Context, receiver, captcha string) bool
 }
