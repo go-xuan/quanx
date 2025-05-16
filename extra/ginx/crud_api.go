@@ -38,7 +38,7 @@ func (m *Model[T]) List(ctx *gin.Context) {
 	var err error
 	var result []*T
 	if err = m.DB.Find(&result).Error; err != nil {
-		respx.Error(ctx, err)
+		respx.Error(ctx, err.Error())
 	} else {
 		respx.Success(ctx, result)
 	}
@@ -52,7 +52,7 @@ func (m *Model[T]) Create(ctx *gin.Context) {
 		return
 	}
 	if err = m.DB.Create(&in).Error; err != nil {
-		respx.Error(ctx, err)
+		respx.Error(ctx, err.Error())
 	} else {
 		respx.Success(ctx, nil)
 	}
@@ -66,7 +66,7 @@ func (m *Model[T]) Update(ctx *gin.Context) {
 		return
 	}
 	if err = m.DB.Updates(&in).Error; err != nil {
-		respx.Error(ctx, err)
+		respx.Error(ctx, err.Error())
 	} else {
 		respx.Success(ctx, nil)
 	}
@@ -81,7 +81,7 @@ func (m *Model[T]) Delete(ctx *gin.Context) {
 	}
 	var t T
 	if err = m.DB.Where("id = ? ", id.Id).Delete(&t).Error; err != nil {
-		respx.Error(ctx, err)
+		respx.Error(ctx, err.Error())
 	} else {
 		respx.Success(ctx, nil)
 	}
@@ -96,7 +96,7 @@ func (m *Model[T]) Detail(ctx *gin.Context) {
 	}
 	var result T
 	if err = m.DB.Where("id = ? ", id.Id).Find(&result).Error; err != nil {
-		respx.Error(ctx, err)
+		respx.Error(ctx, err.Error())
 	} else {
 		respx.Success(ctx, result)
 	}
@@ -121,7 +121,7 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 		return
 	}
 	if err = m.DB.Model(obj).Create(&data).Error; err != nil {
-		respx.Error(ctx, err)
+		respx.Error(ctx, err.Error())
 	} else {
 		respx.Success(ctx, nil)
 	}
