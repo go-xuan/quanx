@@ -1,6 +1,8 @@
 package timex
 
-import "time"
+import (
+	"time"
+)
 
 func NewDate(v ...time.Time) Date {
 	var x = Date{notnull: true}
@@ -20,29 +22,34 @@ type Date struct {
 }
 
 func (x *Date) UnmarshalJSON(bytes []byte) error {
-	if value, err := time.ParseInLocation(`"2006-01-02"`, string(bytes), time.Local); err != nil {
-		return err
-	} else {
-		x.value = value
-		x.notnull = true
+	if l := len(bytes); l > 1 && string(bytes) != "null" {
+		if bytes[0] == 34 && bytes[l-1] == 34 {
+			bytes = bytes[1 : l-1] // 带引号则去掉引号
+		}
+		str := string(bytes)
+		if t, err := time.ParseInLocation(`2006-01-02`, str, time.Local); err == nil {
+			x.value = t
+			x.notnull = true
+			return nil
+		}
 	}
+	x.notnull = false
 	return nil
 }
 
-func (x Date) MarshalJSON() ([]byte, error) {
-	if x.notnull {
+func (x *Date) MarshalJSON() ([]byte, error) {
+	if x != nil && x.notnull {
 		var bytes []byte
 		bytes = append(bytes, 34)
 		bytes = x.value.AppendFormat(bytes, DateFmt)
 		bytes = append(bytes, 34)
 		return bytes, nil
-	} else {
-		return []byte("null"), nil
 	}
+	return []byte("null"), nil
 }
 
-func (x Date) Value(def ...time.Time) time.Time {
-	if x.notnull {
+func (x *Date) Value(def ...time.Time) time.Time {
+	if x != nil && x.notnull {
 		return x.value
 	} else if len(def) > 0 {
 		y, m, d := def[0].Date()
@@ -51,6 +58,6 @@ func (x Date) Value(def ...time.Time) time.Time {
 	return time.Time{}
 }
 
-func (x Date) NotNull() bool {
+func (x *Date) NotNull() bool {
 	return x.notnull
 }

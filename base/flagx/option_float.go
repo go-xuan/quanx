@@ -36,5 +36,10 @@ func (opt *floatOption) Add(fs *flag.FlagSet) {
 }
 
 func (opt *floatOption) GetValue() anyx.Value {
-	return anyx.Float64Value(*opt.value)
+	if opt.value != nil {
+		return anyx.Float64Value(*opt.value)
+	} else if opt.def > 0 {
+		return anyx.Float64Value(opt.def)
+	}
+	return nil
 }

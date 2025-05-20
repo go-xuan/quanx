@@ -14,6 +14,16 @@ import (
 )
 
 func TestValue(t *testing.T) {
+	v := floatx.NewFloat64(123.4)
+	fmt.Println("string = ", v.String())
+	fmt.Println("int = ", v.Int(111))
+	fmt.Println("int64 = ", v.Int64())
+	fmt.Println("float64 = ", v.Float64())
+	fmt.Println("bool = ", v.Bool())
+	fmt.Println("string = ", v.String())
+}
+
+func TestMarshal(t *testing.T) {
 	type Demo struct {
 		String stringx.String `json:"name"`
 		Time   timex.Time     `json:"create_time"`
@@ -22,33 +32,23 @@ func TestValue(t *testing.T) {
 		Int    intx.Int       `json:"int"`
 		Int64  intx.Int64     `json:"int64"`
 		Float  floatx.Float   `json:"float"`
-		//Value  Value          `json:"value"`
 	}
 
-	j := `{"name":12345678,"time":2004565434,"date":"2024-11-21","bool":1,"int":47826,"int64":23364,"float":57575.138063,"value":123.4}`
-	base := &Demo{}
-	if err := json.Unmarshal([]byte(j), base); err != nil {
+	bytes := []byte(`{"name":null,"create_time": 11111,"create_date":"2024-11-21","bool":1,"int":47826,"int64":23364,"float":57575.138063,"value":123.4}`)
+	demo := &Demo{}
+	if err := json.Unmarshal(bytes, demo); err != nil {
 		panic(err)
 	}
-	b, _ := json.Marshal(base)
-	fmt.Println(string(b))
+	bytes, _ = json.Marshal(demo)
+	fmt.Println("反序列化：", string(bytes))
 
-	base.String = stringx.NewString(randx.String())
-	base.Bool = boolx.NewBool(randx.Bool())
-	base.Date = timex.NewDate(randx.Time())
-	base.Time = timex.NewTime(randx.Time())
-	base.Int = intx.NewInt(randx.Int())
-	base.Int64 = intx.NewInt64(randx.Int64())
-	base.Float = floatx.NewFloat64(randx.Float64())
-
-	b, _ = json.Marshal(base)
-	fmt.Println(string(b))
-
-	v := base.Float
-	fmt.Println("string = ", v.String())
-	fmt.Println("int = ", v.Int(111))
-	fmt.Println("int64 = ", v.Int64())
-	fmt.Println("float64 = ", v.Float64())
-	fmt.Println("bool = ", v.Bool())
-	fmt.Println("string = ", v.String())
+	demo.String = stringx.NewString(randx.String())
+	demo.Bool = boolx.NewBool(randx.Bool())
+	demo.Date = timex.NewDate(randx.Time())
+	demo.Time = timex.NewTime(randx.Time())
+	demo.Int = intx.NewInt(randx.Int())
+	demo.Int64 = intx.NewInt64(randx.Int64())
+	demo.Float = floatx.NewFloat64(randx.Float64())
+	bytes, _ = json.Marshal(demo)
+	fmt.Println("重新赋值：", string(bytes))
 }

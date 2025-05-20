@@ -36,5 +36,10 @@ func (opt *int64Option) Add(fs *flag.FlagSet) {
 }
 
 func (opt *int64Option) GetValue() anyx.Value {
-	return anyx.Int64Value(*opt.value)
+	if opt.value != nil {
+		return anyx.Int64Value(*opt.value)
+	} else if opt.def > 0 {
+		return anyx.Int64Value(opt.def)
+	}
+	return nil
 }

@@ -37,5 +37,10 @@ func (opt *intOption) Add(fs *flag.FlagSet) {
 }
 
 func (opt *intOption) GetValue() anyx.Value {
-	return anyx.IntValue(*opt.value)
+	if opt.value != nil {
+		return anyx.IntValue(*opt.value)
+	} else if opt.def > 0 {
+		return anyx.IntValue(opt.def)
+	}
+	return nil
 }

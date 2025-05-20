@@ -20,43 +20,39 @@ type String struct {
 }
 
 func (x *String) UnmarshalJSON(bytes []byte) error {
-	if l := len(bytes); l >= 0 {
-		x.notnull = true
+	if l := len(bytes); l >= 0 && string(bytes) != "null" {
 		if l > 1 && bytes[0] == 34 && bytes[l-1] == 34 {
-			// 带引号则去掉引号
-			x.value = string(bytes[1 : l-1])
-		} else {
-			// 兼容不带引号的字符串
-			x.value = string(bytes)
+			bytes = bytes[1 : l-1] // 带引号则去掉引号
 		}
-	} else {
-		x.notnull = false
+		x.notnull = true
+		x.value = string(bytes)
+		return nil
 	}
+	x.notnull = false
 	return nil
 }
 
-func (x String) MarshalJSON() ([]byte, error) {
-	if x.notnull {
+func (x *String) MarshalJSON() ([]byte, error) {
+	if x != nil && x.notnull {
 		var bytes []byte
 		bytes = append(bytes, 34)
 		bytes = append(bytes, []byte(x.value)...)
 		bytes = append(bytes, 34)
 		return bytes, nil
-	} else {
-		return []byte("null"), nil
 	}
+	return []byte("null"), nil
 }
 
-func (x String) Value(def ...string) string {
+func (x *String) Value(def ...string) string {
 	return x.String(def...)
 }
 
-func (x String) NotNull() bool {
+func (x *String) NotNull() bool {
 	return x.notnull
 }
 
-func (x String) String(def ...string) string {
-	if x.notnull {
+func (x *String) String(def ...string) string {
+	if x != nil && x.notnull {
 		return x.value
 	} else if len(def) > 0 {
 		return def[0]
@@ -64,8 +60,8 @@ func (x String) String(def ...string) string {
 	return ""
 }
 
-func (x String) Int(def ...int) int {
-	if x.notnull {
+func (x *String) Int(def ...int) int {
+	if x != nil && x.notnull {
 		if value, err := strconv.Atoi(x.value); err == nil {
 			return value
 		}
@@ -75,8 +71,8 @@ func (x String) Int(def ...int) int {
 	return 0
 }
 
-func (x String) Int64(def ...int64) int64 {
-	if x.notnull {
+func (x *String) Int64(def ...int64) int64 {
+	if x != nil && x.notnull {
 		if value, err := strconv.ParseInt(x.value, 10, 64); err == nil {
 			return value
 		}
@@ -86,8 +82,8 @@ func (x String) Int64(def ...int64) int64 {
 	return 0
 }
 
-func (x String) Float64(def ...float64) float64 {
-	if x.notnull {
+func (x *String) Float64(def ...float64) float64 {
+	if x != nil && x.notnull {
 		if value, err := strconv.ParseFloat(x.value, 64); err == nil {
 			return value
 		}
@@ -97,8 +93,8 @@ func (x String) Float64(def ...float64) float64 {
 	return 0
 }
 
-func (x String) Bool(def ...bool) bool {
-	if x.notnull {
+func (x *String) Bool(def ...bool) bool {
+	if x != nil && x.notnull {
 		return ParseBool(x.value)
 	} else if len(def) > 0 {
 		return def[0]

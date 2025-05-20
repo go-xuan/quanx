@@ -37,5 +37,10 @@ func (opt *boolOption) Add(fs *flag.FlagSet) {
 }
 
 func (opt *boolOption) GetValue() anyx.Value {
-	return anyx.BoolValue(*opt.value)
+	if opt.value != nil {
+		return anyx.BoolValue(*opt.value)
+	} else if opt.def {
+		return anyx.BoolValue(opt.def)
+	}
+	return nil
 }

@@ -36,5 +36,10 @@ func (opt *stringOption) Add(fs *flag.FlagSet) {
 }
 
 func (opt *stringOption) GetValue() anyx.Value {
-	return anyx.StringValue(*opt.value)
+	if opt.value != nil {
+		return anyx.StringValue(*opt.value)
+	} else if opt.def != "" {
+		return anyx.StringValue(opt.def)
+	}
+	return nil
 }
