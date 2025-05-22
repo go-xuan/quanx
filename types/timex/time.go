@@ -46,7 +46,7 @@ func (x *Time) UnmarshalJSON(bytes []byte) error {
 }
 
 func (x *Time) MarshalJSON() ([]byte, error) {
-	if x != nil && x.notnull {
+	if x.Valid() {
 		var bytes []byte
 		bytes = append(bytes, 34)
 		bytes = x.value.AppendFormat(bytes, TimeFmt)
@@ -57,7 +57,7 @@ func (x *Time) MarshalJSON() ([]byte, error) {
 }
 
 func (x *Time) Value(def ...time.Time) time.Time {
-	if x != nil && x.notnull {
+	if x.Valid() {
 		return x.value
 	} else if len(def) > 0 {
 		return def[0]
@@ -65,6 +65,6 @@ func (x *Time) Value(def ...time.Time) time.Time {
 	return time.Time{}
 }
 
-func (x *Time) NotNull() bool {
-	return x.notnull
+func (x *Time) Valid() bool {
+	return x != nil && x.notnull
 }

@@ -25,13 +25,13 @@ func TestValue(t *testing.T) {
 
 func TestMarshal(t *testing.T) {
 	type Demo struct {
-		String stringx.String `json:"name"`
-		Time   timex.Time     `json:"create_time"`
-		Date   timex.Date     `json:"create_date"`
-		Bool   boolx.Bool     `json:"bool"`
-		Int    intx.Int       `json:"int"`
-		Int64  intx.Int64     `json:"int64"`
-		Float  floatx.Float   `json:"float"`
+		String *stringx.String `json:"name"`
+		Time   *timex.Time     `json:"create_time"`
+		Date   *timex.Date     `json:"create_date"`
+		Bool   *boolx.Bool     `json:"bool"`
+		Int    *intx.Int       `json:"int"`
+		Int64  *intx.Int64     `json:"int64"`
+		Float  *floatx.Float   `json:"float"`
 	}
 
 	bytes := []byte(`{"name":null,"create_time": 11111,"create_date":"2024-11-21","bool":1,"int":47826,"int64":23364,"float":57575.138063,"value":123.4}`)
@@ -42,6 +42,7 @@ func TestMarshal(t *testing.T) {
 	bytes, _ = json.Marshal(demo)
 	fmt.Println("反序列化：", string(bytes))
 
+	stringx.NewString().Valid()
 	demo.String = stringx.NewString(randx.String())
 	demo.Bool = boolx.NewBool(randx.Bool())
 	demo.Date = timex.NewDate(randx.Time())

@@ -32,7 +32,7 @@ func (x *Int64) UnmarshalJSON(bytes []byte) error {
 }
 
 func (x *Int64) MarshalJSON() ([]byte, error) {
-	if x != nil && x.notnull {
+	if x.Valid() {
 		return []byte(strconv.FormatInt(x.value, 10)), nil
 	}
 	return []byte("null"), nil
@@ -42,12 +42,12 @@ func (x *Int64) Value(def ...int64) int64 {
 	return x.Int64(def...)
 }
 
-func (x *Int64) NotNull() bool {
-	return x.notnull
+func (x *Int64) Valid() bool {
+	return x != nil && x.notnull
 }
 
 func (x *Int64) String(def ...string) string {
-	if x != nil && x.notnull {
+	if x.Valid() {
 		return strconv.FormatInt(x.value, 10)
 	} else if len(def) > 0 {
 		return def[0]
@@ -56,7 +56,7 @@ func (x *Int64) String(def ...string) string {
 }
 
 func (x *Int64) Int(def ...int) int {
-	if x != nil && x.notnull {
+	if x.Valid() {
 		return int(x.value)
 	} else if len(def) > 0 {
 		return def[0]
@@ -65,7 +65,7 @@ func (x *Int64) Int(def ...int) int {
 }
 
 func (x *Int64) Int64(def ...int64) int64 {
-	if x != nil && x.notnull {
+	if x.Valid() {
 		return x.value
 	} else if len(def) > 0 {
 		return def[0]
@@ -74,7 +74,7 @@ func (x *Int64) Int64(def ...int64) int64 {
 }
 
 func (x *Int64) Float64(def ...float64) float64 {
-	if x != nil && x.notnull {
+	if x.Valid() {
 		return float64(x.value)
 	} else if len(def) > 0 {
 		return def[0]
@@ -83,7 +83,7 @@ func (x *Int64) Float64(def ...float64) float64 {
 }
 
 func (x *Int64) Bool(def ...bool) bool {
-	if x != nil && x.notnull {
+	if x.Valid() {
 		return x.value == 1
 	} else if len(def) > 0 {
 		return def[0]

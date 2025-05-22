@@ -8,6 +8,7 @@ import (
 )
 
 type Value interface {
+	Valid() bool
 	String(def ...string) string
 	Int(def ...int) int
 	Int64(def ...int64) int64

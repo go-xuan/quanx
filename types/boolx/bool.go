@@ -32,7 +32,7 @@ func (x *Bool) MarshalJSON() ([]byte, error) {
 	if x == nil {
 		return []byte("null"), nil
 	}
-	if x.notnull && x.value {
+	if x.Valid() {
 		return []byte("true"), nil
 	} else {
 		return []byte("false"), nil
@@ -43,12 +43,12 @@ func (x *Bool) Value(def ...bool) bool {
 	return x.Bool(def...)
 }
 
-func (x *Bool) NotNull() bool {
-	return x.notnull
+func (x *Bool) Valid() bool {
+	return x != nil && x.notnull
 }
 
 func (x *Bool) String(def ...string) string {
-	if x != nil && x.notnull {
+	if x.Valid() {
 		return strconv.FormatBool(x.value)
 	} else if len(def) > 0 {
 		return def[0]
@@ -57,7 +57,7 @@ func (x *Bool) String(def ...string) string {
 }
 
 func (x *Bool) Int(def ...int) int {
-	if x.notnull && x.value {
+	if x.Valid() {
 		return 1
 	} else if len(def) > 0 {
 		return def[0]
@@ -66,7 +66,7 @@ func (x *Bool) Int(def ...int) int {
 }
 
 func (x *Bool) Int64(def ...int64) int64 {
-	if x.notnull && x.value {
+	if x.Valid() {
 		return 1
 	} else if len(def) > 0 {
 		return def[0]
@@ -75,7 +75,7 @@ func (x *Bool) Int64(def ...int64) int64 {
 }
 
 func (x *Bool) Float64(def ...float64) float64 {
-	if x.notnull && x.value {
+	if x.Valid() {
 		return 1
 	} else if len(def) > 0 {
 		return def[0]
@@ -84,7 +84,7 @@ func (x *Bool) Float64(def ...float64) float64 {
 }
 
 func (x *Bool) Bool(def ...bool) bool {
-	if x != nil && x.notnull {
+	if x.Valid() {
 		return x.value
 	} else if len(def) > 0 {
 		return def[0]
