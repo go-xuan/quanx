@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func NewTime(v ...time.Time) Time {
-	var x = Time{notnull: true}
+func NewTime(v ...time.Time) *Time {
+	var x = &Time{notnull: true}
 	if len(v) > 0 {
 		x.value = v[0]
 	} else {

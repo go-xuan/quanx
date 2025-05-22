@@ -2,8 +2,8 @@ package intx
 
 import "strconv"
 
-func NewInt(v ...int) Int {
-	var x = Int{notnull: true}
+func NewInt(v ...int) *Int {
+	var x = &Int{notnull: true}
 	if len(v) > 0 {
 		x.value = v[0]
 	} else {

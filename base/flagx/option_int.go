@@ -25,7 +25,7 @@ func (opt *intOption) Name() string {
 }
 
 func (opt *intOption) Usage() string {
-	if opt.def == 0 {
+	if opt.def != 0 {
 		return genUsage(opt.usage, opt.def)
 	} else {
 		return opt.usage

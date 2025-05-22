@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-func NewDate(v ...time.Time) Date {
-	var x = Date{notnull: true}
+func NewDate(v ...time.Time) *Date {
+	var x = &Date{notnull: true}
 	if len(v) > 0 {
 		y, m, d := v[0].Date()
 		x.value = time.Date(y, m, d, 0, 0, 0, 0, time.Local)

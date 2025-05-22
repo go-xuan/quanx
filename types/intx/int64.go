@@ -4,8 +4,8 @@ import (
 	"strconv"
 )
 
-func NewInt64(v ...int64) Int64 {
-	var x = Int64{notnull: true}
+func NewInt64(v ...int64) *Int64 {
+	var x = &Int64{notnull: true}
 	if len(v) > 0 {
 		x.value = v[0]
 	} else {

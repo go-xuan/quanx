@@ -12,190 +12,146 @@ import (
 	"github.com/go-xuan/quanx/base/filex"
 )
 
-const PemHeaderModeKey = "Crypto-Mode"
+const (
+	PKCS1 Mode = iota + 1 // 私钥和公钥都能使用
+	PKCS8                 // 仅能用于私钥
+	PKIX                  // 仅能用于公钥
 
-func RSA() (*RsaCrypto, error) {
-	var crypto *RsaCrypto
-	if privateKey, err := rsa.GenerateKey(rand.Reader, 1024); err != nil {
-		return nil, err
-	} else if crypto, err = NewRsaCrypto(privateKey, RsaPKCS1, RsaPKCS1); err != nil {
-		return nil, err
+	PrivateKeyType = "PRIVATE KEY"
+	PublicKeyType  = "PUBLIC KEY"
+)
+
+func RSA() (Crypto, error) {
+	crypto, err := NewRsaCrypto(1024)
+	if err != nil {
+		return nil, errorx.Wrap(err, "new rsa crypto error")
 	}
 	return crypto, nil
 }
 
 // NewRsaCrypto 生成RAS加密对象
-func NewRsaCrypto(privateKey *rsa.PrivateKey, privateMode, publicMode Mode) (*RsaCrypto, error) {
-	var err error
-
-	// 生成私钥block
-	var privacyBlock *pem.Block
-	if privacyBlock, err = NewRSAPrivateBlock(privateKey, privateMode); err != nil {
-		return nil, errorx.Wrap(err, "gen rsa private key error")
+func NewRsaCrypto(bits int) (*RsaCrypto, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, bits)
+	if err != nil {
+		return nil, errorx.Wrap(err, "generate rsa key error")
 	}
-	// 根据私钥生成公钥block
-	var publicBlock *pem.Block
-	if publicBlock, err = NewRSAPublicBlock(privateKey, publicMode); err != nil {
-		return nil, errorx.Wrap(err, "gen rsa public key error")
-	}
-	return &RsaCrypto{
-		privateKey:   privateKey,
-		privateBlock: privacyBlock,
-		publicBlock:  publicBlock,
-	}, nil
+	return &RsaCrypto{PrivateKey: privateKey}, nil
 }
 
 // ParseRsaCrypto 从现有的密钥解析出RAS加密对象
-func ParseRsaCrypto(privateData []byte, privateMode, publicMode Mode) (*RsaCrypto, error) {
-	var err error
-
+func ParseRsaCrypto(privateData []byte, mode Mode) (*RsaCrypto, error) {
 	var privateBlock *pem.Block
 	if privateBlock, _ = pem.Decode(privateData); privateBlock == nil {
-		return nil, errorx.Wrap(err, "private key decode error")
+		return nil, errorx.New("decode private block error")
 	}
-	var privateKey *rsa.PrivateKey
-	if privateKey, err = ParseRsaPrivateKey(privateBlock, privateMode); err != nil {
-		return nil, errorx.Wrap(err, "parse private key error")
-	}
-	var publicBlock *pem.Block
-	if publicBlock, err = NewRSAPublicBlock(privateKey, publicMode); err != nil {
-		return nil, errorx.Wrap(err, "gen rsa public key error")
-	}
-	return &RsaCrypto{
-		privateKey:   privateKey,
-		privateBlock: privateBlock,
-		publicBlock:  publicBlock,
-	}, nil
-}
-
-// RsaCrypto RSA加密器
-type RsaCrypto struct {
-	privateKey   *rsa.PrivateKey // rsa私钥
-	privateBlock *pem.Block      // 私钥块
-	publicBlock  *pem.Block      // 公钥块
-}
-
-// Encrypt 公钥加密
-func (c *RsaCrypto) Encrypt(plaintext []byte) ([]byte, error) {
-	var publicKey *rsa.PublicKey
-	mode, _ := strconv.Atoi(c.publicBlock.Headers[PemHeaderModeKey])
-	switch Mode(mode) {
-	case RsaPKCS1:
-		key, err := x509.ParsePKCS1PublicKey(c.publicBlock.Bytes)
-		if err != nil {
-			return nil, errorx.Wrap(err, "pkcs1 public key parse error")
-		}
-		publicKey = key
-	case RsaPKIX:
-		key, err := x509.ParsePKIXPublicKey(c.publicBlock.Bytes)
-		if err != nil {
-			return nil, errorx.Wrap(err, "pkcs1 public key parse error")
-		}
-		publicKey = key.(*rsa.PublicKey)
-	default:
-		publicKey = &c.privateKey.PublicKey
-	}
-	return rsa.EncryptPKCS1v15(rand.Reader, publicKey, plaintext)
-}
-
-// Decrypt 私钥解密
-func (c *RsaCrypto) Decrypt(ciphertext []byte) ([]byte, error) {
-	var privateKey *rsa.PrivateKey
-	mode, _ := strconv.Atoi(c.publicBlock.Headers[PemHeaderModeKey])
-	switch Mode(mode) {
-	case RsaPKCS1:
-		key, err := x509.ParsePKCS1PrivateKey(c.privateBlock.Bytes)
-		if err != nil {
-			return nil, errorx.Wrap(err, "pkcs1 public key parse error")
-		}
-		privateKey = key
-	case RsaPKCS8:
-		key, err := x509.ParsePKCS8PrivateKey(c.privateBlock.Bytes)
-		if err != nil {
-			return nil, errorx.Wrap(err, "pkcs1 public key parse error")
-		}
-		privateKey = key.(*rsa.PrivateKey)
-	default:
-		privateKey = c.privateKey
-	}
-	return rsa.DecryptPKCS1v15(rand.Reader, privateKey, ciphertext)
-}
-
-// SavePrivateKey 密钥持久化
-func (c *RsaCrypto) SavePrivateKey(path string) error {
-	if err := writePemBlock(path, c.privateBlock); err != nil {
-		return errorx.Wrap(err, "save private pem encode error")
-	}
-	return nil
-}
-
-// SavePublicKey 公钥持久化
-func (c *RsaCrypto) SavePublicKey(path string) error {
-	if err := writePemBlock(path, c.publicBlock); err != nil {
-		return errorx.Wrap(err, "save public pem error")
-	}
-	return nil
-}
-
-// NewRSAPrivateBlock 生成私钥block
-func NewRSAPrivateBlock(privateKey *rsa.PrivateKey, mode Mode) (*pem.Block, error) {
 	switch mode {
-	case RsaPKCS1:
-		return &pem.Block{
-			Type:    "RSA PRIVATE KEY",
-			Bytes:   x509.MarshalPKCS1PrivateKey(privateKey),
-			Headers: map[string]string{PemHeaderModeKey: strconv.Itoa(int(RsaPKCS1))},
-		}, nil
-	case RsaPKCS8:
-		data, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	case PKCS1:
+		privateKey, err := x509.ParsePKCS1PrivateKey(privateBlock.Bytes)
 		if err != nil {
-			return nil, errorx.Wrap(err, "marshal PKCS8 private key error")
+			return nil, errorx.Wrap(err, "parse PKCS1 private key error")
 		}
-		return &pem.Block{
-			Type:    "RSA PRIVATE KEY",
-			Bytes:   data,
-			Headers: map[string]string{PemHeaderModeKey: strconv.Itoa(int(RsaPKCS8))},
-		}, nil
+		return &RsaCrypto{PrivateKey: privateKey}, nil
+	case PKCS8:
+		privateKey, err := x509.ParsePKCS8PrivateKey(privateBlock.Bytes)
+		if err != nil {
+			return nil, errorx.Wrap(err, "parse PKCS8 private key error")
+		}
+		return &RsaCrypto{PrivateKey: privateKey.(*rsa.PrivateKey)}, nil
 	default:
 		return nil, errorx.New("unsupported private mode:" + strconv.Itoa(int(mode)))
 	}
 }
 
-// NewRSAPublicBlock 根据私钥生成公钥block
-func NewRSAPublicBlock(privateKey *rsa.PrivateKey, mode Mode) (*pem.Block, error) {
+// RsaCrypto RSA加密器
+type RsaCrypto struct {
+	PrivateKey *rsa.PrivateKey // rsa私钥
+}
+
+// Encrypt 公钥加密
+func (c *RsaCrypto) Encrypt(plaintext []byte) ([]byte, error) {
+	return rsa.EncryptPKCS1v15(rand.Reader, &c.PrivateKey.PublicKey, plaintext)
+}
+
+// Decrypt 私钥解密
+func (c *RsaCrypto) Decrypt(ciphertext []byte) ([]byte, error) {
+	return rsa.DecryptPKCS1v15(rand.Reader, c.PrivateKey, ciphertext)
+}
+
+// SavePrivateKey 密钥持久化
+func (c *RsaCrypto) SavePrivateKey(path string, mode Mode) error {
 	switch mode {
-	case RsaPKCS1:
-		return &pem.Block{
-			Type:    "RSA PUBLIC KEY",
-			Bytes:   x509.MarshalPKCS1PublicKey(&privateKey.PublicKey),
-			Headers: map[string]string{"mode": strconv.Itoa(int(RsaPKCS1))},
-		}, nil
-	case RsaPKIX:
-		data, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	case PKCS1:
+		return writePemBlock(path, &pem.Block{
+			Type:  PrivateKeyType,
+			Bytes: x509.MarshalPKCS1PrivateKey(c.PrivateKey),
+		})
+	case PKCS8:
+		data, err := x509.MarshalPKCS8PrivateKey(c.PrivateKey)
 		if err != nil {
-			return nil, errorx.Wrap(err, "marshal PKIX private privateKey error")
+			return errorx.Wrap(err, "marshal PKCS8 private key error")
 		}
-		return &pem.Block{
-			Type:    "RSA PUBLIC KEY",
-			Bytes:   data,
-			Headers: map[string]string{"mode": strconv.Itoa(int(RsaPKIX))},
-		}, nil
+		return writePemBlock(path, &pem.Block{
+			Type:  PrivateKeyType,
+			Bytes: data,
+		})
 	default:
-		return nil, errorx.New("unsupported public mode:" + strconv.Itoa(int(mode)))
+		return errorx.New("unsupported private key mode: " + strconv.Itoa(int(mode)))
+	}
+}
+
+// SavePublicKey 公钥持久化
+func (c *RsaCrypto) SavePublicKey(path string, mode Mode) error {
+	switch mode {
+	case PKCS1:
+		return writePemBlock(path, &pem.Block{
+			Type:  PublicKeyType,
+			Bytes: x509.MarshalPKCS1PublicKey(&c.PrivateKey.PublicKey),
+		})
+	case PKIX:
+		data, err := x509.MarshalPKIXPublicKey(&c.PrivateKey.PublicKey)
+		if err != nil {
+			return errorx.Wrap(err, "marshal PKIX public key error")
+		}
+		return writePemBlock(path, &pem.Block{
+			Type:  PublicKeyType,
+			Bytes: data,
+		})
+	default:
+		return errorx.New("unsupported public key mode: " + strconv.Itoa(int(mode)))
+	}
+}
+
+// RsaEncrypt 公钥加密
+func RsaEncrypt(plaintext, publicKey []byte, mode Mode) ([]byte, error) {
+	switch mode {
+	case PKCS1:
+		key, err := x509.ParsePKCS1PublicKey(publicKey)
+		if err != nil {
+			return nil, errorx.Wrap(err, "parse PKCS1 public key error")
+		}
+		return rsa.EncryptPKCS1v15(rand.Reader, key, plaintext)
+	case PKIX:
+		key, err := x509.ParsePKIXPublicKey(publicKey)
+		if err != nil {
+			return nil, errorx.Wrap(err, "parse PKIX public key error")
+		}
+		return rsa.EncryptPKCS1v15(rand.Reader, key.(*rsa.PublicKey), plaintext)
+	default:
+		return nil, errorx.New("unsupported public mode: " + strconv.Itoa(int(mode)))
 	}
 }
 
 // ParseRsaPrivateKey 从私钥block解析私钥
-func ParseRsaPrivateKey(block *pem.Block, mode Mode) (*rsa.PrivateKey, error) {
+func ParseRsaPrivateKey(publicKey []byte, mode Mode) (*rsa.PrivateKey, error) {
 	switch mode {
-	case RsaPKCS1:
-		key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	case PKCS1:
+		key, err := x509.ParsePKCS1PrivateKey(publicKey)
 		if err != nil {
 			return nil, errorx.Wrap(err, "parse PKCS1 private key error")
 		}
 		return key, nil
-	case RsaPKCS8:
-		key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	case PKCS8:
+		key, err := x509.ParsePKCS8PrivateKey(publicKey)
 		if err != nil {
 			return nil, errorx.Wrap(err, "parse PKCS8 private key error")
 		}
@@ -206,18 +162,18 @@ func ParseRsaPrivateKey(block *pem.Block, mode Mode) (*rsa.PrivateKey, error) {
 }
 
 // ParseRsaPublicKey 从公钥block解析公钥
-func ParseRsaPublicKey(block *pem.Block, mode Mode) (*rsa.PublicKey, error) {
+func ParseRsaPublicKey(publicKey []byte, mode Mode) (*rsa.PublicKey, error) {
 	switch mode {
-	case RsaPKCS1:
-		key, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	case PKCS1:
+		key, err := x509.ParsePKCS1PublicKey(publicKey)
 		if err != nil {
 			return nil, errorx.Wrap(err, "parse PKCS1 public key error")
 		}
 		return key, nil
-	case RsaPKIX:
-		key, err := x509.ParsePKIXPublicKey(block.Bytes)
+	case PKIX:
+		key, err := x509.ParsePKIXPublicKey(publicKey)
 		if err != nil {
-			return nil, errorx.Wrap(err, "parse PKIX private key error")
+			return nil, errorx.Wrap(err, "parse PKIX public key error")
 		}
 		return key.(*rsa.PublicKey), nil
 	default:

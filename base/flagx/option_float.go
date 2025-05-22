@@ -24,7 +24,7 @@ func (opt *floatOption) Name() string {
 }
 
 func (opt *floatOption) Usage() string {
-	if opt.def == float64(0) {
+	if opt.def != float64(0) {
 		return genUsage(opt.usage, opt.def)
 	} else {
 		return opt.usage

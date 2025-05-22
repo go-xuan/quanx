@@ -37,26 +37,21 @@ func ZeroValue() Value {
 }
 
 func StringValue(v string) Value {
-	x := stringx.NewString(v)
-	return &x
+	return stringx.NewString(v)
 }
 
 func Int64Value(v int64) Value {
-	x := intx.NewInt64(v)
-	return &x
+	return intx.NewInt64(v)
 }
 
 func IntValue(v int) Value {
-	x := intx.NewInt(v)
-	return &x
+	return intx.NewInt(v)
 }
 
 func Float64Value(v float64) Value {
-	x := floatx.NewFloat64(v)
-	return &x
+	return floatx.NewFloat64(v)
 }
 
 func BoolValue(v bool) Value {
-	x := boolx.NewBool(v)
-	return &x
+	return boolx.NewBool(v)
 }

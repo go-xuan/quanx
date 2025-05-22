@@ -4,8 +4,8 @@ import (
 	"strconv"
 )
 
-func NewFloat64(t ...float64) Float {
-	var x = Float{notnull: true}
+func NewFloat64(t ...float64) *Float {
+	var x = &Float{notnull: true}
 	if len(t) > 0 {
 		x.value = t[0]
 	} else {

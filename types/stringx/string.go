@@ -4,8 +4,8 @@ import (
 	"strconv"
 )
 
-func NewString(v ...string) String {
-	var x = String{notnull: true}
+func NewString(v ...string) *String {
+	var x = &String{notnull: true}
 	if len(v) > 0 {
 		x.value = v[0]
 	} else {

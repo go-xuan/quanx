@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-func NewBool(v ...bool) Bool {
-	var x = Bool{notnull: true}
+func NewBool(v ...bool) *Bool {
+	var x = &Bool{notnull: true}
 	if len(v) > 0 && v[0] {
 		x.value = true
 	}
