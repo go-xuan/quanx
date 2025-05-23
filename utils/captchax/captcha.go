@@ -15,3 +15,10 @@ type CodeCaptchaService interface {
 	Send(ctx context.Context, receiver ...string) (captcha string, expired int, err error)
 	Verify(ctx context.Context, receiver, captcha string) bool
 }
+
+// Sender 验证码发送器，由业务自行实现
+type Sender interface {
+	AddReceiver(reciver ...string) Sender
+	SetContent(content string) Sender
+	Send() error
+}

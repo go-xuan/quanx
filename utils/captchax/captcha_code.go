@@ -25,8 +25,8 @@ func defaultTemplate() *template.Template {
 type CodeCaptcha struct {
 	len      int                // 验证码长度
 	template *template.Template // 验证码模板
-	store    *CaptchaStore      //	验证码存储
-	sender   Sender             //	验证码发送器
+	store    *CaptchaStore      // 验证码存储
+	sender   Sender             // 验证码发送器
 }
 
 func (c *CodeCaptcha) Send(ctx context.Context, reciver ...string) (string, int, error) {
@@ -54,11 +54,4 @@ func (c *CodeCaptcha) Send(ctx context.Context, reciver ...string) (string, int,
 
 func (c *CodeCaptcha) Verify(ctx context.Context, email, captcha string) bool {
 	return c.store.verify(ctx, email, captcha)
-}
-
-// Sender 验证码发送器，由业务自行实现
-type Sender interface {
-	AddReceiver(reciver ...string) Sender
-	SetContent(content string) Sender
-	Send() error
 }

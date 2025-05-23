@@ -1,13 +1,11 @@
 package excelx
 
 import (
-	"reflect"
-	"strings"
-
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/tealeg/xlsx"
+	"reflect"
 )
 
 const (
@@ -38,63 +36,23 @@ func GetHeadersByReflect(v any) []*Header {
 	return result
 }
 
-func GetSheet(path string, sheetName string) (*xlsx.Sheet, error) {
+// GetSheet 获取sheet页
+func GetSheet(path string, sheet string) (*xlsx.Sheet, error) {
 	if file, err := xlsx.OpenFile(path); err != nil {
 		return nil, errorx.Wrap(err, "open xlsx file error")
+	} else if s, ok := file.Sheet[sheet]; ok {
+		return s, nil
 	} else {
-		return anyx.IfZero(file.Sheet[sheetName], file.Sheets[0]), nil
+		return file.Sheets[0], nil
 	}
-}
-
-// SplitXlsx 在目标sheet页中，根据【具有合并单元格的行】进行横向拆分，并取【合并单元格的值】作为拆分出的新sheet名
-func SplitXlsx(path, sheetName string) (string, error) {
-	// 读取excel
-	readSheet, err := GetSheet(path, sheetName)
-	if err != nil {
-		return "", errorx.Wrap(err, "get sheetName error")
-	}
-	// 新增sheet页
-	var newFile = xlsx.NewFile()
-	var sheets []*Sheet
-	for i, row := range readSheet.Rows {
-		// 如果是合并单元格
-		if len(row.Cells) > 0 && row.Cells[0].HMerge > 0 {
-			name := row.Cells[0].Value
-			if len(name) > 30 {
-				name = name[:30]
-			}
-			sheet, _ := newFile.AddSheet(name)
-			sheets = append(sheets, &Sheet{Name: name, StartRow: i, Sheet: sheet})
-		} else {
-			continue
-		}
-	}
-
-	for i, sheet := range sheets {
-		start, end := sheet.StartRow+1, len(readSheet.Rows)-1
-		if i < len(sheets)-1 {
-			end = sheets[i+1].StartRow - 2
-		}
-		for _, row := range readSheet.Rows[start:end] {
-			newRow := sheet.Sheet.AddRow()
-			for _, cell := range row.Cells {
-				newRow.AddCell().Value = cell.Value
-			}
-		}
-	}
-	path = stringx.Insert(path, "_split", strings.LastIndex(path, ".")-1)
-	if err = newFile.Save(path); err != nil {
-		return "", errorx.Wrap(err, "save xlsx file error")
-	}
-	return path, nil
 }
 
 // ReadXlsxWithMapping 根据映射读取excel
-func ReadXlsxWithMapping(path, sheetName string, mapping map[string]string) ([]map[string]string, error) {
+func ReadXlsxWithMapping(path, sheet string, mapping map[string]string) ([]map[string]string, error) {
 	// 读取目标sheet
-	readSheet, err := GetSheet(path, sheetName)
+	readSheet, err := GetSheet(path, sheet)
 	if err != nil {
-		return nil, errorx.Wrap(err, "get sheetName error")
+		return nil, errorx.Wrap(err, "get sheet error")
 	}
 	// 读取表头
 	var headers []string
@@ -106,10 +64,10 @@ func ReadXlsxWithMapping(path, sheetName string, mapping map[string]string) ([]m
 		headers = append(headers, header)
 	}
 	// 遍历excel(x:横向坐标，y:纵向坐标)
-	var data = make([]map[string]string, 0)
+	var list = make([]map[string]string, 0)
 	for y, row := range readSheet.Rows {
 		if y > 0 {
-			var rowMap = make(map[string]string)
+			var data = make(map[string]string)
 			for x, cell := range row.Cells {
 				if x >= len(headers) {
 					break
@@ -117,20 +75,20 @@ func ReadXlsxWithMapping(path, sheetName string, mapping map[string]string) ([]m
 				if cell.IsTime() {
 					cell.SetFormat(timeFormat)
 				}
-				rowMap[headers[x]] = cell.String()
+				data[headers[x]] = cell.String()
 			}
-			data = append(data, rowMap)
+			list = append(list, data)
 		}
 	}
-	return data, nil
+	return list, nil
 }
 
 // ReadXlsxWithStruct 根据结构体读取excel
-func ReadXlsxWithStruct[T any](path, sheetName string, t T) ([]*T, error) {
+func ReadXlsxWithStruct[T any](path, sheet string, t T) ([]*T, error) {
 	// 读取目标sheet
-	readSheet, err := GetSheet(path, sheetName)
+	readSheet, err := GetSheet(path, sheet)
 	if err != nil {
-		return nil, errorx.Wrap(err, "get sheetName error")
+		return nil, errorx.Wrap(err, "get sheet error")
 	}
 	// 读取表头
 	var mapping = make(map[string]string)
@@ -142,25 +100,25 @@ func ReadXlsxWithStruct[T any](path, sheetName string, t T) ([]*T, error) {
 		headers = append(headers, stringx.IfZero(mapping[cell.Value], cell.Value))
 	}
 	// 遍历excel(x:横向坐标，y:纵向坐标)
-	var data = make([]*T, 0)
+	var list = make([]*T, 0)
 	for y, row := range readSheet.Rows {
 		if y > 0 {
-			var rowMap = make(map[string]string)
+			var data = make(map[string]string)
 			for i, cell := range row.Cells {
 				if i >= len(headers) {
 					break
 				}
 				if cell.IsTime() {
-					cell.SetFormat("yyyy-mm-dd h:mm:ss")
+					cell.SetFormat(timeFormat)
 				}
-				rowMap[headers[i]] = cell.String()
+				data[headers[i]] = cell.String()
 			}
 			item := new(T)
-			if err = anyx.MapToStruct(rowMap, item); err != nil {
+			if err = anyx.MapToStruct(data, item); err != nil {
 				return nil, errorx.Wrap(err, "convert map to struct error")
 			}
-			data = append(data, item)
+			list = append(list, item)
 		}
 	}
-	return data, nil
+	return list, nil
 }

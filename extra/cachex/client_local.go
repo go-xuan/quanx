@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/patrickmn/go-cache"
+
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/utils/marshalx"
-	"github.com/patrickmn/go-cache"
 )
 
 // LocalClient 本地缓存客户端
@@ -49,26 +50,14 @@ func (c *LocalClient) GetString(ctx context.Context, key string) string {
 	return ""
 }
 
-func (c *LocalClient) Delete(ctx context.Context, keys ...string) int64 {
-	if len(keys) > 0 {
-		for _, key := range keys {
-			c.Instance().Delete(c.config.GetKey(key))
-		}
-		return int64(len(keys))
-	}
-	return 0
+func (c *LocalClient) Delete(ctx context.Context, key string) bool {
+	c.Instance().Delete(c.config.GetKey(key))
+	return true
 }
 
-func (c *LocalClient) Exist(ctx context.Context, keys ...string) bool {
-	if len(keys) > 0 {
-		for _, k := range keys {
-			if _, ok := c.Instance().Get(c.config.GetKey(k)); !ok {
-				return false
-			}
-		}
-		return true
-	}
-	return false
+func (c *LocalClient) Exist(ctx context.Context, key string) bool {
+	_, ok := c.Instance().Get(c.config.GetKey(key))
+	return ok
 }
 
 func (c *LocalClient) Expire(ctx context.Context, key string, d time.Duration) error {

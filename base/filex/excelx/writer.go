@@ -40,29 +40,48 @@ type Header struct {
 }
 
 // WriteXlsx 将数据写入excel
-func WriteXlsx(path string, data any, headers []*Header) error {
-	var xlsxFile = xlsx.NewFile()
-	sheet, err := xlsxFile.AddSheet("Sheet1")
+func WriteXlsx(path string, data any) error {
+	// 写入数据
+	var file = xlsx.NewFile()
+	sheet, err := file.AddSheet("Sheet1")
 	if err != nil {
 		return errorx.Wrap(err, "add sheet error")
 	}
+
+	// 解析数据
+	var bytes []byte
+	if bytes, err = json.Marshal(data); err != nil {
+		return errorx.Wrap(err, "data marshal error")
+	}
+	var list []gjson.Result
+	if list = gjson.ParseBytes(bytes).Array(); len(list) == 0 {
+		return errorx.Wrap(err, "data is empty")
+	}
+
+	// 获取表头
+	var headers []string
+	if first := list[0]; first.IsObject() {
+		first.ForEach(func(key, value gjson.Result) bool {
+			headers = append(headers, key.String())
+			return true
+		})
+	}
+
 	// 写入表头
 	var headerRow = sheet.AddRow()
 	for _, header := range headers {
-		headerRow.AddCell().SetString(header.Name)
+		headerRow.AddCell().SetString(header)
 	}
+
 	// 写入数据
-	var bytes, _ = json.Marshal(data)
-	var array = gjson.ParseBytes(bytes).Array()
-	for _, item := range array {
-		var dataMap = item.Map()
-		var row = sheet.AddRow()
+	for _, item := range list {
+		row := sheet.AddRow()
 		for _, header := range headers {
-			row.AddCell().SetString(dataMap[header.Key].String())
+			row.AddCell().SetString(item.Get(header).String())
 		}
 	}
 	// 保存xlsx
-	if err = xlsxFile.Save(path); err != nil {
+	if err = file.Save(path); err != nil {
 		return errorx.Wrap(err, "save xlsx file error")
 	}
 	return nil
