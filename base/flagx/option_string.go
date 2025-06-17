@@ -2,21 +2,23 @@ package flagx
 
 import (
 	"flag"
+
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
 func StringOption(name, usage string, def string) Option {
 	return &stringOption{
-		baseOption: baseOption{name: name, usage: usage},
-		def:        def,
-		value:      new(string),
+		baseOption: baseOption{
+			name:  name,
+			usage: usage,
+		},
+		def: def,
 	}
 }
 
 type stringOption struct {
 	baseOption
-	def   string
-	value *string
+	def string
 }
 
 func (opt *stringOption) Name() string {
@@ -31,13 +33,9 @@ func (opt *stringOption) Usage() string {
 	}
 }
 
-func (opt *stringOption) Add(fs *flag.FlagSet) {
-	opt.value = fs.String(opt.name, opt.def, opt.usage)
-}
-
-func (opt *stringOption) GetValue() anyx.Value {
-	if opt.value != nil {
-		return anyx.StringValue(*opt.value)
+func (opt *stringOption) GetValue(fs *flag.FlagSet) anyx.Value {
+	if value := fs.String(opt.name, opt.def, opt.usage); value != nil && *value != opt.def {
+		return anyx.StringValue(*value)
 	} else if opt.def != "" {
 		return anyx.StringValue(opt.def)
 	}

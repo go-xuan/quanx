@@ -1,36 +1,30 @@
 package excelx
 
 import (
+	"encoding/json"
+	"reflect"
+
+	"github.com/tealeg/xlsx"
+	"github.com/tidwall/gjson"
+
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/types/anyx"
 	"github.com/go-xuan/quanx/types/stringx"
-	"github.com/tealeg/xlsx"
-	"reflect"
 )
 
 const (
-	timeFormat = "yyyy-mm-dd h:mm:ss"
-	dateFmt    = "yyyy-mm-dd"
+	TimeFmt = "yyyy-mm-dd h:mm:ss"
+	DateFmt = "yyyy-mm-dd"
 )
 
-type Sheet struct {
-	Name     string      `json:"name"`
-	StartRow int         `json:"startRow"`
-	EndRow   int         `json:"endRow"`
-	Sheet    *xlsx.Sheet `json:"-"`
-}
-
-// GetHeadersByReflect 通过反射获取excel标签
-func GetHeadersByReflect(v any) []*Header {
-	var result []*Header
+// GetHeaderMapping 通过反射获取excel表头映射，key:excel表头，value:结构体字段名
+func GetHeaderMapping(v any) map[string]string {
+	var result = make(map[string]string)
 	var typeRef = reflect.TypeOf(v)
 	for i := 0; i < typeRef.NumField(); i++ {
 		field := typeRef.Field(i)
-		if field.Tag.Get("excel") != "" {
-			result = append(result, &Header{
-				Key:  field.Tag.Get("json"),
-				Name: field.Tag.Get("excel"),
-			})
+		if header := field.Tag.Get("excel"); header != "" {
+			result[header] = field.Name
 		}
 	}
 	return result
@@ -73,7 +67,7 @@ func ReadXlsxWithMapping(path, sheet string, mapping map[string]string) ([]map[s
 					break
 				}
 				if cell.IsTime() {
-					cell.SetFormat(timeFormat)
+					cell.SetFormat(TimeFmt)
 				}
 				data[headers[x]] = cell.String()
 			}
@@ -91,11 +85,8 @@ func ReadXlsxWithStruct[T any](path, sheet string, t T) ([]*T, error) {
 		return nil, errorx.Wrap(err, "get sheet error")
 	}
 	// 读取表头
-	var mapping = make(map[string]string)
-	for _, header := range GetHeadersByReflect(t) {
-		mapping[header.Name] = header.Key
-	}
 	var headers []string
+	var mapping = GetHeaderMapping(t)
 	for _, cell := range readSheet.Rows[0].Cells {
 		headers = append(headers, stringx.IfZero(mapping[cell.Value], cell.Value))
 	}
@@ -109,11 +100,11 @@ func ReadXlsxWithStruct[T any](path, sheet string, t T) ([]*T, error) {
 					break
 				}
 				if cell.IsTime() {
-					cell.SetFormat(timeFormat)
+					cell.SetFormat(TimeFmt)
 				}
 				data[headers[i]] = cell.String()
 			}
-			item := new(T)
+			var item = new(T)
 			if err = anyx.MapToStruct(data, item); err != nil {
 				return nil, errorx.Wrap(err, "convert map to struct error")
 			}
@@ -121,4 +112,52 @@ func ReadXlsxWithStruct[T any](path, sheet string, t T) ([]*T, error) {
 		}
 	}
 	return list, nil
+}
+
+// WriteAny 将数据写入excel
+func WriteAny(path string, data any) error {
+	// 写入数据
+	var file = xlsx.NewFile()
+	sheet, err := file.AddSheet("Sheet1")
+	if err != nil {
+		return errorx.Wrap(err, "add sheet error")
+	}
+
+	// 解析数据
+	var bytes []byte
+	if bytes, err = json.Marshal(data); err != nil {
+		return errorx.Wrap(err, "data marshal error")
+	}
+	var list []gjson.Result
+	if list = gjson.ParseBytes(bytes).Array(); len(list) == 0 {
+		return errorx.Wrap(err, "data is empty")
+	}
+
+	// 获取表头
+	var headers []string
+	if first := list[0]; first.IsObject() {
+		first.ForEach(func(key, value gjson.Result) bool {
+			headers = append(headers, key.String())
+			return true
+		})
+	}
+
+	// 写入表头
+	var headerRow = sheet.AddRow()
+	for _, header := range headers {
+		headerRow.AddCell().SetString(header)
+	}
+
+	// 写入数据
+	for _, item := range list {
+		row := sheet.AddRow()
+		for _, header := range headers {
+			row.AddCell().SetString(item.Get(header).String())
+		}
+	}
+	// 保存xlsx
+	if err = file.Save(path); err != nil {
+		return errorx.Wrap(err, "save xlsx file error")
+	}
+	return nil
 }

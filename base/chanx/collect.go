@@ -16,9 +16,9 @@ func NewCollectManager[T any]() *CollectManager[T] {
 }
 
 type CollectManager[T any] struct {
-	mu         *sync.Mutex
-	wg         *sync.WaitGroup
-	collectors map[string]*Collector[T]
+	mu         *sync.Mutex              // 互斥锁，用于保护 collectors 的并发访问
+	wg         *sync.WaitGroup          // 用于等待所有 goroutine 完成
+	collectors map[string]*Collector[T] // 存储所有的 Collector
 }
 
 func (m *CollectManager[T]) Add(key string, collector *Collector[T]) {

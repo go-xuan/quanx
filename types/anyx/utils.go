@@ -10,8 +10,8 @@ import (
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
-//  获取结构体的值
-func getValueOf(v any) reflect.Value {
+// ValueOf 反射获取结构体的值
+func ValueOf(v any) reflect.Value {
 	var valueOf = reflect.ValueOf(v)
 	if valueOf.Kind() == reflect.Pointer {
 		valueOf = valueOf.Elem()
@@ -21,7 +21,7 @@ func getValueOf(v any) reflect.Value {
 
 // GetTagNames 获取结构体中指定tag名
 func GetTagNames(v any, tag string) []string {
-	valueOf := getValueOf(v)
+	valueOf := ValueOf(v)
 	typeOf := valueOf.Type()
 
 	var names []string
@@ -35,7 +35,7 @@ func GetTagNames(v any, tag string) []string {
 
 // GetTagFieldValues 获取结构体中指定tag的字段值
 func GetTagFieldValues(v any, tag string) []string {
-	valueOf := getValueOf(v)
+	valueOf := ValueOf(v)
 	typeOf := valueOf.Type()
 
 	var values []string
@@ -92,9 +92,9 @@ func SetDefaultValue(v interface{}, tag ...string) error {
 
 // MapToStruct 将map转换为结构体
 func MapToStruct(m map[string]string, v interface{}) error {
-	elem := reflect.ValueOf(v).Elem() // 获取指向结构体的值类型
+	valueOf := ValueOf(v) // 获取指向结构体的值类型
 	for key, value := range m {
-		field := elem.FieldByName(key) // 根据字段名称查找对应的字段
+		field := valueOf.FieldByName(key)
 		if field.IsValid() && field.CanSet() {
 			switch field.Kind() {
 			case reflect.String:

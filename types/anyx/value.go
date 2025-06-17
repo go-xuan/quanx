@@ -16,7 +16,33 @@ type Value interface {
 	Bool(def ...bool) bool
 }
 
-func ValueOf(v any) Value {
+type Zero struct{}
+
+func (z *Zero) Valid() bool {
+	return false
+}
+
+func (z *Zero) String(...string) string {
+	return ""
+}
+
+func (z *Zero) Int(...int) int {
+	return 0
+}
+
+func (z *Zero) Int64(...int64) int64 {
+	return 0
+}
+
+func (z *Zero) Float64(...float64) float64 {
+	return 0
+}
+
+func (z *Zero) Bool(...bool) bool {
+	return false
+}
+
+func New(v any) Value {
 	switch value := v.(type) {
 	case int:
 		return IntValue(value)
@@ -34,7 +60,7 @@ func ValueOf(v any) Value {
 }
 
 func ZeroValue() Value {
-	return IntValue(0)
+	return &Zero{}
 }
 
 func StringValue(v string) Value {

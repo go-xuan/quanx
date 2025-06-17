@@ -135,7 +135,7 @@ func (m *Model[T]) Export(ctx *gin.Context) {
 	}
 	var filePath = filepath.Join(constx.DefaultResourceDir, time.Now().Format(timex.TimestampFmt)+".xlsx")
 	if len(result) > 0 {
-		if err := excelx.WriteXlsx(filePath, result); err != nil {
+		if err := excelx.WriteAny(filePath, result); err != nil {
 			respx.CustomError(ctx, respx.NewResponseData(respx.ExportFailedCode, err.Error()))
 			return
 		}

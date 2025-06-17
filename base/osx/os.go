@@ -3,6 +3,7 @@ package osx
 import (
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
 
 	"github.com/go-xuan/quanx/base/errorx"
@@ -12,6 +13,23 @@ import (
 	"github.com/go-xuan/quanx/types/intx"
 	"github.com/go-xuan/quanx/types/stringx"
 )
+
+const (
+	WindowsOS = "windows"
+	LinuxOS   = "linux"
+	MacOS     = "darwin"
+)
+
+func GetHome() string {
+	switch runtime.GOOS {
+	case WindowsOS:
+		return os.Getenv("USERPROFILE")
+	case MacOS:
+		return os.Getenv("HOME")
+	default:
+		return ""
+	}
+}
 
 func Hostname() string {
 	hostname, err := os.Hostname()
