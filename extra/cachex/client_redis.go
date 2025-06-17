@@ -14,7 +14,7 @@ import (
 type RedisClient struct {
 	config  *Config
 	client  redis.UniversalClient
-	marshal marshalx.Method
+	marshal marshalx.Marshal
 }
 
 func (c *RedisClient) Instance() redis.UniversalClient {

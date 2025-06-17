@@ -7,6 +7,10 @@ import (
 	"github.com/go-xuan/quanx/base/filex"
 )
 
+func Msgpack() Marshal {
+	return msgpackImpl{}
+}
+
 type msgpackImpl struct{}
 
 func (m msgpackImpl) Name() string {

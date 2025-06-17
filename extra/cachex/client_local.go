@@ -14,7 +14,7 @@ import (
 type LocalClient struct {
 	config  *Config
 	cache   *cache.Cache
-	marshal marshalx.Method
+	marshal marshalx.Marshal
 }
 
 func (c *LocalClient) Instance() *cache.Cache {

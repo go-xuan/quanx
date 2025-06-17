@@ -20,13 +20,13 @@ var (
 )
 
 // GetClient 获取httpx客户端
-func GetClient(uses ...ClientUse) *Client {
-	if len(uses) > 0 {
-		option := &ClientOption{}
-		for _, use := range uses {
-			use(option)
+func GetClient(options ...Option) *Client {
+	if len(options) > 0 {
+		setting := &ClientSetting{}
+		for _, option := range options {
+			option(setting)
 		}
-		return option.Client()
+		return setting.Client()
 	}
 	return newHttpClient()
 }

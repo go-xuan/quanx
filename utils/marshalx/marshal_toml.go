@@ -2,12 +2,16 @@ package marshalx
 
 import (
 	"bytes"
-	
+
 	"github.com/BurntSushi/toml"
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/filex"
 )
+
+func Toml() Marshal {
+	return tomlImpl{}
+}
 
 type tomlImpl struct{}
 

@@ -12,6 +12,10 @@ import (
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
+func Properties() Marshal {
+	return propertiesImpl{}
+}
+
 type propertiesImpl struct{}
 
 func (p propertiesImpl) Name() string {

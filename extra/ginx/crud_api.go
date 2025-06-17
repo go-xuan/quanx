@@ -116,7 +116,7 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 	}
 	var obj T
 	var data []*T
-	if data, err = excelx.ReadXlsxWithStruct(filePath, "", obj); err != nil {
+	if data, err = excelx.ReadAny(filePath, "", obj); err != nil {
 		respx.Custom(ctx, http.StatusBadRequest, respx.NewResponseData(respx.ExportFailedCode, err.Error()))
 		return
 	}

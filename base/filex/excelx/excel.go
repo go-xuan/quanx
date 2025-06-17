@@ -41,8 +41,8 @@ func GetSheet(path string, sheet string) (*xlsx.Sheet, error) {
 	}
 }
 
-// ReadXlsxWithMapping 根据映射读取excel
-func ReadXlsxWithMapping(path, sheet string, mapping map[string]string) ([]map[string]string, error) {
+// ReadWithMapping 根据映射读取excel
+func ReadWithMapping(path, sheet string, mapping map[string]string) ([]map[string]string, error) {
 	// 读取目标sheet
 	readSheet, err := GetSheet(path, sheet)
 	if err != nil {
@@ -77,16 +77,22 @@ func ReadXlsxWithMapping(path, sheet string, mapping map[string]string) ([]map[s
 	return list, nil
 }
 
-// ReadXlsxWithStruct 根据结构体读取excel
-func ReadXlsxWithStruct[T any](path, sheet string, t T) ([]*T, error) {
+// ReadAny 根据结构体读取excel
+func ReadAny[T any](path, sheet string, t T) ([]*T, error) {
 	// 读取目标sheet
 	readSheet, err := GetSheet(path, sheet)
 	if err != nil {
 		return nil, errorx.Wrap(err, "get sheet error")
 	}
+	if len(readSheet.Rows) == 0 {
+		return nil, errorx.New("sheet is empty")
+	}
 	// 读取表头
 	var headers []string
 	var mapping = GetHeaderMapping(t)
+	if len(mapping) == 0 {
+		return nil, errorx.New("excel tag is required for struct")
+	}
 	for _, cell := range readSheet.Rows[0].Cells {
 		headers = append(headers, stringx.IfZero(mapping[cell.Value], cell.Value))
 	}

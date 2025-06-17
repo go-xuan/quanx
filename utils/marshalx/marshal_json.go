@@ -7,8 +7,17 @@ import (
 	"github.com/go-xuan/quanx/base/filex"
 )
 
+// Json 序列化方式
+// indent: 缩进值，默认不缩进，仅在 Marshal 时有效
+func Json(indent ...string) Marshal {
+	if len(indent) > 0 {
+		return jsonImpl{indent: indent[0]}
+	}
+	return jsonImpl{}
+}
+
 type jsonImpl struct {
-	indent string // effective only when Marshal
+	indent string
 }
 
 func (j jsonImpl) Name() string {

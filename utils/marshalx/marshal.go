@@ -15,8 +15,8 @@ const (
 	msgpackMethod    = "msgpack"
 )
 
-// Method 序列化方式
-type Method interface {
+// Marshal 序列化
+type Marshal interface {
 	Name() string
 	Marshal(interface{}) ([]byte, error)
 	Unmarshal([]byte, interface{}) error
@@ -24,8 +24,8 @@ type Method interface {
 	Write(string, interface{}) error
 }
 
-// Apply 适配序列化方式
-func Apply(name string) Method {
+// Apply 适配序列化
+func Apply(name string) Marshal {
 	if stringx.ContainsAny(name, ".", "\\", "/") {
 		name = filex.GetSuffix(name)
 	}
@@ -43,29 +43,6 @@ func Apply(name string) Method {
 	default:
 		return Json()
 	}
-}
-
-func Json(indent ...string) Method {
-	if len(indent) > 0 {
-		return jsonImpl{indent: indent[0]}
-	}
-	return jsonImpl{}
-}
-
-func Yaml() Method {
-	return yamlImpl{}
-}
-
-func Toml() Method {
-	return tomlImpl{}
-}
-
-func Properties() Method {
-	return propertiesImpl{}
-}
-
-func Msgpack() Method {
-	return msgpackImpl{}
 }
 
 func readFile(path string) ([]byte, error) {

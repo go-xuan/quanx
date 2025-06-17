@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-xuan/quanx/base/ctxx"
+	"github.com/go-xuan/quanx/base/contextx"
 )
 
 func TestWrapper(t *testing.T) {
@@ -16,12 +16,12 @@ func TestWrapper(t *testing.T) {
 	i := 1
 	fn := func(ctx context.Context) error {
 		i += 10
-		fmt.Println("get value:", ctxx.GetValue(ctx, "quanx").Int())
+		fmt.Println("get value:", contextx.GetValue(ctx, "quanx").Int())
 		return nil
 	}
 
-	ctx := ctxx.New()
-	ctxx.SetValue(ctx, "quanx", i)
+	ctx := contextx.New()
+	contextx.SetValue(ctx, "quanx", i)
 
 	fmt.Println("before call: ", i)
 	if err := wrapper.Call(ctx, fn); err != nil {
@@ -44,9 +44,9 @@ func cost(fn Func) Func {
 
 func setValue(fn Func) Func {
 	return func(ctx context.Context) error {
-		before := ctxx.GetValue(ctx, "quanx").Int()
+		before := contextx.GetValue(ctx, "quanx").Int()
 		after := before + 3
-		ctxx.SetValue(ctx, "quanx", after)
+		contextx.SetValue(ctx, "quanx", after)
 		fmt.Printf("set value: %v ==> %v \n", before, after)
 		if err := fn(ctx); err != nil {
 			return err
