@@ -411,14 +411,14 @@ func GetFileBytesByUrl(fileUrl string) ([]byte, error) {
 	if err != nil {
 		return nil, errorx.Wrap(err, "get http client error")
 	}
-	var bytes []byte
-	if bytes, err = io.ReadAll(resp.Body); err != nil {
+	var body []byte
+	if body, err = io.ReadAll(resp.Body); err != nil {
 		return nil, errorx.Wrap(err, "response body read error")
 	}
 	if err = resp.Body.Close(); err != nil {
 		return nil, errorx.Wrap(err, "response body close error")
 	}
-	return bytes, nil
+	return body, nil
 }
 
 // 获取文件字节的二进制

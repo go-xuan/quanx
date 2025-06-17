@@ -10,6 +10,44 @@ import (
 	"github.com/go-xuan/quanx/types/stringx"
 )
 
+// ValueOf 反射获取结构体的值
+func ValueOf(v any) reflect.Value {
+	var valueOf = reflect.ValueOf(v)
+	if valueOf.Kind() == reflect.Pointer {
+		valueOf = valueOf.Elem()
+	}
+	return valueOf
+}
+
+// GetTagNames 获取结构体中指定tag名
+func GetTagNames(v any, tag string) []string {
+	valueOf := ValueOf(v)
+	typeOf := valueOf.Type()
+
+	var names []string
+	for i := 0; i < typeOf.NumField(); i++ {
+		if name, ok := typeOf.Field(i).Tag.Lookup(tag); ok {
+			names = append(names, name)
+		}
+	}
+	return names
+}
+
+// GetTagFieldValues 获取结构体中指定tag的字段值
+func GetTagFieldValues(v any, tag string) []string {
+	valueOf := ValueOf(v)
+	typeOf := valueOf.Type()
+
+	var values []string
+	for i := 0; i < typeOf.NumField(); i++ {
+		if _, ok := typeOf.Field(i).Tag.Lookup(tag); ok {
+			values = append(values, fmt.Sprintf("%v", valueOf.Field(i).Interface()))
+		}
+	}
+	return values
+}
+
+// MustStructPointer 检查是否为结构体指针
 func MustStructPointer(v any) error {
 	var typeOf = reflect.TypeOf(v)
 	if typeOf.Kind() != reflect.Pointer {
@@ -52,10 +90,11 @@ func SetDefaultValue(v interface{}, tag ...string) error {
 	return nil
 }
 
+// MapToStruct 将map转换为结构体
 func MapToStruct(m map[string]string, v interface{}) error {
-	elem := reflect.ValueOf(v).Elem() // 获取指向结构体的值类型
+	valueOf := ValueOf(v) // 获取指向结构体的值类型
 	for key, value := range m {
-		field := elem.FieldByName(key) // 根据字段名称查找对应的字段
+		field := valueOf.FieldByName(key)
 		if field.IsValid() && field.CanSet() {
 			switch field.Kind() {
 			case reflect.String:
@@ -80,6 +119,7 @@ func MapToStruct(m map[string]string, v interface{}) error {
 	return nil
 }
 
+// MergeStructs 合并结构体
 func MergeStructs(a, b interface{}) {
 	va, vb := reflect.ValueOf(a).Elem(), reflect.ValueOf(b).Elem()
 	for i := 0; i < va.NumField(); i++ {
@@ -91,6 +131,7 @@ func MergeStructs(a, b interface{}) {
 	}
 }
 
+// SetZeroValue 设置结构体零值
 func SetZeroValue[T interface{}](a, b T) {
 	va, vb := reflect.ValueOf(a).Elem(), reflect.ValueOf(b).Elem()
 	for i := 0; i < va.NumField(); i++ {

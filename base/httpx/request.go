@@ -110,7 +110,7 @@ func (r *Request) SetCookie(cookie string) *Request {
 	return r
 }
 
-func (r *Request) Do(uses ...ClientUse) (*Response, error) {
+func (r *Request) Do(options ...Option) (*Response, error) {
 	if r.url == "" {
 		return &Response{trace: r.trace}, errorx.New("url is empty")
 	}
@@ -124,7 +124,7 @@ func (r *Request) Do(uses ...ClientUse) (*Response, error) {
 		}
 	}
 	var response *Response
-	if response, err = GetClient(uses...).Do(request); err != nil {
+	if response, err = GetClient(options...).Do(request); err != nil {
 		return &Response{trace: r.trace}, errorx.Wrap(err, "do request error")
 	}
 	response.trace = r.trace

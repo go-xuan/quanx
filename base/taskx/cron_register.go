@@ -30,16 +30,16 @@ func (t *FunctionCronJob) Register() {
 
 // RequestCronJob http请求类定时任务，实现 CronJob 接口
 type RequestCronJob struct {
-	Name       string            // 任务名
-	Spec       string            // 定时表达式
-	Request    *httpx.Request    // http请求
-	ClientUses []httpx.ClientUse // httpx.Client使用
+	Name    string         // 任务名
+	Spec    string         // 定时表达式
+	Request *httpx.Request // http请求
+	Options []httpx.Option // http选项
 }
 
 // Register 任务注册
 func (t *RequestCronJob) Register() {
 	if err := Cron().Add(t.Name, t.Spec, func(context.Context) {
-		if _, err := t.Request.Do(t.ClientUses...); err != nil {
+		if _, err := t.Request.Do(t.Options...); err != nil {
 			log.Error("do request failed: ", err)
 		}
 	}); err != nil {

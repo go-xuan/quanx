@@ -10,7 +10,7 @@ import (
 	"github.com/go-xuan/quanx/utils/randx"
 )
 
-func TestExcelWriter(t *testing.T) {
+func TestSheetWriter(t *testing.T) {
 	var users []*User
 	for i := 0; i < 10; i++ {
 		users = append(users, &User{
@@ -21,7 +21,11 @@ func TestExcelWriter(t *testing.T) {
 		})
 	}
 	path := "test" + time.Now().Format("20060102150405") + ".xlsx"
-	if err := WritToXlsx[*User](path, &User{}, users); err != nil {
+	var file = xlsx.NewFile()
+	if err := WriteSheet(file, "", users); err != nil {
+		panic(err)
+	}
+	if err := file.Save(path); err != nil {
 		panic(err)
 	}
 }
@@ -33,7 +37,7 @@ type User struct {
 	Birthday time.Time
 }
 
-func (u *User) AddHeader(sheet *xlsx.Sheet) {
+func (u *User) WriteHeader(sheet *xlsx.Sheet) {
 	row := sheet.AddRow()
 	row.AddCell().SetString("姓名")
 	row.AddCell().SetString("年龄")
@@ -42,7 +46,7 @@ func (u *User) AddHeader(sheet *xlsx.Sheet) {
 	row.AddCell().SetString("出生日期2")
 }
 
-func (u *User) AddRow(sheet *xlsx.Sheet) {
+func (u *User) WriteRow(sheet *xlsx.Sheet) {
 	row := sheet.AddRow()
 	row.AddCell().SetString(u.Name)
 	row.AddCell().SetString(u.Age)
@@ -50,6 +54,6 @@ func (u *User) AddRow(sheet *xlsx.Sheet) {
 	row.AddCell().SetDateTime(u.Birthday)
 	row.AddCell().SetDateWithOptions(u.Birthday, xlsx.DateTimeOptions{
 		Location:        time.Local,
-		ExcelTimeFormat: "yyyy-mm-dd hh:mm:ss"},
+		ExcelTimeFormat: TimeFmt},
 	)
 }

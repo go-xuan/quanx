@@ -8,16 +8,17 @@ import (
 
 func BoolOption(name, usage string, def bool) Option {
 	return &boolOption{
-		baseOption: baseOption{name: name, usage: usage},
-		def:        def,
-		value:      new(bool),
+		baseOption: baseOption{
+			name:  name,
+			usage: usage,
+		},
+		def: def,
 	}
 }
 
 type boolOption struct {
 	baseOption
-	def   bool
-	value *bool
+	def bool
 }
 
 func (opt *boolOption) Name() string {
@@ -32,10 +33,11 @@ func (opt *boolOption) Usage() string {
 	}
 }
 
-func (opt *boolOption) Add(fs *flag.FlagSet) {
-	opt.value = fs.Bool(opt.name, opt.def, opt.usage)
-}
-
-func (opt *boolOption) GetValue() anyx.Value {
-	return anyx.BoolValue(*opt.value)
+func (opt *boolOption) GetValue(fs *flag.FlagSet) anyx.Value {
+	if value := fs.Bool(opt.name, opt.def, opt.usage); value != nil && *value != opt.def {
+		return anyx.BoolValue(*value)
+	} else if opt.def {
+		return anyx.BoolValue(opt.def)
+	}
+	return nil
 }

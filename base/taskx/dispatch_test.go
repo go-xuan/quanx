@@ -10,12 +10,12 @@ import (
 )
 
 func TestInBatches(t *testing.T) {
-	var total = 20
+	var total = 200
 	var s []int
 	for i := 0; i < total; i++ {
 		s = append(s, i)
 	}
-	if err := ExecWithBatches(total, 100, func(start, end int) error {
+	if err := ExecWithBatches(total, 13, func(start, end int) error {
 		fmt.Printf("%d ==> %d :%v \n", start, end, s[start:end])
 		return nil
 	}); err != nil {

@@ -8,6 +8,7 @@ import (
 )
 
 type Value interface {
+	Valid() bool
 	String(def ...string) string
 	Int(def ...int) int
 	Int64(def ...int64) int64
@@ -15,7 +16,33 @@ type Value interface {
 	Bool(def ...bool) bool
 }
 
-func ValueOf(v any) Value {
+type Zero struct{}
+
+func (z *Zero) Valid() bool {
+	return false
+}
+
+func (z *Zero) String(...string) string {
+	return ""
+}
+
+func (z *Zero) Int(...int) int {
+	return 0
+}
+
+func (z *Zero) Int64(...int64) int64 {
+	return 0
+}
+
+func (z *Zero) Float64(...float64) float64 {
+	return 0
+}
+
+func (z *Zero) Bool(...bool) bool {
+	return false
+}
+
+func New(v any) Value {
 	switch value := v.(type) {
 	case int:
 		return IntValue(value)
@@ -33,30 +60,25 @@ func ValueOf(v any) Value {
 }
 
 func ZeroValue() Value {
-	return IntValue(0)
+	return &Zero{}
 }
 
 func StringValue(v string) Value {
-	x := stringx.NewString(v)
-	return &x
+	return stringx.NewString(v)
 }
 
 func Int64Value(v int64) Value {
-	x := intx.NewInt64(v)
-	return &x
+	return intx.NewInt64(v)
 }
 
 func IntValue(v int) Value {
-	x := intx.NewInt(v)
-	return &x
+	return intx.NewInt(v)
 }
 
 func Float64Value(v float64) Value {
-	x := floatx.NewFloat64(v)
-	return &x
+	return floatx.NewFloat64(v)
 }
 
 func BoolValue(v bool) Value {
-	x := boolx.NewBool(v)
-	return &x
+	return boolx.NewBool(v)
 }

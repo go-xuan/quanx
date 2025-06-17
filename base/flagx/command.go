@@ -113,7 +113,7 @@ func (c *Command) Register() {
 
 // Execute 执行
 func (c *Command) Execute(args []string) error {
-	if err := c.GetFlagSet().Parse(args); err != nil {
+	if err := c.FlagSet().Parse(args); err != nil {
 		return errorx.Wrap(err, "命令参数解析失败")
 	} else {
 		c.args = args
@@ -148,16 +148,15 @@ func (c *Command) AddOption(options ...Option) *Command {
 // GetOptionValue 获取参数值
 func (c *Command) GetOptionValue(name string) anyx.Value {
 	if option, ok := c.options[name]; ok {
-		if value := option.GetValue(); value.String() == "-h" {
-			_ = c.GetFlagSet().Set("h", "true")
-			return anyx.ZeroValue()
-		} else {
-			return value
+		if value := option.GetValue(c.FlagSet()); value != nil {
+			if value.String() == "-h" {
+				_ = c.FlagSet().Set("h", "true")
+			} else {
+				return value
+			}
 		}
-	} else {
-		fmt.Printf("[%s]参数未找到\n", name)
-		return anyx.ZeroValue()
 	}
+	return anyx.ZeroValue()
 }
 
 func (c *Command) NeedHelp() bool {
@@ -170,17 +169,10 @@ func (c *Command) SetExecutor(executor func() error) *Command {
 	return c
 }
 
-// GetFlagSet 初始化FlagSet并将参数注册到FlagSet
-func (c *Command) GetFlagSet() *flag.FlagSet {
+// FlagSet 初始化FlagSet并将参数注册到FlagSet
+func (c *Command) FlagSet() *flag.FlagSet {
 	if c.flagSet == nil {
-		fs := flag.NewFlagSet(c.name, flag.ExitOnError)
-		if options := c.options; options != nil {
-			for _, option := range options {
-				option.Add(fs)
-			}
-			c.options = options
-		}
-		c.flagSet = fs
+		c.flagSet = flag.NewFlagSet(c.name, flag.ExitOnError)
 	}
 	return c.flagSet
 }

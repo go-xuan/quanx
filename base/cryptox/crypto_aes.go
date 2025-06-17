@@ -5,74 +5,171 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"fmt"
+	"github.com/go-xuan/quanx/utils/randx"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/types/anyx"
+)
+
+const (
+	CBC Mode = iota + 1
+	CFB
+	ECB
+	GCM
 )
 
 // AES 创建AES对象（默认CBC模式）
-func AES(key, iv string, mode ...Mode) (*AesCrypto, error) {
+func AES() (Crypto, error) {
+	key := randx.String(16)
+	iv := randx.String(16)
+	crypto, err := NewAesCrypto(key, iv, CBC)
+	if err != nil {
+		return nil, errorx.Wrap(err, "new aes crypto error")
+	}
+	return crypto, nil
+}
+
+// NewAesCrypto 创建AES对象（默认CBC模式）
+func NewAesCrypto(key, iv string, mode Mode) (Crypto, error) {
 	block, err := aes.NewCipher([]byte(key))
 	if err != nil {
 		return nil, errorx.Wrap(err, "new cipher error")
 	}
-	if ivl, bs := len(iv), block.BlockSize(); ivl != bs {
-		return nil, errorx.Errorf("iv length must equal block size: %d != %d", ivl, bs)
+	switch mode {
+	case CBC:
+		return newAesCBC(key, iv, block)
+	case CFB:
+		return newAesCFB(key, iv, block)
+	case ECB:
+		return newAesECB(key, iv, block)
+	case GCM:
+		return newAesGCM(key, iv, block)
+	default:
+		return nil, errorx.New(fmt.Sprintf("unsupported aes mode: %d", mode))
 	}
-	return &AesCrypto{
-		mode:  anyx.Default(AesCBC, mode...),
-		key:   key,
-		iv:    []byte(iv),
-		block: block,
-	}, nil
 }
 
-// AesCrypto AES加密器
-type AesCrypto struct {
-	mode  Mode         // 加密模式
+func newAesGCM(key, nonce string, block cipher.Block) (*AesGCM, error) {
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, errorx.Wrap(err, "new gcm error")
+	}
+
+	if len(nonce) < gcm.NonceSize() {
+		return nil, errorx.New("nonce length must greater than gcm nonce size")
+	}
+	nonce = nonce[:gcm.NonceSize()]
+	return &AesGCM{key: key, nonce: []byte(nonce), block: block, gcm: gcm}, nil
+}
+
+type AesGCM struct {
 	key   string       // 秘钥, 长度必须为16, 24或32字节
-	iv    []byte       // 初始化向量, 长度必须和加密块大小相等
+	nonce []byte       // 随机值
+	block cipher.Block // 加密块
+	gcm   cipher.AEAD  // GCM加密器
+}
+
+func (c *AesGCM) Encrypt(plaintext []byte) ([]byte, error) {
+	ciphertext := c.gcm.Seal(nil, c.nonce, plaintext, nil)
+	return ciphertext, nil
+}
+
+func (c *AesGCM) Decrypt(ciphertext []byte) ([]byte, error) {
+	plaintext, err := c.gcm.Open(nil, c.nonce, ciphertext, nil)
+	if err != nil {
+		return nil, errorx.Wrap(err, "gcm open error")
+	}
+	return plaintext, nil
+}
+
+func newAesCBC(key, iv string, block cipher.Block) (*AesCBC, error) {
+	if len(iv) != block.BlockSize() {
+		return nil, errorx.New("iv length must equal block size")
+	}
+	return &AesCBC{key: key, iv: []byte(iv), block: block}, nil
+}
+
+type AesCBC struct {
+	key   string       // 秘钥, 长度必须为16, 24或32字节
+	iv    []byte       // 随机值
 	block cipher.Block // 加密块
 }
 
-// Encrypt 加密
-func (c *AesCrypto) Encrypt(plaintext []byte) ([]byte, error) {
+func (c *AesCBC) Encrypt(plaintext []byte) ([]byte, error) {
 	plaintext = pkcs7Padding(plaintext, c.block.BlockSize())
 	var ciphertext = make([]byte, len(plaintext))
-	switch c.mode {
-	case AesCBC:
-		cipher.NewCBCEncrypter(c.block, c.iv).CryptBlocks(ciphertext, plaintext)
-	case AesCFB:
-		cipher.NewCFBEncrypter(c.block, c.iv).XORKeyStream(ciphertext, plaintext)
-	case AesECB:
-		size, blockSize := len(plaintext), c.block.BlockSize()
-		for i := 0; i < size; i += blockSize {
-			c.block.Encrypt(ciphertext[i:i+blockSize], plaintext[i:i+blockSize])
-		}
-	default:
-		return nil, errorx.New("unsupported aes mode")
+	cipher.NewCBCEncrypter(c.block, c.iv).CryptBlocks(ciphertext, plaintext)
+	return ciphertext, nil
+}
+
+func (c *AesCBC) Decrypt(ciphertext []byte) ([]byte, error) {
+	if size, blockSize := len(ciphertext), c.block.BlockSize(); size%blockSize != 0 {
+		return nil, errorx.Errorf("the ciphertext size error: %d/%d", size, blockSize)
+	}
+	var plaintext = make([]byte, len(ciphertext))
+	cipher.NewCBCDecrypter(c.block, c.iv).CryptBlocks(plaintext, ciphertext)
+	return pkcs7UnPadding(plaintext)
+}
+
+func newAesCFB(key, iv string, block cipher.Block) (*AesCFB, error) {
+	if len(iv) != block.BlockSize() {
+		return nil, errorx.New("iv length must equal block size")
+	}
+	return &AesCFB{key: key, iv: []byte(iv), block: block}, nil
+}
+
+type AesCFB struct {
+	key   string       // 秘钥, 长度必须为16, 24或32字节
+	iv    []byte       // 随机值
+	block cipher.Block // 加密块
+}
+
+func (c *AesCFB) Encrypt(plaintext []byte) ([]byte, error) {
+	plaintext = pkcs7Padding(plaintext, c.block.BlockSize())
+	var ciphertext = make([]byte, len(plaintext))
+	cipher.NewCFBEncrypter(c.block, c.iv).XORKeyStream(ciphertext, plaintext)
+	return ciphertext, nil
+}
+
+func (c *AesCFB) Decrypt(ciphertext []byte) ([]byte, error) {
+	if size, blockSize := len(ciphertext), c.block.BlockSize(); size%blockSize != 0 {
+		return nil, errorx.Errorf("the ciphertext size error: %d/%d", size, blockSize)
+	}
+	var plaintext = make([]byte, len(ciphertext))
+	cipher.NewCFBDecrypter(c.block, c.iv).XORKeyStream(plaintext, ciphertext)
+	return pkcs7UnPadding(plaintext)
+}
+
+func newAesECB(key, iv string, block cipher.Block) (*AesECB, error) {
+	if len(iv) != block.BlockSize() {
+		return nil, errorx.New("iv length must equal block size")
+	}
+	return &AesECB{key: key, iv: []byte(iv), block: block}, nil
+}
+
+type AesECB struct {
+	key   string       // 秘钥, 长度必须为16, 24或32字节
+	iv    []byte       // 随机值
+	block cipher.Block // 加密块
+}
+
+func (c *AesECB) Encrypt(plaintext []byte) ([]byte, error) {
+	plaintext = pkcs7Padding(plaintext, c.block.BlockSize())
+	size, blockSize := len(plaintext), c.block.BlockSize()
+	var ciphertext = make([]byte, size)
+	for i := 0; i < size; i += blockSize {
+		c.block.Encrypt(ciphertext[i:i+blockSize], plaintext[i:i+blockSize])
 	}
 	return ciphertext, nil
 }
 
-// Decrypt 解密
-func (c *AesCrypto) Decrypt(ciphertext []byte) ([]byte, error) {
+func (c *AesECB) Decrypt(ciphertext []byte) ([]byte, error) {
 	size, blockSize := len(ciphertext), c.block.BlockSize()
 	if size%blockSize != 0 {
 		return nil, errorx.Errorf("the ciphertext size error: %d/%d", size, blockSize)
 	}
 	var plaintext = make([]byte, size)
-	switch c.mode {
-	case AesCBC:
-		cipher.NewCBCDecrypter(c.block, c.iv).CryptBlocks(plaintext, ciphertext)
-	case AesCFB:
-		cipher.NewCFBDecrypter(c.block, c.iv).XORKeyStream(plaintext, ciphertext)
-	case AesECB:
-		for i := 0; i < size; i += blockSize {
-			c.block.Decrypt(plaintext[i:i+blockSize], ciphertext[i:i+blockSize])
-		}
-	default:
-		return nil, errorx.New("unsupported aes mode")
+	for i := 0; i < size; i += blockSize {
+		c.block.Decrypt(plaintext[i:i+blockSize], ciphertext[i:i+blockSize])
 	}
 	return pkcs7UnPadding(plaintext)
 }
@@ -80,8 +177,8 @@ func (c *AesCrypto) Decrypt(ciphertext []byte) ([]byte, error) {
 // pkcs7Padding 使用 PKCS7 进行填充
 func pkcs7Padding(data []byte, blockSize int) []byte {
 	padding := blockSize - len(data)%blockSize
-	padText := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(data, padText...)
+	paddingText := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(data, paddingText...)
 }
 
 // pkcs7UnPadding 移除 PKCS7 填充

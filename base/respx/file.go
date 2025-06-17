@@ -17,12 +17,12 @@ type Header struct {
 }
 
 func ExcelHeaders(model any) (result []*Header) {
-	typeRef := reflect.TypeOf(model)
-	for i := 0; i < typeRef.NumField(); i++ {
-		if typeRef.Field(i).Tag.Get("export") != "" {
+	typeOf := reflect.TypeOf(model)
+	for i := 0; i < typeOf.NumField(); i++ {
+		if typeOf.Field(i).Tag.Get("export") != "" {
 			result = append(result, &Header{
-				Key:  typeRef.Field(i).Tag.Get("json"),
-				Name: typeRef.Field(i).Tag.Get("export"),
+				Key:  typeOf.Field(i).Tag.Get("json"),
+				Name: typeOf.Field(i).Tag.Get("export"),
 			})
 		}
 	}

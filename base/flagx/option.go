@@ -3,14 +3,14 @@ package flagx
 import (
 	"flag"
 	"fmt"
+
 	"github.com/go-xuan/quanx/types/anyx"
 )
 
 type Option interface {
 	Name() string
 	Usage() string
-	Add(fs *flag.FlagSet)
-	GetValue() anyx.Value
+	GetValue(fs *flag.FlagSet) anyx.Value
 }
 
 // baseOption 基础选项

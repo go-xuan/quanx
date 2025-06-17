@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	CacheTypeRedis = "redis"
-	CacheTypeLocal = "local"
+	REDIS = "redis"
+	LOCAL = "local"
 )
 
 type Config struct {
@@ -65,13 +65,13 @@ func (c *Config) Execute() error {
 // NewClient 根据缓存配置初始化缓存客户端
 func (c *Config) NewClient() (Client, error) {
 	switch c.Type {
-	case CacheTypeRedis:
+	case REDIS:
 		return &RedisClient{
 			config:  c,
 			client:  redisx.GetInstance(c.Source),
 			marshal: marshalx.Apply(c.Marshal),
 		}, nil
-	case CacheTypeLocal:
+	case LOCAL:
 		return &LocalClient{
 			config:  c,
 			cache:   cache.New(time.Duration(-1), time.Duration(-1)),

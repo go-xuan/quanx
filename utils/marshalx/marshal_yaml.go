@@ -7,6 +7,10 @@ import (
 	"github.com/go-xuan/quanx/base/filex"
 )
 
+func Yaml() Marshal {
+	return yamlImpl{}
+}
+
 type yamlImpl struct{}
 
 func (y yamlImpl) Name() string {

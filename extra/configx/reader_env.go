@@ -5,8 +5,7 @@ import (
 	"github.com/go-xuan/quanx/base/osx"
 )
 
-type EnvReader struct {
-}
+type EnvReader struct{}
 
 func (r *EnvReader) Ready(...string) {
 }

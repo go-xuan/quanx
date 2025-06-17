@@ -4,7 +4,7 @@ import (
 	"sort"
 )
 
-// Contains 字符串是否包含
+// Contains 是否包含
 func Contains[T comparable](slice []T, v T) bool {
 	for _, item := range slice {
 		if item == v {
@@ -14,7 +14,7 @@ func Contains[T comparable](slice []T, v T) bool {
 	return false
 }
 
-// ContainsAny 数组是否包含
+// ContainsAny 是否包含任意元素
 func ContainsAny[T comparable](slice []T, args ...T) bool {
 	if args != nil && len(args) > 0 {
 		m := make(map[T]struct{})
@@ -30,7 +30,7 @@ func ContainsAny[T comparable](slice []T, args ...T) bool {
 	return false
 }
 
-// ContainsAll 数组是否包含
+// ContainsAll 是否包含全部元素
 func ContainsAll[T comparable](slice []T, args ...T) bool {
 	if args != nil && len(args) > 0 {
 		var m = make(map[T]struct{})
@@ -46,6 +46,7 @@ func ContainsAll[T comparable](slice []T, args ...T) bool {
 	return true
 }
 
+// Distinct 去重
 func Distinct[T comparable](slices ...[]T) []T {
 	if len(slices) > 0 {
 		var m = make(map[T]struct{})

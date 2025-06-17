@@ -160,7 +160,7 @@ func (e *Engine) initConfig() error {
 		return errorx.Wrap(err, "init database configurator error")
 	}
 
-	// 初始化 Redis 缓存配置器
+	// 初始化 REDIS 缓存配置器
 	if err := e.initRedisCacheConfigurator(); err != nil {
 		return errorx.Wrap(err, "init cache configurator error")
 	}

@@ -7,7 +7,6 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/base/taskx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
@@ -15,7 +14,7 @@ import (
 type RedisClient struct {
 	config  *Config
 	client  redis.UniversalClient
-	marshal marshalx.Method
+	marshal marshalx.Marshal
 }
 
 func (c *RedisClient) Instance() redis.UniversalClient {
@@ -52,30 +51,18 @@ func (c *RedisClient) GetString(ctx context.Context, key string) string {
 	return ""
 }
 
-func (c *RedisClient) Delete(ctx context.Context, keys ...string) int64 {
-	var sum int64
-	_ = taskx.ExecWithBatches(len(keys), 100, func(x int, y int) error {
-		if s, err := c.Instance().Del(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
-			return errorx.Wrap(err, "delete redis keys error")
-		} else {
-			sum += s
-			return nil
-		}
-	})
-	return sum
+func (c *RedisClient) Delete(ctx context.Context, key string) bool {
+	if n, err := c.Instance().Del(ctx, c.config.GetKey(key)).Result(); err == nil && n > 0 {
+		return true
+	}
+	return false
 }
 
-func (c *RedisClient) Exist(ctx context.Context, keys ...string) bool {
-	var sum int64
-	_ = taskx.ExecWithBatches(len(keys), 100, func(x int, y int) error {
-		if n, err := c.Instance().Exists(ctx, c.config.GetKeys(keys[x:y])...).Result(); err != nil {
-			return errorx.Wrap(err, "redis exists error")
-		} else {
-			sum += n
-			return nil
-		}
-	})
-	return sum > 0
+func (c *RedisClient) Exist(ctx context.Context, key string) bool {
+	if n, err := c.Instance().Exists(ctx, c.config.GetKey(key)).Result(); err == nil && n > 0 {
+		return true
+	}
+	return false
 }
 
 func (c *RedisClient) Expire(ctx context.Context, key string, d time.Duration) error {
