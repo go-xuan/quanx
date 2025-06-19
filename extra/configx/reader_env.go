@@ -5,13 +5,13 @@ import (
 	"github.com/go-xuan/quanx/base/osx"
 )
 
+// EnvReader 环境变量读取器，根据env标签读取环境变量作为配置值
 type EnvReader struct{}
 
-func (r *EnvReader) Ready(...string) {
-}
+func (r *EnvReader) Anchor(string) {}
 
-func (r *EnvReader) Check(_ any) error {
-	return nil
+func (r *EnvReader) Location() string {
+	return "env"
 }
 
 func (r *EnvReader) Read(config any) error {
@@ -19,8 +19,4 @@ func (r *EnvReader) Read(config any) error {
 		return errorx.Wrap(err, "read config from env error")
 	}
 	return nil
-}
-
-func (r *EnvReader) Location() string {
-	return "env"
 }

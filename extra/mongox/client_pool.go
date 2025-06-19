@@ -21,11 +21,16 @@ func this() *enumx.Enum[string, *Client] {
 	return pool
 }
 
-func AddClient(config *Config, client *mongo.Client) {
+func AddClient(config *Config, cli *mongo.Client) {
+	if config == nil || cli == nil {
+		return
+	}
+	client := &Client{config, cli}
 	if pool == nil {
 		pool = enumx.NewStringEnum[*Client]()
+		pool.Add(constx.DefaultSource, client)
 	}
-	pool.Add(config.Source, &Client{config, client})
+	pool.Add(config.Source, client)
 }
 
 // GetClient 获取客户端

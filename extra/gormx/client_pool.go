@@ -23,10 +23,15 @@ func this() *enumx.Enum[string, *Client] {
 }
 
 func AddClient(config *Config, db *gorm.DB) {
+	if config == nil || db == nil {
+		return
+	}
+	client := &Client{config, db}
 	if pool == nil {
 		pool = enumx.NewStringEnum[*Client]()
+		pool.Add(constx.DefaultSource, client)
 	}
-	pool.Add(config.Source, &Client{config, db})
+	pool.Add(config.Source, client)
 }
 
 // GetClient 获取客户端

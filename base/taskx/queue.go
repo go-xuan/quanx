@@ -62,11 +62,10 @@ func (q *QueueScheduler) Execute() error {
 
 	current := q.head
 	for current != nil {
-		logger := log.WithField("current_task", current.name)
+		logger := log.WithField("curr_task", current.name)
 		if current.next != nil {
-			logger = logger.WithField("next_task", current.next.name)
+			logger.WithField("next_task", current.next.name)
 		}
-
 		// 执行当前任务
 		logger.Info("queue task execute")
 		if err := current.fn(); err != nil {
@@ -92,7 +91,7 @@ func (q *QueueScheduler) Add(name string, fn func() error) {
 // 若任务已存在，更新任务函数
 func (q *QueueScheduler) existAndUpdate(name string, fn func() error) bool {
 	if existTask, exist := q.tasks[name]; exist {
-		log.Infof("task [%s] already exists, updated its function", name)
+		log.WithField("add_task", name).Errorf("task already exists, updated function")
 		existTask.fn = fn
 		return true
 	}
@@ -101,8 +100,9 @@ func (q *QueueScheduler) existAndUpdate(name string, fn func() error) bool {
 
 // AddTail 尾插（当前新增任务添加到队列末尾）
 func (q *QueueScheduler) AddTail(name string, fn func() error) {
+	logger := log.WithField("add_task", name)
 	if name == "" || fn == nil {
-		log.Errorf("task name [%s] or task function is empty", name)
+		logger.Error("task name or task function is empty")
 		return
 	}
 	q.mutex.Lock()
@@ -125,13 +125,14 @@ func (q *QueueScheduler) AddTail(name string, fn func() error) {
 	}
 
 	q.tasks[name] = newTask
-	log.Infof("task [%s] add to the tail of queue", name)
+	logger.Info("add task to the tail of the queue")
 }
 
 // AddHead 头插（当前新增任务添加到队列首位）
 func (q *QueueScheduler) AddHead(name string, fn func() error) {
+	logger := log.WithField("add_task", name)
 	if name == "" || fn == nil {
-		log.Errorf("task name [%s] or task function is empty", name)
+		logger.Error("task name or task function is empty")
 		return
 	}
 	q.mutex.Lock()
@@ -153,13 +154,15 @@ func (q *QueueScheduler) AddHead(name string, fn func() error) {
 		q.tail = newTask
 	}
 	q.tasks[name] = newTask
-	log.Infof("task [%s] add to the head of the queue", name)
+	logger.Info("add task to the head of the queue")
 }
 
-// AddAfter 后插队(当前新增任务添加到after任务之后)
-func (q *QueueScheduler) AddAfter(name, after string, fn func() error) {
+// AddAfter 后插队(将新任务添加到目标任务之后)
+// 基于XXX后置添加任务
+func (q *QueueScheduler) AddAfter(base, name string, fn func() error) {
+	logger := log.WithField("add_task", name).WithField("base_task", base)
 	if name == "" || fn == nil {
-		log.Errorf("task name [%s] or task function is empty", name)
+		logger.Error("task name or task function is empty")
 		return
 	}
 
@@ -171,30 +174,31 @@ func (q *QueueScheduler) AddAfter(name, after string, fn func() error) {
 	}
 
 	newTask := &QueueTask{name: name, fn: fn}
-	if target, ok := q.tasks[after]; ok {
-		if target.next != nil {
+	if curr, ok := q.tasks[base]; ok {
+		if curr.next != nil {
 			// 目标任务存在且不是队尾，则插入到目标任务之后
-			newTask.next = target.next
-			newTask.prev = target
-			target.next.prev = newTask
-			target.next = newTask
+			newTask.next = curr.next
+			newTask.prev = curr
+			curr.next.prev = newTask
+			curr.next = newTask
 		} else {
 			// 插入当前队尾之后
-			target.next = newTask
-			newTask.prev = target
+			curr.next = newTask
+			newTask.prev = curr
 			q.tail = newTask
 		}
 		q.tasks[name] = newTask
-		log.Infof("task [%s] add after task [%s]", name, after)
+		logger.Info("add task after")
 	} else {
-		log.Errorf("target task [%s] does not exist, cannot add task [%s] after it", after, name)
+		logger.Error("base task does not exist, cannot add task after it")
 	}
 }
 
-// AddBefore 前插队(当前新增任务添加到before任务之后)
-func (q *QueueScheduler) AddBefore(name, before string, fn func() error) {
+// AddBefore 前插队(将新任务添加到目标任务之后)
+func (q *QueueScheduler) AddBefore(base, name string, fn func() error) {
+	logger := log.WithField("add_task", name).WithField("base_task", base)
 	if name == "" || fn == nil {
-		log.Errorf("task name [%s] or task function is empty", name)
+		logger.Error("task name or task function is empty")
 		return
 	}
 	q.mutex.Lock()
@@ -205,32 +209,33 @@ func (q *QueueScheduler) AddBefore(name, before string, fn func() error) {
 	}
 
 	newTask := &QueueTask{name: name, fn: fn}
-	if target, ok := q.tasks[before]; ok {
-		if target.prev != nil {
+	if curr, ok := q.tasks[base]; ok {
+		if curr.prev != nil {
 			// 目标任务不是队列头部，插入到目标任务之前
-			newTask.prev = target.prev
-			newTask.next = target
-			target.prev.next = newTask
-			target.prev = newTask
+			newTask.prev = curr.prev
+			newTask.next = curr
+			curr.prev.next = newTask
+			curr.prev = newTask
 		} else {
 			// 目标任务是队列头部，新任务成为新的头部
-			newTask.next = target
-			target.prev = newTask
+			newTask.next = curr
+			curr.prev = newTask
 			q.head = newTask
 		}
 		q.tasks[name] = newTask
-		log.Infof("task [%s] add before task [%s]", name, before)
+		logger.Info("add task before")
 	} else {
-		log.Errorf("target task [%s] does not exist, cannot add task [%s] before it", before, name)
+		logger.Error("base task does not exist, cannot add task before it")
 	}
 }
 
 // Remove 移除任务
 func (q *QueueScheduler) Remove(name string) {
 	if name != "" {
-		q.mutex.Lock()
-		defer q.mutex.Unlock()
+		logger := log.WithField("remove_task", name)
 		if task, ok := q.tasks[name]; ok {
+			q.mutex.Lock()
+			defer q.mutex.Unlock()
 			if task.prev == nil && task.next == nil {
 				// 移除的是队列中唯一的任务
 				q.head = nil
@@ -253,9 +258,9 @@ func (q *QueueScheduler) Remove(name string) {
 				task.next.prev = task.prev
 			}
 			delete(q.tasks, name)
-			log.Infof("task [%s] has been removed from the queue", name)
+			logger.Info("task has been removed")
 		} else {
-			log.Errorf("task [%s] does not exist in the queue", name)
+			logger.Error("task does not exist")
 		}
 	}
 }

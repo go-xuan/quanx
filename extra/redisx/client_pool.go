@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/redis/go-redis/v9"
-	
+
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/types/enumx"
@@ -25,11 +25,16 @@ func this() *enumx.Enum[string, *Client] {
 	return pool
 }
 
-func AddClient(config *Config, client redis.UniversalClient) {
+func AddClient(config *Config, cli redis.UniversalClient) {
+	if config == nil || cli == nil {
+		return
+	}
+	client := &Client{config, cli}
 	if pool == nil {
 		pool = enumx.NewStringEnum[*Client]()
+		pool.Add(constx.DefaultSource, client)
 	}
-	pool.Add(config.Source, &Client{config, client})
+	pool.Add(config.Source, client)
 }
 
 // GetClient 获取客户端

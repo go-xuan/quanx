@@ -59,7 +59,7 @@ func MustStructPointer(v any) error {
 }
 
 // SetDefaultValue 设置默认值
-func SetDefaultValue(v interface{}, tag ...string) error {
+func SetDefaultValue(v any, tag ...string) error {
 	if err := MustStructPointer(v); err != nil {
 		return errorx.New("the kind must be struct pointer")
 	}
@@ -91,7 +91,7 @@ func SetDefaultValue(v interface{}, tag ...string) error {
 }
 
 // MapToStruct 将map转换为结构体
-func MapToStruct(m map[string]string, v interface{}) error {
+func MapToStruct(m map[string]string, v any) error {
 	valueOf := ValueOf(v) // 获取指向结构体的值类型
 	for key, value := range m {
 		field := valueOf.FieldByName(key)
@@ -120,7 +120,7 @@ func MapToStruct(m map[string]string, v interface{}) error {
 }
 
 // MergeStructs 合并结构体
-func MergeStructs(a, b interface{}) {
+func MergeStructs(a, b any) {
 	va, vb := reflect.ValueOf(a).Elem(), reflect.ValueOf(b).Elem()
 	for i := 0; i < va.NumField(); i++ {
 		fieldA := va.Type().Field(i)
@@ -132,7 +132,7 @@ func MergeStructs(a, b interface{}) {
 }
 
 // SetZeroValue 设置结构体零值
-func SetZeroValue[T interface{}](a, b T) {
+func SetZeroValue[T any](a, b T) {
 	va, vb := reflect.ValueOf(a).Elem(), reflect.ValueOf(b).Elem()
 	for i := 0; i < va.NumField(); i++ {
 		if va.Field(i).IsZero() {

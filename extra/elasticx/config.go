@@ -29,12 +29,12 @@ func (c *Config) Info() string {
 
 func (c *Config) Reader(from configx.From) configx.Reader {
 	switch from {
-	case configx.FormNacos:
+	case configx.FromNacos:
 		return &nacosx.Reader{
 			DataId: "elastic.yaml",
 		}
-	case configx.FromLocal:
-		return &configx.LocalReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "elastic.yaml",
 		}
 	default:
@@ -96,12 +96,12 @@ func (list MultiConfig) Info() string {
 
 func (MultiConfig) Reader(from configx.From) configx.Reader {
 	switch from {
-	case configx.FormNacos:
+	case configx.FromNacos:
 		return &nacosx.Reader{
 			DataId: "elastic.yaml",
 		}
-	case configx.FromLocal:
-		return &configx.LocalReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "elastic.yaml",
 		}
 	default:

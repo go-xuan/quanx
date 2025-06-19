@@ -34,12 +34,12 @@ func (m *Config) Info() string {
 
 func (*Config) Reader(from configx.From) configx.Reader {
 	switch from {
-	case configx.FormNacos:
+	case configx.FromNacos:
 		return &nacosx.Reader{
 			DataId: "minio.yaml",
 		}
-	case configx.FromLocal:
-		return &configx.LocalReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "minio.yaml",
 		}
 	default:

@@ -22,6 +22,7 @@ func this() *enumx.Enum[string, Client] {
 func AddClient(config *Config, client Client) {
 	if pool == nil {
 		pool = enumx.NewStringEnum[Client]()
+		pool.Add(constx.DefaultSource, client)
 	}
 	pool.Add(config.Source, client)
 }

@@ -25,13 +25,13 @@ func (s *Servers) Info() string {
 
 func (*Servers) Reader(from configx.From) configx.Reader {
 	switch from {
-	case configx.FormNacos:
+	case configx.FromNacos:
 		return &nacosx.Reader{
 			DataId: "gateway.yaml",
 			Listen: true,
 		}
-	case configx.FromLocal:
-		return &configx.LocalReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "gateway.yaml",
 		}
 	default:

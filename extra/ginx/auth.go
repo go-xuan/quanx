@@ -42,8 +42,8 @@ type AuthValidator interface {
 	Encrypt(user AuthUser) (string, error) // 用户信息加密
 	TokenValidate(ctx *gin.Context)        // token方式鉴权
 	CookieValidate(ctx *gin.Context)       // cookie方式鉴权
-	AddWhite(ignore ...string)             // 添加白名单
-	Ignore(ctx *gin.Context) bool          // 白名单免鉴权
+	Ignore(ignores ...string)              // 添加白名单
+	IsIgnore(ctx *gin.Context) bool        // 白名单免鉴权
 }
 
 // AuthUser 鉴权用户

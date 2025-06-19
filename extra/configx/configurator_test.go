@@ -3,8 +3,6 @@ package configx
 import (
 	"fmt"
 	"testing"
-
-	"github.com/go-xuan/quanx/types/anyx"
 )
 
 type test struct {
@@ -21,9 +19,6 @@ func (t *test) Reader(from From) Reader {
 }
 
 func (t *test) Execute() error {
-	if err := anyx.SetDefaultValue(t); err != nil {
-		return err
-	}
 	t.Name = "hello world"
 	return nil
 }
@@ -31,7 +26,7 @@ func (t *test) Execute() error {
 func TestConfigurator(t *testing.T) {
 	var config = &test{}
 	fmt.Println("before execute :", config)
-	if err := ReadAndExecute(config, FromDefault); err != nil {
+	if err := ReadAndExecute(config, FromTag); err != nil {
 		t.Error(err)
 		return
 	}

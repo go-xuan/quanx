@@ -42,8 +42,8 @@ func (*Config) Reader(from configx.From) configx.Reader {
 	switch from {
 	case configx.FromEnv:
 		return &configx.EnvReader{}
-	case configx.FromLocal:
-		return &configx.LocalReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "nacos.yaml",
 		}
 	default:

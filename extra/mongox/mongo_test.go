@@ -7,11 +7,7 @@ import (
 )
 
 func TestMongo(t *testing.T) {
-	if err := configx.ReadAndExecute(&Config{
-		Enable:   true,
-		URI:      "mongodb://localhost:27017",
-		Database: "test",
-	}, configx.FromDefault); err != nil {
+	if err := configx.ReadAndExecute(&Config{}, configx.FromDefault); err != nil {
 		panic(err)
 	}
 }
