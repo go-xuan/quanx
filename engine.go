@@ -19,7 +19,7 @@ import (
 	"github.com/go-xuan/quanx/extra/logx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/extra/redisx"
-	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/utils/anyx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
@@ -430,7 +430,7 @@ func (e *Engine) GetConfigPath(filename string) string {
 
 // AddTable 添加表结构（默认数据源）
 func (e *Engine) AddTable(tablers ...interface{}) {
-	e.AddSourceTable(constx.DefaultSource, tablers...)
+	e.AddSourceTable("default", tablers...)
 }
 
 // AddSourceTable 添加表结构（指定数据源）

@@ -4,12 +4,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/typex"
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/respx"
-	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/anyx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 func NewJwtValidator(secret string, ignore ...string) *JwtValidator {
@@ -128,8 +129,8 @@ func (u *JwtUser) Valid() error {
 	return nil
 }
 
-func (u *JwtUser) UserId() anyx.Value {
-	return anyx.Int64Value(u.Id)
+func (u *JwtUser) UserId() typex.Value {
+	return typex.Int64Value(u.Id)
 }
 
 func (u *JwtUser) Username() string {

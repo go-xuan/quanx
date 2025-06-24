@@ -4,10 +4,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/typex"
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/extra/cachex"
-	"github.com/go-xuan/quanx/types/anyx"
 )
 
 var (
@@ -48,9 +48,9 @@ type AuthValidator interface {
 
 // AuthUser 鉴权用户
 type AuthUser interface {
-	UserId() anyx.Value // 用户ID
-	Username() string   // 用户名
-	TTL() int           // 存活时长，秒
+	UserId() typex.Value // 用户ID
+	Username() string    // 用户名
+	TTL() int            // 存活时长，秒
 }
 
 // SetSessionUser 设置会话用户

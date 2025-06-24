@@ -6,8 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/types/boolx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 // ValueOf 反射获取结构体的值
@@ -64,7 +63,7 @@ func SetDefaultValue(v any, tag ...string) error {
 		return errorx.New("the kind must be struct pointer")
 	}
 	var elem = reflect.ValueOf(v).Elem()
-	key := stringx.Default("default", tag...)
+	key := Default("default", tag...)
 	for i := 0; i < elem.NumField(); i++ {
 		field := elem.Field(i)
 		if field.IsZero() {
@@ -73,7 +72,7 @@ func SetDefaultValue(v any, tag ...string) error {
 				case reflect.String:
 					field.SetString(value)
 				case reflect.Bool:
-					field.SetBool(boolx.ValueOf(value))
+					field.SetBool(stringx.ParseBool(value))
 				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 					reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 					intVal, _ := strconv.ParseInt(value, 10, 64)
@@ -100,7 +99,7 @@ func MapToStruct(m map[string]string, v any) error {
 			case reflect.String:
 				field.SetString(value)
 			case reflect.Bool:
-				field.SetBool(boolx.ValueOf(value))
+				field.SetBool(stringx.ParseBool(value))
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 				reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				intVal, _ := strconv.ParseInt(value, 10, 64)

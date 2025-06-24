@@ -12,9 +12,9 @@ import (
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/extra/redisx"
-	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/anyx"
 	"github.com/go-xuan/quanx/utils/marshalx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 const (

@@ -2,7 +2,7 @@ package configx
 
 import (
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/utils/anyx"
 )
 
 // TagReader 标签读取器，获取tag值作为配置值

@@ -13,7 +13,7 @@ import (
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
-	"github.com/go-xuan/quanx/types/timex"
+	"github.com/go-xuan/quanx/utils/timex"
 )
 
 type Config struct {

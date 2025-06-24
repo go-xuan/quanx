@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/filex"
-	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 // Reader nacos配置读取器

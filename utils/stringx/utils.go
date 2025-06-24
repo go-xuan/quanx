@@ -38,16 +38,16 @@ func ParseFloat(str string, def ...float64) float64 {
 
 // ParseBool 解析布尔值
 func ParseBool(str string, def ...bool) bool {
-	switch str {
-	case "1", "t", "T", "true", "TRUE", "True", "是", "yes", "YES", "Yes":
-		return true
-	default:
-		if len(def) > 0 {
-			return def[0]
-		} else {
-			return false
+	str = strings.ToLower(str)
+	for _, item := range []string{"1", "true", "是", "yes"} {
+		if str == item {
+			return true
 		}
 	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return false
 }
 
 // ParseTime 解析时间字符串

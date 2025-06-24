@@ -8,7 +8,7 @@ import (
 	"github.com/go-xuan/quanx/extra/logx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/extra/redisx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 // GetServer 获取服务配置
