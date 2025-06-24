@@ -1,24 +1,25 @@
 package taskx
 
 import (
+	"context"
 	"fmt"
 	"testing"
 )
 
-func task1() {
-	fmt.Println("执行定时任务 ==> task1")
+func job1(context.Context) {
+	fmt.Println("执行定时任务 ==> job1")
 }
 
-func task2() {
-	fmt.Println("执行定时任务 ==> task2")
+func job2(context.Context) {
+	fmt.Println("执行定时任务 ==> job2")
 }
 
-func task3() {
-	fmt.Println("执行定时任务 ==> task3")
+func job3(context.Context) {
+	fmt.Println("执行定时任务 ==> job3")
 }
 
-func task4() {
-	fmt.Println("执行定时任务 ==> task4")
+func job4(context.Context) {
+	fmt.Println("执行定时任务 ==> job4")
 }
 
 func TestCron(t *testing.T) {
@@ -27,16 +28,16 @@ func TestCron(t *testing.T) {
 		DurationWrap,
 	)
 
-	//scheduler.Add("task1", "@every 5s", task1)
-	//scheduler.Add("task2", "@every 2s", task2)
-	//scheduler.Add("task3", "@daily", task3)
-	//scheduler.Add("task4", "0 */1 * * * ?", task4)
+	scheduler.Add("job1", "@every 5s", job1)
+	scheduler.Add("job2", "@every 2s", job2)
+	scheduler.Add("job3", "@daily", job3)
+	scheduler.Add("job4", "0 */1 * * * ?", job4)
 
 	scheduler.Start()
 
 	// 定时任务信息
-	for i, task := range scheduler.All() {
-		fmt.Println(i, task.Info())
+	for i, job := range scheduler.All() {
+		fmt.Println(i, job.Info())
 	}
 	select {}
 }

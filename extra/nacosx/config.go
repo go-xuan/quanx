@@ -15,7 +15,7 @@ import (
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/extra/configx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 const (
@@ -42,8 +42,8 @@ func (*Config) Reader(from configx.From) configx.Reader {
 	switch from {
 	case configx.FromEnv:
 		return &configx.EnvReader{}
-	case configx.FromLocal:
-		return &configx.LocalReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "nacos.yaml",
 		}
 	default:

@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/filex"
-	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/utils/anyx"
 )
 
 var _client *Client
@@ -50,9 +50,6 @@ func ReadConfig(config any, group, dataId string, listen ...bool) error {
 		DataId: dataId,
 		Type:   filex.GetSuffix(dataId),
 		Listen: anyx.Default(false, listen...),
-	}
-	if err := reader.Check(config); err != nil {
-		return errorx.Wrap(err, "check nacos config error")
 	}
 	if err := reader.Read(config); err != nil {
 		return errorx.Wrap(err, "read nacos config error")

@@ -12,7 +12,7 @@ import (
 	"github.com/go-xuan/quanx/base/osx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
-	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/utils/anyx"
 )
 
 var _config *Config
@@ -72,12 +72,12 @@ func (c *Config) Info() string {
 
 func (*Config) Reader(from configx.From) configx.Reader {
 	switch from {
-	case configx.FormNacos:
+	case configx.FromNacos:
 		return &nacosx.Reader{
 			DataId: "log.yaml",
 		}
-	case configx.FromLocal:
-		return &configx.LocalReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "log.yaml",
 		}
 	default:

@@ -9,10 +9,7 @@ import (
 )
 
 func TestRedis(t *testing.T) {
-	if err := configx.ReadAndExecute(&Config{
-		Enable:   true,
-		Password: "Init@123",
-	}, configx.FromDefault); err != nil {
+	if err := configx.ReadAndExecute(&Config{}, configx.FromDefault); err != nil {
 		panic(err)
 	}
 

@@ -7,10 +7,7 @@ import (
 )
 
 func TestNacos(t *testing.T) {
-	if err := configx.ReadAndExecute(&Config{
-		Username: "nacos",
-		Password: "nacos",
-	}, configx.FromDefault); err != nil {
+	if err := configx.ReadAndExecute(&Config{}, configx.FromFile, ""); err != nil {
 		panic(err)
 	}
 }

@@ -8,7 +8,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/base/fmtx"
 	"github.com/go-xuan/quanx/base/osx"
 )
 
@@ -59,22 +58,21 @@ func (f *textFormatter) Format(entry *log.Entry) ([]byte, error) {
 	}
 	b.WriteString("\n")
 	if f.color {
-		return Color(entry.Level).Bytes(b.String()), nil
-	} else {
-		return b.Bytes(), nil
+		return Color(entry.Level, b.Bytes()), nil
 	}
+	return b.Bytes(), nil
 }
 
-func Color(level log.Level) fmtx.Color {
+func Color(level log.Level, s []byte) []byte {
 	switch level {
 	case log.InfoLevel:
-		return fmtx.Green
+		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 32, string(s)))
 	case log.WarnLevel:
-		return fmtx.Yellow
+		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 33, string(s)))
 	case log.ErrorLevel:
-		return fmtx.Red
+		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 31, string(s)))
 	default:
-		return 0
+		return s
 	}
 }
 

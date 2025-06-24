@@ -12,7 +12,7 @@ import (
 	"github.com/go-xuan/quanx/base/respx"
 	"github.com/go-xuan/quanx/common/constx"
 	"github.com/go-xuan/quanx/common/modelx"
-	"github.com/go-xuan/quanx/types/timex"
+	"github.com/go-xuan/quanx/utils/timex"
 )
 
 func NewCrudApi[T any](group *gin.RouterGroup, db *gorm.DB) {

@@ -3,20 +3,20 @@ package nacosx
 import (
 	"fmt"
 	"reflect"
-	
+
 	"github.com/nacos-group/nacos-sdk-go/vo"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/filex"
-	"github.com/go-xuan/quanx/types/stringx"
 	"github.com/go-xuan/quanx/utils/marshalx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 // Reader nacos配置读取器
 type Reader struct {
-	Type   string `yaml:"type"`   // 配置类型
-	Group  string `yaml:"group"`  // 配置分组
+	Type   string `yaml:"type"`   // 配置文件类型
+	Group  string `yaml:"group"`  // 配置所在分组
 	DataId string `yaml:"dataId"` // 配置文件ID
 	Data   []byte `yaml:"data"`   // 配置文件内容
 	Listen bool   `yaml:"listen"` // 是否启用监听
@@ -34,21 +34,24 @@ func (r *Reader) ConfigParam() vo.ConfigParam {
 	}
 }
 
-func (r *Reader) Ready(group ...string) {
-	if len(group) > 0 && group[0] != "" {
-		r.Group = group[0]
-	}
+func (r *Reader) Anchor(anchor string) {
+	r.Group = anchor
 }
 
-func (r *Reader) Check(config any) error {
+func (r *Reader) Location() string {
+	return fmt.Sprintf("nacos@%s@%s", r.Group, r.DataId)
+}
+
+func (r *Reader) Read(config any) error {
 	if r.Data == nil {
 		if !Initialized() {
-			return errorx.New("nacos client not initialized")
+			return errorx.New("nacos not initialized")
 		}
 		// 配置值必须是指针类型，否则不允许读取
 		if ref := reflect.ValueOf(config); ref.Type().Kind() != reflect.Ptr {
 			return errorx.New("the scanned object must be of pointer type")
 		}
+		// 读取配置文件内容
 		content, err := GetNacosConfigClient().GetConfig(r.ConfigParam())
 		if err != nil {
 			return errorx.Wrap(err, "read config from nacos error")
@@ -58,22 +61,11 @@ func (r *Reader) Check(config any) error {
 			return errorx.Wrap(err, "unmarshal config from nacos error")
 		}
 		r.Data = data
+		if err = r.ListenConfig(config); err != nil {
+			return errorx.Wrap(err, "listen nacos config error")
+		}
 	}
 	return nil
-}
-
-func (r *Reader) Read(config any) error {
-	if err := r.Check(config); err != nil {
-		return errorx.Wrap(err, "check nacos config error")
-	}
-	if err := r.ListenConfig(config); err != nil {
-		return errorx.Wrap(err, "listen nacos config error")
-	}
-	return nil
-}
-
-func (r *Reader) Location() string {
-	return fmt.Sprintf("nacos@%s@%s", r.Group, r.DataId)
 }
 
 // ListenConfig 监听nacos配置

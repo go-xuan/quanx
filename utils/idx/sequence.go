@@ -2,20 +2,20 @@ package idx
 
 import (
 	"sync"
-
-	"github.com/go-xuan/quanx/types/enumx"
+	
+	"github.com/go-xuan/typex"
 )
 
 var seqManager *SeqManager
 
 type SeqManager struct {
-	Pool *enumx.Enum[string, *sequence]
+	Pool *typex.Enum[string, *sequence]
 }
 
 func Sequence() *SeqManager {
 	if seqManager == nil {
 		seqManager = &SeqManager{
-			Pool: enumx.NewStringEnum[*sequence](),
+			Pool: typex.NewStringEnum[*sequence](),
 		}
 	}
 	return seqManager

@@ -12,9 +12,9 @@ import (
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/extra/redisx"
-	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/anyx"
 	"github.com/go-xuan/quanx/utils/marshalx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 const (
@@ -23,10 +23,10 @@ const (
 )
 
 type Config struct {
-	Type    string `json:"type" yaml:"type" default:"local"`         // 缓存类型（local/redis）
-	Source  string `json:"source" yaml:"source" default:"default"`   // 缓存存储数据源名称
-	Prefix  string `json:"prefix" yaml:"prefix" default:"local"`     // 缓存key前缀前缀
-	Marshal string `json:"marshal" yaml:"marshal" default:"msgpack"` // 序列化方案
+	Type    string `json:"type" yaml:"type" default:"local"`       // 缓存类型（local/redis）
+	Source  string `json:"source" yaml:"source" default:"default"` // 缓存存储数据源名称
+	Prefix  string `json:"prefix" yaml:"prefix" default:"local"`   // 缓存key前缀前缀
+	Marshal string `json:"marshal" yaml:"marshal" default:"json"`  // 序列化方案
 }
 
 func (c *Config) Info() string {
@@ -35,16 +35,16 @@ func (c *Config) Info() string {
 
 func (c *Config) Reader(from configx.From) configx.Reader {
 	switch from {
-	case configx.FormNacos:
+	case configx.FromNacos:
 		return &nacosx.Reader{
 			DataId: "cache.yaml",
 		}
-	case configx.FromLocal:
-		return &configx.LocalReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "cache.yaml",
 		}
 	default:
-		return nil
+		return &configx.TagReader{}
 	}
 }
 
@@ -122,12 +122,12 @@ func (list MultiConfig) Info() string {
 
 func (MultiConfig) Reader(from configx.From) configx.Reader {
 	switch from {
-	case configx.FormNacos:
+	case configx.FromNacos:
 		return &nacosx.Reader{
 			DataId: "cache.yaml",
 		}
-	case configx.FromLocal:
-		return &configx.LocalReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "cache.yaml",
 		}
 	default:

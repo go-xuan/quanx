@@ -1,21 +1,20 @@
 package gormx
 
 import (
+	"github.com/go-xuan/typex"
 	"gorm.io/gorm"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/types/enumx"
 )
 
-var pool *enumx.Enum[string, *Client]
+var pool *typex.Enum[string, *Client]
 
 // Initialized 是否初始化
 func Initialized() bool {
 	return pool != nil && pool.Len() > 0
 }
 
-func this() *enumx.Enum[string, *Client] {
+func this() *typex.Enum[string, *Client] {
 	if pool == nil {
 		panic("gorm client not initialized, please check the relevant config")
 	}
@@ -23,10 +22,15 @@ func this() *enumx.Enum[string, *Client] {
 }
 
 func AddClient(config *Config, db *gorm.DB) {
-	if pool == nil {
-		pool = enumx.NewStringEnum[*Client]()
+	if config == nil || db == nil {
+		return
 	}
-	pool.Add(config.Source, &Client{config, db})
+	client := &Client{config, db}
+	if pool == nil {
+		pool = typex.NewStringEnum[*Client]()
+		pool.Add("default", client)
+	}
+	pool.Add(config.Source, client)
 }
 
 // GetClient 获取客户端
@@ -36,7 +40,7 @@ func GetClient(source ...string) *Client {
 			return client
 		}
 	}
-	return this().Get(constx.DefaultSource)
+	return this().Get("default")
 }
 
 // GetConfig 获取配置

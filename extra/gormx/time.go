@@ -2,8 +2,8 @@ package gormx
 
 import (
 	"time"
-
-	"github.com/go-xuan/quanx/types/timex"
+	
+	"github.com/go-xuan/quanx/utils/timex"
 )
 
 type Time time.Time

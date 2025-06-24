@@ -3,7 +3,7 @@ package marshalx
 import (
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/filex"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 const (

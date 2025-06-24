@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/anyx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 /*

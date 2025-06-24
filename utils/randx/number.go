@@ -1,7 +1,7 @@
 package randx
 
 import (
-	"github.com/go-xuan/quanx/types/floatx"
+	"github.com/go-xuan/quanx/utils/floatx"
 )
 
 // Int 随机整数

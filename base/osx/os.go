@@ -6,12 +6,10 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/go-xuan/typex"
+
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/types/boolx"
-	"github.com/go-xuan/quanx/types/floatx"
-	"github.com/go-xuan/quanx/types/intx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/anyx"
 )
 
 const (
@@ -49,7 +47,7 @@ func SetValueFromEnv(v any) error {
 		field := elem.Field(i)
 		tag := elem.Type().Field(i).Tag.Get("env")
 		key := strings.ToUpper(tag)
-		value := stringx.NewString(os.Getenv(key))
+		value := typex.NewString(os.Getenv(key))
 		switch field.Kind() {
 		case reflect.String:
 			field.SetString(value.Value())
@@ -82,13 +80,13 @@ func SetEnvFromValue(v any) error {
 		case reflect.String:
 			value = field.String()
 		case reflect.Bool:
-			value = boolx.NewBool(field.Bool()).String()
+			value = typex.NewBool(field.Bool()).String()
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			value = intx.NewInt64(field.Int()).String()
+			value = typex.NewInt64(field.Int()).String()
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			value = intx.NewInt64(int64(field.Uint())).String()
+			value = typex.NewInt64(int64(field.Uint())).String()
 		case reflect.Float32, reflect.Float64:
-			value = floatx.NewFloat64(field.Float()).String()
+			value = typex.NewFloat64(field.Float()).String()
 		default:
 			continue // 忽略不支持的类型
 		}

@@ -14,6 +14,7 @@ const (
 	running                   // 正在运行中
 )
 
+// EngineOptionFunc 配置选项
 type EngineOptionFunc = func(e *Engine)
 
 func SetPort(port int) EngineOptionFunc {
@@ -84,16 +85,16 @@ func AddSourceTable(source string, tablers ...interface{}) EngineOptionFunc {
 }
 
 // AddTaskBefore 前插队添加任务
-func AddTaskBefore(name, before string, task func() error) EngineOptionFunc {
+func AddTaskBefore(base, name string, task func() error) EngineOptionFunc {
 	return func(e *Engine) {
-		e.AddTaskBefore(name, before, task)
+		e.AddTaskBefore(base, name, task)
 	}
 }
 
 // AddTaskAfter 后插队添加任务
-func AddTaskAfter(name, after string, task func() error) EngineOptionFunc {
+func AddTaskAfter(base, name string, task func() error) EngineOptionFunc {
 	return func(e *Engine) {
-		e.AddTaskAfter(name, after, task)
+		e.AddTaskAfter(base, name, task)
 	}
 }
 

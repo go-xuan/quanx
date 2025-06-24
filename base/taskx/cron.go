@@ -107,7 +107,7 @@ func (s *CronScheduler) Remove(name string) error {
 		s.cron.Remove(entry.ID)
 		delete(s.entries, name)
 	} else {
-		return errorx.New("task not found: " + name)
+		return errorx.New("job not found: " + name)
 	}
 	// 当任务清零则状态值归零
 	if len(s.entries) == 0 {

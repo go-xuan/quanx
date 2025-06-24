@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	log "github.com/sirupsen/logrus"
-
-	"github.com/go-xuan/quanx/types/stringx"
+	
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 func NewHook() *Hook {

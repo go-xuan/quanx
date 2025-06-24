@@ -4,12 +4,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/typex"
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/base/respx"
-	"github.com/go-xuan/quanx/types/anyx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/anyx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 func NewJwtValidator(secret string, ignore ...string) *JwtValidator {
@@ -37,7 +38,7 @@ func (v *JwtValidator) Encrypt(user AuthUser) (string, error) {
 }
 
 func (v *JwtValidator) TokenValidate(ctx *gin.Context) {
-	if !v.Ignore(ctx) {
+	if !v.IsIgnore(ctx) {
 		if err := v.tokenValidate(ctx); err != nil {
 			respx.Forbidden(ctx, errorx.Wrap(err, "auth validate failed"))
 			ctx.Abort()
@@ -46,7 +47,7 @@ func (v *JwtValidator) TokenValidate(ctx *gin.Context) {
 }
 
 func (v *JwtValidator) CookieValidate(ctx *gin.Context) {
-	if !v.Ignore(ctx) {
+	if !v.IsIgnore(ctx) {
 		if err := v.cookieValidate(ctx); err != nil {
 			respx.Forbidden(ctx, errorx.Wrap(err, "auth validate failed"))
 			ctx.Abort()
@@ -54,11 +55,11 @@ func (v *JwtValidator) CookieValidate(ctx *gin.Context) {
 	}
 }
 
-func (v *JwtValidator) AddWhite(ignore ...string) {
-	v.ignore = append(v.ignore, ignore...)
+func (v *JwtValidator) Ignore(ignores ...string) {
+	v.ignore = append(v.ignore, ignores...)
 }
 
-func (v *JwtValidator) Ignore(ctx *gin.Context) bool {
+func (v *JwtValidator) IsIgnore(ctx *gin.Context) bool {
 	url := ctx.Request.URL.Path
 	for _, ignore := range v.ignore {
 		if stringx.MatchUrl(url, ignore) {
@@ -80,9 +81,10 @@ func (v *JwtValidator) tokenValidate(ctx *gin.Context) error {
 }
 
 func (v *JwtValidator) cookieValidate(ctx *gin.Context) error {
+	var user *JwtUser
 	if cookie, err := ctx.Cookie(userCookieKey); err != nil || cookie == "" {
-		return errorx.New("request cookie required")
-	} else if user, err := v.validate(ctx, cookie); err != nil {
+		return errorx.Wrap(err, "request cookie required")
+	} else if user, err = v.validate(ctx, cookie); err != nil {
 		return errorx.Wrap(err, "validate cookie error")
 	} else if _, err = SetAuthCookie(ctx, user); err != nil {
 		return errorx.Wrap(err, "set cookie error")
@@ -127,8 +129,8 @@ func (u *JwtUser) Valid() error {
 	return nil
 }
 
-func (u *JwtUser) UserId() anyx.Value {
-	return anyx.Int64Value(u.Id)
+func (u *JwtUser) UserId() typex.Value {
+	return typex.Int64Value(u.Id)
 }
 
 func (u *JwtUser) Username() string {

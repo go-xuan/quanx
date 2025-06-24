@@ -5,9 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
+	"github.com/go-xuan/typex"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/go-xuan/quanx/types/enumx"
 )
 
 const (
@@ -21,7 +20,7 @@ const (
 	ExportFailedCode = 10603
 )
 
-var CodeMsgEnum = enumx.NewIntEnum[string]()
+var CodeMsgEnum = typex.NewIntEnum[string]()
 
 func init() {
 	CodeMsgEnum.Add(SuccessCode, "success").

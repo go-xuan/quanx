@@ -14,7 +14,7 @@ import (
 	"github.com/go-xuan/quanx/base/errorx"
 	"github.com/go-xuan/quanx/extra/configx"
 	"github.com/go-xuan/quanx/extra/nacosx"
-	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/utils/anyx"
 )
 
 const (
@@ -58,12 +58,12 @@ func (c *Config) Info() string {
 
 func (*Config) Reader(from configx.From) configx.Reader {
 	switch from {
-	case configx.FormNacos:
+	case configx.FromNacos:
 		return &nacosx.Reader{
 			DataId: "redis.yaml",
 		}
-	case configx.FromLocal:
-		return &configx.LocalReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "redis.yaml",
 		}
 	default:
@@ -147,12 +147,12 @@ func (list MultiConfig) Info() string {
 
 func (MultiConfig) Reader(from configx.From) configx.Reader {
 	switch from {
-	case configx.FormNacos:
+	case configx.FromNacos:
 		return &nacosx.Reader{
 			DataId: "redis.yaml",
 		}
-	case configx.FromLocal:
-		return &configx.LocalReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "redis.yaml",
 		}
 	default:

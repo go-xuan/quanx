@@ -19,7 +19,7 @@ import (
 	"github.com/go-xuan/quanx/extra/logx"
 	"github.com/go-xuan/quanx/extra/nacosx"
 	"github.com/go-xuan/quanx/extra/redisx"
-	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/quanx/utils/anyx"
 	"github.com/go-xuan/quanx/utils/marshalx"
 )
 
@@ -327,40 +327,48 @@ func (e *Engine) ReadConfigurator(configurator configx.Configurator) (string, er
 	e.checkRunning()
 	// 获取可用的reader
 	reader := func() configx.Reader {
-		if reader := configurator.Reader(configx.FormNacos); reader != nil {
-			reader.Ready(e.config.Server.Name)
-			if err := reader.Check(configurator); err == nil {
+		if reader := configurator.Reader(configx.FromNacos); reader != nil {
+			reader.Anchor(e.config.Server.Name)
+			if err := reader.Read(configurator); err == nil {
 				return reader
 			}
 		}
-		if reader := configurator.Reader(configx.FromLocal); reader != nil {
-			reader.Ready(e.configDir)
-			if err := reader.Check(configurator); err == nil {
+		if reader := configurator.Reader(configx.FromFile); reader != nil {
+			reader.Anchor(e.configDir)
+			if err := reader.Read(configurator); err == nil {
 				return reader
 			}
 		}
 		if reader := configurator.Reader(configx.FromEnv); reader != nil {
-			reader.Ready()
-			if err := reader.Check(configurator); err == nil {
+			if err := reader.Read(configurator); err == nil {
+				return reader
+			}
+		}
+		if reader := configurator.Reader(configx.FromTag); reader != nil {
+			reader.Anchor("default")
+			if err := reader.Read(configurator); err == nil {
 				return reader
 			}
 		}
 		return nil
 	}()
 	if reader == nil {
-		return configx.FromDefault, errorx.New("get config reader error")
+		return "", errorx.New("configurator reader is nil")
 	}
-	return reader.Location(), reader.Read(configurator)
+	return reader.Location(), nil
 }
 
-// ExecuteConfigurator 执行配置器（立即执行）
+// ExecuteConfigurator 执行配置器
+// configurator: 配置器对象
+// must: 是否必须执行配置器，默认false
 func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...bool) error {
 	location, err := e.ReadConfigurator(configurator)
-	logger := logrus.WithField("location", location)
 	if err != nil && (len(must) == 0 || !must[0]) {
-		// 配置读取失败并且非必须执行，则直接返回
+		// 如果是非必须执行的配置器，读取配置失败则直接返回
 		return errorx.Wrap(err, "configurator read error")
 	}
+	logger := logrus.WithField("location", location)
+	// 执行配置器
 	if err = configurator.Execute(); err != nil {
 		logger.Error("configurator execute error")
 		return errorx.Wrap(err, "configurator execute error")
@@ -395,7 +403,7 @@ func (e *Engine) ReadNacosConfig(config any, dataId string, listen ...bool) {
 	})
 }
 
-// doOptionFuncs 启动项函数
+// doOptionFuncs 加载配置函数
 func (e *Engine) doOptionFuncs(funcs ...EngineOptionFunc) {
 	e.checkRunning()
 	if len(funcs) > 0 {
@@ -422,7 +430,7 @@ func (e *Engine) GetConfigPath(filename string) string {
 
 // AddTable 添加表结构（默认数据源）
 func (e *Engine) AddTable(tablers ...interface{}) {
-	e.AddSourceTable(constx.DefaultSource, tablers...)
+	e.AddSourceTable("default", tablers...)
 }
 
 // AddSourceTable 添加表结构（指定数据源）
@@ -450,21 +458,21 @@ func (e *Engine) AddGinRouter(router ...func(*gin.RouterGroup)) {
 }
 
 // AddTaskBefore 前插队添加任务
-func (e *Engine) AddTaskBefore(name, before string, task func() error) {
+func (e *Engine) AddTaskBefore(base, name string, task func() error) {
 	e.checkRunning()
-	e.queue.AddBefore(name, before, task)
+	e.queue.AddBefore(base, name, task)
 }
 
 // AddTaskAfter 后插队添加任务
-func (e *Engine) AddTaskAfter(name, after string, task func() error) {
+func (e *Engine) AddTaskAfter(base, name string, task func() error) {
 	e.checkRunning()
-	e.queue.AddAfter(name, after, task)
+	e.queue.AddAfter(base, name, task)
 }
 
 // PanicRecover 服务保活
 func PanicRecover() {
 	if err := recover(); err != nil {
-		logrus.Error("server run panic: ", err)
+		logrus.Error("engine run panic: ", err)
 		return
 	}
 }

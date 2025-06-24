@@ -6,8 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/types/boolx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 // ValueOf 反射获取结构体的值
@@ -59,12 +58,12 @@ func MustStructPointer(v any) error {
 }
 
 // SetDefaultValue 设置默认值
-func SetDefaultValue(v interface{}, tag ...string) error {
+func SetDefaultValue(v any, tag ...string) error {
 	if err := MustStructPointer(v); err != nil {
 		return errorx.New("the kind must be struct pointer")
 	}
 	var elem = reflect.ValueOf(v).Elem()
-	key := stringx.Default("default", tag...)
+	key := Default("default", tag...)
 	for i := 0; i < elem.NumField(); i++ {
 		field := elem.Field(i)
 		if field.IsZero() {
@@ -73,7 +72,7 @@ func SetDefaultValue(v interface{}, tag ...string) error {
 				case reflect.String:
 					field.SetString(value)
 				case reflect.Bool:
-					field.SetBool(boolx.ValueOf(value))
+					field.SetBool(stringx.ParseBool(value))
 				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 					reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 					intVal, _ := strconv.ParseInt(value, 10, 64)
@@ -91,7 +90,7 @@ func SetDefaultValue(v interface{}, tag ...string) error {
 }
 
 // MapToStruct 将map转换为结构体
-func MapToStruct(m map[string]string, v interface{}) error {
+func MapToStruct(m map[string]string, v any) error {
 	valueOf := ValueOf(v) // 获取指向结构体的值类型
 	for key, value := range m {
 		field := valueOf.FieldByName(key)
@@ -100,7 +99,7 @@ func MapToStruct(m map[string]string, v interface{}) error {
 			case reflect.String:
 				field.SetString(value)
 			case reflect.Bool:
-				field.SetBool(boolx.ValueOf(value))
+				field.SetBool(stringx.ParseBool(value))
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 				reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				intVal, _ := strconv.ParseInt(value, 10, 64)
@@ -120,7 +119,7 @@ func MapToStruct(m map[string]string, v interface{}) error {
 }
 
 // MergeStructs 合并结构体
-func MergeStructs(a, b interface{}) {
+func MergeStructs(a, b any) {
 	va, vb := reflect.ValueOf(a).Elem(), reflect.ValueOf(b).Elem()
 	for i := 0; i < va.NumField(); i++ {
 		fieldA := va.Type().Field(i)
@@ -132,7 +131,7 @@ func MergeStructs(a, b interface{}) {
 }
 
 // SetZeroValue 设置结构体零值
-func SetZeroValue[T interface{}](a, b T) {
+func SetZeroValue[T any](a, b T) {
 	va, vb := reflect.ValueOf(a).Elem(), reflect.ValueOf(b).Elem()
 	for i := 0; i < va.NumField(); i++ {
 		if va.Field(i).IsZero() {

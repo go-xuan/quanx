@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/types/intx"
-	"github.com/go-xuan/quanx/types/stringx"
+	"github.com/go-xuan/quanx/utils/intx"
+	"github.com/go-xuan/quanx/utils/stringx"
 )
 
 const (

@@ -3,7 +3,7 @@ package contextx
 import (
 	"context"
 
-	"github.com/go-xuan/quanx/types/anyx"
+	"github.com/go-xuan/typex"
 )
 
 const (
@@ -32,11 +32,11 @@ func getValue(ctx context.Context, key string) any {
 	return nil
 }
 
-func GetValue(ctx context.Context, key string) anyx.Value {
+func GetValue(ctx context.Context, key string) typex.Value {
 	if value := getValue(ctx, key); value != nil {
-		return anyx.New(value)
+		return typex.NewValue(value)
 	}
-	return anyx.ZeroValue()
+	return typex.ZeroValue()
 }
 
 func GetValueString(ctx context.Context, key string) string {
