@@ -5,22 +5,22 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	"github.com/go-xuan/utilx/anyx"
+	"github.com/go-xuan/utilx/errorx"
+	"github.com/go-xuan/utilx/filex"
+	"github.com/go-xuan/utilx/marshalx"
+	"github.com/go-xuan/utilx/osx"
+	"github.com/go-xuan/utilx/taskx"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/go-xuan/quanx/base/errorx"
-	"github.com/go-xuan/quanx/base/filex"
-	"github.com/go-xuan/quanx/base/osx"
-	"github.com/go-xuan/quanx/base/taskx"
-	"github.com/go-xuan/quanx/common/constx"
-	"github.com/go-xuan/quanx/extra/cachex"
-	"github.com/go-xuan/quanx/extra/configx"
-	"github.com/go-xuan/quanx/extra/ginx"
-	"github.com/go-xuan/quanx/extra/gormx"
-	"github.com/go-xuan/quanx/extra/logx"
-	"github.com/go-xuan/quanx/extra/nacosx"
-	"github.com/go-xuan/quanx/extra/redisx"
-	"github.com/go-xuan/quanx/utils/anyx"
-	"github.com/go-xuan/quanx/utils/marshalx"
+	"github.com/go-xuan/quanx/cachex"
+	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/constx"
+	"github.com/go-xuan/quanx/ginx"
+	"github.com/go-xuan/quanx/gormx"
+	"github.com/go-xuan/quanx/logx"
+	"github.com/go-xuan/quanx/nacosx"
+	"github.com/go-xuan/quanx/redisx"
 )
 
 // Queue task name
@@ -216,7 +216,7 @@ func (e *Engine) runServer() error {
 	port := strconv.Itoa(e.config.Server.Port)
 	// 启动服务
 	e.switches[running] = true
-	logrus.Infof(`API接口请求地址: http://%s:%s`, host, port)
+	log.Infof(`API接口请求地址: http://%s:%s`, host, port)
 	if err := e.ginEngine.Run(":" + port); err != nil {
 		return errorx.Wrap(err, "run server error")
 	}
@@ -303,7 +303,7 @@ func (e *Engine) initGinRouter(group *gin.RouterGroup) {
 			router(group)
 		}
 	} else {
-		logrus.Warn("gin router is empty")
+		log.Warn("gin router is empty")
 	}
 }
 
@@ -367,7 +367,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 		// 如果是非必须执行的配置器，读取配置失败则直接返回
 		return errorx.Wrap(err, "configurator read error")
 	}
-	logger := logrus.WithField("location", location)
+	logger := log.WithField("location", location)
 	// 执行配置器
 	if err = configurator.Execute(); err != nil {
 		logger.Error("configurator execute error")
@@ -383,7 +383,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 // ReadLocalConfig 读取本地配置项（立即执行）
 func (e *Engine) ReadLocalConfig(config any, path string) {
 	if err := marshalx.Apply(path).Read(path, config); err != nil {
-		logrus.WithField("path", path).WithError(err).Error("read local config error")
+		log.WithField("path", path).WithError(err).Error("read local config error")
 		panic(errorx.Wrap(err, "read local config error"))
 	}
 }
@@ -393,7 +393,7 @@ func (e *Engine) ReadNacosConfig(config any, dataId string, listen ...bool) {
 	e.AddCustomFunc(func() error {
 		if !nacosx.Initialized() {
 			var err = errorx.New("nacos not initialized")
-			logrus.WithField("dataId", dataId).WithError(err).Error("read nacos config error")
+			log.WithField("dataId", dataId).WithError(err).Error("read nacos config error")
 			return err
 		}
 		if err := nacosx.ReadConfig(config, e.config.Server.Name, dataId, listen...); err != nil {
@@ -472,7 +472,7 @@ func (e *Engine) AddTaskAfter(base, name string, task func() error) {
 // PanicRecover 服务保活
 func PanicRecover() {
 	if err := recover(); err != nil {
-		logrus.Error("engine run panic: ", err)
+		log.Error("engine run panic: ", err)
 		return
 	}
 }
