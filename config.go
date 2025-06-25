@@ -3,12 +3,13 @@ package quanx
 import (
 	"strings"
 
-	"github.com/go-xuan/quanx/extra/cachex"
-	"github.com/go-xuan/quanx/extra/gormx"
-	"github.com/go-xuan/quanx/extra/logx"
-	"github.com/go-xuan/quanx/extra/nacosx"
-	"github.com/go-xuan/quanx/extra/redisx"
-	"github.com/go-xuan/quanx/utils/stringx"
+	"github.com/go-xuan/utilx/stringx"
+
+	"github.com/go-xuan/quanx/cachex"
+	"github.com/go-xuan/quanx/gormx"
+	"github.com/go-xuan/quanx/logx"
+	"github.com/go-xuan/quanx/nacosx"
+	"github.com/go-xuan/quanx/redisx"
 )
 
 // GetServer 获取服务配置

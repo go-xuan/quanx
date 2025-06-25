@@ -2,8 +2,8 @@ package quanx
 
 import (
 	"github.com/gin-gonic/gin"
-
-	"github.com/go-xuan/quanx/extra/configx"
+	
+	"github.com/go-xuan/quanx/configx"
 )
 
 type Option uint
