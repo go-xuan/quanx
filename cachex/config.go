@@ -1,11 +1,8 @@
 package cachex
 
 import (
-	"fmt"
-	"strings"
 	"time"
 
-	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/marshalx"
 	"github.com/go-xuan/utilx/stringx"
@@ -29,8 +26,20 @@ type Config struct {
 	Marshal string `json:"marshal" yaml:"marshal" default:"json"`  // 序列化方案
 }
 
-func (c *Config) Info() string {
-	return fmt.Sprintf("type=%s source=%s prefix=%s marshal=%s", c.Type, c.Source, c.Prefix, c.Marshal)
+func (c *Config) NeedRead() bool {
+	if c.Type == "" && c.Source == "" {
+		return true
+	}
+	return false
+}
+
+func (c *Config) LogEntry() *log.Entry {
+	return log.WithFields(log.Fields{
+		"type":    c.Type,
+		"source":  c.Source,
+		"prefix":  c.Prefix,
+		"marshal": c.Marshal,
+	})
 }
 
 func (c *Config) Reader(from configx.From) configx.Reader {
@@ -49,14 +58,11 @@ func (c *Config) Reader(from configx.From) configx.Reader {
 }
 
 func (c *Config) Execute() error {
-	if err := anyx.SetDefaultValue(c); err != nil {
-		return errorx.Wrap(err, "set default value error")
-	}
 	if client, err := c.NewClient(); err != nil {
-		log.Error("cache init failed: ", c.Info())
+		c.LogEntry().WithError(err).Error("cache init failed")
 		return errorx.Wrap(err, "new cache error")
 	} else {
-		log.Info("cache init success: ", c.Info())
+		c.LogEntry().Info("cache init success")
 		AddClient(c, client)
 	}
 	return nil
@@ -105,19 +111,8 @@ func (c *Config) GetKeys(keys []string) []string {
 // MultiConfig 多缓存配置
 type MultiConfig []*Config
 
-func (list MultiConfig) Info() string {
-	sb := &strings.Builder{}
-	sb.WriteString("[")
-	for i, config := range list {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString("{")
-		sb.WriteString(config.Info())
-		sb.WriteString("}")
-	}
-	sb.WriteString("]")
-	return sb.String()
+func (list MultiConfig) NeedRead() bool {
+	return len(list) == 0
 }
 
 func (MultiConfig) Reader(from configx.From) configx.Reader {

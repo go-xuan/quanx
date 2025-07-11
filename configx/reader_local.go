@@ -10,9 +10,9 @@ import (
 
 // FileReader 本地文件读取器
 type FileReader struct {
-	Dir  string `json:"dir" yaml:"dir"`   // 配置文件路径
-	Name string `json:"name" yaml:"name"` // 配置文件名
-	Data []byte `json:"data" yaml:"data"` // 配置文件内容
+	Dir  string // 配置文件路径
+	Name string // 配置文件名
+	Data []byte // 配置文件内容
 }
 
 func (r *FileReader) Anchor(anchor string) {

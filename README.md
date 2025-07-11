@@ -294,8 +294,11 @@ type demo struct {
 	Key3 []string `json:"key3" yaml:"key3"`
 }
 
-func (d *demo) Info() string {
-	return "demo配置"
+func (t *test) Unread() bool {
+    if t.Key1 == 0 && t.Key2 == "" {
+        return true
+    }
+    return false
 }
 
 func (d *demo) Reader(from configx.From) confx.Reader {

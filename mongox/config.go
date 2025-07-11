@@ -2,19 +2,17 @@ package mongox
 
 import (
 	"context"
-	"fmt"
-	configx2 "github.com/go-xuan/quanx/configx"
-	"github.com/go-xuan/quanx/nacosx"
-	"strings"
 	"time"
 
-	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+
+	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/nacosx"
 )
 
 type Config struct {
@@ -33,18 +31,30 @@ type Config struct {
 	Debug           bool   `json:"debug" yaml:"debug"`                                       // debug模式（日志打印）
 }
 
-func (c *Config) Info() string {
-	return fmt.Sprintf("uri=%s database=%s", c.URI, c.Database)
+func (c *Config) LogEntry() *log.Entry {
+	return log.WithFields(log.Fields{
+		"source":   c.Source,
+		"uri":      c.URI,
+		"database": c.Database,
+		"debug":    c.Debug,
+	})
 }
 
-func (*Config) Reader(from configx2.From) configx2.Reader {
+func (c *Config) NeedRead() bool {
+	if c.Source == "" && c.URI == "" {
+		return true
+	}
+	return false
+}
+
+func (*Config) Reader(from configx.From) configx.Reader {
 	switch from {
-	case configx2.FromNacos:
+	case configx.FromNacos:
 		return &nacosx.Reader{
 			DataId: "mongo.yaml",
 		}
-	case configx2.FromFile:
-		return &configx2.FileReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "mongo.yaml",
 		}
 	default:
@@ -54,14 +64,11 @@ func (*Config) Reader(from configx2.From) configx2.Reader {
 
 func (c *Config) Execute() error {
 	if c.Enable {
-		if err := anyx.SetDefaultValue(c); err != nil {
-			return errorx.Wrap(err, "set default value error")
-		}
 		if client, err := c.NewClient(); err != nil {
-			log.Error("mongo connect failed: ", c.Info())
+			c.LogEntry().WithError(err).Error("mongo init failed")
 			return errorx.Wrap(err, "mongo init client error")
 		} else {
-			log.Info("mongo connect success: ", c.Info())
+			c.LogEntry().Info("mongo init success")
 			AddClient(c, client)
 		}
 	}
@@ -128,29 +135,18 @@ func (c *Config) NewClient() (*mongo.Client, error) {
 
 type MultiConfig []*Config
 
-func (list MultiConfig) Info() string {
-	sb := &strings.Builder{}
-	sb.WriteString("[")
-	for i, config := range list {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString("{")
-		sb.WriteString(config.Info())
-		sb.WriteString("}")
-	}
-	sb.WriteString("]")
-	return sb.String()
+func (list MultiConfig) NeedRead() bool {
+	return len(list) == 0
 }
 
-func (MultiConfig) Reader(from configx2.From) configx2.Reader {
+func (MultiConfig) Reader(from configx.From) configx.Reader {
 	switch from {
-	case configx2.FromNacos:
+	case configx.FromNacos:
 		return &nacosx.Reader{
 			DataId: "mongo.yaml",
 		}
-	case configx2.FromFile:
-		return &configx2.FileReader{
+	case configx.FromFile:
+		return &configx.FileReader{
 			Name: "mongo.yaml",
 		}
 	default:

@@ -2,7 +2,6 @@ package redisx
 
 import (
 	"github.com/redis/go-redis/v9"
-	log "github.com/sirupsen/logrus"
 )
 
 type Client struct {
@@ -23,10 +22,10 @@ func (c *Client) Copy(target string, database int) (*Client, error) {
 	config.Source = target
 	config.Database = database
 	if client, err := config.NewRedisClient(); err != nil {
-		log.Error("redis connect failed: ", config.Info())
+		config.LogEntry().WithError(err).Error("redis connect failed")
 		return nil, err
 	} else {
-		log.Info("redis connect success: ", config.Info())
+		config.LogEntry().Info("redis connect success")
 		return &Client{config: config, client: client}, nil
 	}
 }

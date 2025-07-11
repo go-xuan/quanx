@@ -1,7 +1,6 @@
 package gormx
 
 import (
-	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -23,10 +22,10 @@ func (c *Client) Copy(target, database string) (*Client, error) {
 	config.Source = target
 	config.Database = database
 	if db, err := config.NewGormDB(); err != nil {
-		log.Error("database connect failed: ", config.Info())
+		config.LogEntry().Error("database connect failed")
 		return nil, err
 	} else {
-		log.Info("database connect success: ", config.Info())
+		config.LogEntry().Info("database connect success")
 		return &Client{config: config, db: db}, nil
 	}
 }

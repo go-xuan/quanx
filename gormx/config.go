@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
@@ -34,27 +33,22 @@ type Config struct {
 	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
 }
 
-func (c *Config) Copy() *Config {
-	return &Config{
-		Source:          c.Source,
-		Enable:          c.Enable,
-		Type:            c.Type,
-		Host:            c.Host,
-		Port:            c.Port,
-		Username:        c.Username,
-		Password:        c.Password,
-		Database:        c.Database,
-		Schema:          c.Schema,
-		Debug:           c.Debug,
-		MaxIdleConns:    c.MaxIdleConns,
-		MaxOpenConns:    c.MaxOpenConns,
-		ConnMaxLifetime: c.ConnMaxLifetime,
+func (c *Config) NeedRead() bool {
+	if c.Source == "" && c.Host == "" {
+		return true
 	}
+	return false
 }
 
-func (c *Config) Info() string {
-	return fmt.Sprintf("source=%s type=%s host=%s port=%d database=%s debug=%v",
-		c.Source, c.Type, c.Host, c.Port, c.Database, c.Debug)
+func (c *Config) LogEntry() *log.Entry {
+	return log.WithFields(log.Fields{
+		"source":   c.Source,
+		"type":     c.Type,
+		"host":     c.Host,
+		"port":     c.Port,
+		"database": c.Database,
+		"debug":    c.Debug,
+	})
 }
 
 func (*Config) Reader(from configx.From) configx.Reader {
@@ -74,15 +68,12 @@ func (*Config) Reader(from configx.From) configx.Reader {
 
 func (c *Config) Execute() error {
 	if c.Enable {
-		if err := anyx.SetDefaultValue(c); err != nil {
-			return errorx.Wrap(err, "set default value error")
-		}
 		if db, err := c.NewGormDB(); err != nil {
-			log.Error("database connect failed: ", c.Info())
+			c.LogEntry().WithError(err).Error("database init failed")
 			return errorx.Wrap(err, "new gorm db error")
 		} else {
 			AddClient(c, db)
-			log.Info("database connect success: ", c.Info())
+			c.LogEntry().Info("database init success")
 		}
 	}
 	return nil
@@ -105,6 +96,24 @@ func (c *Config) NewGormDB() (*gorm.DB, error) {
 			db = db.Debug() // 是否打印SQL
 		}
 		return db, nil
+	}
+}
+
+func (c *Config) Copy() *Config {
+	return &Config{
+		Source:          c.Source,
+		Enable:          c.Enable,
+		Type:            c.Type,
+		Host:            c.Host,
+		Port:            c.Port,
+		Username:        c.Username,
+		Password:        c.Password,
+		Database:        c.Database,
+		Schema:          c.Schema,
+		Debug:           c.Debug,
+		MaxIdleConns:    c.MaxIdleConns,
+		MaxOpenConns:    c.MaxOpenConns,
+		ConnMaxLifetime: c.ConnMaxLifetime,
 	}
 }
 
@@ -153,19 +162,8 @@ func (c *Config) GetGormDB() (*gorm.DB, error) {
 // MultiConfig 数据库多数据源配置
 type MultiConfig []*Config
 
-func (list MultiConfig) Info() string {
-	sb := &strings.Builder{}
-	sb.WriteString("[")
-	for i, config := range list {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString("{")
-		sb.WriteString(config.Info())
-		sb.WriteString("}")
-	}
-	sb.WriteString("]")
-	return sb.String()
+func (list MultiConfig) NeedRead() bool {
+	return len(list) == 0
 }
 
 func (MultiConfig) Reader(from configx.From) configx.Reader {

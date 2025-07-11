@@ -2,8 +2,9 @@ package quanx
 
 import (
 	"github.com/gin-gonic/gin"
-	
+
 	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/serverx"
 )
 
 type Option uint
@@ -20,7 +21,7 @@ type EngineOptionFunc = func(e *Engine)
 func SetPort(port int) EngineOptionFunc {
 	return func(e *Engine) {
 		if server := e.config.Server; server == nil {
-			e.config.Server = &Server{Port: port}
+			e.config.Server = &serverx.Config{Port: port}
 		} else {
 			server.Port = port
 		}

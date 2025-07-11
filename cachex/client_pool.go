@@ -8,22 +8,22 @@ var pool *typex.Enum[string, Client]
 
 // Initialized 是否初始化
 func Initialized() bool {
-	return pool != nil && pool.Len() > 0
+	return pool != nil
 }
 
 func this() *typex.Enum[string, Client] {
-	if pool == nil {
+	if !Initialized() {
 		panic("cache cache not initialized, please check the relevant config")
 	}
 	return pool
 }
 
 func AddClient(config *Config, client Client) {
-	if pool == nil {
+	if !Initialized() {
 		pool = typex.NewStringEnum[Client]()
-		pool.Add("default", client)
+		this().Add("default", client)
 	}
-	pool.Add(config.Source, client)
+	this().Add(config.Source, client)
 }
 
 // GetClient 获取客户端
