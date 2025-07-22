@@ -10,11 +10,11 @@ var pool *typex.Enum[string, *Client]
 
 // Initialized 是否初始化
 func Initialized() bool {
-	return pool != nil && pool.Len() > 0
+	return pool != nil
 }
 
 func this() *typex.Enum[string, *Client] {
-	if pool == nil {
+	if !Initialized() {
 		panic("gorm client not initialized, please check the relevant config")
 	}
 	return pool
@@ -25,11 +25,11 @@ func AddClient(config *Config, db *gorm.DB) {
 		return
 	}
 	client := &Client{config, db}
-	if pool == nil {
+	if !Initialized() {
 		pool = typex.NewStringEnum[*Client]()
-		pool.Add("default", client)
+		this().Add("default", client)
 	}
-	pool.Add(config.Source, client)
+	this().Add(config.Source, client)
 }
 
 // GetClient 获取客户端
@@ -58,10 +58,10 @@ func Sources() []string {
 }
 
 // Close 关闭数据库连接
-func Close(source ...string) error {
-	if db, err := GetInstance(source...).DB(); err != nil {
-		return errorx.Wrap(err, "get db failed")
-	} else if err = db.Close(); err != nil {
+func Close(db *gorm.DB) error {
+	if d, err := db.DB(); err != nil {
+		return errorx.Wrap(err, "get DB failed")
+	} else if err = d.Close(); err != nil {
 		return errorx.Wrap(err, "close db failed")
 	}
 	return nil

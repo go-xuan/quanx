@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-xuan/utilx/anyx"
-	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/osx"
 	log "github.com/sirupsen/logrus"
 
@@ -23,8 +21,11 @@ func GetConfig() *Config {
 
 func init() {
 	log.SetOutput(NewConsoleWriter()) // 设置默认日志输出
-	_config = &Config{}
-	if err := _config.Execute(); err != nil {
+	_config = new(Config)
+	var reader configx.Reader = &configx.TagReader{Tag: "default"}
+	if err := reader.Read(_config); err != nil {
+		panic(err)
+	} else if err = _config.Execute(); err != nil {
 		panic(err)
 	}
 }
@@ -66,8 +67,11 @@ type Config struct {
 	Caller     bool                `json:"caller" yaml:"caller" default:"false"`                           // caller开关
 }
 
-func (c *Config) Info() string {
-	return fmt.Sprintf("level=%s formatter=%s writer=%s", c.Level, c.Formatter, c.Writer)
+func (c *Config) NeedRead() bool {
+	if c.Name == "" && c.Level == "" && c.Formatter == "" {
+		return true
+	}
+	return false
 }
 
 func (*Config) Reader(from configx.From) configx.Reader {
@@ -86,9 +90,6 @@ func (*Config) Reader(from configx.From) configx.Reader {
 }
 
 func (c *Config) Execute() error {
-	if err := anyx.SetDefaultValue(c); err != nil {
-		return errorx.Wrap(err, "set default value error")
-	}
 	// 添加hook钩子
 	if len(c.Hook) > 0 {
 		for _, mapping := range c.Hook {

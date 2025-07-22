@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
@@ -16,6 +15,13 @@ import (
 
 	"github.com/go-xuan/quanx/configx"
 	"github.com/go-xuan/quanx/nacosx"
+)
+
+// 数据库类型
+const (
+	MYSQL    = "mysql"    // mysql
+	POSTGRES = "postgres" // postgres
+	PGSQL    = "pgsql"    // pgsql
 )
 
 type Config struct {
@@ -32,6 +38,72 @@ type Config struct {
 	MaxIdleConns    int    `json:"maxIdleConns" yaml:"maxIdleConns" default:"10"`       // 最大空闲连接
 	MaxOpenConns    int    `json:"maxOpenConns" yaml:"maxOpenConns" default:"10"`       // 最大打开连接
 	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
+}
+
+func (c *Config) NeedRead() bool {
+	if c.Source == "" && c.Host == "" {
+		return true
+	}
+	return false
+}
+
+func (c *Config) LogEntry() *log.Entry {
+	return log.WithFields(log.Fields{
+		"source":   c.Source,
+		"type":     c.Type,
+		"host":     c.Host,
+		"port":     c.Port,
+		"database": c.Database,
+		"debug":    c.Debug,
+	})
+}
+
+func (*Config) Reader(from configx.From) configx.Reader {
+	switch from {
+	case configx.FromNacos:
+		return &nacosx.Reader{
+			DataId: "database.yaml",
+		}
+	case configx.FromFile:
+		return &configx.FileReader{
+			Name: "database.yaml",
+		}
+	default:
+		return nil
+	}
+}
+
+func (c *Config) Execute() error {
+	if c.Enable {
+		if db, err := c.NewGormDB(); err != nil {
+			c.LogEntry().WithField("error", err.Error()).Error("database init failed")
+			return errorx.Wrap(err, "new gorm db error")
+		} else {
+			AddClient(c, db)
+			c.LogEntry().Info("database init success")
+		}
+	}
+	return nil
+}
+
+// NewGormDB 创建数据库连接
+func (c *Config) NewGormDB() (*gorm.DB, error) {
+	if db, err := c.gormOpen(); err != nil {
+		return nil, errorx.Wrap(err, "gorm open failed")
+	} else {
+		var sqlDB *sql.DB
+		if sqlDB, err = db.DB(); err != nil {
+			return nil, errorx.Wrap(err, "get sql db failed")
+		}
+		sqlDB.SetMaxIdleConns(c.MaxIdleConns)
+		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
+		sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
+
+		if c.Debug {
+			db = db.Debug() // 是否打印SQL
+		}
+		return db, nil
+	}
 }
 
 func (c *Config) Copy() *Config {
@@ -52,69 +124,6 @@ func (c *Config) Copy() *Config {
 	}
 }
 
-func (c *Config) Info() string {
-	return fmt.Sprintf("source=%s type=%s host=%s port=%d database=%s debug=%v",
-		c.Source, c.Type, c.Host, c.Port, c.Database, c.Debug)
-}
-
-func (*Config) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "database.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "database.yaml",
-		}
-	default:
-		return nil
-	}
-}
-
-func (c *Config) Execute() error {
-	if c.Enable {
-		if err := anyx.SetDefaultValue(c); err != nil {
-			return errorx.Wrap(err, "set default value error")
-		}
-		if db, err := c.NewGormDB(); err != nil {
-			log.Error("database connect failed: ", c.Info())
-			return errorx.Wrap(err, "new gorm db error")
-		} else {
-			AddClient(c, db)
-			log.Info("database connect success: ", c.Info())
-		}
-	}
-	return nil
-}
-
-// NewGormDB 创建数据库连接
-func (c *Config) NewGormDB() (*gorm.DB, error) {
-	if db, err := c.GetGormDB(); err != nil {
-		return nil, errorx.Wrap(err, "new gorm db failed")
-	} else {
-		var sqlDB *sql.DB
-		if sqlDB, err = db.DB(); err != nil {
-			return nil, errorx.Wrap(err, "get sql db failed")
-		}
-		sqlDB.SetMaxIdleConns(c.MaxIdleConns)
-		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
-		sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
-
-		if c.Debug {
-			db = db.Debug() // 是否打印SQL
-		}
-		return db, nil
-	}
-}
-
-// 数据库类型
-const (
-	MYSQL    = "mysql"
-	POSTGRES = "postgres"
-	PGSQL    = "pgsql"
-)
-
 // CommentTableSql 生成表备注
 func (c *Config) CommentTableSql(table, comment string) string {
 	switch strings.ToLower(c.Type) {
@@ -126,8 +135,8 @@ func (c *Config) CommentTableSql(table, comment string) string {
 	return ""
 }
 
-// GetGormDB 根据dsn生成gormDB
-func (c *Config) GetGormDB() (*gorm.DB, error) {
+//  生成gormDB
+func (c *Config) gormOpen() (*gorm.DB, error) {
 	var dial gorm.Dialector
 	switch strings.ToLower(c.Type) {
 	case MYSQL:
@@ -150,25 +159,14 @@ func (c *Config) GetGormDB() (*gorm.DB, error) {
 	}
 }
 
-// MultiConfig 数据库多数据源配置
-type MultiConfig []*Config
+// Configs 数据库多数据源配置
+type Configs []*Config
 
-func (list MultiConfig) Info() string {
-	sb := &strings.Builder{}
-	sb.WriteString("[")
-	for i, config := range list {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString("{")
-		sb.WriteString(config.Info())
-		sb.WriteString("}")
-	}
-	sb.WriteString("]")
-	return sb.String()
+func (s Configs) NeedRead() bool {
+	return len(s) == 0
 }
 
-func (MultiConfig) Reader(from configx.From) configx.Reader {
+func (s Configs) Reader(from configx.From) configx.Reader {
 	switch from {
 	case configx.FromNacos:
 		return &nacosx.Reader{
@@ -183,11 +181,11 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (list MultiConfig) Execute() error {
-	if len(list) == 0 {
+func (s Configs) Execute() error {
+	if len(s) == 0 {
 		return errorx.New("database not initialized! database.yaml is invalid")
 	}
-	for _, config := range list {
+	for _, config := range s {
 		if err := config.Execute(); err != nil {
 			return errorx.Wrap(err, "gorm config execute error")
 		}

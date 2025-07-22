@@ -1,7 +1,6 @@
 package redisx
 
 import (
-	"context"
 	"errors"
 
 	"github.com/go-xuan/typex"
@@ -13,11 +12,11 @@ var pool *typex.Enum[string, *Client]
 
 // Initialized 是否初始化
 func Initialized() bool {
-	return pool != nil && pool.Len() > 0
+	return pool != nil
 }
 
 func this() *typex.Enum[string, *Client] {
-	if pool == nil {
+	if !Initialized() {
 		panic("redis client not initialized, please check the relevant config")
 	}
 	return pool
@@ -28,11 +27,11 @@ func AddClient(config *Config, cli redis.UniversalClient) {
 		return
 	}
 	client := &Client{config, cli}
-	if pool == nil {
+	if !Initialized() {
 		pool = typex.NewStringEnum[*Client]()
-		pool.Add("default", client)
+		this().Add("default", client)
 	}
-	pool.Add(config.Source, client)
+	this().Add(config.Source, client)
 }
 
 // GetClient 获取客户端
@@ -53,15 +52,6 @@ func GetConfig(source ...string) *Config {
 // GetInstance 获取数据库连接
 func GetInstance(source ...string) redis.UniversalClient {
 	return GetClient(source...).Instance()
-}
-
-// Ping 连接检查
-func Ping(ctx context.Context, source ...string) (bool, error) {
-	if result, err := GetInstance(source...).Ping(ctx).Result(); err != nil || result != "PONG" {
-		return false, err
-	} else {
-		return true, nil
-	}
 }
 
 // CopyDatabase 复制redis数据库

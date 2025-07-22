@@ -28,8 +28,20 @@ type Config struct {
 	Expire       int64  `yaml:"expire" json:"expire"`             // 下载链接有效时长(分钟)
 }
 
-func (m *Config) Info() string {
-	return fmt.Sprintf("host=%s port=%d accessId=%s bucketName=%s", m.Host, m.Port, m.AccessId, m.BucketName)
+func (c *Config) NeedRead() bool {
+	if c.Host == "" {
+		return true
+	}
+	return false
+}
+
+func (c *Config) LogEntry() *log.Entry {
+	return log.WithFields(log.Fields{
+		"host":       c.Host,
+		"port":       c.Port,
+		"accessId":   c.AccessId,
+		"bucketName": c.BucketName,
+	})
 }
 
 func (*Config) Reader(from configx.From) configx.Reader {
@@ -47,26 +59,26 @@ func (*Config) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (m *Config) Execute() error {
-	if client, err := m.NewClient(); err != nil {
-		log.Error("minio connect failed: ", m.Info(), err)
+func (c *Config) Execute() error {
+	if client, err := c.NewClient(); err != nil {
+		c.LogEntry().WithField("error", err.Error()).Error("minio init failed")
 		return errorx.Wrap(err, "new minio client failed")
 	} else {
-		_client = &Client{config: m, client: client}
-		log.Info("minio connect success: ", m.Info())
+		_client = &Client{config: c, client: client}
+		c.LogEntry().Info("minio init success")
 		return nil
 	}
 }
 
-func (m *Config) Endpoint() string {
-	return fmt.Sprintf("%s:%d", m.Host, m.Port)
+func (c *Config) Endpoint() string {
+	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }
 
 // NewClient 初始化minio客户端
-func (m *Config) NewClient() (*minio.Client, error) {
-	if client, err := minio.New(m.Endpoint(), &minio.Options{
-		Creds:  credentials.NewStaticV4(m.AccessId, m.AccessSecret, m.SessionToken),
-		Secure: m.Secure,
+func (c *Config) NewClient() (*minio.Client, error) {
+	if client, err := minio.New(c.Endpoint(), &minio.Options{
+		Creds:  credentials.NewStaticV4(c.AccessId, c.AccessSecret, c.SessionToken),
+		Secure: c.Secure,
 		Region: Region,
 	}); err != nil {
 		return nil, errorx.Wrap(err, "new minio client failed")
@@ -75,11 +87,11 @@ func (m *Config) NewClient() (*minio.Client, error) {
 	}
 }
 
-func (m *Config) MinioPath(fileName string) string {
+func (c *Config) MinioPath(fileName string) string {
 	fileSuffix := filepath.Ext(filepath.Base(fileName))
 	minioPath := filepath.Join(time.Now().Format(timex.TimestampFmt), uuid.NewString()+fileSuffix)
-	if m.PrefixPath != "" {
-		minioPath = filepath.Join(m.PrefixPath, minioPath)
+	if c.PrefixPath != "" {
+		minioPath = filepath.Join(c.PrefixPath, minioPath)
 	}
 	return minioPath
 }

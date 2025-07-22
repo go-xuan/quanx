@@ -10,8 +10,11 @@ type test struct {
 	Name string `json:"name" default:"test"`
 }
 
-func (t *test) Info() string {
-	return "test show id"
+func (t *test) NeedRead() bool {
+	if t.Id == "" && t.Name == "" {
+		return true
+	}
+	return false
 }
 
 func (t *test) Reader(from From) Reader {

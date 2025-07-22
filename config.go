@@ -1,52 +1,20 @@
 package quanx
 
 import (
-	"strings"
-
-	"github.com/go-xuan/utilx/stringx"
-
 	"github.com/go-xuan/quanx/cachex"
 	"github.com/go-xuan/quanx/gormx"
 	"github.com/go-xuan/quanx/logx"
 	"github.com/go-xuan/quanx/nacosx"
 	"github.com/go-xuan/quanx/redisx"
+	"github.com/go-xuan/quanx/serverx"
 )
-
-// GetServer 获取服务配置
-func GetServer() *Server {
-	return GetEngine().config.Server
-}
 
 // Config 服务配置
 type Config struct {
-	Server   *Server             `yaml:"server"`   // 服务配置
-	Log      *logx.Config        `yaml:"log"`      // 日志配置
-	Nacos    *nacosx.Config      `yaml:"nacos"`    // nacos访问配置
-	Database *gormx.MultiConfig  `yaml:"database"` // 数据源配置
-	Redis    *redisx.MultiConfig `yaml:"redis"`    // redis配置
-	Cache    *cachex.MultiConfig `yaml:"cache"`    // 缓存配置
-}
-
-// Server 服务配置
-type Server struct {
-	Name   string `yaml:"name" default:"app"`       // 服务名
-	Host   string `yaml:"host" default:"127.0.0.1"` // 服务host
-	Port   int    `yaml:"port" default:"8888"`      // 服务端口
-	Prefix string `yaml:"prefix"`                   // api prefix（接口根路由）
-	Debug  bool   `yaml:"debug" default:"false"`    // debug模式
-}
-
-// ApiPrefix API路由前缀
-func (s *Server) ApiPrefix() string {
-	prefix := stringx.IfZero(s.Prefix, s.Name)
-	return stringx.AddPrefix(strings.ToLower(prefix), "/")
-}
-
-// Instance 服务实例
-func (s *Server) Instance() nacosx.ServerInstance {
-	return nacosx.ServerInstance{
-		Name: s.Name,
-		Host: s.Host,
-		Port: s.Port,
-	}
+	Server   *serverx.Config `json:"server" yaml:"server"`     // 服务配置
+	Log      *logx.Config    `json:"log" yaml:"log"`           // 日志配置
+	Nacos    *nacosx.Config  `json:"nacos" yaml:"nacos"`       // nacos访问配置
+	Database *gormx.Configs  `json:"database" yaml:"database"` // 数据源配置
+	Redis    *redisx.Configs `json:"redis" yaml:"redis"`       // redis配置
+	Cache    *cachex.Configs `json:"cache" yaml:"cache"`       // 缓存配置
 }

@@ -1,7 +1,6 @@
 package nacosx
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -19,9 +18,9 @@ import (
 )
 
 const (
-	OnlyConfig      = iota // 仅用配置中心
-	OnlyNaming             // 仅用服务发现
-	ConfigAndNaming        // 配置中心和服务发现都使用
+	OnlyConfig      = iota // 仅启用配置中心
+	OnlyNaming             // 仅启用服务发现
+	ConfigAndNaming        // 启用配置中心和服务发现
 )
 
 // Config nacos连接配置
@@ -29,13 +28,25 @@ type Config struct {
 	Address   string `yaml:"address" json:"address" default:"localhost:8848"` // nacos服务地址,多个以英文逗号分割
 	Username  string `yaml:"username" json:"username"`                        // 用户名
 	Password  string `yaml:"password" json:"password"`                        // 密码
-	NameSpace string `yaml:"nameSpace" json:"nameSpace" default:"public"`     // 命名空间
+	Namespace string `yaml:"namespace" json:"namespace" default:"public"`     // 命名空间
 	Mode      int    `yaml:"mode" json:"mode" default:"2"`                    // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 }
 
-func (c *Config) Info() string {
-	return fmt.Sprintf("address=%s username=%s password=%s nameSpace=%s mode=%d",
-		c.AddressUrl(), c.Username, c.Password, c.NameSpace, c.Mode)
+func (c *Config) LogEntry() *log.Entry {
+	return log.WithFields(log.Fields{
+		"address":   c.AddressUrl(),
+		"username":  c.Username,
+		"password":  c.Password,
+		"namespace": c.Namespace,
+		"mode":      c.Mode,
+	})
+}
+
+func (c *Config) NeedRead() bool {
+	if c.Address == "" && c.Username == "" {
+		return true
+	}
+	return false
 }
 
 func (*Config) Reader(from configx.From) configx.Reader {
@@ -56,19 +67,19 @@ func (c *Config) Execute() error {
 		_client = &Client{config: c}
 		var param = c.ClientParam()
 		switch c.Mode {
-		case OnlyConfig:
+		case OnlyConfig: // 仅初始化配置中心
 			if configClient, err := c.ConfigClient(param); err != nil {
 				return errorx.Wrap(err, "init nacos config client error")
 			} else {
 				_client.configClient = configClient
 			}
-		case OnlyNaming:
+		case OnlyNaming: // 仅初始化服务发现
 			if namingClient, err := c.NamingClient(param); err != nil {
 				return errorx.Wrap(err, "init nacos naming client error")
 			} else {
 				_client.namingClient = namingClient
 			}
-		case ConfigAndNaming:
+		case ConfigAndNaming: // 初始化配置中心和服务发现
 			if configClient, err := c.ConfigClient(param); err != nil {
 				return errorx.Wrap(err, "init nacos config client error")
 			} else {
@@ -81,7 +92,7 @@ func (c *Config) Execute() error {
 			}
 		}
 	}
-	log.Info("nacos connect success: ", c.Info())
+	c.LogEntry().Info("nacos init success")
 	return nil
 }
 
@@ -103,7 +114,7 @@ func (c *Config) ClientConfig() *constant.ClientConfig {
 		TimeoutMs:           10 * 1000,
 		BeatInterval:        3 * 1000,
 		NotLoadCacheAtStart: true,
-		NamespaceId:         c.NameSpace,
+		NamespaceId:         c.Namespace,
 		LogDir:              filepath.Join(constx.DefaultResourceDir, ".nacos/log"),
 		CacheDir:            filepath.Join(constx.DefaultResourceDir, ".nacos/cache"),
 	}
@@ -138,7 +149,7 @@ func (c *Config) ClientParam() vo.NacosClientParam {
 // ConfigClient 初始化Nacos配置中心客户端
 func (c *Config) ConfigClient(param vo.NacosClientParam) (config_client.IConfigClient, error) {
 	if client, err := clients.NewConfigClient(param); err != nil {
-		log.WithField("format", c.Info()).Error("nacos config client init failed: ", err)
+		c.LogEntry().WithField("error", err.Error()).Error("nacos config client init failed")
 		return nil, errorx.Wrap(err, "nacos config client init failed")
 	} else {
 		return client, nil
@@ -148,7 +159,7 @@ func (c *Config) ConfigClient(param vo.NacosClientParam) (config_client.IConfigC
 // NamingClient 初始化Nacos服务发现客户端
 func (c *Config) NamingClient(param vo.NacosClientParam) (naming_client.INamingClient, error) {
 	if client, err := clients.NewNamingClient(param); err != nil {
-		log.WithField("format", c.Info()).Error("nacos naming client init failed: ", err)
+		c.LogEntry().WithField("error", err.Error()).Error("nacos naming client init failed")
 		return nil, errorx.Wrap(err, "nacos naming client init failed")
 	} else {
 		return client, nil
