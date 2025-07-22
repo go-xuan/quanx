@@ -93,7 +93,8 @@ type Engine struct {
 func (e *Engine) RUN() {
 	defer PanicRecover()
 	if err := e.queue.Execute(); err != nil {
-		panic(err)
+		log.WithField("error", err.Error()).Error("engine run error")
+
 	}
 }
 
@@ -248,14 +249,14 @@ func (e *Engine) initLogConfigurator() error {
 // 初始化数据库
 func (e *Engine) initDatabaseConfigurator() error {
 	// 读取数据库配置并初始化
-	database := anyx.IfZero(e.config.Database, &gormx.MultiConfig{})
+	database := anyx.IfZero(e.config.Database, &gormx.Configs{})
 	if err := e.ExecuteConfigurator(database); err != nil {
 		e.config.Database = database
 	}
 	if !gormx.Initialized() {
 		var one = &gormx.Config{}
 		if err := e.ExecuteConfigurator(one); err == nil {
-			e.config.Database = &gormx.MultiConfig{one}
+			e.config.Database = &gormx.Configs{one}
 		}
 	}
 
@@ -276,27 +277,27 @@ func (e *Engine) initDatabaseConfigurator() error {
 // 初始化缓存
 func (e *Engine) initRedisCacheConfigurator() error {
 	// 读取redis配置并初始化
-	redis := anyx.IfZero(e.config.Redis, &redisx.MultiConfig{})
+	redis := anyx.IfZero(e.config.Redis, &redisx.Configs{})
 	if err := e.ExecuteConfigurator(redis); err == nil {
 		e.config.Redis = redis
 	}
 	if !redisx.Initialized() {
 		var one = &redisx.Config{}
 		if err := e.ExecuteConfigurator(one); err == nil {
-			e.config.Redis = &redisx.MultiConfig{one}
+			e.config.Redis = &redisx.Configs{one}
 		}
 	}
 
 	// 初始化缓存
 	if redisx.Initialized() {
-		cache := anyx.IfZero(e.config.Cache, &cachex.MultiConfig{})
+		cache := anyx.IfZero(e.config.Cache, &cachex.Configs{})
 		if err := e.ExecuteConfigurator(cache); err == nil {
 			e.config.Cache = cache
 		}
 		if !cachex.Initialized() {
 			var one = &cachex.Config{}
 			if err := e.ExecuteConfigurator(one); err == nil {
-				e.config.Cache = &cachex.MultiConfig{one}
+				e.config.Cache = &cachex.Configs{one}
 			}
 		}
 	}
@@ -332,7 +333,7 @@ func (e *Engine) AddConfigurator(configurators ...configx.Configurator) {
 
 func (e *Engine) ReadConfigurator(configurator configx.Configurator) (string, error) {
 	e.checkRunning()
-	// 获取可用的reader
+	// 获取可用的reader，优先级：nacos > 本地文件 > 环境变量 > tag
 	if reader := func() configx.Reader {
 		if reader := configurator.Reader(configx.FromNacos); reader != nil {
 			reader.Anchor(e.config.Server.NacosGroup())
@@ -379,7 +380,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 	}
 	// 执行配置器
 	if err := configurator.Execute(); err != nil {
-		logger.Error("configurator execute error")
+		logger.WithField("error", err.Error()).Error("configurator execute error")
 		return errorx.Wrap(err, "configurator execute error")
 	}
 	if e.switches[enableDebug] {
@@ -392,7 +393,7 @@ func (e *Engine) ExecuteConfigurator(configurator configx.Configurator, must ...
 // ReadLocalConfig 读取本地配置项（立即执行）
 func (e *Engine) ReadLocalConfig(config any, path string) {
 	if err := marshalx.Apply(path).Read(path, config); err != nil {
-		log.WithField("path", path).WithError(err).Error("read local config error")
+		log.WithField("path", path).WithField("error", err.Error()).Error("read local config error")
 		panic(errorx.Wrap(err, "read local config error"))
 	}
 }

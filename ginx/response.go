@@ -68,13 +68,13 @@ func Error(ctx *gin.Context, data any) {
 // ParamError 请求参数错误
 func ParamError(ctx *gin.Context, err error) {
 	ctx.JSON(http.StatusBadRequest, NewResponseData(ParamErrorCode, err.Error()))
-	Logger(ctx).WithField("code", http.StatusBadRequest).WithError(err).Error("request parameter error")
+	Logger(ctx).WithField("code", http.StatusBadRequest).WithField("error", err.Error()).Error("request parameter error")
 }
 
 // Forbidden 鉴权失败
 func Forbidden(ctx *gin.Context, err error) {
 	ctx.JSON(http.StatusForbidden, NewResponseData(AuthFailedCode, err.Error()))
-	Logger(ctx).WithField("code", http.StatusForbidden).WithError(err).Error("request auth validate error")
+	Logger(ctx).WithField("code", http.StatusForbidden).WithField("error", err.Error()).Error("request auth validate error")
 }
 
 // Custom 自定义响应体

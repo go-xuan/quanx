@@ -22,7 +22,7 @@ func (c *Client) Copy(target string, database int) (*Client, error) {
 	config.Source = target
 	config.Database = database
 	if client, err := config.NewRedisClient(); err != nil {
-		config.LogEntry().WithError(err).Error("redis connect failed")
+		config.LogEntry().WithField("error", err.Error()).Error("redis connect failed")
 		return nil, err
 	} else {
 		config.LogEntry().Info("redis connect success")

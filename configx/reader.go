@@ -1,5 +1,9 @@
 package configx
 
+import (
+	"errors"
+)
+
 type From string
 
 const (
@@ -8,6 +12,8 @@ const (
 	FromEnv   From = "env"
 	FromTag   From = "tag"
 )
+
+var ErrorNotFound = errors.New("config not found")
 
 // Reader 配置读取器
 type Reader interface {

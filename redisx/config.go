@@ -86,7 +86,7 @@ func (*Config) Reader(from configx.From) configx.Reader {
 func (c *Config) Execute() error {
 	if c.Enable {
 		if client, err := c.NewRedisClient(); err != nil {
-			c.LogEntry().WithError(err).Error("redis init failed")
+			c.LogEntry().WithField("error", err.Error()).Error("redis init failed")
 			return errorx.Wrap(err, "redis init error")
 		} else {
 			AddClient(c, client)
@@ -130,20 +130,20 @@ func (c *Config) NewRedisClient() (redis.UniversalClient, error) {
 		return nil, errors.New("redis mode is invalid")
 	}
 	if result, err := client.Ping(context.TODO()).Result(); err != nil || result != "PONG" {
-		c.LogEntry().WithError(err).Error("client ping failed")
+		c.LogEntry().WithField("error", err.Error()).Error("client ping failed")
 		return client, errorx.Wrap(err, "client ping error")
 	}
 	return client, nil
 }
 
-// MultiConfig redis多连接配置
-type MultiConfig []*Config
+// Configs redis多连接配置
+type Configs []*Config
 
-func (list MultiConfig) NeedRead() bool {
-	return len(list) == 0
+func (s Configs) NeedRead() bool {
+	return len(s) == 0
 }
 
-func (MultiConfig) Reader(from configx.From) configx.Reader {
+func (s Configs) Reader(from configx.From) configx.Reader {
 	switch from {
 	case configx.FromNacos:
 		return &nacosx.Reader{
@@ -158,11 +158,11 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (list MultiConfig) Execute() error {
-	if len(list) == 0 {
+func (s Configs) Execute() error {
+	if len(s) == 0 {
 		return errorx.New("redis not initialized, redis.yaml is invalid")
 	}
-	for _, config := range list {
+	for _, config := range s {
 		if err := config.Execute(); err != nil {
 			return errorx.Wrap(err, "redis config execute error")
 		}

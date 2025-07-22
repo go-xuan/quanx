@@ -54,7 +54,7 @@ func (c *Config) Reader(from configx.From) configx.Reader {
 func (c *Config) Execute() error {
 	if c.Enable {
 		if client, err := c.NewClient(); err != nil {
-			c.LogEntry().WithError(err).Error("elastic-search init failed")
+			c.LogEntry().WithField("error", err.Error()).Error("elastic-search init failed")
 			return errorx.Wrap(err, "new elasticx client error")
 		} else {
 			c.LogEntry().Info("elastic-search init success")
@@ -83,13 +83,13 @@ func (c *Config) NewClient() (*elastic.Client, error) {
 	return client, nil
 }
 
-type MultiConfig []*Config
+type Configs []*Config
 
-func (list MultiConfig) NeedRead() bool {
-	return len(list) == 0
+func (s Configs) NeedRead() bool {
+	return len(s) == 0
 }
 
-func (MultiConfig) Reader(from configx.From) configx.Reader {
+func (s Configs) Reader(from configx.From) configx.Reader {
 	switch from {
 	case configx.FromNacos:
 		return &nacosx.Reader{
@@ -104,11 +104,11 @@ func (MultiConfig) Reader(from configx.From) configx.Reader {
 	}
 }
 
-func (list MultiConfig) Execute() error {
-	if len(list) == 0 {
+func (s Configs) Execute() error {
+	if len(s) == 0 {
 		return errorx.New("elastic-search not initialized, elastic.yaml is invalid")
 	}
-	for _, config := range list {
+	for _, config := range s {
 		if err := config.Execute(); err != nil {
 			return errorx.Wrap(err, "elastic config execute error")
 		}

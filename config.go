@@ -11,10 +11,10 @@ import (
 
 // Config 服务配置
 type Config struct {
-	Server   *serverx.Config     `json:"server" yaml:"server"`     // 服务配置
-	Log      *logx.Config        `json:"log" yaml:"log"`           // 日志配置
-	Nacos    *nacosx.Config      `json:"nacos" yaml:"nacos"`       // nacos访问配置
-	Database *gormx.MultiConfig  `json:"database" yaml:"database"` // 数据源配置
-	Redis    *redisx.MultiConfig `json:"redis" yaml:"redis"`       // redis配置
-	Cache    *cachex.MultiConfig `json:"cache" yaml:"cache"`       // 缓存配置
+	Server   *serverx.Config `json:"server" yaml:"server"`     // 服务配置
+	Log      *logx.Config    `json:"log" yaml:"log"`           // 日志配置
+	Nacos    *nacosx.Config  `json:"nacos" yaml:"nacos"`       // nacos访问配置
+	Database *gormx.Configs  `json:"database" yaml:"database"` // 数据源配置
+	Redis    *redisx.Configs `json:"redis" yaml:"redis"`       // redis配置
+	Cache    *cachex.Configs `json:"cache" yaml:"cache"`       // 缓存配置
 }

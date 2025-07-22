@@ -26,19 +26,6 @@ func Initialized() bool {
 	return _client != nil
 }
 
-// ReadConfig 读取nacos配置
-func ReadConfig(config any, param vo.ConfigParam, listen ...bool) error {
-	if _, err := this().ReadConfig(config, param); err != nil {
-		return errorx.Wrap(err, "read nacos config error")
-	}
-	if len(listen) > 0 && listen[0] {
-		if err := this().ListenConfig(config, param); err != nil {
-			return errorx.Wrap(err, "listen nacos config error")
-		}
-	}
-	return nil
-}
-
 // Client nacos客户端
 type Client struct {
 	config       *Config                     // nacos配置
@@ -64,21 +51,27 @@ func (c *Client) GetNamingClient() naming_client.INamingClient {
 	}
 }
 
-// GetConfig 获取nacos配置
-func (c *Client) GetConfig(param vo.ConfigParam) (string, error) {
-	if content, err := c.GetConfigClient().GetConfig(param); err != nil {
-		return "", errorx.Wrap(err, "get nacos config error")
-	} else {
-		return content, nil
-	}
-}
-
 // PublishConfig 发布nacos配置
 func (c *Client) PublishConfig(param vo.ConfigParam) error {
 	if _, err := c.GetConfigClient().PublishConfig(param); err != nil {
 		return errorx.Wrap(err, "publish nacos config error")
 	}
 	return nil
+}
+
+// GetConfig 获取nacos配置
+func (c *Client) GetConfig(param vo.ConfigParam, publishIfNotExist bool) (string, error) {
+	content, err := c.GetConfigClient().GetConfig(param)
+	if err != nil {
+		return "", errorx.Wrap(err, "get nacos config error")
+	}
+	// 如果配置不存在，则发布配置
+	if content == "" && publishIfNotExist {
+		if err = c.PublishConfig(param); err != nil {
+			return "", errorx.Wrap(err, "publish nacos config error")
+		}
+	}
+	return content, nil
 }
 
 // DeleteConfig 删除nacos配置
@@ -89,19 +82,24 @@ func (c *Client) DeleteConfig(param vo.ConfigParam) error {
 	return nil
 }
 
+// ReadConfig 读取nacos配置
 func (c *Client) ReadConfig(config any, param vo.ConfigParam) ([]byte, error) {
 	// 配置值必须是指针类型，否则不允许读取
 	if typeOf := reflect.TypeOf(config); typeOf.Kind() != reflect.Pointer {
 		return nil, errorx.New("the scanned object must be of pointer type")
 	}
 	// 读取配置文件内容
-	content, err := c.GetConfig(param)
+	content, err := c.GetConfig(param, false)
 	if err != nil {
 		return nil, errorx.Wrap(err, "read nacos config error")
 	}
+	if content == "" {
+		return nil, errorx.New("read nacos config empty")
+	}
+	// 解析配置文件内容
 	data := []byte(content)
-	if err = marshalx.Apply(param.DataId).Unmarshal(data, config); err != nil {
-		return nil, errorx.Wrap(err, "unmarshal nacos config data error")
+	if err = marshalx.Apply(string(param.Type)).Unmarshal(data, config); err != nil {
+		return nil, errorx.Wrap(err, "unmarshal nacos config error")
 	}
 	return data, nil
 }
@@ -110,13 +108,13 @@ func (c *Client) ReadConfig(config any, param vo.ConfigParam) ([]byte, error) {
 func (c *Client) ListenConfig(config any, param vo.ConfigParam) error {
 	// 配置监听响应方法
 	param.OnChange = func(namespace, group, dataId, data string) {
-		log.WithField("dataId", dataId).
+		logger := log.WithField("dataId", dataId).
 			WithField("group", group).
 			WithField("namespace", namespace).
-			WithField("data", data).
-			Info("the nacos config content has changed !!!")
+			WithField("data", data)
+		logger.Info("the nacos config data has changed !!!")
 		if err := marshalx.Apply(dataId).Unmarshal([]byte(data), config); err != nil {
-			log.Errorf("update config error, group: %s; dataId: %s; data: %s", group, dataId, data)
+			logger.WithField("error", err.Error()).Error("update config error")
 		}
 	}
 	if err := c.GetConfigClient().ListenConfig(param); err != nil {

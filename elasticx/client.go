@@ -24,11 +24,12 @@ func (c *Client) Config() *Config {
 
 // CreateIndex 创建索引
 func (c *Client) CreateIndex(ctx context.Context, index string) (bool, error) {
+	logger := log.WithField("index", index)
 	if resp, err := c.Instance().CreateIndex(index).Do(ctx); err != nil {
-		log.WithField("index", index).Error("create index failed: ", err)
+		logger.WithField("error", err.Error()).Error("create index failed")
 		return false, errorx.Wrap(err, "create index failed")
 	} else {
-		log.WithField("index", index).Error("create index success")
+		logger.Info("create index success")
 		return resp.Acknowledged, nil
 	}
 }
@@ -48,11 +49,12 @@ func (c *Client) AllIndices(ctx context.Context) ([]string, error) {
 
 // DeleteIndex 删除索引
 func (c *Client) DeleteIndex(ctx context.Context, index string) (bool, error) {
+	logger := log.WithField("index", index)
 	if resp, err := c.Instance().DeleteIndex(index).Do(ctx); err != nil {
-		log.WithField("index", index).Error("delete index failed: ", err)
+		logger.WithField("error", err.Error()).Error("delete index failed")
 		return false, errorx.Wrap(err, "delete index failed")
 	} else {
-		log.WithField("index", index).Error("delete index success")
+		logger.Info("delete index success")
 		return resp.Acknowledged, nil
 	}
 }
@@ -60,13 +62,14 @@ func (c *Client) DeleteIndex(ctx context.Context, index string) (bool, error) {
 // DeleteIndices 批量索引
 func (c *Client) DeleteIndices(ctx context.Context, indices []string) (bool, error) {
 	var ok bool
+	logger := log.WithField("index", indices)
 	if err := taskx.ExecWithBatches(len(indices), 100, func(start int, end int) error {
 		deleteIndices := indices[start:end]
 		if resp, err := c.Instance().DeleteIndex(deleteIndices...).Do(ctx); err != nil {
-			log.WithField("deleteIndices", deleteIndices).Error("delete indices failed: ", err)
-			return err
+			logger.WithField("error", err.Error()).Error("delete indices failed")
+			return errorx.Wrap(err, "delete indices failed")
 		} else {
-			log.WithField("deleteIndices", deleteIndices).Info("delete indices success")
+			logger.Info("delete indices success")
 			ok = resp.Acknowledged
 			return nil
 		}
@@ -77,37 +80,34 @@ func (c *Client) DeleteIndices(ctx context.Context, indices []string) (bool, err
 }
 
 func (c *Client) Create(ctx context.Context, index, id string, body any) error {
+	logger := log.WithField("index", index).WithField("id", id)
 	if resp, err := c.Instance().Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
-		log.WithField("index", index).WithField("id", id).
-			Error("create failed: ", err)
-		return err
+		logger.WithField("error", err.Error()).Error("create failed")
+		return errorx.Wrap(err, "create failed")
 	} else {
-		log.WithField("index", resp.Index).WithField("id", resp.Id).
-			WithField("type", resp.Type).Info("create success")
+		logger.WithField("type", resp.Type).Info("create success")
 		return nil
 	}
 }
 
 func (c *Client) Update(ctx context.Context, index, id string, body any) error {
+	logger := log.WithField("index", index).WithField("id", id)
 	if resp, err := c.Instance().Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
-		log.WithField("index", index).WithField("id", id).
-			Error("update failed: ", err)
-		return errorx.Wrap(err, "update index failed")
+		logger.WithField("error", err.Error()).Error("update failed")
+		return errorx.Wrap(err, "update failed")
 	} else {
-		log.WithField("index", resp.Index).WithField("id", resp.Id).
-			WithField("type", resp.Type).Info("update success")
+		logger.WithField("type", resp.Type).Info("update success")
 		return nil
 	}
 }
 
 func (c *Client) Delete(ctx context.Context, index, id string) error {
+	logger := log.WithField("index", index).WithField("id", id)
 	if resp, err := c.Instance().Delete().Index(index).Id(id).Do(ctx); err != nil {
-		log.WithField("index", index).WithField("id", id).
-			Error("delete failed: ", err)
+		logger.WithField("error", err.Error()).Error("delete failed: ", err)
 		return errorx.Wrap(err, "delete index failed")
 	} else {
-		log.WithField("index", resp.Index).WithField("id", resp.Id).
-			WithField("type", resp.Type).Info("delete success")
+		logger.WithField("type", resp.Type).Info("delete success")
 		return nil
 	}
 }

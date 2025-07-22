@@ -58,10 +58,10 @@ func Sources() []string {
 }
 
 // Close 关闭数据库连接
-func Close(source ...string) error {
-	if db, err := GetInstance(source...).DB(); err != nil {
-		return errorx.Wrap(err, "get db failed")
-	} else if err = db.Close(); err != nil {
+func Close(db *gorm.DB) error {
+	if d, err := db.DB(); err != nil {
+		return errorx.Wrap(err, "get DB failed")
+	} else if err = d.Close(); err != nil {
 		return errorx.Wrap(err, "close db failed")
 	}
 	return nil
