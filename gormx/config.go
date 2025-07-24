@@ -35,7 +35,6 @@ type Config struct {
 	Password        string `json:"password" yaml:"password"`                            // 密码
 	Database        string `json:"database" yaml:"database"`                            // 数据库名
 	Schema          string `json:"schema" yaml:"schema"`                                // schema模式名
-	Debug           bool   `json:"debug" yaml:"debug" default:"false"`                  // 开启debug（打印SQL以及初始化模型建表）
 	MaxIdleConns    int    `json:"maxIdleConns" yaml:"maxIdleConns" default:"10"`       // 最大空闲连接
 	MaxOpenConns    int    `json:"maxOpenConns" yaml:"maxOpenConns" default:"10"`       // 最大打开连接
 	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
