@@ -16,9 +16,7 @@ import (
 
 // NewConsoleWriter 创建控制台日志写入器
 func NewConsoleWriter() io.Writer {
-	return &ConsoleWriter{
-		writer: os.Stdout, // 标准输出
-	}
+	return &ConsoleWriter{}
 }
 
 // NewFileWriter 创建本地文件日志写入器
@@ -32,6 +30,13 @@ func NewFileWriter(filename string) io.Writer {
 	}
 }
 
+// ConsoleWriter 日志写入控制台
+type ConsoleWriter struct{}
+
+func (w *ConsoleWriter) Write(bytes []byte) (int, error) {
+	return os.Stdout.Write(bytes)
+}
+
 // NewMongoWriter 创建MongoDB日志写入器
 func NewMongoWriter(collection string) io.Writer {
 	if mongox.Initialized() {
@@ -43,30 +48,6 @@ func NewMongoWriter(collection string) io.Writer {
 		}
 	}
 	return nil
-}
-
-// NewElasticSearchWriter 创建ES日志写入器
-func NewElasticSearchWriter(index string) io.Writer {
-	if elasticx.Initialized() {
-		client := elasticx.GetClient(logWriterSource)
-		if exist, err := client.Instance().IndexExists(index).Do(context.TODO()); err != nil || !exist {
-			_, _ = client.CreateIndex(context.TODO(), index)
-		}
-		return &ElasticSearchWriter{
-			index:  index,
-			client: client.Instance(),
-		}
-	}
-	return nil
-}
-
-// ConsoleWriter 日志写入控制台
-type ConsoleWriter struct {
-	writer io.Writer
-}
-
-func (w *ConsoleWriter) Write(bytes []byte) (int, error) {
-	return w.writer.Write(bytes)
 }
 
 // MongoWriter 日志写入mongo
@@ -86,6 +67,21 @@ func (w *MongoWriter) Write(bytes []byte) (int, error) {
 		_, _ = w.client.Database(w.database).Collection(w.collection).InsertOne(context.Background(), log)
 	}()
 	return 0, nil
+}
+
+// NewElasticSearchWriter 创建ES日志写入器
+func NewElasticSearchWriter(index string) io.Writer {
+	if elasticx.Initialized() {
+		client := elasticx.GetClient(logWriterSource)
+		if exist, err := client.Instance().IndexExists(index).Do(context.TODO()); err != nil || !exist {
+			_, _ = client.CreateIndex(context.TODO(), index)
+		}
+		return &ElasticSearchWriter{
+			index:  index,
+			client: client.Instance(),
+		}
+	}
+	return nil
 }
 
 // ElasticSearchWriter 日志写入elastic search

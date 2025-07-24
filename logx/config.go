@@ -109,7 +109,7 @@ func (c *Config) Execute() error {
 					writer = NewElasticSearchWriter(c.Name)
 				}
 				if writer != nil {
-					hook.SetWriter(ToLogrusLevel(level), writer)
+					hook.SetWriter(LogrusLevel(level), writer)
 				}
 			}
 			log.AddHook(hook)
@@ -158,11 +158,11 @@ func (c *Config) GetWriter() io.Writer {
 }
 
 func (c *Config) GetLogrusLevel() log.Level {
-	return ToLogrusLevel(c.Level)
+	return LogrusLevel(c.Level)
 }
 
-// ToLogrusLevel 日志级别映射，默认debug
-func ToLogrusLevel(level string) log.Level {
+// LogrusLevel 日志级别映射，默认debug
+func LogrusLevel(level string) log.Level {
 	switch strings.ToLower(level) {
 	case LevelTrace:
 		return log.TraceLevel
@@ -177,6 +177,6 @@ func ToLogrusLevel(level string) log.Level {
 	case LevelPanic:
 		return log.PanicLevel
 	default:
-		return log.DebugLevel
+		return log.PanicLevel
 	}
 }
