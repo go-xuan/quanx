@@ -10,16 +10,21 @@ type TagReader struct {
 	Tag string
 }
 
+// Anchor 标签读取器锚点为tag名称
 func (r *TagReader) Anchor(tag string) {
-	r.Tag = tag
+	if r.Tag == "" {
+		r.Tag = tag
+	}
 }
 
+// Location 配置文件位置
 func (r *TagReader) Location() string {
 	return "tag@" + r.Tag
 }
 
-func (r *TagReader) Read(config any) error {
-	if err := anyx.SetDefaultValue(config, r.Tag); err != nil {
+// Read 从tag中读取值并加载到配置
+func (r *TagReader) Read(v any) error {
+	if err := anyx.SetDefaultValue(v, r.Tag); err != nil {
 		return errorx.Wrap(err, "read config from tag error")
 	}
 	return nil

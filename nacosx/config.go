@@ -28,10 +28,13 @@ type Config struct {
 	Address   string `yaml:"address" json:"address" default:"localhost:8848"` // nacos服务地址,多个以英文逗号分割
 	Username  string `yaml:"username" json:"username"`                        // 用户名
 	Password  string `yaml:"password" json:"password"`                        // 密码
+	AccessKey string `yaml:"access_key" json:"accessKey"`                     // ak
+	SecretKey string `yaml:"secret_key" json:"secretKey"`                     // sk
 	Namespace string `yaml:"namespace" json:"namespace" default:"public"`     // 命名空间
-	Mode      int    `yaml:"mode" json:"mode" default:"2"`                    // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
+	Mode      int    `yaml:"mode" json:"mode" default:"0"`                    // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 }
 
+// LogEntry 日志打印实体类
 func (c *Config) LogEntry() *log.Entry {
 	return log.WithFields(log.Fields{
 		"address":   c.AddressUrl(),
@@ -42,6 +45,16 @@ func (c *Config) LogEntry() *log.Entry {
 	})
 }
 
+func (c *Config) EnvReader() configx.Reader {
+	return &configx.EnvReader{}
+}
+
+func (c *Config) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "nacos.yaml",
+	}
+}
+
 func (c *Config) NeedRead() bool {
 	if c.Address == "" && c.Username == "" {
 		return true
@@ -49,51 +62,40 @@ func (c *Config) NeedRead() bool {
 	return false
 }
 
-func (*Config) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromEnv:
-		return &configx.EnvReader{}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "nacos.yaml",
-		}
-	default:
-		return nil
-	}
-}
-
 func (c *Config) Execute() error {
 	if _client == nil {
-		_client = &Client{config: c}
-		var param = c.ClientParam()
-		switch c.Mode {
-		case OnlyConfig: // 仅初始化配置中心
-			if configClient, err := c.ConfigClient(param); err != nil {
-				return errorx.Wrap(err, "init nacos config client error")
-			} else {
-				_client.configClient = configClient
-			}
-		case OnlyNaming: // 仅初始化服务发现
-			if namingClient, err := c.NamingClient(param); err != nil {
-				return errorx.Wrap(err, "init nacos naming client error")
-			} else {
-				_client.namingClient = namingClient
-			}
-		case ConfigAndNaming: // 初始化配置中心和服务发现
-			if configClient, err := c.ConfigClient(param); err != nil {
-				return errorx.Wrap(err, "init nacos config client error")
-			} else {
-				_client.configClient = configClient
-			}
-			if namingClient, err := c.NamingClient(param); err != nil {
-				return errorx.Wrap(err, "init nacos naming client error")
-			} else {
-				_client.namingClient = namingClient
-			}
+		var err error
+		if _client, err = c.NewClient(); err != nil {
+			return errorx.Wrap(err, "init nacos client error")
 		}
 	}
 	c.LogEntry().Info("nacos init success")
 	return nil
+}
+
+// NewClient 创建nacos客户端
+func (c *Config) NewClient() (*Client, error) {
+	client := &Client{config: c}
+	var param = c.ClientParam()
+	var err error
+	switch c.Mode {
+	case OnlyConfig: // 仅初始化配置中心
+		if client.configClient, err = c.ConfigClient(param); err != nil {
+			return nil, errorx.Wrap(err, "init nacos config client error")
+		}
+	case OnlyNaming: // 仅初始化服务发现
+		if client.namingClient, err = c.NamingClient(param); err != nil {
+			return nil, errorx.Wrap(err, "init nacos naming client error")
+		}
+	case ConfigAndNaming: // 初始化配置中心和服务发现
+		if client.configClient, err = c.ConfigClient(param); err != nil {
+			return nil, errorx.Wrap(err, "init nacos config client error")
+		}
+		if client.namingClient, err = c.NamingClient(param); err != nil {
+			return nil, errorx.Wrap(err, "init nacos naming client error")
+		}
+	}
+	return client, nil
 }
 
 // AddressUrl nacos访问地址
@@ -109,12 +111,14 @@ func (c *Config) EnableNaming() bool {
 // ClientConfig nacos客户端配置
 func (c *Config) ClientConfig() *constant.ClientConfig {
 	return &constant.ClientConfig{
+		NamespaceId:         c.Namespace,
+		AccessKey:           c.AccessKey,
+		SecretKey:           c.SecretKey,
 		Username:            c.Username,
 		Password:            c.Password,
 		TimeoutMs:           10 * 1000,
 		BeatInterval:        3 * 1000,
 		NotLoadCacheAtStart: true,
-		NamespaceId:         c.Namespace,
 		LogDir:              filepath.Join(constx.DefaultResourceDir, ".nacos/log"),
 		CacheDir:            filepath.Join(constx.DefaultResourceDir, ".nacos/cache"),
 	}

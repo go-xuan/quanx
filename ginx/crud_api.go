@@ -33,44 +33,48 @@ type Model[T any] struct {
 	DB *gorm.DB
 }
 
+// List 列表
 func (m *Model[T]) List(ctx *gin.Context) {
 	var err error
 	var result []*T
 	if err = m.DB.Find(&result).Error; err != nil {
-		Error(ctx, err.Error())
+		Error(ctx, err)
 	} else {
 		Success(ctx, result)
 	}
 }
 
+// Create 新增
 func (m *Model[T]) Create(ctx *gin.Context) {
 	var err error
-	var in T
-	if err = ctx.ShouldBindJSON(&in); err != nil {
+	var create T
+	if err = ctx.ShouldBindJSON(&create); err != nil {
 		ParamError(ctx, err)
 		return
 	}
-	if err = m.DB.Create(&in).Error; err != nil {
-		Error(ctx, err.Error())
+	if err = m.DB.Create(&create).Error; err != nil {
+		Error(ctx, err)
 	} else {
 		Success(ctx, nil)
 	}
 }
 
+// Update 修改
 func (m *Model[T]) Update(ctx *gin.Context) {
 	var err error
-	var in T
-	if err = ctx.ShouldBindJSON(&in); err != nil {
+	var update T
+	if err = ctx.ShouldBindJSON(&update); err != nil {
 		ParamError(ctx, err)
 		return
 	}
-	if err = m.DB.Updates(&in).Error; err != nil {
-		Error(ctx, err.Error())
+	if err = m.DB.Updates(&update).Error; err != nil {
+		Error(ctx, err)
 	} else {
 		Success(ctx, nil)
 	}
 }
 
+// Delete 删除
 func (m *Model[T]) Delete(ctx *gin.Context) {
 	var err error
 	var id modelx.Id[string]
@@ -80,12 +84,13 @@ func (m *Model[T]) Delete(ctx *gin.Context) {
 	}
 	var t T
 	if err = m.DB.Where("id = ? ", id.Id).Delete(&t).Error; err != nil {
-		Error(ctx, err.Error())
+		Error(ctx, err)
 	} else {
 		Success(ctx, nil)
 	}
 }
 
+// Detail 明细
 func (m *Model[T]) Detail(ctx *gin.Context) {
 	var err error
 	var id modelx.Id[string]
@@ -95,12 +100,13 @@ func (m *Model[T]) Detail(ctx *gin.Context) {
 	}
 	var result T
 	if err = m.DB.Where("id = ? ", id.Id).Find(&result).Error; err != nil {
-		Error(ctx, err.Error())
+		Error(ctx, err)
 	} else {
 		Success(ctx, result)
 	}
 }
 
+// Import 导入
 func (m *Model[T]) Import(ctx *gin.Context) {
 	var err error
 	var file modelx.File
@@ -116,26 +122,27 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 	var obj T
 	var data []*T
 	if data, err = excelx.ReadAny(filePath, "", obj); err != nil {
-		Custom(ctx, http.StatusBadRequest, NewResponseData(ExportFailedCode, err.Error()))
+		Custom(ctx, http.StatusBadRequest, NewResponse(ExportFailedCode, err.Error()))
 		return
 	}
 	if err = m.DB.Model(obj).Create(&data).Error; err != nil {
-		Error(ctx, err.Error())
+		Error(ctx, err)
 	} else {
 		Success(ctx, nil)
 	}
 }
 
+// Export 导出
 func (m *Model[T]) Export(ctx *gin.Context) {
 	var result []*T
 	if err := m.DB.Find(&result).Error; err != nil {
-		Custom(ctx, http.StatusBadRequest, NewResponseData(ExportFailedCode, err.Error()))
+		Custom(ctx, http.StatusBadRequest, NewResponse(ExportFailedCode, err.Error()))
 		return
 	}
 	var filePath = filepath.Join(constx.DefaultResourceDir, time.Now().Format(timex.TimestampFmt)+".xlsx")
 	if len(result) > 0 {
 		if err := excelx.WriteAny(filePath, result); err != nil {
-			CustomError(ctx, NewResponseData(ExportFailedCode, err.Error()))
+			CustomError(ctx, NewResponse(ExportFailedCode, err.Error()))
 			return
 		}
 	}

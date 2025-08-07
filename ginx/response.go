@@ -11,7 +11,7 @@ import (
 
 const (
 	SuccessCode      = 10000
-	FailedCode       = 10001
+	FailedCode       = 99999
 	AuthFailedCode   = 10401
 	ParamErrorCode   = 10501
 	RequiredCode     = 10502
@@ -33,16 +33,16 @@ func init() {
 		Add(ExportFailedCode, "export failed")
 }
 
-// ResponseData 响应数据
-type ResponseData struct {
+// Response 响应数据
+type Response struct {
 	Code int    `json:"code"` // 响应状态码
 	Msg  string `json:"msg"`  // 响应消息
 	Data any    `json:"data"` // 响应数据
 }
 
-// NewResponseData 初始化响应数据
-func NewResponseData(code int, data any) *ResponseData {
-	return &ResponseData{
+// NewResponse 初始化响应数据
+func NewResponse(code int, data any) *Response {
+	return &Response{
 		Code: code,
 		Msg:  CodeEnum.Get(code),
 		Data: data,
@@ -55,36 +55,36 @@ func Logger(ctx *gin.Context) *log.Entry {
 
 // Success 请求成功
 func Success(ctx *gin.Context, data any) {
-	ctx.JSON(http.StatusOK, NewResponseData(SuccessCode, data))
-	Logger(ctx).WithField("code", http.StatusOK).WithField("data", data).Info("request success")
+	ctx.JSON(http.StatusOK, NewResponse(SuccessCode, data))
+	Logger(ctx).WithField("http_code", http.StatusOK).WithField("data", data).Info("request success")
 }
 
 // Error 请求失败
-func Error(ctx *gin.Context, data any) {
-	ctx.JSON(http.StatusInternalServerError, NewResponseData(FailedCode, data))
-	Logger(ctx).WithField("code", http.StatusInternalServerError).WithField("data", data).Error("request error")
+func Error(ctx *gin.Context, err error) {
+	ctx.JSON(http.StatusInternalServerError, NewResponse(FailedCode, err.Error()))
+	Logger(ctx).WithField("http_code", http.StatusInternalServerError).WithField("error", err.Error()).Error("request error")
 }
 
 // ParamError 请求参数错误
 func ParamError(ctx *gin.Context, err error) {
-	ctx.JSON(http.StatusBadRequest, NewResponseData(ParamErrorCode, err.Error()))
-	Logger(ctx).WithField("code", http.StatusBadRequest).WithField("error", err.Error()).Error("request parameter error")
+	ctx.JSON(http.StatusBadRequest, NewResponse(ParamErrorCode, err.Error()))
+	Logger(ctx).WithField("http_code", http.StatusBadRequest).WithField("error", err.Error()).Error("request parameter error")
 }
 
 // Forbidden 鉴权失败
 func Forbidden(ctx *gin.Context, err error) {
-	ctx.JSON(http.StatusForbidden, NewResponseData(AuthFailedCode, err.Error()))
-	Logger(ctx).WithField("code", http.StatusForbidden).WithField("error", err.Error()).Error("request auth validate error")
+	ctx.JSON(http.StatusForbidden, NewResponse(AuthFailedCode, err.Error()))
+	Logger(ctx).WithField("http_code", http.StatusForbidden).WithField("error", err.Error()).Error("request auth validate error")
 }
 
 // Custom 自定义响应体
-func Custom(ctx *gin.Context, code int, data *ResponseData) {
-	ctx.JSON(code, data)
-	Logger(ctx).WithField("code", code).WithField("data", data).Info("request custom")
+func Custom(ctx *gin.Context, httpCode int, data *Response) {
+	ctx.JSON(httpCode, data)
+	Logger(ctx).WithField("http_code", httpCode).WithField("data", data).Info("request custom")
 }
 
 // CustomError 自定义错误
-func CustomError(ctx *gin.Context, data *ResponseData) {
+func CustomError(ctx *gin.Context, data *Response) {
 	code := http.StatusInternalServerError
 	switch data.Code {
 	case AuthFailedCode:
@@ -93,7 +93,7 @@ func CustomError(ctx *gin.Context, data *ResponseData) {
 		code = http.StatusBadRequest
 	}
 	ctx.JSON(code, data)
-	Logger(ctx).WithField("code", code).WithField("data", data).Error("request custom error")
+	Logger(ctx).WithField("http_code", code).WithField("data", data).Error("request custom error")
 }
 
 // File 文件输出
@@ -104,5 +104,5 @@ func File(ctx *gin.Context, filepath string) {
 
 func Render(ctx *gin.Context, data render.Data) {
 	ctx.Render(http.StatusOK, data)
-	Logger(ctx).WithField("code", http.StatusOK).WithField("data", data).Info("request render success")
+	Logger(ctx).WithField("http_code", http.StatusOK).WithField("data", data).Info("request render success")
 }

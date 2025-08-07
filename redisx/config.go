@@ -50,6 +50,7 @@ func (c *Config) Copy() *Config {
 	}
 }
 
+// LogEntry 日志打印实体类
 func (c *Config) LogEntry() *log.Entry {
 	return log.WithFields(log.Fields{
 		"source":   c.Source,
@@ -61,26 +62,23 @@ func (c *Config) LogEntry() *log.Entry {
 	})
 }
 
+func (c *Config) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "redis.yaml",
+	}
+}
+
+func (c *Config) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "redis.yaml",
+	}
+}
+
 func (c *Config) NeedRead() bool {
 	if c.Source == "" && c.Host == "" {
 		return true
 	}
 	return false
-}
-
-func (*Config) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "redis.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "redis.yaml",
-		}
-	default:
-		return nil
-	}
 }
 
 func (c *Config) Execute() error {
@@ -139,23 +137,20 @@ func (c *Config) NewRedisClient() (redis.UniversalClient, error) {
 // Configs redis多连接配置
 type Configs []*Config
 
-func (s Configs) NeedRead() bool {
-	return len(s) == 0
+func (s Configs) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "redis.yaml",
+	}
 }
 
-func (s Configs) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "redis.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "redis.yaml",
-		}
-	default:
-		return nil
+func (s Configs) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "redis.yaml",
 	}
+}
+
+func (s Configs) NeedRead() bool {
+	return len(s) == 0
 }
 
 func (s Configs) Execute() error {
@@ -168,7 +163,7 @@ func (s Configs) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("redis not initialized,  no enabled source")
+		log.Error("redis not initialized because no enabled source")
 	}
 	return nil
 }

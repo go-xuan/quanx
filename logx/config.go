@@ -67,26 +67,23 @@ type Config struct {
 	Caller     bool                `json:"caller" yaml:"caller" default:"false"`                           // caller开关
 }
 
+func (c *Config) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "log.yaml",
+	}
+}
+
+func (c *Config) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "log.yaml",
+	}
+}
+
 func (c *Config) NeedRead() bool {
 	if c.Name == "" && c.Level == "" && c.Formatter == "" {
 		return true
 	}
 	return false
-}
-
-func (*Config) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "log.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "log.yaml",
-		}
-	default:
-		return nil
-	}
 }
 
 func (c *Config) Execute() error {

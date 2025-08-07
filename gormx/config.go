@@ -42,26 +42,34 @@ type Config struct {
 	SlowThreshold   int    `json:"slowThreshold" yaml:"slowThreshold" default:"200"`    // 慢查询阈值(毫秒)
 }
 
+// LogEntry 日志打印实体类
+func (c *Config) LogEntry() *log.Entry {
+	return log.WithFields(log.Fields{
+		"source":   c.Source,
+		"type":     c.Type,
+		"host":     c.Host,
+		"port":     c.Port,
+		"database": c.Database,
+	})
+}
+
+func (c *Config) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "database.yaml",
+	}
+}
+
+func (c *Config) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "database.yaml",
+	}
+}
+
 func (c *Config) NeedRead() bool {
 	if c.Source == "" && c.Host == "" {
 		return true
 	}
 	return false
-}
-
-func (*Config) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "database.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "database.yaml",
-		}
-	default:
-		return nil
-	}
 }
 
 func (c *Config) Execute() error {
@@ -77,25 +85,15 @@ func (c *Config) Execute() error {
 	return nil
 }
 
-func (c *Config) LogEntry() *log.Entry {
-	return log.WithFields(log.Fields{
-		"source":   c.Source,
-		"type":     c.Type,
-		"host":     c.Host,
-		"port":     c.Port,
-		"database": c.Database,
-	})
-}
-
 func (c *Config) GetLogger() logger.Interface {
-	li := DefaultLogger()
+	l := DefaultLogger()
 	if c.LogLevel != "" {
-		li.LogLevel = LogLevel(c.LogLevel)
+		l.LogLevel = LogLevel(c.LogLevel)
 	}
 	if c.SlowThreshold > 0 {
-		li.SlowThreshold = time.Duration(c.SlowThreshold) * time.Millisecond
+		l.SlowThreshold = time.Duration(c.SlowThreshold) * time.Millisecond
 	}
-	return li
+	return l
 }
 
 // NewGormDB 创建数据库连接
@@ -122,7 +120,7 @@ func (c *Config) NewGormDB() (*gorm.DB, error) {
 	}
 	var sqlDB *sql.DB
 	if sqlDB, err = gormDB.DB(); err != nil {
-		return nil, errorx.Wrap(err, "get sql gormDB failed")
+		return nil, errorx.Wrap(err, "get sql db failed")
 	}
 	sqlDB.SetMaxIdleConns(c.MaxIdleConns)
 	sqlDB.SetMaxOpenConns(c.MaxOpenConns)
@@ -167,18 +165,15 @@ func (s Configs) NeedRead() bool {
 	return len(s) == 0
 }
 
-func (s Configs) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "database.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "database.yaml",
-		}
-	default:
-		return nil
+func (s Configs) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "database.yaml",
+	}
+}
+
+func (s Configs) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "database.yaml",
 	}
 }
 
@@ -192,7 +187,7 @@ func (s Configs) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("database not initialized! no enabled source")
+		log.Error("database not initialized because no enabled source")
 	}
 	return nil
 }

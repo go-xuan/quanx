@@ -80,28 +80,29 @@ func (l *Logger) Trace(ctx context.Context, begin time.Time, fc func() (sql stri
 		sql, rows := fc()
 		log.WithContext(ctx).WithFields(log.Fields{
 			"location": utils.FileWithLineNum(),
-			"rows":     rows,
 			"elapsed":  elapsed.String(),
+			"rows":     rows,
 			"sql":      sql,
 		}).Error(err.Error())
 	case elapsed > l.SlowThreshold && l.SlowThreshold <= 0 && l.LogLevel >= logger.Warn:
 		sql, rows := fc()
 		log.WithContext(ctx).WithFields(log.Fields{
 			"location": utils.FileWithLineNum(),
-			"rows":     rows,
 			"elapsed":  elapsed.String(),
+			"rows":     rows,
 			"sql":      sql,
 		}).Warnf("slow sql more than %v", l.SlowThreshold)
 	case l.LogLevel == logger.Info:
 		sql, rows := fc()
 		log.WithContext(ctx).WithFields(log.Fields{
 			"location": utils.FileWithLineNum(),
-			"rows":     rows,
 			"elapsed":  elapsed.String(),
+			"rows":     rows,
 			"sql":      sql,
 		}).Info()
 	case l.LogLevel == Debug:
 		sql, rows := fc()
-		fmt.Printf("[GORM-DEBUG] %s [%s] [%d] %s \n", utils.FileWithLineNum(), elapsed.String(), rows, sql)
+		fmt.Printf("[GORM-DEBUG] [%s] [rows:%d] %s \n", elapsed.String(), rows, utils.FileWithLineNum())
+		fmt.Println(sql)
 	}
 }

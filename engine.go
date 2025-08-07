@@ -333,26 +333,26 @@ func (e *Engine) AddConfigurator(configurators ...configx.Configurator) {
 
 func (e *Engine) ReadConfigurator(configurator configx.Configurator) (string, error) {
 	e.checkRunning()
-	// 获取可用的reader，优先级：nacos > 本地文件 > 环境变量 > tag
+	// 获取可用的reader，优先级：nacos > file > env > tag
 	if reader := func() configx.Reader {
-		if reader := configurator.Reader(configx.FromNacos); reader != nil {
+		if reader := configx.CheckReader(configurator, configx.FromNacos); reader != nil {
 			reader.Anchor(e.config.Server.NacosGroup())
 			if err := reader.Read(configurator); err == nil {
 				return reader
 			}
 		}
-		if reader := configurator.Reader(configx.FromFile); reader != nil {
+		if reader := configx.CheckReader(configurator, configx.FromFile); reader != nil {
 			reader.Anchor(e.configDir)
 			if err := reader.Read(configurator); err == nil {
 				return reader
 			}
 		}
-		if reader := configurator.Reader(configx.FromEnv); reader != nil {
+		if reader := configx.CheckReader(configurator, configx.FromEnv); reader != nil {
 			if err := reader.Read(configurator); err == nil {
 				return reader
 			}
 		}
-		if reader := configurator.Reader(configx.FromTag); reader != nil {
+		if reader := configx.CheckReader(configurator, configx.FromTag); reader != nil {
 			reader.Anchor("default")
 			if err := reader.Read(configurator); err == nil {
 				return reader

@@ -3,6 +3,7 @@ package cachex
 import (
 	"time"
 
+	"github.com/go-xuan/quanx/logx"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/marshalx"
 	"github.com/go-xuan/utilx/stringx"
@@ -26,6 +27,31 @@ type Config struct {
 	Marshal string `json:"marshal" yaml:"marshal" default:"json"`  // 序列化方案
 }
 
+func (c *Config) LogFields() log.Fields {
+	return log.Fields{
+		"type":    c.Type,
+		"source":  c.Source,
+		"prefix":  c.Prefix,
+		"marshal": c.Marshal,
+	}
+}
+
+func (c *Config) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "cache.yaml",
+	}
+}
+
+func (c *Config) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "cache.yaml",
+	}
+}
+
+func (c *Config) TagReader() configx.Reader {
+	return &configx.TagReader{}
+}
+
 func (c *Config) NeedRead() bool {
 	if c.Type == "" && c.Source == "" {
 		return true
@@ -33,36 +59,12 @@ func (c *Config) NeedRead() bool {
 	return false
 }
 
-func (c *Config) LogEntry() *log.Entry {
-	return log.WithFields(log.Fields{
-		"type":    c.Type,
-		"source":  c.Source,
-		"prefix":  c.Prefix,
-		"marshal": c.Marshal,
-	})
-}
-
-func (c *Config) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "cache.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "cache.yaml",
-		}
-	default:
-		return &configx.TagReader{}
-	}
-}
-
 func (c *Config) Execute() error {
 	if client, err := c.NewClient(); err != nil {
-		c.LogEntry().WithField("error", err.Error()).Error("cache init failed")
+		logx.WithEntity(c).WithField("error", err.Error()).Error("cache init failed")
 		return errorx.Wrap(err, "new cache error")
 	} else {
-		c.LogEntry().Info("cache init success")
+		logx.WithEntity(c).Info("cache init success")
 		AddClient(c, client)
 	}
 	return nil
@@ -111,23 +113,20 @@ func (c *Config) GetKeys(keys []string) []string {
 // Configs 多缓存配置
 type Configs []*Config
 
-func (s Configs) NeedRead() bool {
-	return len(s) == 0
+func (s Configs) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "cache.yaml",
+	}
 }
 
-func (s Configs) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "cache.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "cache.yaml",
-		}
-	default:
-		return nil
+func (s Configs) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "cache.yaml",
 	}
+}
+
+func (s Configs) NeedRead() bool {
+	return len(s) == 0
 }
 
 func (s Configs) Execute() error {
@@ -140,7 +139,7 @@ func (s Configs) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("cache not initialized, no enabled source")
+		log.Error("cache not initialized because no enabled source")
 	}
 	return nil
 }
