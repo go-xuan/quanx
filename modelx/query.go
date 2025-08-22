@@ -1,8 +1,9 @@
 package modelx
 
 import (
-	"gorm.io/gorm"
 	"mime/multipart"
+
+	"gorm.io/gorm"
 )
 
 type Id[T int | int64 | string] struct {

@@ -23,6 +23,11 @@ func this() *Client {
 	return _client
 }
 
+// GetClient 获取客户端
+func GetClient() *Client {
+	return this()
+}
+
 type Client struct {
 	config *Config
 	client *minio.Client // minio客户端

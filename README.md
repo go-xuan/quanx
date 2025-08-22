@@ -188,7 +188,7 @@ nacos配置文件路径：conf/nacos.yaml，不使用nacos可不添加。
 address: "127.0.0.1:8848"     # string nacos服务地址,多个以英文逗号分割
 username: "nacos"             # string 用户名
 password: "nacos"             # string 密码
-nameSpace: "demo"             # string 命名空间
+namespace: "demo"             # string 命名空间
 mode: 2                       # int 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 ```
 

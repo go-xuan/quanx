@@ -14,6 +14,11 @@ import (
 
 var _client *Client
 
+// Initialized 是否初始化
+func Initialized() bool {
+	return _client != nil
+}
+
 func this() *Client {
 	if _client == nil {
 		panic("nacos client not initialized, please check the relevant config")
@@ -21,9 +26,9 @@ func this() *Client {
 	return _client
 }
 
-// Initialized 是否初始化
-func Initialized() bool {
-	return _client != nil
+// GetClient 获取客户端
+func GetClient() *Client {
+	return this()
 }
 
 // Client nacos客户端
@@ -35,7 +40,7 @@ type Client struct {
 
 // GetConfigClient 获取配置中心客户端
 func (c *Client) GetConfigClient() config_client.IConfigClient {
-	if client := this().configClient; client == nil {
+	if client := c.configClient; client == nil {
 		panic("the nacos config client has not been initialized")
 	} else {
 		return client
@@ -44,7 +49,7 @@ func (c *Client) GetConfigClient() config_client.IConfigClient {
 
 // GetNamingClient 获取服务发现客户端
 func (c *Client) GetNamingClient() naming_client.INamingClient {
-	if client := this().namingClient; client == nil {
+	if client := c.namingClient; client == nil {
 		panic("the nacos naming client has not been initialized")
 	} else {
 		return client
@@ -121,6 +126,23 @@ func (c *Client) ListenConfig(config any, param vo.ConfigParam) error {
 		return errorx.Wrap(err, "listen nacos config failed")
 	}
 	return nil
+}
+
+// CancelListenConfig 取消监听nacos配置
+func (c *Client) CancelListenConfig(param vo.ConfigParam) error {
+	if err := c.GetConfigClient().CancelListenConfig(param); err != nil {
+		return errorx.Wrap(err, "cancel listen nacos config failed")
+	}
+	return nil
+}
+
+// SearchConfig 搜索nacos配置
+func (c *Client) SearchConfig(param vo.SearchConfigParam) (*model.ConfigPage, error) {
+	page, err := c.GetConfigClient().SearchConfig(param)
+	if err != nil {
+		return nil, errorx.Wrap(err, "get nacos config error")
+	}
+	return page, nil
 }
 
 // RegisterInstance 注册nacos服务实例

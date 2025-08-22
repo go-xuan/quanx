@@ -22,18 +22,6 @@ func this() *typex.Enum[string, *Client] {
 	return pool
 }
 
-func AddClient(config *Config, cli redis.UniversalClient) {
-	if config == nil || cli == nil {
-		return
-	}
-	client := &Client{config, cli}
-	if !Initialized() {
-		pool = typex.NewStringEnum[*Client]()
-		this().Add("default", client)
-	}
-	this().Add(config.Source, client)
-}
-
 // GetClient 获取客户端
 func GetClient(source ...string) *Client {
 	if len(source) > 0 && source[0] != "" {
@@ -42,6 +30,19 @@ func GetClient(source ...string) *Client {
 		}
 	}
 	return this().Get("default")
+}
+
+// AddClient 添加客户端
+func AddClient(config *Config, cli redis.UniversalClient) {
+	if config == nil || cli == nil {
+		return
+	}
+	client := &Client{config: config, client: cli}
+	if !Initialized() {
+		pool = typex.NewStringEnum[*Client]()
+		this().Add("default", client)
+	}
+	this().Add(config.Source, client)
 }
 
 // GetConfig 获取配置
@@ -54,7 +55,7 @@ func GetInstance(source ...string) redis.UniversalClient {
 	return GetClient(source...).Instance()
 }
 
-// CopyDatabase 复制redis数据库
+// CopyDatabase 复制redis库
 func CopyDatabase(source, target string, database int) error {
 	if source != "" && target != "" {
 		if sourceClient := this().Get(source); sourceClient != nil {

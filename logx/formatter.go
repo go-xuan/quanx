@@ -4,14 +4,35 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/go-xuan/utilx/osx"
+	"github.com/go-xuan/utilx/stringx"
 	log "github.com/sirupsen/logrus"
 )
 
-func DefaultJsonFormatter() log.Formatter {
-	return &jsonFormatter{TimeFormat, osx.Hostname()}
+func NewFormatter(formatter, timeFormat string) log.Formatter {
+	timeFormat = stringx.IfZero(timeFormat, TimeFormat)
+	switch formatter {
+	case FormatterJson:
+		return &jsonFormatter{
+			timeFormat: timeFormat,
+			hostname:   osx.Hostname(),
+		}
+	case FormatterText:
+		return &textFormatter{
+			timeFormat: timeFormat,
+			hostname:   osx.Hostname(),
+		}
+	default:
+		return DefaultFormatter()
+	}
+}
+
+func DefaultFormatter() log.Formatter {
+	return &textFormatter{
+		timeFormat: TimeFormat,
+		hostname:   osx.Hostname(),
+	}
 }
 
 type jsonFormatter struct {
@@ -19,7 +40,7 @@ type jsonFormatter struct {
 	hostname   string
 }
 
-// Format 日志格式化,用以实现logrus.Formatter接口
+// Format 日志格式化
 func (f *jsonFormatter) Format(entry *log.Entry) ([]byte, error) {
 	var buffer = bytes.Buffer{}
 	if marshal, err := json.Marshal(LogRecord{
@@ -37,41 +58,37 @@ func (f *jsonFormatter) Format(entry *log.Entry) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func DefaultFormatter() log.Formatter {
-	return &textFormatter{TimeFormat, osx.Hostname(), true}
-}
-
 type textFormatter struct {
 	timeFormat string
 	hostname   string
 	color      bool
 }
 
-// Format 日志格式化，用以实现logrus.Formatter接口
 func (f *textFormatter) Format(entry *log.Entry) ([]byte, error) {
-	var b = bytes.Buffer{}
-	b.WriteString(fmt.Sprintf("[%-23s][%s][%-5s]", time.Now().Format(f.timeFormat), f.hostname, LevelString(entry.Level, 5)))
-	b.WriteString(entry.Message)
+	var buffer = bytes.Buffer{}
+	timeStr, level := entry.Time.Format(f.timeFormat), LevelString(entry.Level, 5)
+	buffer.WriteString(fmt.Sprintf("[%-23s][%s][%-5s]", timeStr, f.hostname, level))
+	buffer.WriteString(entry.Message)
 	for key, value := range entry.Data {
-		b.WriteString(fmt.Sprintf(", %s:%+v", key, value))
+		buffer.WriteString(fmt.Sprintf(", %s:%+v", key, value))
 	}
-	b.WriteString("\n")
+	buffer.WriteString("\n")
 	if f.color {
-		return Color(entry.Level, b.Bytes()), nil
+		return Color(entry.Level, buffer.Bytes()), nil
 	}
-	return b.Bytes(), nil
+	return buffer.Bytes(), nil
 }
 
-func Color(level log.Level, s []byte) []byte {
+func Color(level log.Level, data []byte) []byte {
 	switch level {
 	case log.InfoLevel:
-		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 32, string(s)))
+		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 32, string(data)))
 	case log.WarnLevel:
-		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 33, string(s)))
+		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 33, string(data)))
 	case log.ErrorLevel:
-		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 31, string(s)))
+		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 31, string(data)))
 	default:
-		return s
+		return data
 	}
 }
 

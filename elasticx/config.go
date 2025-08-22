@@ -21,13 +21,7 @@ type Config struct {
 	Index  []string `yaml:"index" json:"index"`                     // 索引
 }
 
-func (c *Config) NeedRead() bool {
-	if c.Source == "" && c.Host == "" {
-		return true
-	}
-	return false
-}
-
+// LogEntry 日志打印实体类
 func (c *Config) LogEntry() *log.Entry {
 	return log.WithFields(log.Fields{
 		"source": c.Source,
@@ -36,19 +30,23 @@ func (c *Config) LogEntry() *log.Entry {
 	})
 }
 
-func (c *Config) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "elastic.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "elastic.yaml",
-		}
-	default:
-		return nil
+func (c *Config) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "elastic.yaml",
 	}
+}
+
+func (c *Config) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "elastic.yaml",
+	}
+}
+
+func (c *Config) NeedRead() bool {
+	if c.Source == "" && c.Host == "" {
+		return true
+	}
+	return false
 }
 
 func (c *Config) Execute() error {
@@ -89,18 +87,15 @@ func (s Configs) NeedRead() bool {
 	return len(s) == 0
 }
 
-func (s Configs) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "elastic.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "elastic.yaml",
-		}
-	default:
-		return nil
+func (s Configs) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "elastic.yaml",
+	}
+}
+
+func (s Configs) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "elastic.yaml",
 	}
 }
 
@@ -114,7 +109,7 @@ func (s Configs) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("elastic-search not initialized, no enabled source")
+		log.Error("elastic-search not initialized because no enabled source")
 	}
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/olivere/elastic/v7"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,11 +15,26 @@ import (
 	"github.com/go-xuan/quanx/mongox"
 )
 
+func NewWriter(writer string, name string, level ...string) io.Writer {
+	switch writer {
+	case WriterToConsole:
+		return NewConsoleWriter()
+	case WriterToFile:
+		if len(level) > 0 && level[0] != "" {
+			name = name + "_" + level[0]
+		}
+		return NewFileWriter(filepath.Join("log", name+".log"))
+	case WriterToMongo:
+		return NewMongoWriter(name)
+	case WriterToES:
+		return NewElasticSearchWriter(name)
+	}
+	return nil
+}
+
 // NewConsoleWriter 创建控制台日志写入器
 func NewConsoleWriter() io.Writer {
-	return &ConsoleWriter{
-		writer: os.Stdout, // 标准输出
-	}
+	return &ConsoleWriter{}
 }
 
 // NewFileWriter 创建本地文件日志写入器
@@ -32,6 +48,13 @@ func NewFileWriter(filename string) io.Writer {
 	}
 }
 
+// ConsoleWriter 日志写入控制台
+type ConsoleWriter struct{}
+
+func (w *ConsoleWriter) Write(bytes []byte) (int, error) {
+	return os.Stdout.Write(bytes)
+}
+
 // NewMongoWriter 创建MongoDB日志写入器
 func NewMongoWriter(collection string) io.Writer {
 	if mongox.Initialized() {
@@ -43,6 +66,24 @@ func NewMongoWriter(collection string) io.Writer {
 		}
 	}
 	return nil
+}
+
+// MongoWriter 日志写入mongo
+type MongoWriter struct {
+	database   string
+	collection string
+	client     *mongo.Client
+}
+
+func (w *MongoWriter) Write(bytes []byte) (int, error) {
+	go func() {
+		var log LogRecord
+		if err := json.Unmarshal(bytes, &log); err != nil {
+			return
+		}
+		_, _ = w.client.Database(w.database).Collection(w.collection).InsertOne(context.Background(), log)
+	}()
+	return 0, nil
 }
 
 // NewElasticSearchWriter 创建ES日志写入器
@@ -60,41 +101,12 @@ func NewElasticSearchWriter(index string) io.Writer {
 	return nil
 }
 
-// ConsoleWriter 日志写入控制台
-type ConsoleWriter struct {
-	writer io.Writer
-}
-
-func (w *ConsoleWriter) Write(bytes []byte) (int, error) {
-	return w.writer.Write(bytes)
-}
-
-// MongoWriter 日志写入mongo
-type MongoWriter struct {
-	database   string
-	collection string
-	client     *mongo.Client
-}
-
-// 异步写入mongo
-func (w *MongoWriter) Write(bytes []byte) (int, error) {
-	go func() {
-		var log LogRecord
-		if err := json.Unmarshal(bytes, &log); err != nil {
-			return
-		}
-		_, _ = w.client.Database(w.database).Collection(w.collection).InsertOne(context.Background(), log)
-	}()
-	return 0, nil
-}
-
 // ElasticSearchWriter 日志写入elastic search
 type ElasticSearchWriter struct {
 	index  string
 	client *elastic.Client
 }
 
-// 异步写入es
 func (w *ElasticSearchWriter) Write(bytes []byte) (int, error) {
 	go func() {
 		var log LogRecord

@@ -31,6 +31,7 @@ type Config struct {
 	Debug           bool   `json:"debug" yaml:"debug"`                                       // debug模式（日志打印）
 }
 
+// LogEntry 日志打印实体类
 func (c *Config) LogEntry() *log.Entry {
 	return log.WithFields(log.Fields{
 		"source":   c.Source,
@@ -40,26 +41,23 @@ func (c *Config) LogEntry() *log.Entry {
 	})
 }
 
+func (c *Config) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "mongo.yaml",
+	}
+}
+
+func (c *Config) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "mongo.yaml",
+	}
+}
+
 func (c *Config) NeedRead() bool {
 	if c.Source == "" && c.URI == "" {
 		return true
 	}
 	return false
-}
-
-func (*Config) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "mongo.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "mongo.yaml",
-		}
-	default:
-		return nil
-	}
 }
 
 func (c *Config) Execute() error {
@@ -135,23 +133,20 @@ func (c *Config) NewClient() (*mongo.Client, error) {
 
 type Configs []*Config
 
-func (s Configs) NeedRead() bool {
-	return len(s) == 0
+func (s Configs) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "mongo.yaml",
+	}
 }
 
-func (s Configs) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "mongo.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "mongo.yaml",
-		}
-	default:
-		return nil
+func (s Configs) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "mongo.yaml",
 	}
+}
+
+func (s Configs) NeedRead() bool {
+	return len(s) == 0
 }
 
 func (s Configs) Execute() error {
@@ -164,7 +159,7 @@ func (s Configs) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("mongo not initialized, no enabled source")
+		log.Error("mongo not initialized because no enabled source")
 	}
 	return nil
 }

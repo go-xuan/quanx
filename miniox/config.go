@@ -28,13 +28,7 @@ type Config struct {
 	Expire       int64  `yaml:"expire" json:"expire"`             // 下载链接有效时长(分钟)
 }
 
-func (c *Config) NeedRead() bool {
-	if c.Host == "" {
-		return true
-	}
-	return false
-}
-
+// LogEntry 日志打印实体类
 func (c *Config) LogEntry() *log.Entry {
 	return log.WithFields(log.Fields{
 		"host":       c.Host,
@@ -44,19 +38,23 @@ func (c *Config) LogEntry() *log.Entry {
 	})
 }
 
-func (*Config) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "minio.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "minio.yaml",
-		}
-	default:
-		return nil
+func (c *Config) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "minio.yaml",
 	}
+}
+
+func (c *Config) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "minio.yaml",
+	}
+}
+
+func (c *Config) NeedRead() bool {
+	if c.Host == "" {
+		return true
+	}
+	return false
 }
 
 func (c *Config) Execute() error {

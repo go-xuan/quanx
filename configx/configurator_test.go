@@ -17,7 +17,7 @@ func (t *test) NeedRead() bool {
 	return false
 }
 
-func (t *test) Reader(from From) Reader {
+func (t *test) Reader(From) Reader {
 	return nil
 }
 

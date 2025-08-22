@@ -15,21 +15,26 @@ type FileReader struct {
 	Data []byte // 配置文件内容
 }
 
+// Anchor 本地文件读取器锚点为配置文件夹路径
 func (r *FileReader) Anchor(anchor string) {
-	r.Dir = anchor
+	if r.Dir == "" {
+		r.Dir = anchor
+	}
 }
 
+// Location 配置文件位置
 func (r *FileReader) Location() string {
 	return "local@" + filepath.Join(r.Dir, r.Name)
 }
 
-func (r *FileReader) Read(config any) error {
+// Read 从本地文件中读取配置
+func (r *FileReader) Read(v any) error {
 	if r.Data == nil {
 		if path := filepath.Join(r.Dir, r.Name); !filex.Exists(path) {
 			return errorx.Errorf("local file not exist: %s", filex.Pwd(path))
 		} else if data, err := filex.ReadFile(path); err != nil {
 			return errorx.Wrap(err, "read file error")
-		} else if err = marshalx.Apply(r.Name).Unmarshal(data, config); err != nil {
+		} else if err = marshalx.Apply(r.Name).Unmarshal(data, v); err != nil {
 			return errorx.Wrap(err, "read config from local error")
 		} else {
 			r.Data = data

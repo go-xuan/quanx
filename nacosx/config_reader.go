@@ -12,13 +12,14 @@ import (
 
 // Reader nacos配置读取器
 type Reader struct {
-	Type   string // 配置文件类型
-	Group  string // 配置所在分组
 	DataId string // 配置文件ID
+	Group  string // 配置所在分组
+	Type   string // 配置文件类型
 	Data   []byte // 配置文件内容
 	Listen bool   // 是否启用监听
 }
 
+// ConfigParam 获取nacos配置参数
 func (r *Reader) ConfigParam() vo.ConfigParam {
 	return vo.ConfigParam{
 		DataId:  r.DataId,
@@ -28,27 +29,32 @@ func (r *Reader) ConfigParam() vo.ConfigParam {
 	}
 }
 
+// Anchor 配置读取器锚点为配置分组
 func (r *Reader) Anchor(anchor string) {
-	r.Group = anchor
+	if r.Group == "" {
+		r.Group = anchor
+	}
 }
 
+// Location 配置文件位置
 func (r *Reader) Location() string {
 	return fmt.Sprintf("nacos@%s@%s", r.Group, r.DataId)
 }
 
-func (r *Reader) Read(config any) error {
+// Read 从nacos中读取配置
+func (r *Reader) Read(v any) error {
 	if r.Data == nil {
 		if !Initialized() {
 			return errorx.New("nacos not initialized")
 		}
 		param := r.ConfigParam()
-		data, err := this().ReadConfig(config, param)
+		data, err := this().ReadConfig(v, param)
 		if err != nil {
 			return errorx.Wrap(err, "read nacos config error")
 		}
 		r.Data = data
 		if r.Listen {
-			if err = this().ListenConfig(config, param); err != nil {
+			if err = this().ListenConfig(v, param); err != nil {
 				return errorx.Wrap(err, "listen nacos config error")
 			}
 		}
@@ -56,6 +62,7 @@ func (r *Reader) Read(config any) error {
 	return nil
 }
 
+// Write 将配置写入nacos
 func (r *Reader) Write(config any) error {
 	if !Initialized() {
 		return errorx.New("nacos not initialized")

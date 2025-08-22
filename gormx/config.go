@@ -11,6 +11,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
 	"github.com/go-xuan/quanx/configx"
@@ -34,19 +35,14 @@ type Config struct {
 	Password        string `json:"password" yaml:"password"`                            // 密码
 	Database        string `json:"database" yaml:"database"`                            // 数据库名
 	Schema          string `json:"schema" yaml:"schema"`                                // schema模式名
-	Debug           bool   `json:"debug" yaml:"debug" default:"false"`                  // 开启debug（打印SQL以及初始化模型建表）
 	MaxIdleConns    int    `json:"maxIdleConns" yaml:"maxIdleConns" default:"10"`       // 最大空闲连接
 	MaxOpenConns    int    `json:"maxOpenConns" yaml:"maxOpenConns" default:"10"`       // 最大打开连接
 	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
+	LogLevel        string `json:"logLevel" yaml:"logLevel" default:"warn"`             // 日志级别
+	SlowThreshold   int    `json:"slowThreshold" yaml:"slowThreshold" default:"200"`    // 慢查询阈值(毫秒)
 }
 
-func (c *Config) NeedRead() bool {
-	if c.Source == "" && c.Host == "" {
-		return true
-	}
-	return false
-}
-
+// LogEntry 日志打印实体类
 func (c *Config) LogEntry() *log.Entry {
 	return log.WithFields(log.Fields{
 		"source":   c.Source,
@@ -54,23 +50,26 @@ func (c *Config) LogEntry() *log.Entry {
 		"host":     c.Host,
 		"port":     c.Port,
 		"database": c.Database,
-		"debug":    c.Debug,
 	})
 }
 
-func (*Config) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "database.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "database.yaml",
-		}
-	default:
-		return nil
+func (c *Config) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "database.yaml",
 	}
+}
+
+func (c *Config) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "database.yaml",
+	}
+}
+
+func (c *Config) NeedRead() bool {
+	if c.Source == "" && c.Host == "" {
+		return true
+	}
+	return false
 }
 
 func (c *Config) Execute() error {
@@ -86,24 +85,47 @@ func (c *Config) Execute() error {
 	return nil
 }
 
+func (c *Config) GetLogger() logger.Interface {
+	l := DefaultLogger()
+	if c.LogLevel != "" {
+		l.LogLevel = LogLevel(c.LogLevel)
+	}
+	if c.SlowThreshold > 0 {
+		l.SlowThreshold = time.Duration(c.SlowThreshold) * time.Millisecond
+	}
+	return l
+}
+
 // NewGormDB 创建数据库连接
 func (c *Config) NewGormDB() (*gorm.DB, error) {
-	if db, err := c.gormOpen(); err != nil {
-		return nil, errorx.Wrap(err, "gorm open failed")
-	} else {
-		var sqlDB *sql.DB
-		if sqlDB, err = db.DB(); err != nil {
-			return nil, errorx.Wrap(err, "get sql db failed")
-		}
-		sqlDB.SetMaxIdleConns(c.MaxIdleConns)
-		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
-		sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
-
-		if c.Debug {
-			db = db.Debug() // 是否打印SQL
-		}
-		return db, nil
+	var dial gorm.Dialector
+	switch strings.ToLower(c.Type) {
+	case MYSQL:
+		dial = mysql.Open(fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?clientFoundRows=false&parseTime=true&timeout=1800s&charset=utf8&collation=utf8_general_ci&loc=Local",
+			c.Username, c.Password, c.Host, c.Port, c.Database))
+	case POSTGRES, PGSQL:
+		dial = postgres.Open(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
+			c.Host, c.Port, c.Username, c.Password, c.Database))
+	default:
+		return nil, errorx.Errorf("database type only support : %v", []string{MYSQL, POSTGRES, PGSQL})
 	}
+	gormDB, err := gorm.Open(dial, &gorm.Config{
+		Logger: c.GetLogger(),
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: true,
+		},
+	})
+	if err != nil {
+		return nil, errorx.Wrap(err, "gorm open failed")
+	}
+	var sqlDB *sql.DB
+	if sqlDB, err = gormDB.DB(); err != nil {
+		return nil, errorx.Wrap(err, "get sql db failed")
+	}
+	sqlDB.SetMaxIdleConns(c.MaxIdleConns)
+	sqlDB.SetMaxOpenConns(c.MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
+	return gormDB, nil
 }
 
 func (c *Config) Copy() *Config {
@@ -117,10 +139,11 @@ func (c *Config) Copy() *Config {
 		Password:        c.Password,
 		Database:        c.Database,
 		Schema:          c.Schema,
-		Debug:           c.Debug,
 		MaxIdleConns:    c.MaxIdleConns,
 		MaxOpenConns:    c.MaxOpenConns,
 		ConnMaxLifetime: c.ConnMaxLifetime,
+		LogLevel:        c.LogLevel,
+		SlowThreshold:   c.SlowThreshold,
 	}
 }
 
@@ -135,30 +158,6 @@ func (c *Config) CommentTableSql(table, comment string) string {
 	return ""
 }
 
-//  生成gormDB
-func (c *Config) gormOpen() (*gorm.DB, error) {
-	var dial gorm.Dialector
-	switch strings.ToLower(c.Type) {
-	case MYSQL:
-		dial = mysql.Open(fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?clientFoundRows=false&parseTime=true&timeout=1800s&charset=utf8&collation=utf8_general_ci&loc=Local",
-			c.Username, c.Password, c.Host, c.Port, c.Database))
-	case POSTGRES, PGSQL:
-		dial = postgres.Open(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
-			c.Host, c.Port, c.Username, c.Password, c.Database))
-	default:
-		return nil, errorx.Errorf("database type only support : %v", []string{MYSQL, POSTGRES, PGSQL})
-	}
-	if db, err := gorm.Open(dial, &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			SingularTable: true, // 表名单数命名
-		}, // 模型命名策略
-	}); err != nil {
-		return nil, errorx.Wrap(err, "open dialector failed")
-	} else {
-		return db, nil
-	}
-}
-
 // Configs 数据库多数据源配置
 type Configs []*Config
 
@@ -166,18 +165,15 @@ func (s Configs) NeedRead() bool {
 	return len(s) == 0
 }
 
-func (s Configs) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "database.yaml",
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "database.yaml",
-		}
-	default:
-		return nil
+func (s Configs) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "database.yaml",
+	}
+}
+
+func (s Configs) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "database.yaml",
 	}
 }
 
@@ -191,7 +187,7 @@ func (s Configs) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("database not initialized! no enabled source")
+		log.Error("database not initialized because no enabled source")
 	}
 	return nil
 }

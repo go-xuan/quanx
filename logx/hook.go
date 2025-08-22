@@ -10,18 +10,32 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func NewHook() *Hook {
+// NewHook 创建日志钩子
+func NewHook(formatter log.Formatter) *Hook {
 	return &Hook{
-		lock:    new(sync.Mutex),
-		writers: make(map[log.Level]io.Writer),
-		levels:  make([]log.Level, 0),
-		formatter: &log.TextFormatter{
-			DisableColors:          true,
-			DisableTimestamp:       true,
-			DisableLevelTruncation: true,
-			DisableSorting:         false,
-		},
+		lock:      new(sync.Mutex),
+		writers:   make(map[log.Level]io.Writer),
+		levels:    make([]log.Level, 0),
+		formatter: formatter,
 	}
+}
+
+// HookConfig 日志钩子配置
+type HookConfig struct {
+	Writer string   `json:"writer" yaml:"writer" default:"console"`
+	Levels []string `json:"levels" yaml:"levels"`
+}
+
+func (c *HookConfig) NewHook(name string, formatter log.Formatter) *Hook {
+	hook := NewHook(formatter)
+	for _, lv := range c.Levels {
+		level := LogrusLevel(lv)
+		hook.levels = append(hook.levels, level)
+		if writer := NewWriter(c.Writer, name, lv); writer != nil {
+			hook.writers[level] = writer
+		}
+	}
+	return hook
 }
 
 // Hook 日志钩子
@@ -32,19 +46,18 @@ type Hook struct {
 	formatter log.Formatter
 }
 
-func (hook *Hook) Levels() []log.Level {
-	return hook.levels
+func (h *Hook) Levels() []log.Level {
+	return h.levels
 }
 
-func (hook *Hook) Fire(entry *log.Entry) error {
-	var caller = getCaller()
-	_, fileName := stringx.Cut(caller.File, "/", -1)
-	_, funcName := stringx.Cut(caller.Function, ".", -1)
-	entry.WithField("position", fmt.Sprintf("%s:%04d:%s()", fileName, caller.Line, funcName))
-	hook.lock.Lock()
-	defer hook.lock.Unlock()
-	if writer, ok := hook.writers[entry.Level]; ok {
-		if bytes, err := hook.formatter.Format(entry); err != nil {
+func (h *Hook) Fire(entry *log.Entry) error {
+	if caller := getCaller(); caller != nil {
+		_, fileName := stringx.Cut(caller.File, "/", -1)
+		_, funcName := stringx.Cut(caller.Function, ".", -1)
+		entry.WithField("position", fmt.Sprintf("%s:%04d:%s()", fileName, caller.Line, funcName))
+	}
+	if writer, ok := h.writers[entry.Level]; ok {
+		if bytes, err := h.formatter.Format(entry); err != nil {
 			return err
 		} else if _, err = writer.Write(bytes); err != nil {
 			return err
@@ -53,41 +66,27 @@ func (hook *Hook) Fire(entry *log.Entry) error {
 	return nil
 }
 
-func (hook *Hook) SetFormatter(formatter log.Formatter) {
+// SetFormatter 设置日志格式化器
+func (h *Hook) SetFormatter(formatter log.Formatter) {
 	if formatter == nil {
 		return
 	}
-	hook.lock.Lock()
-	defer hook.lock.Unlock()
-	if f, ok := formatter.(*log.TextFormatter); ok {
-		f.DisableColors = true
-	}
-	hook.formatter = formatter
+	h.lock.Lock()
+	defer h.lock.Unlock()
+	h.formatter = formatter
 }
 
-func (hook *Hook) SetWriter(level log.Level, writer io.Writer) {
+// AddWriter 添加日志hook级别以及Writer
+func (h *Hook) AddWriter(level log.Level, writer io.Writer) {
 	if writer == nil {
 		return
 	}
-	hook.lock.Lock()
-	defer hook.lock.Unlock()
-	if _, ok := hook.writers[level]; !ok {
-		hook.levels = append(hook.levels, level)
+	h.lock.Lock()
+	defer h.lock.Unlock()
+	if _, ok := h.writers[level]; !ok {
+		h.levels = append(h.levels, level)
 	}
-	hook.writers[level] = writer
-}
-
-func (hook *Hook) SetWriters(writers map[log.Level]io.Writer) {
-	hook.lock.Lock()
-	defer hook.lock.Unlock()
-	for level, writer := range writers {
-		if writer != nil {
-			if _, ok := hook.writers[level]; !ok {
-				hook.levels = append(hook.levels, level)
-			}
-			hook.writers[level] = writer
-		}
-	}
+	h.writers[level] = writer
 }
 
 var (

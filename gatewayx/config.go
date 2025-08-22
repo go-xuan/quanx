@@ -15,24 +15,20 @@ type Config struct {
 	Proxies []*Proxy `yaml:"proxies" json:"proxies"` // 服务代理
 }
 
-func (c *Config) NeedRead() bool {
-	return len(c.Proxies) == 0
+func (c *Config) NacosReader() configx.Reader {
+	return &nacosx.Reader{
+		DataId: "gateway.yaml",
+	}
 }
 
-func (*Config) Reader(from configx.From) configx.Reader {
-	switch from {
-	case configx.FromNacos:
-		return &nacosx.Reader{
-			DataId: "gateway.yaml",
-			Listen: true,
-		}
-	case configx.FromFile:
-		return &configx.FileReader{
-			Name: "gateway.yaml",
-		}
-	default:
-		return nil
+func (c *Config) FileReader() configx.Reader {
+	return &configx.FileReader{
+		Name: "gateway.yaml",
 	}
+}
+
+func (c *Config) NeedRead() bool {
+	return len(c.Proxies) == 0
 }
 
 func (c *Config) Execute() error {

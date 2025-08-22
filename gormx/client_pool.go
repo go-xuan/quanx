@@ -20,6 +20,17 @@ func this() *typex.Enum[string, *Client] {
 	return pool
 }
 
+// GetClient 获取客户端
+func GetClient(source ...string) *Client {
+	if len(source) > 0 && source[0] != "" {
+		if client := this().Get(source[0]); client != nil {
+			return client
+		}
+	}
+	return this().Get("default")
+}
+
+// AddClient 添加客户端
 func AddClient(config *Config, db *gorm.DB) {
 	if config == nil || db == nil {
 		return
@@ -30,16 +41,6 @@ func AddClient(config *Config, db *gorm.DB) {
 		this().Add("default", client)
 	}
 	this().Add(config.Source, client)
-}
-
-// GetClient 获取客户端
-func GetClient(source ...string) *Client {
-	if len(source) > 0 && source[0] != "" {
-		if client := this().Get(source[0]); client != nil {
-			return client
-		}
-	}
-	return this().Get("default")
 }
 
 // GetConfig 获取配置
