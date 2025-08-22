@@ -59,24 +59,33 @@ func (c *Client) DeleteIndex(ctx context.Context, index string) (bool, error) {
 	}
 }
 
-// DeleteIndices 批量索引
-func (c *Client) DeleteIndices(ctx context.Context, indices []string) (bool, error) {
-	var ok bool
-	logger := log.WithField("index", indices)
-	if err := taskx.ExecWithBatches(len(indices), 100, func(start int, end int) error {
-		deleteIndices := indices[start:end]
-		if resp, err := c.Instance().DeleteIndex(deleteIndices...).Do(ctx); err != nil {
-			logger.WithField("error", err.Error()).Error("delete indices failed")
-			return errorx.Wrap(err, "delete indices failed")
-		} else {
-			logger.Info("delete indices success")
-			ok = resp.Acknowledged
-			return nil
+// DeleteIndicesInBatches 批量删除索引
+func (c *Client) DeleteIndicesInBatches(ctx context.Context, indices []string, limit int) error {
+	if err := taskx.NewSplitter(limit).Execute(ctx, len(indices), func(ctx context.Context, start int, end, batch int) error {
+		indices_ := indices[start:end]
+		logger := log.WithField("start", start).WithField("end", end).WithField("batch", batch)
+		if _, err := c.DeleteIndices(ctx, indices_); err != nil {
+			logger.WithField("error", err.Error()).Error("delete indices in batches failed")
+			return errorx.Wrap(err, "delete indices in batches failed")
 		}
+		logger.Info("delete indices in batches success")
+		return nil
 	}); err != nil {
-		return ok, err
+		return err
 	}
-	return ok, nil
+	return nil
+}
+
+// DeleteIndices 删除索引
+func (c *Client) DeleteIndices(ctx context.Context, indices []string) (bool, error) {
+	logger := log.WithField("indices", indices)
+	resp, err := c.Instance().DeleteIndex(indices...).Do(ctx)
+	if err != nil {
+		logger.WithField("error", err.Error()).Error("delete indices failed")
+		return false, errorx.Wrap(err, "delete indices failed")
+	}
+	logger.Info("delete indices success")
+	return resp.Acknowledged, nil
 }
 
 func (c *Client) Create(ctx context.Context, index, id string, body any) error {

@@ -10,7 +10,7 @@ import (
 // Config 服务配置
 type Config struct {
 	Name   string `json:"name" yaml:"name" default:"app"`     // 服务名
-	IP     string `json:"ip" yaml:"ip" default:"127.0.0.1"`   // 服务IP
+	IP     string `json:"ip" yaml:"ip"`                       // 服务IP
 	Port   int    `json:"port" yaml:"port" default:"8888"`    // 服务端口
 	Prefix string `json:"prefix" yaml:"prefix"`               // 服务根路由
 	Domain string `json:"domain" yaml:"domain"`               // 服务域名

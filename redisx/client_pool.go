@@ -55,7 +55,7 @@ func GetInstance(source ...string) redis.UniversalClient {
 	return GetClient(source...).Instance()
 }
 
-// CopyDatabase 复制redis数据库
+// CopyDatabase 复制redis库
 func CopyDatabase(source, target string, database int) error {
 	if source != "" && target != "" {
 		if sourceClient := this().Get(source); sourceClient != nil {

@@ -49,7 +49,9 @@ func (c *Config) FileReader() configx.Reader {
 }
 
 func (c *Config) TagReader() configx.Reader {
-	return &configx.TagReader{}
+	return &configx.TagReader{
+		Tag: "default",
+	}
 }
 
 func (c *Config) NeedRead() bool {

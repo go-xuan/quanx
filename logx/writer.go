@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/olivere/elastic/v7"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,6 +14,23 @@ import (
 	"github.com/go-xuan/quanx/elasticx"
 	"github.com/go-xuan/quanx/mongox"
 )
+
+func NewWriter(writer string, name string, level ...string) io.Writer {
+	switch writer {
+	case WriterToConsole:
+		return NewConsoleWriter()
+	case WriterToFile:
+		if len(level) > 0 && level[0] != "" {
+			name = name + "_" + level[0]
+		}
+		return NewFileWriter(filepath.Join("log", name+".log"))
+	case WriterToMongo:
+		return NewMongoWriter(name)
+	case WriterToES:
+		return NewElasticSearchWriter(name)
+	}
+	return nil
+}
 
 // NewConsoleWriter 创建控制台日志写入器
 func NewConsoleWriter() io.Writer {
@@ -57,7 +75,6 @@ type MongoWriter struct {
 	client     *mongo.Client
 }
 
-// 异步写入mongo
 func (w *MongoWriter) Write(bytes []byte) (int, error) {
 	go func() {
 		var log LogRecord
@@ -90,7 +107,6 @@ type ElasticSearchWriter struct {
 	client *elastic.Client
 }
 
-// 异步写入es
 func (w *ElasticSearchWriter) Write(bytes []byte) (int, error) {
 	go func() {
 		var log LogRecord

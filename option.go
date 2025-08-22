@@ -1,6 +1,8 @@
 package quanx
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/go-xuan/quanx/configx"
@@ -86,21 +88,21 @@ func AddSourceTable(source string, tablers ...interface{}) EngineOptionFunc {
 }
 
 // AddTaskBefore 前插队添加任务
-func AddTaskBefore(base, name string, task func() error) EngineOptionFunc {
+func AddTaskBefore(base, name string, task func(context.Context) error) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddTaskBefore(base, name, task)
 	}
 }
 
 // AddTaskAfter 后插队添加任务
-func AddTaskAfter(base, name string, task func() error) EngineOptionFunc {
+func AddTaskAfter(base, name string, task func(context.Context) error) EngineOptionFunc {
 	return func(e *Engine) {
 		e.AddTaskAfter(base, name, task)
 	}
 }
 
-// EnableDebug 启用debug
-func EnableDebug() EngineOptionFunc {
+// Debug 启用debug
+func Debug() EngineOptionFunc {
 	return func(e *Engine) {
 		e.switches[enableDebug] = true
 	}

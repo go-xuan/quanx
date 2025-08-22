@@ -8,6 +8,6 @@ func TestEngineRun(t *testing.T) {
 	// 服务启动
 	NewEngine(
 		SetPort(9995),
-		EnableDebug(),
-	).RUN()
+		Debug(),
+	).RUN(t.Context())
 }

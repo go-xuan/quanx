@@ -1,6 +1,7 @@
 package quanx
 
 import (
+	"context"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -25,7 +26,7 @@ import (
 	"github.com/go-xuan/quanx/serverx"
 )
 
-// Queue task name
+// NewQueueScheduler task name
 const (
 	TaskInitServer        = "init_server"         // 初始化服务
 	TaskInitNacos         = "init_nacos"          // 初始化Nacos
@@ -39,9 +40,7 @@ var engine *Engine
 // GetEngine 获取当前Engine
 func GetEngine() *Engine {
 	if engine == nil {
-		engine = NewEngine(
-			EnableDebug(), // 默认启用debug
-		)
+		engine = NewEngine(Debug())
 	}
 	return engine
 }
@@ -62,7 +61,7 @@ func NewEngine(opts ...EngineOptionFunc) *Engine {
 			ginMiddlewares: make([]gin.HandlerFunc, 0),
 			gormTablers:    make(map[string][]interface{}),
 			switches:       make(map[Option]bool),
-			queue:          taskx.Queue(),
+			queue:          taskx.NewQueueScheduler(),
 		}
 		gin.SetMode(gin.ReleaseMode)
 		engine.doOptionFuncs(opts...)
@@ -90,11 +89,10 @@ type Engine struct {
 }
 
 // RUN 服务运行
-func (e *Engine) RUN() {
+func (e *Engine) RUN(ctx context.Context) {
 	defer PanicRecover()
-	if err := e.queue.Execute(); err != nil {
+	if err := e.queue.Execute(ctx); err != nil {
 		log.WithField("error", err.Error()).Error("engine run error")
-
 	}
 }
 
@@ -105,9 +103,11 @@ func (e *Engine) checkRunning() {
 }
 
 // 初始化服务
-func (e *Engine) initServer() error {
+func (e *Engine) initServer(ctx context.Context) error {
 	e.checkRunning()
-	server := &serverx.Config{}
+	server := &serverx.Config{
+		IP: osx.GetLocalIP(),
+	}
 	if e.switches[customPort] && e.config.Server != nil {
 		server.Port = e.config.Server.Port
 	}
@@ -132,15 +132,12 @@ func (e *Engine) initServer() error {
 			return errorx.Wrap(err, "write file error: "+path)
 		}
 	}
-	// 更新host
-	if e.config.Server.IP == "" {
-		e.config.Server.IP = osx.GetLocalIP()
-	}
+
 	return nil
 }
 
 // 初始化nacos
-func (e *Engine) initNacos() error {
+func (e *Engine) initNacos(ctx context.Context) error {
 	if e.config.Nacos != nil {
 		if err := e.ExecuteConfigurator(e.config.Nacos, true); err != nil {
 			return errorx.Wrap(err, "execute nacos configurator error")
@@ -156,7 +153,7 @@ func (e *Engine) initNacos() error {
 }
 
 // 初始化配置
-func (e *Engine) initConfig() error {
+func (e *Engine) initConfig(ctx context.Context) error {
 	e.checkRunning()
 
 	// 初始化日志配置器
@@ -184,7 +181,7 @@ func (e *Engine) initConfig() error {
 }
 
 // 运行自定义函数
-func (e *Engine) runCustomFunction() error {
+func (e *Engine) runCustomFunction(ctx context.Context) error {
 	e.checkRunning()
 	for _, customFunc := range e.customFuncs {
 		if err := customFunc(); err != nil {
@@ -195,7 +192,7 @@ func (e *Engine) runCustomFunction() error {
 }
 
 // 启动服务
-func (e *Engine) runServer() error {
+func (e *Engine) runServer(ctx context.Context) error {
 	e.checkRunning()
 	if e.switches[enableDebug] {
 		gin.SetMode(gin.DebugMode)
@@ -468,13 +465,13 @@ func (e *Engine) AddGinRouter(router ...func(*gin.RouterGroup)) {
 }
 
 // AddTaskBefore 前插队添加任务
-func (e *Engine) AddTaskBefore(base, name string, task func() error) {
+func (e *Engine) AddTaskBefore(base, name string, task func(context.Context) error) {
 	e.checkRunning()
 	e.queue.AddBefore(base, name, task)
 }
 
 // AddTaskAfter 后插队添加任务
-func (e *Engine) AddTaskAfter(base, name string, task func() error) {
+func (e *Engine) AddTaskAfter(base, name string, task func(context.Context) error) {
 	e.checkRunning()
 	e.queue.AddAfter(base, name, task)
 }

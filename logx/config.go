@@ -1,12 +1,9 @@
 package logx
 
 import (
-	"fmt"
 	"io"
-	"path/filepath"
 	"strings"
 
-	"github.com/go-xuan/utilx/osx"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
@@ -22,8 +19,7 @@ func GetConfig() *Config {
 func init() {
 	log.SetOutput(NewConsoleWriter()) // 设置默认日志输出
 	_config = new(Config)
-	var reader configx.Reader = &configx.TagReader{Tag: "default"}
-	if err := reader.Read(_config); err != nil {
+	if err := (&configx.TagReader{Tag: "default"}).Read(_config); err != nil {
 		panic(err)
 	} else if err = _config.Execute(); err != nil {
 		panic(err)
@@ -52,19 +48,16 @@ const (
 	logWriterSource = "log"
 )
 
-// HookWriterMapping 定义一个映射类型，用于将日志级别（字符串类型）映射到对应的Writer（字符串类型）
-type HookWriterMapping map[string]string
-
 // Config 日志配置
 type Config struct {
-	Name       string              `json:"name" yaml:"name" default:"app"`                                 // 日志文件名
-	Level      string              `json:"level" yaml:"level" default:"info"`                              // 默认日志级别
-	Formatter  string              `json:"formatter" yaml:"formatter" default:"json"`                      // 默认日志格式
-	Writer     string              `json:"writer" yaml:"writer" default:"console"`                         // 默认日志输出
-	Hook       []HookWriterMapping `json:"hook" yaml:"hook"`                                               // 日志钩子
-	TimeFormat string              `json:"timeFormat" yaml:"timeFormat" default:"2006-01-02 15:04:05.999"` // 时间格式化
-	Color      bool                `json:"color" yaml:"color" default:"false"`                             // 使用颜色
-	Caller     bool                `json:"caller" yaml:"caller" default:"false"`                           // caller开关
+	Name       string       `json:"name" yaml:"name" default:"app"`                                 // 日志文件名
+	Level      string       `json:"level" yaml:"level" default:"info"`                              // 默认日志级别
+	Formatter  string       `json:"formatter" yaml:"formatter" default:"json"`                      // 默认日志格式
+	Writer     string       `json:"writer" yaml:"writer" default:"console"`                         // 默认日志输出
+	TimeFormat string       `json:"timeFormat" yaml:"timeFormat" default:"2006-01-02 15:04:05.999"` // 时间格式化
+	Color      bool         `json:"color" yaml:"color" default:"false"`                             // 使用颜色
+	Caller     bool         `json:"caller" yaml:"caller" default:"false"`                           // caller开关
+	Hooks      []HookConfig `json:"hooks" yaml:"hooks"`                                             // 日志钩子
 }
 
 func (c *Config) NacosReader() configx.Reader {
@@ -88,77 +81,33 @@ func (c *Config) NeedRead() bool {
 
 func (c *Config) Execute() error {
 	// 添加hook钩子
-	if len(c.Hook) > 0 {
-		for _, mapping := range c.Hook {
-			hook := NewHook()
-			hook.SetFormatter(c.GetFormatter())
-			for level, writerTo := range mapping {
-				var writer io.Writer
-				switch writerTo {
-				case WriterToConsole:
-					writer = NewConsoleWriter()
-				case WriterToFile:
-					filename := filepath.Join("log", fmt.Sprintf("%s_%s.log", c.Name, level))
-					writer = NewFileWriter(filename)
-				case WriterToMongo:
-					writer = NewMongoWriter(c.Name)
-				case WriterToES:
-					writer = NewElasticSearchWriter(c.Name)
-				}
-				if writer != nil {
-					hook.SetWriter(LogrusLevel(level), writer)
-				}
-			}
-			log.AddHook(hook)
+	formatter := c.GetFormatter()
+	if len(c.Hooks) > 0 {
+		for _, hc := range c.Hooks {
+			log.AddHook(hc.NewHook(c.Name, formatter))
 		}
 	}
+	log.SetFormatter(formatter)        // 设置默认日志格式
 	log.SetOutput(c.GetWriter())       // 设置默认日志输出
-	log.SetFormatter(c.GetFormatter()) // 设置默认日志格式
-	log.SetLevel(c.GetLogrusLevel())   // 设置默认日志级别
+	log.SetLevel(LogrusLevel(c.Level)) // 设置默认日志级别
 	log.SetReportCaller(c.Caller)      // 设置caller开关
 	return nil
 }
 
+// GetFormatter 获取日志格式化器
 func (c *Config) GetFormatter() log.Formatter {
-	switch c.Formatter {
-	case FormatterJson:
-		return &jsonFormatter{
-			timeFormat: c.TimeFormat,
-			hostname:   osx.Hostname(),
-		}
-	case FormatterText:
-		return &textFormatter{
-			timeFormat: c.TimeFormat,
-			hostname:   osx.Hostname(),
-			color:      c.Writer == WriterToConsole && c.Color,
-		}
-	default:
-		return nil
-	}
+	return NewFormatter(c.Formatter, c.TimeFormat)
 }
 
+// GetWriter 获取日志写入器
 func (c *Config) GetWriter() io.Writer {
-	var writer io.Writer
-	switch c.Writer {
-	case WriterToFile:
-		filename := filepath.Join("log", c.Name+".log")
-		writer = NewFileWriter(filename)
-	case WriterToMongo:
-		writer = NewMongoWriter(c.Name)
-	case WriterToES:
-		writer = NewElasticSearchWriter(c.Name)
+	if writer := NewWriter(c.Writer, c.Name); writer != nil {
+		return writer
 	}
-	if writer == nil {
-		writer = NewConsoleWriter()
-	}
-	return writer
+	return NewConsoleWriter()
 }
 
-func (c *Config) GetLogrusLevel() log.Level {
-	return LogrusLevel(c.Level)
-}
-
-// LogrusLevel 日志级别映射，默认debug
+// LogrusLevel 转换日志级别
 func LogrusLevel(level string) log.Level {
 	switch strings.ToLower(level) {
 	case LevelTrace:
