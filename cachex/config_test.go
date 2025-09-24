@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	
+
 	"github.com/go-xuan/quanx/configx"
 )
 
 func TestCache(t *testing.T) {
-	if err := configx.ReadAndExecute(&Config{}, configx.FromFile); err != nil {
+	if err := configx.ConfiguratorReadAndExecute(&Config{}); err != nil {
 		panic(err)
 	}
 

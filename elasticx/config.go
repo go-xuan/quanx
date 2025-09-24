@@ -30,23 +30,15 @@ func (c *Config) LogEntry() *log.Entry {
 	})
 }
 
-func (c *Config) NacosReader() configx.Reader {
-	return &nacosx.Reader{
-		DataId: "elastic.yaml",
-	}
+func (c *Config) Valid() bool {
+	return c.Host != "" && c.Port != 0
 }
 
-func (c *Config) FileReader() configx.Reader {
-	return &configx.FileReader{
-		Name: "elastic.yaml",
+func (c *Config) Readers() []configx.Reader {
+	return []configx.Reader{
+		nacosx.NewReader("elastic.yaml"),
+		configx.NewFileReader("elastic.yaml"),
 	}
-}
-
-func (c *Config) NeedRead() bool {
-	if c.Source == "" && c.Host == "" {
-		return true
-	}
-	return false
 }
 
 func (c *Config) Execute() error {
@@ -83,26 +75,18 @@ func (c *Config) NewClient() (*elastic.Client, error) {
 
 type Configs []*Config
 
-func (s Configs) NeedRead() bool {
-	return len(s) == 0
+func (s Configs) Valid() bool {
+	return len(s) > 0
 }
 
-func (s Configs) NacosReader() configx.Reader {
-	return &nacosx.Reader{
-		DataId: "elastic.yaml",
-	}
-}
-
-func (s Configs) FileReader() configx.Reader {
-	return &configx.FileReader{
-		Name: "elastic.yaml",
+func (s Configs) Readers() []configx.Reader {
+	return []configx.Reader{
+		nacosx.NewReader("elastic.yaml"),
+		configx.NewFileReader("elastic.yaml"),
 	}
 }
 
 func (s Configs) Execute() error {
-	if len(s) == 0 {
-		return errorx.New("elastic-search not initialized, elastic.yaml is invalid")
-	}
 	for _, config := range s {
 		if err := config.Execute(); err != nil {
 			return errorx.Wrap(err, "elastic config execute error")

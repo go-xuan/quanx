@@ -8,28 +8,28 @@ import (
 type test struct {
 	Id   string `json:"id" default:"123"`
 	Name string `json:"name" default:"test"`
+	Desc string `json:"desc" default:""`
 }
 
-func (t *test) NeedRead() bool {
-	if t.Id == "" && t.Name == "" {
-		return true
+func (t *test) Valid() bool {
+	return t.Id != "" && t.Name != ""
+}
+
+func (t *test) Readers() []Reader {
+	return []Reader{
+		NewTagReader(),
 	}
-	return false
-}
-
-func (t *test) Reader(From) Reader {
-	return nil
 }
 
 func (t *test) Execute() error {
-	t.Name = "hello world"
+	t.Desc = "hello world"
 	return nil
 }
 
 func TestConfigurator(t *testing.T) {
 	var config = &test{}
 	fmt.Println("before execute :", config)
-	if err := ReadAndExecute(config, FromTag); err != nil {
+	if err := ConfiguratorReadAndExecute(config); err != nil {
 		t.Error(err)
 		return
 	}

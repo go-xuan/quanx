@@ -41,23 +41,15 @@ func (c *Config) LogEntry() *log.Entry {
 	})
 }
 
-func (c *Config) NacosReader() configx.Reader {
-	return &nacosx.Reader{
-		DataId: "mongo.yaml",
+func (c *Config) Readers() []configx.Reader {
+	return []configx.Reader{
+		nacosx.NewReader("mongo.yaml"),
+		configx.NewFileReader("mongo.yaml"),
 	}
 }
 
-func (c *Config) FileReader() configx.Reader {
-	return &configx.FileReader{
-		Name: "mongo.yaml",
-	}
-}
-
-func (c *Config) NeedRead() bool {
-	if c.Source == "" && c.URI == "" {
-		return true
-	}
-	return false
+func (c *Config) Valid() bool {
+	return c.URI != ""
 }
 
 func (c *Config) Execute() error {
@@ -103,19 +95,25 @@ func (c *Config) NewClient() (*mongo.Client, error) {
 
 	if c.Debug {
 		opts.SetMonitor(&event.CommandMonitor{
-			Started: func(ctx context.Context, startedEvent *event.CommandStartedEvent) {
-				if startedEvent.CommandName != "ping" {
-					log.Info("current mongo command: ", startedEvent.Command)
+			Started: func(ctx context.Context, event *event.CommandStartedEvent) {
+				if name := event.CommandName; name != "ping" {
+					log.WithField("command_name", event.CommandName).
+						WithField("command", event.Command.String()).
+						Info("mongo command start")
 				}
 			},
-			Succeeded: func(ctx context.Context, succeededEvent *event.CommandSucceededEvent) {
-				if succeededEvent.CommandName != "ping" {
-					log.Infof("mongo command success: %s ==> %v", succeededEvent.CommandName, succeededEvent.Duration)
+			Succeeded: func(ctx context.Context, event *event.CommandSucceededEvent) {
+				if name := event.CommandName; name != "ping" {
+					log.WithField("command_name", event.CommandName).
+						WithField("duration", event.Duration.String()).
+						Info("mongo command success")
 				}
 			},
-			Failed: func(ctx context.Context, failedEvent *event.CommandFailedEvent) {
-				if failedEvent.CommandName != "ping" {
-					log.Errorf("mongo command failed: %s ==> %v", failedEvent.CommandName, failedEvent.Duration)
+			Failed: func(ctx context.Context, event *event.CommandFailedEvent) {
+				if name := event.CommandName; name != "ping" {
+					log.WithField("command_name", event.CommandName).
+						WithField("duration", event.Duration.String()).
+						Info("mongo command failed")
 				}
 			},
 		})
@@ -133,26 +131,18 @@ func (c *Config) NewClient() (*mongo.Client, error) {
 
 type Configs []*Config
 
-func (s Configs) NacosReader() configx.Reader {
-	return &nacosx.Reader{
-		DataId: "mongo.yaml",
-	}
+func (s Configs) Valid() bool {
+	return len(s) > 0
 }
 
-func (s Configs) FileReader() configx.Reader {
-	return &configx.FileReader{
-		Name: "mongo.yaml",
+func (s Configs) Readers() []configx.Reader {
+	return []configx.Reader{
+		nacosx.NewReader("mongo.yaml"),
+		configx.NewFileReader("mongo.yaml"),
 	}
-}
-
-func (s Configs) NeedRead() bool {
-	return len(s) == 0
 }
 
 func (s Configs) Execute() error {
-	if len(s) == 0 {
-		return errorx.New("mongo not initialized, mongo.yaml is invalid")
-	}
 	for _, config := range s {
 		if err := config.Execute(); err != nil {
 			return errorx.Wrap(err, "mongo config execute error")

@@ -4,106 +4,114 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/utilx/taskx"
 
 	"github.com/go-xuan/quanx/configx"
 	"github.com/go-xuan/quanx/serverx"
 )
 
-type Option uint
+// EngineOption 配置选项
+type EngineOption = func(e *Engine)
 
-const (
-	enableDebug Option = iota // debug模式
-	customPort                // 自定义端口
-	running                   // 正在运行中
-)
-
-// EngineOptionFunc 配置选项
-type EngineOptionFunc = func(e *Engine)
-
-func SetPort(port int) EngineOptionFunc {
+// SetPort 设置服务端口
+func SetPort(port int) EngineOption {
 	return func(e *Engine) {
 		if server := e.config.Server; server == nil {
-			e.config.Server = &serverx.Config{Port: port}
+			e.config.Server = &serverx.Config{
+				Port: port,
+			}
 		} else {
 			server.Port = port
 		}
-		e.switches[customPort] = true
 	}
 }
 
-// SetConfigDir 设置配置文件
-func SetConfigDir(dir string) EngineOptionFunc {
+// Debug 启用debug
+func Debug() EngineOption {
 	return func(e *Engine) {
-		e.SetConfigDir(dir)
+		if server := e.config.Server; server == nil {
+			e.config.Server = &serverx.Config{
+				Debug: true,
+			}
+		} else {
+			server.Debug = true
+		}
 	}
 }
 
 // SetConfig 自定义应用配置
-func SetConfig(config *Config) EngineOptionFunc {
+func SetConfig(config *Config) EngineOption {
 	return func(e *Engine) {
 		e.config = config
 	}
 }
 
 // AddConfigurator 自定义配置器
-func AddConfigurator(configurators ...configx.Configurator) EngineOptionFunc {
+func AddConfigurator(configurators ...configx.Configurator) EngineOption {
 	return func(e *Engine) {
-		e.AddConfigurator(configurators...)
+		e.addConfigurator(configurators...)
 	}
 }
 
-// AddCustomFunc 添加自定义函数
-func AddCustomFunc(funcs ...func() error) EngineOptionFunc {
+// AddExecute 添加自定义函数
+func AddExecute(executes ...taskx.Execute) EngineOption {
 	return func(e *Engine) {
-		e.AddCustomFunc(funcs...)
-	}
-}
-
-// AddGinMiddleware 添加gin中间件
-func AddGinMiddleware(middleware ...gin.HandlerFunc) EngineOptionFunc {
-	return func(e *Engine) {
-		e.AddGinMiddleware(middleware...)
+		e.addExecute(executes...)
 	}
 }
 
 // AddGinRouter 添加gin的路由加载函数
-func AddGinRouter(router ...func(*gin.RouterGroup)) EngineOptionFunc {
+func AddGinRouter(router ...func(*gin.RouterGroup)) EngineOption {
 	return func(e *Engine) {
-		e.AddGinRouter(router...)
+		e.addGinRouter(router...)
+	}
+}
+
+// AddGinMiddleware 添加gin中间件
+func AddGinMiddleware(middleware ...gin.HandlerFunc) EngineOption {
+	return func(e *Engine) {
+		e.addGinMiddleware(middleware...)
 	}
 }
 
 // AddTable 添加表结构（默认数据源）
-func AddTable(tablers ...interface{}) EngineOptionFunc {
+func AddTable(tablers ...interface{}) EngineOption {
 	return func(e *Engine) {
-		e.AddTable(tablers...)
+		e.addTable(tablers...)
 	}
 }
 
 // AddSourceTable 添加表结构（指定数据源）
-func AddSourceTable(source string, tablers ...interface{}) EngineOptionFunc {
+func AddSourceTable(source string, tablers ...interface{}) EngineOption {
 	return func(e *Engine) {
-		e.AddSourceTable(source, tablers...)
+		e.addSourceTable(source, tablers...)
 	}
 }
 
 // AddTaskBefore 前插队添加任务
-func AddTaskBefore(base, name string, task func(context.Context) error) EngineOptionFunc {
+func AddTaskBefore(base, name string, task func(context.Context) error) EngineOption {
 	return func(e *Engine) {
-		e.AddTaskBefore(base, name, task)
+		e.addTaskBefore(base, name, task)
 	}
 }
 
 // AddTaskAfter 后插队添加任务
-func AddTaskAfter(base, name string, task func(context.Context) error) EngineOptionFunc {
+func AddTaskAfter(base, name string, task func(context.Context) error) EngineOption {
 	return func(e *Engine) {
-		e.AddTaskAfter(base, name, task)
+		e.addTaskAfter(base, name, task)
 	}
 }
 
-// Debug 启用debug
-func Debug() EngineOptionFunc {
+// ReadLocalConfig 读取nacos配置（需保证nacos已经提前初始化，所以以自定义函数的形式延迟执行）
+func ReadLocalConfig(config any, path string) EngineOption {
 	return func(e *Engine) {
-		e.switches[enableDebug] = true
+		e.readLocalConfig(config, path)
+	}
+}
+
+// ReadNacosConfig 读取nacos配置（需保证nacos已经提前初始化，所以以自定义函数的形式延迟执行）
+func ReadNacosConfig(v any, dataId string, listen ...bool) EngineOption {
+	return func(e *Engine) {
+		e.readNacosConfig(v, dataId, listen...)
 	}
 }

@@ -38,23 +38,15 @@ func (c *Config) LogEntry() *log.Entry {
 	})
 }
 
-func (c *Config) NacosReader() configx.Reader {
-	return &nacosx.Reader{
-		DataId: "minio.yaml",
-	}
+func (c *Config) Valid() bool {
+	return c.Host != "" && c.Port != 0
 }
 
-func (c *Config) FileReader() configx.Reader {
-	return &configx.FileReader{
-		Name: "minio.yaml",
+func (c *Config) Readers() []configx.Reader {
+	return []configx.Reader{
+		nacosx.NewReader("minio.yaml"),
+		configx.NewFileReader("minio.yaml"),
 	}
-}
-
-func (c *Config) NeedRead() bool {
-	if c.Host == "" {
-		return true
-	}
-	return false
 }
 
 func (c *Config) Execute() error {

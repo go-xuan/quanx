@@ -7,7 +7,7 @@ import (
 )
 
 func TestDatabase(t *testing.T) {
-	if err := configx.ReadAndExecute(&Config{}, configx.FromFile); err != nil {
+	if err := configx.ConfiguratorReadAndExecute(&Config{}); err != nil {
 		panic(err)
 	}
 }

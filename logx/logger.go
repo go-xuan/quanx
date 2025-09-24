@@ -9,13 +9,13 @@ import (
 )
 
 func NewEntry() *log.Entry {
-	return log.WithField("app", _config.Name)
+	return log.WithField("app", config.Name)
 }
 
 // NewLogger 创建日志实例
 func NewLogger() *Logger {
 	return &Logger{
-		app:    _config.Name,
+		app:    config.Name,
 		trace:  idx.UUID(),
 		entity: NewEntry(),
 	}

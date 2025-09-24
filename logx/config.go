@@ -10,18 +10,18 @@ import (
 	"github.com/go-xuan/quanx/nacosx"
 )
 
-var _config *Config
+var config *Config
 
 func GetConfig() *Config {
-	return _config
+	return config
 }
 
 func init() {
 	log.SetOutput(NewConsoleWriter()) // 设置默认日志输出
-	_config = new(Config)
-	if err := (&configx.TagReader{Tag: "default"}).Read(_config); err != nil {
+	config = new(Config)
+	if err := configx.ReadWithReader(config, configx.NewTagReader()); err != nil {
 		panic(err)
-	} else if err = _config.Execute(); err != nil {
+	} else if err = config.Execute(); err != nil {
 		panic(err)
 	}
 }
@@ -60,23 +60,16 @@ type Config struct {
 	Hooks      []HookConfig `json:"hooks" yaml:"hooks"`                                             // 日志钩子
 }
 
-func (c *Config) NacosReader() configx.Reader {
-	return &nacosx.Reader{
-		DataId: "log.yaml",
-	}
+func (c *Config) Valid() bool {
+	return c.Level != "" && c.Formatter != "" && c.Writer != ""
 }
 
-func (c *Config) FileReader() configx.Reader {
-	return &configx.FileReader{
-		Name: "log.yaml",
+func (c *Config) Readers() []configx.Reader {
+	return []configx.Reader{
+		nacosx.NewReader("log.yaml"),
+		configx.NewFileReader("log.yaml"),
+		configx.NewTagReader(),
 	}
-}
-
-func (c *Config) NeedRead() bool {
-	if c.Name == "" && c.Level == "" && c.Formatter == "" {
-		return true
-	}
-	return false
 }
 
 func (c *Config) Execute() error {
