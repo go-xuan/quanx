@@ -10,7 +10,7 @@ import (
 
 func TestLog(t *testing.T) {
 	log.WithField("test", "test").Info("test")
-	if err := configx.ReadAndExecute(&Config{}, configx.FromFile); err != nil {
+	if err := configx.ConfiguratorReadAndExecute(&Config{}); err != nil {
 		panic(err)
 	}
 	log.WithField("test", "test").Info("test")

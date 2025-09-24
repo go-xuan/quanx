@@ -38,6 +38,11 @@ type Client struct {
 	namingClient naming_client.INamingClient // nacos服务发现客户端
 }
 
+// GetGroup 获取分组
+func (c *Client) GetGroup() string {
+	return c.config.Group
+}
+
 // GetConfigClient 获取配置中心客户端
 func (c *Client) GetConfigClient() config_client.IConfigClient {
 	if client := c.configClient; client == nil {
@@ -59,7 +64,7 @@ func (c *Client) GetNamingClient() naming_client.INamingClient {
 // PublishConfig 发布nacos配置
 func (c *Client) PublishConfig(param vo.ConfigParam) error {
 	if _, err := c.GetConfigClient().PublishConfig(param); err != nil {
-		return errorx.Wrap(err, "publish nacos config error")
+		return errorx.Wrap(err, "nacos config client publish config error")
 	}
 	return nil
 }
@@ -82,7 +87,7 @@ func (c *Client) GetConfig(param vo.ConfigParam, publishIfNotExist bool) (string
 // DeleteConfig 删除nacos配置
 func (c *Client) DeleteConfig(param vo.ConfigParam) error {
 	if _, err := c.GetConfigClient().DeleteConfig(param); err != nil {
-		return errorx.Wrap(err, "delete nacos config error")
+		return errorx.Wrap(err, "nacos config client delete config error")
 	}
 	return nil
 }
@@ -123,7 +128,7 @@ func (c *Client) ListenConfig(config any, param vo.ConfigParam) error {
 		}
 	}
 	if err := c.GetConfigClient().ListenConfig(param); err != nil {
-		return errorx.Wrap(err, "listen nacos config failed")
+		return errorx.Wrap(err, "nacos config client listen config failed")
 	}
 	return nil
 }
@@ -131,7 +136,7 @@ func (c *Client) ListenConfig(config any, param vo.ConfigParam) error {
 // CancelListenConfig 取消监听nacos配置
 func (c *Client) CancelListenConfig(param vo.ConfigParam) error {
 	if err := c.GetConfigClient().CancelListenConfig(param); err != nil {
-		return errorx.Wrap(err, "cancel listen nacos config failed")
+		return errorx.Wrap(err, "nacos config client cancel listen config failed")
 	}
 	return nil
 }
@@ -140,7 +145,7 @@ func (c *Client) CancelListenConfig(param vo.ConfigParam) error {
 func (c *Client) SearchConfig(param vo.SearchConfigParam) (*model.ConfigPage, error) {
 	page, err := c.GetConfigClient().SearchConfig(param)
 	if err != nil {
-		return nil, errorx.Wrap(err, "get nacos config error")
+		return nil, errorx.Wrap(err, "nacos config client search config error")
 	}
 	return page, nil
 }
@@ -154,10 +159,10 @@ func (c *Client) RegisterInstance(instance *ServerInstance) error {
 		Enable:      true,
 		Healthy:     true,
 		ServiceName: instance.GetName(),
-		GroupName:   instance.Group,
+		GroupName:   c.GetGroup(),
 		Ephemeral:   true,
 	}); !ok || err != nil {
-		return errorx.Wrap(err, "nacos register instance failed")
+		return errorx.Wrap(err, "nacos naming client register instance failed")
 	}
 	return nil
 }
@@ -168,34 +173,34 @@ func (c *Client) DeregisterInstance(instance *ServerInstance) error {
 		Ip:          instance.GetIP(),
 		Port:        uint64(instance.GetPort()),
 		ServiceName: instance.GetName(),
-		GroupName:   instance.Group,
+		GroupName:   c.GetGroup(),
 		Ephemeral:   true,
 	}); !ok || err != nil {
-		return errorx.Wrap(err, "nacos deregister instance failed")
+		return errorx.Wrap(err, "nacos naming client deregister instance failed")
 	}
 	return nil
 }
 
 // SelectOneHealthyInstance 选择一个健康实例
-func (c *Client) SelectOneHealthyInstance(server, group string) (*model.Instance, error) {
+func (c *Client) SelectOneHealthyInstance(server string) (*model.Instance, error) {
 	if instance, err := c.GetNamingClient().SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
 		ServiceName: server,
-		GroupName:   group,
+		GroupName:   c.GetGroup(),
 	}); err != nil {
-		return nil, errorx.Wrap(err, "select one healthy instance failed")
+		return nil, errorx.Wrap(err, "nacos naming client select one healthy instance failed")
 	} else {
 		return instance, nil
 	}
 }
 
 // SelectInstances 选择实例列表
-func (c *Client) SelectInstances(server, group string) ([]model.Instance, error) {
+func (c *Client) SelectInstances(server string) ([]model.Instance, error) {
 	if instances, err := c.GetNamingClient().SelectInstances(vo.SelectInstancesParam{
 		ServiceName: server,
-		GroupName:   group,
+		GroupName:   c.GetGroup(),
 		HealthyOnly: true,
 	}); err != nil {
-		return nil, errorx.Wrap(err, "select instances failed")
+		return nil, errorx.Wrap(err, "nacos naming client select instances failed")
 	} else {
 		return instances, nil
 	}

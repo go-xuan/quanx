@@ -26,15 +26,13 @@ func main() {
 
 ```go
 func main() {
-    engine := quanx.NewEngine()
-
-    // 初始化表结构
-    engine.AddTable(
-        &User{}, // 需要实现gormx.Tabler接口
+    // 初始化Engine
+    engine := quanx.NewEngine(
+        quanx.AddTable(&User{}), // 初始化表结构
     )
-
+	
     // 启动服务
-    engine.RUN()
+    engine.RUN(context.Background())
 }
 
 // User 用户表结构必须实现gormx.Tabler接口
@@ -57,16 +55,10 @@ func (User) TableName() string {
 
 ```go
 func main() {
-    engine := quanx.NewEngine()
-
-    // 添加gin的路由加载函数
-    engine.AddGinRouter(BindApiRouter)
-
-    // 初始化表结构
-    engine.AddTable(
-        &User{}, // 需要实现 schema.Tabler 接口
+    engine := quanx.NewEngine(
+        quanx.AddGinRouter(BindApiRouter),  // 添加gin的路由加载函数
+        quanx.AddTable(&User{}), // 初始化表结构
     )
-
     // 启动服务
     engine.RUN()
 }
@@ -99,11 +91,11 @@ func (User) TableName() string {
 ```go
 func main() {
     // 初始化服务引擎 
-    engine := quanx.NewEngine()
-
-    // 按照添加顺序先后执行 
-    engine.AddTaskBefore(Init1, "init1", quanx.TaskRunServer)
-    engine.AddTaskAfter(Init2, "init2", "init1")
+    engine := quanx.NewEngine( 
+        // 按照添加顺序先后执行 
+        quanx.AddTaskBefore(Init1, "init1", quanx.TaskRunServer)
+        quanx.AddTaskAfter(Init2, "init2", "init1")
+    )
 	
     // 服务启动
     engine.RUN()
@@ -114,7 +106,7 @@ func Init1() error {
     return nil
 }
 
-func Init2() {
+func Init2() error {
     fmt.Println("执行初始化任务2", time.Now().Format("2006-01-02 15:04:05"))
     return nil
 }
@@ -127,11 +119,10 @@ func Init2() {
 ```go
 func main() {
     // 初始化服务引擎
-	engine := quanx.NewEngine()
-
-    // 添加配置器，Config结构体需要实现Configurator接口
-    engine.AddConfigurator(Config)
-
+    engine := quanx.NewEngine(
+        quanx.AddConfigurator(Config)
+    )
+	
     // 服务启动
     engine.RUN()
 }
@@ -141,20 +132,18 @@ var Config = &config{}
 // 此配置必须实现Configurator配置器接口
 type config struct{}
 
-func (c config) Format() string {
-    return "配置项格式化文本输出"
+func (c *config) Valid() bool {
+    return false
 }
 
-func (c config) Reader() *configx.Reader {
-    return &configx.Reader{
-        FilePath:    "config.yaml", // 本地配置文件
-        NacosGroup:  "",            // nacos配置分组，默认为服务名
-        NacosDataId: "",            // nacos配置ID
-        Listen:      false,         // 是否监听
+func (c *config) Readers() []configx.Reader {
+    return []configx.Reader{
+        nacosx.NewReader("my_config.json"),
+        configx.NewFileReader("my_config.json"),
     }
 }
 
-func (c config) Execute() error {
+func (c *config) Execute() error {
     // todo 配置读取后的业务操作
     return nil
 }
@@ -189,6 +178,7 @@ address: "127.0.0.1:8848"     # string nacos服务地址,多个以英文逗号�
 username: "nacos"             # string 用户名
 password: "nacos"             # string 密码
 namespace: "demo"             # string 命名空间
+group: "DEFAULT_GROUP"        # string 配置分组
 mode: 2                       # int 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 ```
 

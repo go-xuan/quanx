@@ -25,13 +25,14 @@ const (
 
 // Config nacos连接配置
 type Config struct {
-	Address   string `yaml:"address" json:"address" default:"localhost:8848"` // nacos服务地址,多个以英文逗号分割
-	Username  string `yaml:"username" json:"username"`                        // 用户名
-	Password  string `yaml:"password" json:"password"`                        // 密码
-	AccessKey string `yaml:"access_key" json:"accessKey"`                     // ak
-	SecretKey string `yaml:"secret_key" json:"secretKey"`                     // sk
-	Namespace string `yaml:"namespace" json:"namespace" default:"public"`     // 命名空间
-	Mode      int    `yaml:"mode" json:"mode" default:"0"`                    // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
+	Address   string `yaml:"address" json:"address"`      // nacos服务地址,多个以英文逗号分割
+	Username  string `yaml:"username" json:"username"`    // 用户名
+	Password  string `yaml:"password" json:"password"`    // 密码
+	AccessKey string `yaml:"access_key" json:"accessKey"` // ak
+	SecretKey string `yaml:"secret_key" json:"secretKey"` // sk
+	Namespace string `yaml:"namespace" json:"namespace"`  // 命名空间
+	Group     string `yaml:"group" json:"group"`          // 配置分组
+	Mode      int    `yaml:"mode" json:"mode"`            // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 }
 
 // LogEntry 日志打印实体类
@@ -45,21 +46,14 @@ func (c *Config) LogEntry() *log.Entry {
 	})
 }
 
-func (c *Config) EnvReader() configx.Reader {
-	return &configx.EnvReader{}
-}
-
-func (c *Config) FileReader() configx.Reader {
-	return &configx.FileReader{
-		Name: "nacos.yaml",
+func (c *Config) Readers() []configx.Reader {
+	return []configx.Reader{
+		configx.NewFileReader("nacos.yaml"),
 	}
 }
 
-func (c *Config) NeedRead() bool {
-	if c.Address == "" && c.Username == "" {
-		return true
-	}
-	return false
+func (c *Config) Valid() bool {
+	return c.Address != "" && c.Namespace != "" && c.Group != ""
 }
 
 func (c *Config) Execute() error {

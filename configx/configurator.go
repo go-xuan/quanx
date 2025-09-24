@@ -1,29 +1,58 @@
 package configx
 
-import "github.com/go-xuan/utilx/errorx"
+import (
+	"reflect"
+
+	"github.com/go-xuan/utilx/errorx"
+	log "github.com/sirupsen/logrus"
+)
 
 // Configurator 配置器
 type Configurator interface {
-	NeedRead() bool // 是否需要读取
-	Execute() error // 配置器运行
+	Readers() []Reader // 配置读取器, 配置读取器的顺序会影响配置的读取顺序
+	Execute() error    // 配置器运行, 根据配置内容执行相关逻辑
+	Valid() bool       // 是否有效, 用于判断配置是否需要继续读取
 }
 
-// ReadAndExecute 读取配置文件并运行
-func ReadAndExecute(configurator Configurator, from From, anchor ...string) error {
-	if configurator.NeedRead() {
-		if reader := CheckReader(configurator, from); reader != nil {
-			if len(anchor) > 0 && anchor[0] != "" {
-				reader.Anchor(anchor[0])
-			}
-			if err := reader.Read(configurator); err != nil {
-				return errorx.Wrap(err, "reader read error")
-			}
-		} else {
-			return errorx.Errorf("no reader found for %s", from)
-		}
+// ConfiguratorReadAndExecute 读取配置并运行
+func ConfiguratorReadAndExecute(configurator Configurator) error {
+	var logger = log.WithField("type", reflect.TypeOf(configurator).String())
+
+	location, err := ConfiguratorRead(configurator)
+	logger = logger.WithField("location", location)
+	if err != nil {
+		return errorx.Wrap(err, "configurator read error")
 	}
-	if err := configurator.Execute(); err != nil {
+
+	if !configurator.Valid() {
+		logger.Info("configurator is invalid")
+		return nil
+	}
+	if err = configurator.Execute(); err != nil {
+		logger.WithField("error", err.Error()).Error("configurator run error")
 		return errorx.Wrap(err, "configurator execute error")
 	}
+	logger.Info("configurator run success")
 	return nil
+}
+
+// ConfiguratorRead 读取配置
+func ConfiguratorRead(configurator Configurator) (string, error) {
+	if configurator.Valid() {
+		return "origin", nil
+	}
+
+	readers := configurator.Readers()
+	if len(readers) == 0 {
+		return "", errorx.New("configurator reader is empty")
+	}
+
+	for _, reader := range readers {
+		// 按照读取器的先后顺序依次读取配置
+		if err := ReadWithReader(configurator, reader); err == nil && configurator.Valid() {
+			return reader.Location(), nil
+		}
+	}
+
+	return "", errorx.New("configurator all readers are invalid")
 }

@@ -3,24 +3,22 @@ module github.com/go-xuan/quanx
 go 1.18
 
 require (
-	github.com/gin-gonic/gin v1.9.0 // 1.9.1以上版本需要升级go 1.20
+	github.com/gin-gonic/gin v1.9.0 // v1.9.0以上版本需要升级go 1.20
 	github.com/go-xuan/typex v1.25.2
-	github.com/go-xuan/utilx v1.25.6
+	github.com/go-xuan/utilx v1.25.8
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
-	github.com/minio/minio-go/v7 v7.0.61 // v7.0.62以上版本需要检查github.com/klauspost/compress 的版本不超过1.17.2
+	github.com/minio/minio-go/v7 v7.0.61 // v7.0.61以上版本依赖的github.com/klauspost/compress的v1.16.7版本需要升级go 1.22
 	github.com/nacos-group/nacos-sdk-go v1.1.6
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/redis/go-redis/v9 v9.12.1
+	github.com/redis/go-redis/v9 v9.14.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/tealeg/xlsx v1.0.5 // indirect
-	github.com/tidwall/gjson v1.18.0 // indirect
-	go.mongodb.org/mongo-driver v1.16.1 // v0.17.0以上版本依赖golang.org/x/crypto的版本v0.26.0需要升级go 1.20
+	go.mongodb.org/mongo-driver v1.16.1 // v0.16.1以上版本依赖golang.org/x/crypto的版本v0.26.0需要升级go 1.23
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/driver/mysql v1.6.0
-	gorm.io/driver/postgres v1.4.7 // v1.4.8以上版本依赖github.com/jackc/pgx/v5的版本v5.3.0需要升级go 1.19
-	gorm.io/gorm v1.30.1
+	gorm.io/driver/postgres v1.4.7 // v1.4.7以上版本依赖github.com/jackc/pgx/v5的版本v5.3.0需要升级go 1.19
+	gorm.io/gorm v1.31.0
 )
 
 require (
@@ -65,6 +63,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rs/xid v1.5.0 // indirect
+	github.com/tealeg/xlsx v1.0.5 // indirect
+	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

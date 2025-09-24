@@ -36,29 +36,16 @@ func (c *Config) LogFields() log.Fields {
 	}
 }
 
-func (c *Config) NacosReader() configx.Reader {
-	return &nacosx.Reader{
-		DataId: "cache.yaml",
-	}
+func (c *Config) Valid() bool {
+	return c.Type != "" && c.Source != ""
 }
 
-func (c *Config) FileReader() configx.Reader {
-	return &configx.FileReader{
-		Name: "cache.yaml",
+func (c *Config) Readers() []configx.Reader {
+	return []configx.Reader{
+		nacosx.NewReader("cache.yaml"),
+		configx.NewFileReader("cache.yaml"),
+		configx.NewTagReader(),
 	}
-}
-
-func (c *Config) TagReader() configx.Reader {
-	return &configx.TagReader{
-		Tag: "default",
-	}
-}
-
-func (c *Config) NeedRead() bool {
-	if c.Type == "" && c.Source == "" {
-		return true
-	}
-	return false
 }
 
 func (c *Config) Execute() error {
@@ -112,29 +99,20 @@ func (c *Config) GetKeys(keys []string) []string {
 	return keys
 }
 
-// Configs 多缓存配置
 type Configs []*Config
 
-func (s Configs) NacosReader() configx.Reader {
-	return &nacosx.Reader{
-		DataId: "cache.yaml",
-	}
+func (s Configs) Valid() bool {
+	return len(s) > 0
 }
 
-func (s Configs) FileReader() configx.Reader {
-	return &configx.FileReader{
-		Name: "cache.yaml",
+func (s Configs) Readers() []configx.Reader {
+	return []configx.Reader{
+		nacosx.NewReader("cache.yaml"),
+		configx.NewFileReader("cache.yaml"),
 	}
-}
-
-func (s Configs) NeedRead() bool {
-	return len(s) == 0
 }
 
 func (s Configs) Execute() error {
-	if len(s) == 0 {
-		return errorx.New("cache not initialized, cache.yaml is invalid")
-	}
 	for _, config := range s {
 		if err := config.Execute(); err != nil {
 			return errorx.Wrap(err, "cache config execute error")
