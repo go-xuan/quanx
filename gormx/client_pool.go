@@ -31,26 +31,22 @@ func GetClient(source ...string) *Client {
 }
 
 // AddClient 添加客户端
-func AddClient(config *Config, db *gorm.DB) {
-	if config == nil || db == nil {
-		return
-	}
-	client := &Client{config, db}
+func AddClient(client *Client) {
 	if !Initialized() {
 		pool = typex.NewStringEnum[*Client]()
 		this().Add("default", client)
 	}
-	this().Add(config.Source, client)
+	this().Add(client.GetConfig().Source, client)
 }
 
 // GetConfig 获取配置
 func GetConfig(source ...string) *Config {
-	return GetClient(source...).Config()
+	return GetClient(source...).GetConfig()
 }
 
 // GetInstance 获取数据库连接
 func GetInstance(source ...string) *gorm.DB {
-	return GetClient(source...).Instance()
+	return GetClient(source...).GetInstance()
 }
 
 // Sources 所有数据源
@@ -58,8 +54,17 @@ func Sources() []string {
 	return this().Keys()
 }
 
-// Close 关闭数据库连接
-func Close(db *gorm.DB) error {
+// CloseInstance 关闭数据库连接实例
+func CloseInstance(source ...string) {
+	if len(source) > 0 {
+		for _, s := range source {
+			_ = CloseDB(GetInstance(s))
+		}
+	}
+}
+
+// CloseDB 关闭数据库连接
+func CloseDB(db *gorm.DB) error {
 	if d, err := db.DB(); err != nil {
 		return errorx.Wrap(err, "get DB failed")
 	} else if err = d.Close(); err != nil {

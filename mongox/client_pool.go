@@ -44,17 +44,17 @@ func AddClient(config *Config, cli *mongo.Client) {
 
 // GetConfig 获取配置
 func GetConfig(source ...string) *Config {
-	return GetClient(source...).Config()
+	return GetClient(source...).GetConfig()
 }
 
 // GetInstance 获取数据库连接
 func GetInstance(source ...string) *mongo.Client {
-	return GetClient(source...).Instance()
+	return GetClient(source...).GetInstance()
 }
 
 func GetDatabase(source ...string) *mongo.Database {
 	if client := GetClient(source...); client != nil {
-		return client.Instance().Database(client.Config().Database)
+		return client.GetInstance().Database(client.GetConfig().Database)
 	}
 	return nil
 }

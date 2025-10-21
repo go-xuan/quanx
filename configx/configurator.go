@@ -1,8 +1,7 @@
 package configx
 
 import (
-	"reflect"
-
+	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,7 +15,7 @@ type Configurator interface {
 
 // ConfiguratorReadAndExecute 读取配置并运行
 func ConfiguratorReadAndExecute(configurator Configurator) error {
-	var logger = log.WithField("type", reflect.TypeOf(configurator).String())
+	var logger = log.WithField("type", anyx.TypeOf(configurator).String())
 
 	location, err := ConfiguratorRead(configurator)
 	logger = logger.WithField("location", location)

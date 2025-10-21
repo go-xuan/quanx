@@ -9,11 +9,11 @@ type Client struct {
 	client redis.UniversalClient
 }
 
-func (c *Client) Instance() redis.UniversalClient {
+func (c *Client) GetInstance() redis.UniversalClient {
 	return c.client
 }
 
-func (c *Client) Config() *Config {
+func (c *Client) GetConfig() *Config {
 	return c.config
 }
 
@@ -22,10 +22,13 @@ func (c *Client) Copy(target string, database int) (*Client, error) {
 	config.Source = target
 	config.Database = database
 	if client, err := config.NewRedisClient(); err != nil {
-		config.LogEntry().WithField("error", err.Error()).Error("redis connect failed")
+		config.LogEntry().WithField("error", err.Error()).Error("new redis client failed")
 		return nil, err
 	} else {
-		config.LogEntry().Info("redis connect success")
-		return &Client{config: config, client: client}, nil
+		config.LogEntry().Info("new redis client success")
+		return &Client{
+			config: config,
+			client: client,
+		}, nil
 	}
 }

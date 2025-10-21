@@ -42,6 +42,25 @@ type Config struct {
 	SlowThreshold   int    `json:"slowThreshold" yaml:"slowThreshold" default:"200"`    // 慢查询阈值(毫秒)
 }
 
+func (c *Config) Copy() *Config {
+	return &Config{
+		Source:          c.Source,
+		Enable:          c.Enable,
+		Type:            c.Type,
+		Host:            c.Host,
+		Port:            c.Port,
+		Username:        c.Username,
+		Password:        c.Password,
+		Database:        c.Database,
+		Schema:          c.Schema,
+		MaxIdleConns:    c.MaxIdleConns,
+		MaxOpenConns:    c.MaxOpenConns,
+		ConnMaxLifetime: c.ConnMaxLifetime,
+		LogLevel:        c.LogLevel,
+		SlowThreshold:   c.SlowThreshold,
+	}
+}
+
 // LogEntry 日志打印实体类
 func (c *Config) LogEntry() *log.Entry {
 	return log.WithFields(log.Fields{
@@ -66,11 +85,11 @@ func (c *Config) Readers() []configx.Reader {
 
 func (c *Config) Execute() error {
 	if c.Enable {
-		if db, err := c.NewGormDB(); err != nil {
+		if client, err := c.NewClient(); err != nil {
 			c.LogEntry().WithField("error", err.Error()).Error("database init failed")
-			return errorx.Wrap(err, "new gorm db error")
+			return errorx.Wrap(err, "new gorm client error")
 		} else {
-			AddClient(c, db)
+			AddClient(client)
 			c.LogEntry().Info("database init success")
 		}
 	}
@@ -120,22 +139,14 @@ func (c *Config) NewGormDB() (*gorm.DB, error) {
 	return gormDB, nil
 }
 
-func (c *Config) Copy() *Config {
-	return &Config{
-		Source:          c.Source,
-		Enable:          c.Enable,
-		Type:            c.Type,
-		Host:            c.Host,
-		Port:            c.Port,
-		Username:        c.Username,
-		Password:        c.Password,
-		Database:        c.Database,
-		Schema:          c.Schema,
-		MaxIdleConns:    c.MaxIdleConns,
-		MaxOpenConns:    c.MaxOpenConns,
-		ConnMaxLifetime: c.ConnMaxLifetime,
-		LogLevel:        c.LogLevel,
-		SlowThreshold:   c.SlowThreshold,
+func (c *Config) NewClient() (*Client, error) {
+	if db, err := c.NewGormDB(); err != nil {
+		return nil, errorx.Wrap(err, "new gorm db error")
+	} else {
+		return &Client{
+			config: c,
+			db:     db,
+		}, nil
 	}
 }
 

@@ -2,20 +2,21 @@ package quanx
 
 import (
 	"context"
-	"strconv"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/go-xuan/quanx/constx"
-	"github.com/go-xuan/quanx/nacosx"
+	"github.com/go-xuan/quanx/serverx"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/marshalx"
 	"github.com/go-xuan/utilx/taskx"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
-	"github.com/go-xuan/quanx/ginx"
+	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/gormx"
-	"github.com/go-xuan/quanx/logx"
+	"github.com/go-xuan/quanx/nacosx"
 )
 
 // queue task name
@@ -32,8 +33,7 @@ var engine *Engine
 func GetEngine() *Engine {
 	if engine == nil {
 		engine = NewEngine(
-			SetPort(constx.DefaultPort),
-			Debug(),
+			InitServer(&serverx.Config{Debug: true}),
 		)
 	}
 	return engine
@@ -43,43 +43,34 @@ func GetEngine() *Engine {
 func NewEngine(opts ...EngineOption) *Engine {
 	if engine == nil {
 		engine = &Engine{
-			config:         &Config{},
-			executes:       make([]taskx.Execute, 0),
-			configurators:  make([]configx.Configurator, 0),
-			ginMiddlewares: make([]gin.HandlerFunc, 0),
-			tablers:        make(map[string][]interface{}),
-			flags:          make(map[string]bool),
-			queue:          taskx.NewQueueScheduler("engine"),
+			config:        &Config{},
+			executes:      make([]taskx.Execute, 0),
+			servers:       make([]serverx.Server, 0),
+			configurators: make([]configx.Configurator, 0),
+			tablers:       make(map[string][]interface{}),
+			flags:         make(map[string]bool),
 		}
-		gin.SetMode(gin.ReleaseMode)
-		engine.DoOption(opts...)
-		engine.queue.Add(StepInitConfig, engine.initConfig)   // 1.初始化配置
-		engine.queue.Add(StepRunExecutes, engine.runExecutes) // 2.运行自定义函数
-		engine.queue.Add(StepRunServer, engine.runServer)     // 3.运行服务
+		// 初始化队列
+		engine.initQueue()
+		// 加载配置选项
+		engine.LoadOption(opts...)
 	}
 	return engine
 }
 
 // Engine 服务启动器
 type Engine struct {
-	config         *Config                  // 服务配置，使用 initServer()加载配置
-	ginEngine      *gin.Engine              // gin框架引擎实例
-	ginRouters     []func(*gin.RouterGroup) // gin路由的预加载方法，使用 addGinRouter()添加自行实现的路由注册方法
-	ginMiddlewares []gin.HandlerFunc        // gin中间件的预加载方法，使用 addGinRouter()添加gin中间件
-	executes       []taskx.Execute          // 自定义初始化函数 使用 addExecute()添加自定义函数
-	tablers        map[string][]interface{} // gorm表结构对象，使用 addTable() / addSourceTable() 添加至表结构初始化任务列表，需要实现 gormx.Tabler 接口
-	configurators  []configx.Configurator   // 自定义配置器，使用 addConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
-	flags          map[string]bool          // 服务运行标识
-	queue          *taskx.QueueScheduler    // Engine启动步骤队列
+	config        *Config                  // 服务配置
+	servers       []serverx.Server         // http/grpc服务
+	executes      []taskx.Execute          // 自定义初始化函数 使用 addExecute()添加自定义函数
+	configurators []configx.Configurator   // 自定义配置器，使用 addConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
+	tablers       map[string][]interface{} // gorm表结构对象，使用 addTable() / addSourceTable() 添加至表结构初始化任务列表，需要实现 gormx.Tabler 接口
+	flags         map[string]bool          // 服务运行标识
+	queue         *taskx.QueueScheduler    // Engine启动步骤队列
 }
 
-// GetConfig 获取当前配置
-func (e *Engine) GetConfig() *Config {
-	return e.config
-}
-
-// DoOption 加载配置选项
-func (e *Engine) DoOption(options ...EngineOption) {
+// LoadOption 加载配置选项
+func (e *Engine) LoadOption(options ...EngineOption) {
 	e.runningCheck()
 	for _, option := range options {
 		option(e)
@@ -106,6 +97,15 @@ func (e *Engine) runningCheck() {
 	if e.flags[StepRunning] {
 		panic("server has already running")
 	}
+}
+
+// InitQueue 初始化队列
+func (e *Engine) initQueue() {
+	queue := taskx.NewQueueScheduler("engine")
+	queue.Add(StepInitConfig, engine.initConfig)   // 1.初始化配置
+	queue.Add(StepRunExecutes, engine.runExecutes) // 2.运行自定义函数
+	queue.Add(StepRunServer, engine.runServer)     // 3.运行服务
+	e.queue = queue
 }
 
 // 初始化配置
@@ -144,7 +144,6 @@ func (e *Engine) initTables() error {
 			}
 		}
 	}
-
 	return nil
 }
 
@@ -165,56 +164,47 @@ func (e *Engine) runServer(ctx context.Context) error {
 	e.runningCheck()
 	e.flags[StepRunServer] = true
 
-	if e.config.Server.Debug {
-		gin.SetMode(gin.DebugMode)
-	}
-	if e.ginEngine == nil {
-		e.ginEngine = gin.New()
-	}
-
-	// 初始化中间件
-	e.ginEngine.Use(gin.Recovery())
-	if e.config.Log.Formatter == logx.FormatterJson {
-		e.ginEngine.Use(ginx.JsonLogFormatter)
-	} else {
-		e.ginEngine.Use(ginx.DefaultLogFormatter)
-	}
-	e.ginEngine.Use(e.ginMiddlewares...)
-
-	server := e.config.Server
-	if err := e.ginEngine.SetTrustedProxies([]string{server.GetIP()}); err != nil {
-		return errorx.Wrap(err, "set trusted proxies error")
-	}
-	// 注册服务根路由
-	group := e.ginEngine.Group(server.ApiPrefix())
-	e.initGinRouter(group)
-
 	// 启动服务
-	e.flags[StepRunning] = true
-	log.Infof(`service address: %s`, server.GetAddress())
-	if err := e.ginEngine.Run(":" + strconv.Itoa(server.Port)); err != nil {
-		return errorx.Wrap(err, "run server error")
+	for _, server := range e.servers {
+		if err := server.Run(e.config.Server); err != nil {
+			return errorx.Wrap(err, "server run error")
+		}
 	}
+
+	e.flags[StepRunning] = true
+
+	quit := make(chan os.Signal, 1)
+	// 接收 SIGINT（Ctrl+C）、SIGTERM（kill 命令）信号
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	// 设定超时时间
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	// 关闭服务
+	e.Shutdown(ctx)
 	return nil
 }
 
-// initGinRouter 初始化gin路由
-func (e *Engine) initGinRouter(group *gin.RouterGroup) {
-	if len(e.ginRouters) > 0 {
-		for _, router := range e.ginRouters {
-			router(group)
-		}
-	} else {
-		log.Warn("gin router is empty")
+// Shutdown 关闭服务
+func (e *Engine) Shutdown(ctx context.Context) {
+	for _, server := range e.servers {
+		server.Shutdown(ctx)
 	}
+	e.flags[StepRunning] = false
+}
+
+// 添加服务
+func (e *Engine) addServer(servers ...serverx.Server) {
+	e.runningCheck()
+	e.servers = append(e.servers, servers...)
 }
 
 // 新增自定义配置器
 func (e *Engine) addConfigurator(configurators ...configx.Configurator) {
 	e.runningCheck()
-	if len(configurators) > 0 {
-		e.configurators = append(e.configurators, configurators...)
-	}
+	e.configurators = append(e.configurators, configurators...)
 }
 
 // 添加自定义函数
@@ -231,25 +221,7 @@ func (e *Engine) addTable(tablers ...interface{}) {
 // 添加表结构（指定数据源）
 func (e *Engine) addSourceTable(source string, tablers ...interface{}) {
 	e.runningCheck()
-	if len(tablers) > 0 {
-		e.tablers[source] = append(e.tablers[source], tablers...)
-	}
-}
-
-// 添加gin的路由加载函数
-func (e *Engine) addGinRouter(router ...func(*gin.RouterGroup)) {
-	e.runningCheck()
-	if len(router) > 0 {
-		e.ginRouters = append(e.ginRouters, router...)
-	}
-}
-
-// 添加gin中间件
-func (e *Engine) addGinMiddleware(middleware ...gin.HandlerFunc) {
-	e.runningCheck()
-	if len(middleware) > 0 {
-		e.ginMiddlewares = append(e.ginMiddlewares, middleware...)
-	}
+	e.tablers[source] = append(e.tablers[source], tablers...)
 }
 
 // 前插队添加任务

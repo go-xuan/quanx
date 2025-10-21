@@ -3,7 +3,6 @@ package quanx
 import (
 	"context"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/utilx/taskx"
 
 	"github.com/go-xuan/quanx/configx"
@@ -13,36 +12,10 @@ import (
 // EngineOption 配置选项
 type EngineOption = func(e *Engine)
 
-// SetPort 设置服务端口
-func SetPort(port int) EngineOption {
+// InitServer 初始化应用配置
+func InitServer(server *serverx.Config) EngineOption {
 	return func(e *Engine) {
-		if server := e.config.Server; server == nil {
-			e.config.Server = &serverx.Config{
-				Port: port,
-			}
-		} else {
-			server.Port = port
-		}
-	}
-}
-
-// Debug 启用debug
-func Debug() EngineOption {
-	return func(e *Engine) {
-		if server := e.config.Server; server == nil {
-			e.config.Server = &serverx.Config{
-				Debug: true,
-			}
-		} else {
-			server.Debug = true
-		}
-	}
-}
-
-// SetConfig 自定义应用配置
-func SetConfig(config *Config) EngineOption {
-	return func(e *Engine) {
-		e.config = config
+		e.config.Server = server
 	}
 }
 
@@ -60,17 +33,10 @@ func AddExecute(executes ...taskx.Execute) EngineOption {
 	}
 }
 
-// AddGinRouter 添加gin的路由加载函数
-func AddGinRouter(router ...func(*gin.RouterGroup)) EngineOption {
+// AddServer 添加服务
+func AddServer(server ...serverx.Server) EngineOption {
 	return func(e *Engine) {
-		e.addGinRouter(router...)
-	}
-}
-
-// AddGinMiddleware 添加gin中间件
-func AddGinMiddleware(middleware ...gin.HandlerFunc) EngineOption {
-	return func(e *Engine) {
-		e.addGinMiddleware(middleware...)
+		e.addServer(server...)
 	}
 }
 

@@ -3,6 +3,7 @@ package nacosx
 import (
 	"reflect"
 
+	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/marshalx"
 	"github.com/nacos-group/nacos-sdk-go/clients/config_client"
@@ -95,7 +96,7 @@ func (c *Client) DeleteConfig(param vo.ConfigParam) error {
 // ReadConfig 读取nacos配置
 func (c *Client) ReadConfig(config any, param vo.ConfigParam) ([]byte, error) {
 	// 配置值必须是指针类型，否则不允许读取
-	if typeOf := reflect.TypeOf(config); typeOf.Kind() != reflect.Pointer {
+	if typeOf := anyx.TypeOf(config); typeOf.Kind() != reflect.Pointer {
 		return nil, errorx.New("the scanned object must be of pointer type")
 	}
 	// 读取配置文件内容
@@ -153,7 +154,7 @@ func (c *Client) SearchConfig(param vo.SearchConfigParam) (*model.ConfigPage, er
 // RegisterInstance 注册nacos服务实例
 func (c *Client) RegisterInstance(instance *ServerInstance) error {
 	if ok, err := c.GetNamingClient().RegisterInstance(vo.RegisterInstanceParam{
-		Ip:          instance.GetIP(),
+		Ip:          instance.GetHost(),
 		Port:        uint64(instance.GetPort()),
 		Weight:      1,
 		Enable:      true,
@@ -170,7 +171,7 @@ func (c *Client) RegisterInstance(instance *ServerInstance) error {
 // DeregisterInstance 注销nacos服务实例
 func (c *Client) DeregisterInstance(instance *ServerInstance) error {
 	if ok, err := c.GetNamingClient().DeregisterInstance(vo.DeregisterInstanceParam{
-		Ip:          instance.GetIP(),
+		Ip:          instance.GetHost(),
 		Port:        uint64(instance.GetPort()),
 		ServiceName: instance.GetName(),
 		GroupName:   c.GetGroup(),
