@@ -3,7 +3,6 @@ package nacosx
 import (
 	"reflect"
 
-	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/marshalx"
 	"github.com/nacos-group/nacos-sdk-go/clients/config_client"
@@ -96,7 +95,7 @@ func (c *Client) DeleteConfig(param vo.ConfigParam) error {
 // ReadConfig 读取nacos配置
 func (c *Client) ReadConfig(config any, param vo.ConfigParam) ([]byte, error) {
 	// 配置值必须是指针类型，否则不允许读取
-	if typeOf := anyx.TypeOf(config); typeOf.Kind() != reflect.Pointer {
+	if typeOf := reflect.TypeOf(config); typeOf.Kind() != reflect.Pointer {
 		return nil, errorx.New("the scanned object must be of pointer type")
 	}
 	// 读取配置文件内容

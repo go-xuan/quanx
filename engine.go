@@ -97,7 +97,7 @@ func (e *Engine) RUN(ctx context.Context) {
 
 	// 以队列形式依次执行启动步骤
 	if err := e.queue.Execute(ctx); err != nil {
-		log.WithField("error", err.Error()).Error("engine run error")
+		log.WithField("error", err.Error()).Panic("engine run error")
 	}
 }
 
