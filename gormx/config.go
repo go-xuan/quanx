@@ -36,8 +36,8 @@ type Config struct {
 	Database        string `json:"database" yaml:"database"`                            // 数据库名
 	Schema          string `json:"schema" yaml:"schema"`                                // schema模式名
 	MaxIdleConns    int    `json:"maxIdleConns" yaml:"maxIdleConns" default:"10"`       // 最大空闲连接
-	MaxOpenConns    int    `json:"maxOpenConns" yaml:"maxOpenConns" default:"10"`       // 最大打开连接
-	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(分钟)
+	MaxOpenConns    int    `json:"maxOpenConns" yaml:"maxOpenConns" default:"100"`      // 最大打开连接
+	ConnMaxLifetime int    `json:"connMaxLifetime" yaml:"connMaxLifetime" default:"10"` // 连接存活时间(秒)
 	LogLevel        string `json:"logLevel" yaml:"logLevel" default:"warn"`             // 日志级别
 	SlowThreshold   int    `json:"slowThreshold" yaml:"slowThreshold" default:"200"`    // 慢查询阈值(毫秒)
 }

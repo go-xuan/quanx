@@ -1,20 +1,22 @@
 package gatewayx
 
 import (
-	"github.com/go-xuan/utilx/errorx"
-	"github.com/go-xuan/utilx/stringx"
+	"fmt"
+	"strings"
 
 	"github.com/go-xuan/quanx/serverx"
+	"github.com/go-xuan/utilx/errorx"
 )
 
 // GetServerProxyURL 获取服务代理url
 func GetServerProxyURL(url string) (string, error) {
 	for _, proxy := range Gateway.Proxies {
 		if proxy.Match(url) {
-			if instance, err := serverx.GetCenter().SelectOne(proxy.Server); err != nil {
+			if instance, err := serverx.SelectOne(proxy.Server); err != nil {
 				return "", errorx.Wrap(err, "proxy instance not found")
 			} else {
-				return instance.GetDomain() + stringx.AddPrefix(proxy.Prefix, "/"), nil
+				return fmt.Sprintf("http://%s:%d/%s",
+					instance.GetHost(), instance.GetPort(), strings.TrimPrefix(proxy.Prefix, "/")), nil
 			}
 		}
 	}

@@ -56,16 +56,16 @@ func (User) TableName() string {
 ```go
 func main() {
     engine := quanx.NewEngine(
-        quanx.AddGinRouter(BindApiRouter),  // 添加gin的路由加载函数
+        quanx.AddServer(serverx.NewGinServer(BindRouter)),  // 添加gin的路由加载函数
         quanx.AddTable(&User{}), // 初始化表结构
     )
     // 启动服务
     engine.RUN()
 }
 
-// BindApiRouter 绑定api路由
-func BindApiRouter(router *gin.RouterGroup) {
-    group := router.Group("/user")
+// BindRouter 绑定api路由
+func BindRouter(engine *gin.Engine) {
+    group := engine.Group("/user")
     // 用户表增删改查接口注册，仅一行代码就可以实现CRUD
     ginx.NewCrudApi[User](group, gormx.DB())
 }
@@ -93,8 +93,8 @@ func main() {
     // 初始化服务引擎 
     engine := quanx.NewEngine( 
         // 按照添加顺序先后执行 
-        quanx.AddTaskBefore(Init1, "init1", quanx.TaskRunServer)
-        quanx.AddTaskAfter(Init2, "init2", "init1")
+        quanx.AddTaskBefore(quanx.StepInitConfig, "init1", Init1)
+        quanx.AddTaskAfter(quanx.StepInitConfig,, "init2", Init2)
     )
 	
     // 服务启动
@@ -102,12 +102,12 @@ func main() {
 }
 
 func Init1() error {
-    fmt.Println("执行初始化任务1", time.Now().Format("2006-01-02 15:04:05"))
+    fmt.Println("before_init_config", time.Now().Format("2006-01-02 15:04:05"))
     return nil
 }
 
 func Init2() error {
-    fmt.Println("执行初始化任务2", time.Now().Format("2006-01-02 15:04:05"))
+    fmt.Println("after_init_config", time.Now().Format("2006-01-02 15:04:05"))
     return nil
 }
 
@@ -166,7 +166,8 @@ quanx框架本身已实现了一些常规配置项的读取和初始化，开发
 server:
   name: demo                  # 应用名
   port: 8888                  # 服务端口
-  prefix: /demo               # 服务api前缀
+  debug: true                 # 服务api前缀
+  http: 8888                  # http端口
 ```
 
 #### nacos配置
@@ -196,7 +197,11 @@ username: "root"              # string 用户名
 password: "root"              # string 密码
 database: ""                  # string 数据库名
 schema: ""                    # string 模式名（postgres）
-debug: false                  # bool 开启debug模式以及初始化表结构以及数据
+maxIdleConns: 10              # int 最大空闲连接数
+maxOpenConns: 10              # int 最大打开连接数
+connMaxLifetime: 10           # int 连接存活时间(秒)
+logLevel: debug               # string 日志级别
+slowThreshold: 200            # int 慢查询阈值（毫秒）
 ```
 
 ##### 多数据库
