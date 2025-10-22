@@ -25,7 +25,9 @@ func NewGrpcServer(serviceDesc *grpc.ServiceDesc, serviceImpl interface{}, opt .
 
 // GrpcServer grpc服务
 type GrpcServer struct {
-	server *grpc.Server
+	config  *Config      // 服务配置
+	server  *grpc.Server // grpc服务
+	running bool         // 服务运行标识
 }
 
 func (s *GrpcServer) Run(config *Config) error {
@@ -37,11 +39,20 @@ func (s *GrpcServer) Run(config *Config) error {
 		}
 		go s.server.Serve(listen)
 		log.WithField("port", port).Info("grpc server running")
+		s.config = config
+		s.running = true
 	}
 	return nil
 }
 
 func (s *GrpcServer) Shutdown(_ context.Context) {
-	s.server.Stop()
+	if s.running {
+		s.server.Stop()
+		s.running = false
+	}
 	log.Info(`grpc server shutdown`)
+}
+
+func (s *GrpcServer) IsRunning() bool {
+	return s.running
 }

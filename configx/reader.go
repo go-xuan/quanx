@@ -1,8 +1,17 @@
 package configx
 
 import (
+	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/utilx/errorx"
 )
+
+// DefaultReader 默认配置读取器
+func DefaultReader() Reader {
+	return &FileReader{
+		Dir:  constx.DefaultConfigDir,
+		Name: constx.DefaultConfigName,
+	}
+}
 
 // Reader 配置读取器
 type Reader interface {

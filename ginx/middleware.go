@@ -61,28 +61,8 @@ func GetLogger(ctx *gin.Context) *log.Entry {
 	return entry
 }
 
-// ClientIP 获取客户端IP
-func ClientIP(ctx *gin.Context) string {
-	var clientIp string
-	if ip, ok := ctx.Get(clientIpKey); ok {
-		clientIp = ip.(string)
-	} else if clientIp = ctx.ClientIP(); clientIp == "::1" {
-		clientIp = "127.0.0.1"
-		ctx.Set(clientIpKey, clientIp)
-	}
-	return clientIp
-}
-
 // Trace traceId
 func Trace(ctx *gin.Context) {
 	ctx.Set(traceIdKey, uuid.NewString())
 	ctx.Next()
-}
-
-// TraceId 获取traceId
-func TraceId(ctx *gin.Context) string {
-	if traceId, ok := ctx.Get(traceIdKey); ok {
-		return traceId.(string)
-	}
-	return ""
 }

@@ -38,7 +38,7 @@ func ConfiguratorReadAndExecute(configurator Configurator) error {
 // ConfiguratorRead 读取配置
 func ConfiguratorRead(configurator Configurator) (string, error) {
 	if configurator.Valid() {
-		return "origin", nil
+		return "", nil
 	}
 
 	readers := configurator.Readers()
@@ -46,8 +46,8 @@ func ConfiguratorRead(configurator Configurator) (string, error) {
 		return "", errorx.New("configurator reader is empty")
 	}
 
+	// 按照读取器的先后顺序依次读取配置
 	for _, reader := range readers {
-		// 按照读取器的先后顺序依次读取配置
 		if err := ReadWithReader(configurator, reader); err == nil && configurator.Valid() {
 			return reader.Location(), nil
 		}

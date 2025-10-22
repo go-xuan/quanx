@@ -10,16 +10,24 @@ import (
 type Server interface {
 	Run(config *Config) error
 	Shutdown(context.Context)
+	IsRunning() bool
+}
+
+// DefaultConfig 默认服务配置
+func DefaultConfig() *Config {
+	return &Config{
+		Name:  "quanx-server",
+		Debug: false,
+	}
 }
 
 // Config 服务配置
 type Config struct {
-	Name    string `json:"name" yaml:"name" default:"app"`          // 名称
-	Version string `json:"version" yaml:"version" default:"v0.0.1"` // 版本
-	Host    string `json:"host" yaml:"host" default:"localhost"`    // host
-	Debug   bool   `json:"debug" yaml:"debug"`                      // 开启调试模式
-	Http    int    `json:"http" yaml:"http"`                        // http服务端口
-	Grpc    int    `json:"grpc" yaml:"grpc"`                        // grpc服务端口
+	Name  string `json:"name" yaml:"name"`   // 名称
+	Host  string `json:"host" yaml:"host"`   // host
+	Debug bool   `json:"debug" yaml:"debug"` // 开启调试模式
+	Http  int    `json:"http" yaml:"http"`   // http服务端口, 默认8080
+	Grpc  int    `json:"grpc" yaml:"grpc"`   // grpc服务端口, 0表示不开启grpc服务
 }
 
 // GetName 获取服务名

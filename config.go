@@ -4,7 +4,6 @@ import (
 	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/filex"
-	"github.com/go-xuan/utilx/marshalx"
 
 	"github.com/go-xuan/quanx/cachex"
 	"github.com/go-xuan/quanx/configx"
@@ -27,52 +26,54 @@ type Config struct {
 }
 
 // Init 初始化配置
-func (cfg *Config) Init(path string) error {
+func (cfg *Config) Init(reader configx.Reader) error {
 	var server *serverx.Config
 	if s := cfg.Server; s != nil {
 		server = &serverx.Config{
-			Name:    s.Name,
-			Version: s.Version,
-			Debug:   s.Debug,
-			Host:    s.Host,
-			Http:    s.Http,
-			Grpc:    s.Grpc,
+			Name:  s.Name,
+			Debug: s.Debug,
+			Host:  s.Host,
+			Http:  s.Http,
+			Grpc:  s.Grpc,
 		}
 	}
 
 	// 初始化配置文件
-	if !filex.Exists(path) {
-		if err := marshalx.Apply(path).Write(path, cfg); err != nil {
-			return errorx.Wrap(err, "write config file error: "+path)
+	if fr, ok := reader.(*configx.FileReader); ok {
+		if path := fr.GetPath(); !filex.Exists(path) {
+			cfg.Server = serverx.DefaultConfig()
+			if err := fr.Write(cfg); err != nil {
+				return errorx.Wrap(err, "write config file error")
+			}
 		}
 	}
 
 	// 读取配置文件
-	if err := marshalx.Apply(path).Read(path, cfg); err != nil {
-		return errorx.Wrap(err, "read config file error: "+path)
+	if err := reader.Read(cfg); err != nil {
+		return errorx.Wrap(err, "read config error")
 	}
 	// 初始化nacos
-	if err := cfg.InitNacos(); err != nil {
+	if err := cfg.initNacos(); err != nil {
 		return errorx.Wrap(err, "init nacos error")
 	}
 	// 注册nacos服务实例
-	if err := cfg.RegisterNacosServer(); err != nil {
+	if err := cfg.registerNacosServer(); err != nil {
 		return errorx.Wrap(err, "register server instance error")
 	}
 	// 初始化日志
-	if err := cfg.InitLog(); err != nil {
+	if err := cfg.initLog(); err != nil {
 		return errorx.Wrap(err, "init log error")
 	}
 	// 初始化数据库
-	if err := cfg.InitDatabase(); err != nil {
+	if err := cfg.initDatabase(); err != nil {
 		return errorx.Wrap(err, "init database error")
 	}
 	// 初始化redis
-	if err := cfg.InitRedis(); err != nil {
+	if err := cfg.initRedis(); err != nil {
 		return errorx.Wrap(err, "init redis error")
 	}
 	// 初始化缓存
-	if err := cfg.InitCache(); err != nil {
+	if err := cfg.initCache(); err != nil {
 		return errorx.Wrap(err, "init cache error")
 	}
 
@@ -90,15 +91,15 @@ func (cfg *Config) coverServerConfig(server *serverx.Config) {
 	}
 	if nacosx.Initialized() {
 		var config = &Config{}
-		if err := nacosx.NewReader(constx.DefaultConfigFilename).Read(config); err == nil {
+		if err := nacosx.NewReader(constx.DefaultConfigName).Read(config); err == nil {
 			cfg.Server = config.Server
 			return
 		}
 	}
 }
 
-// InitNacos 初始化nacos
-func (cfg *Config) InitNacos() error {
+// 初始化nacos
+func (cfg *Config) initNacos() error {
 	if nacos := cfg.Nacos; nacos != nil {
 		if err := configx.ConfiguratorReadAndExecute(nacos); err != nil {
 			return errorx.Wrap(err, "run nacos configurator error")
@@ -107,8 +108,8 @@ func (cfg *Config) InitNacos() error {
 	return nil
 }
 
-// RegisterNacosServer 注册nacos服务实例
-func (cfg *Config) RegisterNacosServer() error {
+// 注册nacos服务实例
+func (cfg *Config) registerNacosServer() error {
 	if nacos := cfg.Nacos; nacos != nil && nacos.EnableNaming() {
 		serverx.Init(&nacosx.ServerCenter{})
 		if err := serverx.Register(cfg.Server); err != nil {
@@ -118,10 +119,10 @@ func (cfg *Config) RegisterNacosServer() error {
 	return nil
 }
 
-// InitLog 初始化日志配置
-func (cfg *Config) InitLog() error {
+// 初始化日志配置
+func (cfg *Config) initLog() error {
 	log_ := anyx.IfZero(cfg.Log, logx.GetConfig())
-	if log_.Name == "" || log_.Name == "app" {
+	if log_.Name == "" && cfg.Server != nil {
 		log_.Name = cfg.Server.Name
 	}
 	if err := configx.ConfiguratorReadAndExecute(log_); err != nil {
@@ -131,12 +132,12 @@ func (cfg *Config) InitLog() error {
 	return nil
 }
 
-// InitDatabase 初始化数据库
-func (cfg *Config) InitDatabase() error {
+// 初始化数据库
+func (cfg *Config) initDatabase() error {
 	// 读取数据库配置并初始化
-	databases := anyx.IfZero(cfg.Database, &gormx.Configs{})
-	if err := configx.ConfiguratorReadAndExecute(databases); err != nil {
-		cfg.Database = databases
+	dbs := anyx.IfZero(cfg.Database, &gormx.Configs{})
+	if err := configx.ConfiguratorReadAndExecute(dbs); err != nil {
+		cfg.Database = dbs
 	}
 	if !gormx.Initialized() {
 		database := &gormx.Config{}
@@ -147,8 +148,8 @@ func (cfg *Config) InitDatabase() error {
 	return nil
 }
 
-// InitRedis 初始化缓存
-func (cfg *Config) InitRedis() error {
+// 初始化缓存
+func (cfg *Config) initRedis() error {
 	// 读取redis配置并初始化
 	rds := anyx.IfZero(cfg.Redis, &redisx.Configs{})
 	if err := configx.ConfiguratorReadAndExecute(rds); err == nil {
@@ -163,8 +164,8 @@ func (cfg *Config) InitRedis() error {
 	return nil
 }
 
-// InitCache 初始化缓存
-func (cfg *Config) InitCache() error {
+// 初始化缓存
+func (cfg *Config) initCache() error {
 	if redisx.Initialized() {
 		caches := anyx.IfZero(cfg.Cache, &cachex.Configs{})
 		if err := configx.ConfiguratorReadAndExecute(caches); err == nil {

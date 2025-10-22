@@ -1,6 +1,7 @@
 package configx
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/go-xuan/quanx/constx"
@@ -29,18 +30,20 @@ func (r *FileReader) Anchor(dir string) {
 	}
 }
 
+func (r *FileReader) Location() string {
+	return fmt.Sprintf("file@%s", r.GetPath())
+}
+
+// Read 读取配置文件
 func (r *FileReader) Read(v any) error {
 	if r.Data == nil {
-		r.Anchor(constx.DefaultConfigDir)
-		path := filepath.Join(r.Dir, r.Name)
-		if !filex.Exists(path) {
+		if path := r.GetPath(); !filex.Exists(path) {
 			return errorx.Errorf("file not exist: %s", filex.Pwd(path))
-		}
-		data, err := filex.ReadFile(path)
-		if err != nil {
+		} else if data, err := filex.ReadFile(path); err != nil {
 			return errorx.Wrap(err, "file reader read error")
+		} else {
+			r.Data = data
 		}
-		r.Data = data
 	}
 	if err := marshalx.Apply(r.Name).Unmarshal(r.Data, v); err != nil {
 		return errorx.Wrap(err, "file reader unmarshal error")
@@ -48,22 +51,15 @@ func (r *FileReader) Read(v any) error {
 	return nil
 }
 
-func (r *FileReader) Location() string {
-	return "local@" + filepath.Join(r.Dir, r.Name)
-}
-
+// Write 写入配置文件
 func (r *FileReader) Write(v any) error {
-	if r.Data == nil {
-		data, err := marshalx.Apply(r.Name).Marshal(v)
-		if err != nil {
-			return errorx.Wrap(err, "file reader marshal error")
-		}
-		r.Data = data
-	}
-	r.Anchor(constx.DefaultConfigDir)
-	path := filepath.Join(r.Dir, r.Name)
-	if err := filex.WriteFile(path, r.Data); err != nil {
+	if err := marshalx.Apply(r.Name).Write(r.GetPath(), v); err != nil {
 		return errorx.Wrap(err, "file reader write error")
 	}
 	return nil
+}
+
+func (r *FileReader) GetPath() string {
+	r.Anchor(constx.DefaultConfigDir)
+	return filepath.Join(r.Dir, r.Name)
 }

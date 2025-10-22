@@ -5,6 +5,11 @@ import (
 	"github.com/go-xuan/utilx/osx"
 )
 
+// NewEnvReader 创建环境变量读取器
+func NewEnvReader() Reader {
+	return &EnvReader{}
+}
+
 // EnvReader 环境变量读取器，根据env标签读取环境变量作为配置值
 type EnvReader struct{}
 

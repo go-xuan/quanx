@@ -4,19 +4,19 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
-	"github.com/go-xuan/quanx/serverx"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/marshalx"
 	"github.com/go-xuan/utilx/taskx"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/gormx"
 	"github.com/go-xuan/quanx/nacosx"
+	"github.com/go-xuan/quanx/serverx"
 )
 
 // queue task name
@@ -24,7 +24,7 @@ const (
 	StepInitConfig  = "init_config"  // 初始化配置
 	StepRunExecutes = "run_executes" // 运行自定义函数
 	StepRunServer   = "run_server"   // 运行服务
-	StepRunning     = "running"
+	engineRunning   = "running"
 )
 
 var engine *Engine
@@ -33,10 +33,15 @@ var engine *Engine
 func GetEngine() *Engine {
 	if engine == nil {
 		engine = NewEngine(
-			InitServer(&serverx.Config{Debug: true}),
+			InitServerConfig(serverx.DefaultConfig()),
 		)
 	}
 	return engine
+}
+
+// GetConfig 获取当前配置
+func GetConfig() *Config {
+	return GetEngine().config
 }
 
 // NewEngine 初始化Engine
@@ -44,9 +49,9 @@ func NewEngine(opts ...EngineOption) *Engine {
 	if engine == nil {
 		engine = &Engine{
 			config:        &Config{},
-			executes:      make([]taskx.Execute, 0),
-			servers:       make([]serverx.Server, 0),
 			configurators: make([]configx.Configurator, 0),
+			servers:       make([]serverx.Server, 0),
+			executes:      make([]taskx.Execute, 0),
 			tablers:       make(map[string][]interface{}),
 			flags:         make(map[string]bool),
 		}
@@ -61,12 +66,12 @@ func NewEngine(opts ...EngineOption) *Engine {
 // Engine 服务启动器
 type Engine struct {
 	config        *Config                  // 服务配置
+	configurators []configx.Configurator   // 自定义配置器，使用 AddConfigurator() 添加对象
 	servers       []serverx.Server         // http/grpc服务
-	executes      []taskx.Execute          // 自定义初始化函数 使用 addExecute()添加自定义函数
-	configurators []configx.Configurator   // 自定义配置器，使用 addConfigurator()添加配置器对象，被添加对象必须为指针类型，且需要实现 configx.Configurator 接口
-	tablers       map[string][]interface{} // gorm表结构对象，使用 addTable() / addSourceTable() 添加至表结构初始化任务列表，需要实现 gormx.Tabler 接口
+	executes      []taskx.Execute          // 自定义初始化函数，使用 AddExecute() 添加对象
+	tablers       map[string][]interface{} // gorm表结构对象，使用 AddTable() / AddSourceTable() 添加对象
 	flags         map[string]bool          // 服务运行标识
-	queue         *taskx.QueueScheduler    // Engine启动步骤队列
+	queue         *taskx.QueueScheduler    // Engine启动队列
 }
 
 // LoadOption 加载配置选项
@@ -81,7 +86,11 @@ func (e *Engine) LoadOption(options ...EngineOption) {
 func (e *Engine) RUN(ctx context.Context) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Error("engine run panic: ", err)
+			logger := log.WithField("error", err)
+			if _, file, line, ok := runtime.Caller(4); ok {
+				logger = logger.WithField("file", file).WithField("line", line)
+			}
+			logger.Panic("engine run panic")
 			return
 		}
 	}()
@@ -94,7 +103,7 @@ func (e *Engine) RUN(ctx context.Context) {
 
 // 检查服务运行状态
 func (e *Engine) runningCheck() {
-	if e.flags[StepRunning] {
+	if e.flags[engineRunning] {
 		panic("server has already running")
 	}
 }
@@ -114,7 +123,8 @@ func (e *Engine) initConfig(ctx context.Context) error {
 	e.flags[StepInitConfig] = true
 
 	// 初始化配置
-	if err := e.config.Init(constx.GetDefaultConfigPath()); err != nil {
+	reader := configx.DefaultReader()
+	if err := e.config.Init(reader); err != nil {
 		return errorx.Wrap(err, "init config error")
 	}
 
@@ -165,34 +175,37 @@ func (e *Engine) runServer(ctx context.Context) error {
 	e.flags[StepRunServer] = true
 
 	// 启动服务
-	for _, server := range e.servers {
-		if err := server.Run(e.config.Server); err != nil {
-			return errorx.Wrap(err, "server run error")
+	if srv := e.config.Server; srv != nil {
+		for _, server := range e.servers {
+			if err := server.Run(srv); err != nil {
+				return errorx.Wrap(err, "server run error")
+			}
 		}
 	}
+	// 服务运行标识
+	e.flags[engineRunning] = true
 
-	e.flags[StepRunning] = true
-
-	quit := make(chan os.Signal, 1)
 	// 接收 SIGINT（Ctrl+C）、SIGTERM（kill 命令）信号
+	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	// 设定超时时间
+	// 设定超时时间，确保服务有足够时间关闭
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	// 关闭服务
-	e.Shutdown(ctx)
+	e.shutdownServer(ctx)
+
 	return nil
 }
 
-// Shutdown 关闭服务
-func (e *Engine) Shutdown(ctx context.Context) {
+// 关闭服务
+func (e *Engine) shutdownServer(ctx context.Context) {
 	for _, server := range e.servers {
 		server.Shutdown(ctx)
 	}
-	e.flags[StepRunning] = false
+	e.flags[engineRunning] = false
 }
 
 // 添加服务
@@ -225,15 +238,15 @@ func (e *Engine) addSourceTable(source string, tablers ...interface{}) {
 }
 
 // 前插队添加任务
-func (e *Engine) addTaskBefore(base, name string, task func(context.Context) error) {
+func (e *Engine) addTaskBefore(baseStep, name string, task func(context.Context) error) {
 	e.runningCheck()
-	e.queue.AddBefore(base, name, task)
+	e.queue.AddBefore(baseStep, name, task)
 }
 
 // 后插队添加任务
-func (e *Engine) addTaskAfter(base, name string, task func(context.Context) error) {
+func (e *Engine) addTaskAfter(baseStep, name string, task func(context.Context) error) {
 	e.runningCheck()
-	e.queue.AddAfter(base, name, task)
+	e.queue.AddAfter(baseStep, name, task)
 }
 
 // ReadLocalConfig 读取本地配置项（立即执行）
