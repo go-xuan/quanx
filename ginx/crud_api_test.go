@@ -1,10 +1,10 @@
 package ginx
 
 import (
-	"gorm.io/gorm"
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func TestCrudApiRouter(t *testing.T) {

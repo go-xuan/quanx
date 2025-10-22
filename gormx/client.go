@@ -9,11 +9,11 @@ type Client struct {
 	db     *gorm.DB
 }
 
-func (c *Client) Instance() *gorm.DB {
+func (c *Client) GetInstance() *gorm.DB {
 	return c.db
 }
 
-func (c *Client) Config() *Config {
+func (c *Client) GetConfig() *Config {
 	return c.config
 }
 
@@ -21,11 +21,11 @@ func (c *Client) Copy(target, database string) (*Client, error) {
 	config := c.config.Copy()
 	config.Source = target
 	config.Database = database
-	if db, err := config.NewGormDB(); err != nil {
-		config.LogEntry().WithField("error", err.Error()).Error("database connect failed")
+	if client, err := config.NewClient(); err != nil {
+		config.LogEntry().WithField("error", err.Error()).Error("new gorm client failed")
 		return nil, err
 	} else {
-		config.LogEntry().Info("database connect success")
-		return &Client{config: config, db: db}, nil
+		config.LogEntry().Info("new gorm client success")
+		return client, nil
 	}
 }

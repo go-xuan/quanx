@@ -40,9 +40,9 @@ type AnyHandler interface {
 	Any(ctx *gin.Context)
 }
 
-// BindRouter 绑定路由
+// BindHandlerRouter 绑定Handler路由
 // handler必须实现 Handler 接口，按需实现 GetHandler, PostHandler ... 等接口
-func BindRouter(router *gin.RouterGroup, handler Handler, middleware ...gin.HandlerFunc) {
+func BindHandlerRouter(router *gin.RouterGroup, handler Handler, middleware ...gin.HandlerFunc) {
 	// 设置路由和中间件
 	group := router.Group(handler.RelativePath(), middleware...)
 	if impl, ok := handler.(GetHandler); ok {

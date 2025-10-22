@@ -1,15 +1,21 @@
 package configx
 
 import (
+	"fmt"
+
 	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
 )
 
-func NewTagReader(tag ...string) *TagReader {
-	if len(tag) > 0 {
-		return &TagReader{Tag: tag[0]}
+// NewTagReader 创建tag读取器
+func NewTagReader(tags ...string) *TagReader {
+	tag := "default"
+	if len(tags) > 0 && tags[0] != "" {
+		tag = tags[0]
 	}
-	return &TagReader{}
+	return &TagReader{
+		Tag: tag,
+	}
 }
 
 // TagReader tag读取器，获取tag值作为配置值
@@ -32,5 +38,5 @@ func (r *TagReader) Read(v any) error {
 }
 
 func (r *TagReader) Location() string {
-	return "tag@" + r.Tag
+	return fmt.Sprintf("tag@%s", r.Tag)
 }

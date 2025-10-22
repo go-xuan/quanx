@@ -1,8 +1,7 @@
 package configx
 
 import (
-	"reflect"
-
+	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,7 +15,7 @@ type Configurator interface {
 
 // ConfiguratorReadAndExecute 读取配置并运行
 func ConfiguratorReadAndExecute(configurator Configurator) error {
-	var logger = log.WithField("type", reflect.TypeOf(configurator).String())
+	var logger = log.WithField("type", anyx.TypeOf(configurator).String())
 
 	location, err := ConfiguratorRead(configurator)
 	logger = logger.WithField("location", location)
@@ -39,7 +38,7 @@ func ConfiguratorReadAndExecute(configurator Configurator) error {
 // ConfiguratorRead 读取配置
 func ConfiguratorRead(configurator Configurator) (string, error) {
 	if configurator.Valid() {
-		return "origin", nil
+		return "", nil
 	}
 
 	readers := configurator.Readers()
@@ -47,8 +46,8 @@ func ConfiguratorRead(configurator Configurator) (string, error) {
 		return "", errorx.New("configurator reader is empty")
 	}
 
+	// 按照读取器的先后顺序依次读取配置
 	for _, reader := range readers {
-		// 按照读取器的先后顺序依次读取配置
 		if err := ReadWithReader(configurator, reader); err == nil && configurator.Valid() {
 			return reader.Location(), nil
 		}

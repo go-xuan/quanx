@@ -33,26 +33,22 @@ func GetClient(source ...string) *Client {
 }
 
 // AddClient 添加客户端
-func AddClient(config *Config, cli redis.UniversalClient) {
-	if config == nil || cli == nil {
-		return
-	}
-	client := &Client{config: config, client: cli}
+func AddClient(client *Client) {
 	if !Initialized() {
 		pool = typex.NewStringEnum[*Client]()
 		this().Add("default", client)
 	}
-	this().Add(config.Source, client)
+	this().Add(client.GetConfig().Source, client)
 }
 
 // GetConfig 获取配置
 func GetConfig(source ...string) *Config {
-	return GetClient(source...).Config()
+	return GetClient(source...).GetConfig()
 }
 
 // GetInstance 获取数据库连接
 func GetInstance(source ...string) redis.UniversalClient {
-	return GetClient(source...).Instance()
+	return GetClient(source...).GetInstance()
 }
 
 // CopyDatabase 复制redis库

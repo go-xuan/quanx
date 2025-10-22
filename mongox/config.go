@@ -31,6 +31,24 @@ type Config struct {
 	Debug           bool   `json:"debug" yaml:"debug"`                                       // debug模式（日志打印）
 }
 
+func (c *Config) Copy() *Config {
+	return &Config{
+		Source:          c.Source,
+		Enable:          c.Enable,
+		URI:             c.URI,
+		AuthMechanism:   c.AuthMechanism,
+		AuthSource:      c.AuthSource,
+		Username:        c.Username,
+		Password:        c.Password,
+		Database:        c.Database,
+		MaxPoolSize:     c.MaxPoolSize,
+		MinPoolSize:     c.MinPoolSize,
+		MaxConnIdleTime: c.MaxConnIdleTime,
+		Timeout:         c.Timeout,
+		Debug:           c.Debug,
+	}
+}
+
 // LogEntry 日志打印实体类
 func (c *Config) LogEntry() *log.Entry {
 	return log.WithFields(log.Fields{

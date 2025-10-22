@@ -75,11 +75,11 @@ func (c *Config) Valid() bool {
 
 func (c *Config) Execute() error {
 	if c.Enable {
-		if client, err := c.NewRedisClient(); err != nil {
+		if client, err := c.NewClient(); err != nil {
 			c.LogEntry().WithField("error", err.Error()).Error("redis init failed")
-			return errorx.Wrap(err, "redis init error")
+			return errorx.Wrap(err, "new redis client error")
 		} else {
-			AddClient(c, client)
+			AddClient(client)
 			c.LogEntry().Info("redis init success")
 		}
 	}
@@ -88,6 +88,17 @@ func (c *Config) Execute() error {
 
 func (c *Config) Address() string {
 	return fmt.Sprintf("%s:%d", c.Host, c.Port)
+}
+
+func (c *Config) NewClient() (*Client, error) {
+	if client, err := c.NewRedisClient(); err != nil {
+		return nil, errorx.Wrap(err, "redis init failed")
+	} else {
+		return &Client{
+			config: c,
+			client: client,
+		}, nil
+	}
 }
 
 // NewRedisClient 初始化redis客户端
@@ -120,7 +131,10 @@ func (c *Config) NewRedisClient() (redis.UniversalClient, error) {
 		return nil, errors.New("redis mode is invalid")
 	}
 	if result, err := client.Ping(context.TODO()).Result(); err != nil || result != "PONG" {
-		c.LogEntry().WithField("error", err.Error()).Error("client ping failed")
+		if err != nil {
+			result = err.Error()
+		}
+		c.LogEntry().WithField("error", result).Error("client ping failed")
 		return client, errorx.Wrap(err, "client ping error")
 	}
 	return client, nil

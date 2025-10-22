@@ -60,9 +60,9 @@ func NewMongoWriter(collection string) io.Writer {
 	if mongox.Initialized() {
 		client := mongox.GetClient(logWriterSource)
 		return &MongoWriter{
-			database:   client.Config().Database,
+			database:   client.GetConfig().Database,
 			collection: collection,
-			client:     client.Instance(),
+			client:     client.GetInstance(),
 		}
 	}
 	return nil

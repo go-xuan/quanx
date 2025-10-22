@@ -3,7 +3,6 @@ package quanx
 import (
 	"context"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/utilx/taskx"
 
 	"github.com/go-xuan/quanx/configx"
@@ -13,36 +12,10 @@ import (
 // EngineOption 配置选项
 type EngineOption = func(e *Engine)
 
-// SetPort 设置服务端口
-func SetPort(port int) EngineOption {
+// InitServerConfig 初始化服务配置
+func InitServerConfig(server *serverx.Config) EngineOption {
 	return func(e *Engine) {
-		if server := e.config.Server; server == nil {
-			e.config.Server = &serverx.Config{
-				Port: port,
-			}
-		} else {
-			server.Port = port
-		}
-	}
-}
-
-// Debug 启用debug
-func Debug() EngineOption {
-	return func(e *Engine) {
-		if server := e.config.Server; server == nil {
-			e.config.Server = &serverx.Config{
-				Debug: true,
-			}
-		} else {
-			server.Debug = true
-		}
-	}
-}
-
-// SetConfig 自定义应用配置
-func SetConfig(config *Config) EngineOption {
-	return func(e *Engine) {
-		e.config = config
+		e.config.Server = server
 	}
 }
 
@@ -60,17 +33,10 @@ func AddExecute(executes ...taskx.Execute) EngineOption {
 	}
 }
 
-// AddGinRouter 添加gin的路由加载函数
-func AddGinRouter(router ...func(*gin.RouterGroup)) EngineOption {
+// AddServer 添加服务
+func AddServer(server ...serverx.Server) EngineOption {
 	return func(e *Engine) {
-		e.addGinRouter(router...)
-	}
-}
-
-// AddGinMiddleware 添加gin中间件
-func AddGinMiddleware(middleware ...gin.HandlerFunc) EngineOption {
-	return func(e *Engine) {
-		e.addGinMiddleware(middleware...)
+		e.addServer(server...)
 	}
 }
 
@@ -89,16 +55,16 @@ func AddSourceTable(source string, tablers ...interface{}) EngineOption {
 }
 
 // AddTaskBefore 前插队添加任务
-func AddTaskBefore(base, name string, task func(context.Context) error) EngineOption {
+func AddTaskBefore(baseStep, name string, task func(context.Context) error) EngineOption {
 	return func(e *Engine) {
-		e.addTaskBefore(base, name, task)
+		e.addTaskBefore(baseStep, name, task)
 	}
 }
 
 // AddTaskAfter 后插队添加任务
-func AddTaskAfter(base, name string, task func(context.Context) error) EngineOption {
+func AddTaskAfter(baseStep, name string, task func(context.Context) error) EngineOption {
 	return func(e *Engine) {
-		e.addTaskAfter(base, name, task)
+		e.addTaskAfter(baseStep, name, task)
 	}
 }
 
@@ -110,8 +76,8 @@ func ReadLocalConfig(config any, path string) EngineOption {
 }
 
 // ReadNacosConfig 读取nacos配置（需保证nacos已经提前初始化，所以以自定义函数的形式延迟执行）
-func ReadNacosConfig(v any, dataId string, listen ...bool) EngineOption {
+func ReadNacosConfig(config any, dataId string, listen ...bool) EngineOption {
 	return func(e *Engine) {
-		e.readNacosConfig(v, dataId, listen...)
+		e.readNacosConfig(config, dataId, listen...)
 	}
 }

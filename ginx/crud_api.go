@@ -14,13 +14,15 @@ import (
 	"github.com/go-xuan/quanx/modelx"
 )
 
-func NewCrudApi[T any](group *gin.RouterGroup, db *gorm.DB) {
-	var api = &Model[T]{DB: db}
-	group.GET("list", api.List)      // 列表
-	group.POST("create", api.Create) // 新增
-	group.POST("update", api.Update) // 修改
-	group.GET("delete", api.Delete)  // 删除
-	group.GET("detail", api.Detail)  // 明细
+func NewCrudApi[T any](router *gin.RouterGroup, db *gorm.DB) {
+	var api = &Model[T]{
+		DB: db,
+	}
+	router.GET("list", api.List)      // 列表
+	router.POST("create", api.Create) // 新增
+	router.POST("update", api.Update) // 修改
+	router.GET("delete", api.Delete)  // 删除
+	router.GET("detail", api.Detail)  // 明细
 }
 
 func NewExcelApi[T any](group *gin.RouterGroup, db *gorm.DB) {
