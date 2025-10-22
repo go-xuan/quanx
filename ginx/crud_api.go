@@ -18,11 +18,11 @@ func NewCrudApi[T any](router *gin.RouterGroup, db *gorm.DB) {
 	var api = &Model[T]{
 		DB: db,
 	}
-	router.GET("list", api.List)      // 列表
-	router.POST("create", api.Create) // 新增
-	router.POST("update", api.Update) // 修改
-	router.GET("delete", api.Delete)  // 删除
-	router.GET("detail", api.Detail)  // 明细
+	router.GET("list", api.List)        // 列表
+	router.GET("detail", api.Detail)    // 明细
+	router.POST("create", api.Create)   // 新增
+	router.PUT("update", api.Update)    // 修改
+	router.DELETE("delete", api.Delete) // 删除
 }
 
 func NewExcelApi[T any](group *gin.RouterGroup, db *gorm.DB) {

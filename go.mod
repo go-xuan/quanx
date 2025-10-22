@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/gin-gonic/gin v1.9.0 // v1.9.1版本需要升级到go 1.20
 	github.com/go-xuan/typex v1.25.3
-	github.com/go-xuan/utilx v1.25.9
+	github.com/go-xuan/utilx v1.25.10
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/minio/minio-go/v7 v7.0.61 // v7.0.61以上版本依赖的github.com/klauspost/compress的v1.16.7版本需要升级go 1.22

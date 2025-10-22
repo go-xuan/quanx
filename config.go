@@ -77,7 +77,7 @@ func (cfg *Config) Init(reader configx.Reader) error {
 		return errorx.Wrap(err, "init cache error")
 	}
 
-	// 覆盖应用配置
+	// 覆盖服务配置
 	cfg.coverServerConfig(server)
 
 	return nil
@@ -85,14 +85,17 @@ func (cfg *Config) Init(reader configx.Reader) error {
 
 // 覆盖预设服务配置
 func (cfg *Config) coverServerConfig(server *serverx.Config) {
+	if cfg.Server == nil {
+		return
+	}
 	if server != nil {
-		cfg.Server = server
+		cfg.Server.Cover(server)
 		return
 	}
 	if nacosx.Initialized() {
 		var config = &Config{}
 		if err := nacosx.NewReader(constx.DefaultConfigName).Read(config); err == nil {
-			cfg.Server = config.Server
+			cfg.Server.Cover(config.Server)
 			return
 		}
 	}
