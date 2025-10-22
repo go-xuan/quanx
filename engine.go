@@ -71,7 +71,7 @@ type Engine struct {
 	executes      []taskx.Execute          // 自定义初始化函数，使用 AddExecute() 添加对象
 	tablers       map[string][]interface{} // gorm表结构对象，使用 AddTable() / AddSourceTable() 添加对象
 	flags         map[string]bool          // 服务运行标识
-	queue         *taskx.QueueScheduler    // Engine启动队列
+	queue         *taskx.Queue             // Engine启动队列
 }
 
 // LoadOption 加载配置选项
@@ -110,7 +110,7 @@ func (e *Engine) runningCheck() {
 
 // InitQueue 初始化队列
 func (e *Engine) initQueue() {
-	queue := taskx.NewQueueScheduler("engine")
+	queue := taskx.NewQueue("engine")
 	queue.Add(StepInitConfig, engine.initConfig)   // 1.初始化配置
 	queue.Add(StepRunExecutes, engine.runExecutes) // 2.运行自定义函数
 	queue.Add(StepRunServer, engine.runServer)     // 3.运行服务
