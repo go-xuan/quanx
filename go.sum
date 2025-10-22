@@ -41,10 +41,10 @@ github.com/go-playground/validator/v10 v10.11.2 h1:q3SHpufmypg+erIExEKUmsgmhDTyh
 github.com/go-playground/validator/v10 v10.11.2/go.mod h1:NieE624vt4SCTJtD87arVLvdmjPAeV8BQlHtMnw9D7s=
 github.com/go-sql-driver/mysql v1.8.1 h1:LedoTUt/eveggdHS9qUFC1EFSa8bU2+1pZjSRpvNJ1Y=
 github.com/go-sql-driver/mysql v1.8.1/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqwuVSjsCm7DZg=
-github.com/go-xuan/typex v1.25.2 h1:/qTKPnAOiPRq8hJv5b99R9K7PkaN7ZsKSG7McfVdzV0=
-github.com/go-xuan/typex v1.25.2/go.mod h1:q7/j65RGZYHwX0PEpPdd8hZCBcusUzwXvJzzyjW5kao=
-github.com/go-xuan/utilx v1.25.8 h1:bgk0CmRb+JlO3oONoa+4zIsO/ygTsW5joHjdM0UKX8A=
-github.com/go-xuan/utilx v1.25.8/go.mod h1:3hTiBfANDnDxLDwucqSBT9HnkMfTUZ7tLrtYCx6DRjk=
+github.com/go-xuan/typex v1.25.3 h1:h1etBnwzy43FRA/tW4yR+MOMDyIK7SnCJIi8/vhYG8c=
+github.com/go-xuan/typex v1.25.3/go.mod h1:q7/j65RGZYHwX0PEpPdd8hZCBcusUzwXvJzzyjW5kao=
+github.com/go-xuan/utilx v1.25.9 h1:N2tG3AklYh9aGMqGcP86aBzVn4vco/WD1N95e99WAvA=
+github.com/go-xuan/utilx v1.25.9/go.mod h1:4deiWxShU7aHRTrJaSoAeJq2mwxsFOhmqHzOJNhzpRo=
 github.com/goccy/go-json v0.10.0 h1:mXKd9Qw4NuzShiRlOXKews24ufknHO7gx30lsDyokKA=
 github.com/goccy/go-json v0.10.0/go.mod h1:6MelG93GURQebXPDq3khkgXZkazVtN9CRI+MGFi0w8I=
 github.com/goji/httpauth v0.0.0-20160601135302-2da839ab0f4d/go.mod h1:nnjvkQ9ptGaCkuDUx6wNykzzlUixGxvkme+H/lnzb+A=
