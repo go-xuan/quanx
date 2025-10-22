@@ -38,12 +38,8 @@ func (s *GinServer) Run(config *Config) error {
 		s.prepare(s.engine)
 
 		if config.Debug {
-			gin.SetMode(gin.DebugMode)
 			for _, info := range s.engine.Routes() {
-				log.WithField("method", info.Method).
-					WithField("path", info.Path).
-					WithField("handler", info.Handler).
-					Debug("http route info")
+				fmt.Printf("%6s %-50s %s\n", info.Method, info.Path, info.Handler)
 			}
 		}
 		s.srv = &http.Server{

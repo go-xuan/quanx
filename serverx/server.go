@@ -30,6 +30,25 @@ type Config struct {
 	Grpc  int    `json:"grpc" yaml:"grpc"`   // grpc服务端口, 0表示不开启grpc服务
 }
 
+// Cover 覆盖默认配置
+func (a *Config) Cover(config *Config) {
+	if config.Name != "" {
+		a.Name = config.Name
+	}
+	if config.Debug {
+		a.Debug = config.Debug
+	}
+	if config.Host != "" {
+		a.Host = config.Host
+	}
+	if config.Http != 0 {
+		a.Http = config.Http
+	}
+	if config.Grpc != 0 {
+		a.Grpc = config.Grpc
+	}
+}
+
 // GetName 获取服务名
 func (a *Config) GetName() string {
 	return a.Name
