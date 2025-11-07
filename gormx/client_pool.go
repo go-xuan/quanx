@@ -15,7 +15,7 @@ func Initialized() bool {
 
 func this() *typex.Enum[string, *Client] {
 	if !Initialized() {
-		panic("gorm client not initialized, please check the relevant config")
+		panic("gorm client pool not initialized, please check the relevant config")
 	}
 	return pool
 }

@@ -26,6 +26,7 @@ type HookConfig struct {
 	Levels []string `json:"levels" yaml:"levels"`
 }
 
+// NewHook 创建日志钩子
 func (c *HookConfig) NewHook(name string, formatter log.Formatter) *Hook {
 	hook := NewHook(formatter)
 	for _, lv := range c.Levels {
@@ -46,10 +47,12 @@ type Hook struct {
 	formatter log.Formatter
 }
 
+// Levels 获取日志钩子级别
 func (h *Hook) Levels() []log.Level {
 	return h.levels
 }
 
+// Fire 日志钩子触发
 func (h *Hook) Fire(entry *log.Entry) error {
 	if caller := getCaller(); caller != nil {
 		_, fileName := stringx.Cut(caller.File, "/", -1)
@@ -94,6 +97,7 @@ var (
 	callerOnce sync.Once
 )
 
+// 获取调用栈信息
 func getCaller() *runtime.Frame {
 	pcs := make([]uintptr, 32)
 	depth := runtime.Callers(4, pcs)
@@ -109,6 +113,7 @@ func getCaller() *runtime.Frame {
 	return nil
 }
 
+// 获取包名
 func getPackageName(function string) string {
 	for {
 		period, slash := stringx.Index(function, ".", -1), stringx.Index(function, "/", -1)

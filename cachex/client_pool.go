@@ -13,7 +13,7 @@ func Initialized() bool {
 
 func this() *typex.Enum[string, Client] {
 	if !Initialized() {
-		panic("cache cache not initialized, please check the relevant config")
+		panic("cache client pool not initialized, please check the relevant config")
 	}
 	return pool
 }
@@ -29,12 +29,12 @@ func GetClient(source ...string) Client {
 }
 
 // AddClient 添加客户端
-func AddClient(config *Config, client Client) {
+func AddClient(source string, client Client) {
 	if !Initialized() {
 		pool = typex.NewStringEnum[Client]()
 		this().Add("default", client)
 	}
-	this().Add(config.Source, client)
+	this().Add(source, client)
 }
 
 // GetConfig 获取配置

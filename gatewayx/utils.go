@@ -16,7 +16,9 @@ func GetServerProxyURL(url string) (string, error) {
 				return "", errorx.Wrap(err, "proxy instance not found")
 			} else {
 				return fmt.Sprintf("http://%s:%d/%s",
-					instance.GetHost(), instance.GetPort(), strings.TrimPrefix(proxy.Prefix, "/")), nil
+					instance.GetHost(),
+					instance.GetPort(),
+					strings.TrimPrefix(proxy.Prefix, "/")), nil
 			}
 		}
 	}

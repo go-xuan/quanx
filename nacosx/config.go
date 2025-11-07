@@ -39,8 +39,7 @@ type Config struct {
 func (c *Config) LogEntry() *log.Entry {
 	return log.WithFields(log.Fields{
 		"address":   c.AddressUrl(),
-		"username":  c.Username,
-		"password":  c.Password,
+		"group":     c.Group,
 		"namespace": c.Namespace,
 		"mode":      c.Mode,
 	})
@@ -97,7 +96,7 @@ func (c *Config) AddressUrl() string {
 	return c.Address + "/nacos"
 }
 
-// EnableNaming 开启服务注册
+// EnableNaming 是否开启服务注册
 func (c *Config) EnableNaming() bool {
 	return c.Mode == OnlyNaming || c.Mode == ConfigAndNaming
 }

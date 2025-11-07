@@ -10,6 +10,26 @@ import (
 	"github.com/go-xuan/quanx/nacosx"
 )
 
+// 日志级别
+const (
+	LevelTrace = "trace"
+	LevelDebug = "debug"
+	LevelInfo  = "info"
+	LevelError = "error"
+	LevelFatal = "fatal"
+	LevelPanic = "panic"
+
+	WriterConsole       = "console" // 控制台打印
+	WriterFile          = "file"    // 写入日志文件
+	WriterMongo         = "mongo"   // 写入Mongo
+	WriterElasticSearch = "es"      // 写入ES
+
+	FormatterText   = "text"                    // 文本格式化
+	FormatterJson   = "json"                    // json格式化
+	TimeFormat      = "2006-01-02 15:04:05.999" // 时间格式化
+	logWriterSource = "log"                     // 日志写入源
+)
+
 var config *Config
 
 func GetConfig() *Config {
@@ -25,28 +45,6 @@ func init() {
 		panic(err)
 	}
 }
-
-// 日志级别
-const (
-	LevelTrace = "trace"
-	LevelDebug = "debug"
-	LevelInfo  = "info"
-	LevelError = "error"
-	LevelFatal = "fatal"
-	LevelPanic = "panic"
-
-	WriterToConsole = "console" // 控制台打印
-	WriterToFile    = "file"    // 写入日志文件
-	WriterToMongo   = "mongo"   // 写入Mongo
-	WriterToES      = "es"      // 写入ES
-
-	FormatterText = "text" // 文本格式化
-	FormatterJson = "json" // json格式化
-
-	TimeFormat = "2006-01-02 15:04:05.999"
-
-	logWriterSource = "log"
-)
 
 // Config 日志配置
 type Config struct {

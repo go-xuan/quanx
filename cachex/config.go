@@ -24,7 +24,7 @@ type Config struct {
 	Type    string `json:"type" yaml:"type" default:"local"`       // 缓存类型（local/redis）
 	Source  string `json:"source" yaml:"source" default:"default"` // 缓存存储数据源名称
 	Prefix  string `json:"prefix" yaml:"prefix" default:"local"`   // 缓存key前缀前缀
-	Marshal string `json:"marshal" yaml:"marshal" default:"json"`  // 序列化方案
+	Marshal string `json:"marshal" yaml:"marshal" default:"json"`  // 序列化方式（json/yaml/msgpack/properties/toml）
 }
 
 func (c *Config) LogFields() log.Fields {
@@ -50,11 +50,11 @@ func (c *Config) Readers() []configx.Reader {
 
 func (c *Config) Execute() error {
 	if client, err := c.NewClient(); err != nil {
-		logx.WithEntity(c).WithField("error", err.Error()).Error("cache init failed")
-		return errorx.Wrap(err, "new cache error")
+		logx.WithEntity(c).WithField("error", err.Error()).Error("cache client init failed")
+		return errorx.Wrap(err, "new cache client error")
 	} else {
-		logx.WithEntity(c).Info("cache init success")
-		AddClient(c, client)
+		logx.WithEntity(c).Info("cache client init success")
+		AddClient(c.Source, client)
 	}
 	return nil
 }
@@ -75,7 +75,7 @@ func (c *Config) NewClient() (Client, error) {
 			marshal: marshalx.Apply(c.Marshal),
 		}, nil
 	default:
-		return nil, errorx.New("not support type: " + c.Type)
+		return nil, errorx.New("not support cache client type: " + c.Type)
 	}
 }
 

@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
-	
+
 	"github.com/go-xuan/quanx/cachex"
 )
 
@@ -30,6 +30,7 @@ func AuthValidate() AuthValidator {
 	return authValidator
 }
 
+// AuthCache 获取token缓存客户端
 func AuthCache() cachex.Client {
 	if authCacheClient == nil {
 		authCacheClient = cachex.GetClient("auth")
@@ -48,9 +49,9 @@ type AuthValidator interface {
 
 // AuthUser 鉴权用户
 type AuthUser interface {
-	UserId() typex.Value // 用户ID
-	Username() string    // 用户名
-	TTL() int            // 存活时长，秒
+	GetUserId() typex.Value // 用户ID
+	GetUsername() string    // 用户名
+	GetTTL() int            // 存活时长，秒
 }
 
 // SetSessionUser 设置会话用户
@@ -72,10 +73,10 @@ func GetSessionUser(ctx *gin.Context) AuthUser {
 func SetAuthCookie(ctx *gin.Context, user AuthUser) (string, error) {
 	if cookie, err := AuthValidate().Encrypt(user); err != nil {
 		return "", errorx.Wrap(err, "new cookie error")
-	} else if err = AuthCache().Set(ctx, user.UserId().String(), cookie, time.Duration(user.TTL())*time.Second); err != nil {
+	} else if err = AuthCache().Set(ctx, user.GetUserId().String(), cookie, time.Duration(user.GetTTL())*time.Second); err != nil {
 		return "", errorx.Wrap(err, "save cookie to cache error")
 	} else {
-		ctx.SetCookie(userCookieKey, cookie, user.TTL(), "", "", false, true)
+		ctx.SetCookie(userCookieKey, cookie, user.GetTTL(), "", "", false, true)
 		SetSessionUser(ctx, user)
 		return cookie, nil
 	}
@@ -90,7 +91,7 @@ func RemoveAuthCookie(ctx *gin.Context) {
 func SetAuthToken(ctx *gin.Context, user AuthUser) (string, error) {
 	if token, err := AuthValidate().Encrypt(user); err != nil {
 		return "", errorx.Wrap(err, "new token error")
-	} else if err = AuthCache().Set(ctx, user.UserId().String(), token, time.Duration(user.TTL())*time.Second); err != nil {
+	} else if err = AuthCache().Set(ctx, user.GetUserId().String(), token, time.Duration(user.GetTTL())*time.Second); err != nil {
 		return "", errorx.Wrap(err, "save token to cache error")
 	} else {
 		SetSessionUser(ctx, user)

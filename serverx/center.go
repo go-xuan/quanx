@@ -1,5 +1,7 @@
 package serverx
 
+import "github.com/go-xuan/utilx/errorx"
+
 var _center Center
 
 // Init 初始化服务中心
@@ -31,13 +33,33 @@ func getCenter() Center {
 	return _center
 }
 
+// ValidateInstance 验证服务实例
+func ValidateInstance(instance Instance) error {
+	if instance.GetName() == "" {
+		return errorx.New("server instance name is empty")
+	}
+	if instance.GetHost() == "" {
+		return errorx.New("server instance host is empty")
+	}
+	if instance.GetPort() <= 0 {
+		return errorx.New("server instance port is invalid")
+	}
+	return nil
+}
+
 // Register 注册服务实例
 func Register(instance Instance) error {
+	if err := ValidateInstance(instance); err != nil {
+		return errorx.Wrap(err, "instance is invalid")
+	}
 	return getCenter().Register(instance)
 }
 
 // Deregister 注销服务实例
 func Deregister(instance Instance) error {
+	if err := ValidateInstance(instance); err != nil {
+		return errorx.Wrap(err, "instance is invalid")
+	}
 	return getCenter().Deregister(instance)
 }
 

@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// NewFormatter 日志格式化器
 func NewFormatter(formatter, timeFormat string) log.Formatter {
 	timeFormat = stringx.IfZero(timeFormat, TimeFormat)
 	switch formatter {
@@ -28,11 +29,21 @@ func NewFormatter(formatter, timeFormat string) log.Formatter {
 	}
 }
 
+// DefaultFormatter 默认日志格式化器
 func DefaultFormatter() log.Formatter {
 	return &textFormatter{
 		timeFormat: TimeFormat,
 		hostname:   osx.Hostname(),
 	}
+}
+
+// LogRecord 日志记录
+type LogRecord struct {
+	Time     string      `json:"create_time" bson:"create_time"`
+	Level    string      `json:"level" bson:"level"`
+	Hostname string      `json:"hostname" bson:"hostname"`
+	Message  string      `json:"message" bson:"message"`
+	Data     interface{} `json:"data" bson:"data"`
 }
 
 type jsonFormatter struct {
@@ -79,6 +90,7 @@ func (f *textFormatter) Format(entry *log.Entry) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
+// Color 日志颜色，根据日志级别对日志内容染色
 func Color(level log.Level, data []byte) []byte {
 	switch level {
 	case log.InfoLevel:
@@ -92,6 +104,7 @@ func Color(level log.Level, data []byte) []byte {
 	}
 }
 
+// LevelString 日志级别字符串
 func LevelString(level log.Level, length ...int) string {
 	var str string
 	switch level {
@@ -116,12 +129,4 @@ func LevelString(level log.Level, length ...int) string {
 		return str[:length[0]]
 	}
 	return str
-}
-
-type LogRecord struct {
-	Time     string      `json:"create_time" bson:"create_time"`
-	Level    string      `json:"level" bson:"level"`
-	Hostname string      `json:"hostname" bson:"hostname"`
-	Message  string      `json:"message" bson:"message"`
-	Data     interface{} `json:"data" bson:"data"`
 }

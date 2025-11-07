@@ -15,7 +15,7 @@ import (
 	"github.com/go-xuan/quanx/serverx"
 )
 
-// Config 服务配置
+// Config 服务基础配置
 type Config struct {
 	Server   *serverx.Config `json:"server" yaml:"server"`     // 服务配置
 	Log      *logx.Config    `json:"log" yaml:"log"`           // 日志配置
@@ -28,16 +28,11 @@ type Config struct {
 // Init 初始化配置
 func (cfg *Config) Init(reader configx.Reader) error {
 	var server *serverx.Config
-	if s := cfg.Server; s != nil {
-		server = &serverx.Config{
-			Name:  s.Name,
-			Debug: s.Debug,
-			Host:  s.Host,
-			Http:  s.Http,
-			Grpc:  s.Grpc,
-		}
+	// 预制配置
+	if srv := cfg.Server; srv != nil {
+		server = &serverx.Config{}
+		server.Cover(srv)
 	}
-
 	// 初始化配置文件
 	if fr, ok := reader.(*configx.FileReader); ok {
 		if path := fr.GetPath(); !filex.Exists(path) {
@@ -56,9 +51,9 @@ func (cfg *Config) Init(reader configx.Reader) error {
 	if err := cfg.initNacos(); err != nil {
 		return errorx.Wrap(err, "init nacos error")
 	}
-	// 注册nacos服务实例
-	if err := cfg.registerNacosServer(); err != nil {
-		return errorx.Wrap(err, "register server instance error")
+	// 初始化服务（服务配置生效优先级：预制配置 > nacos > 配置文件）
+	if err := cfg.initServer(server); err != nil {
+		return errorx.Wrap(err, "init server error")
 	}
 	// 初始化日志
 	if err := cfg.initLog(); err != nil {
@@ -77,28 +72,7 @@ func (cfg *Config) Init(reader configx.Reader) error {
 		return errorx.Wrap(err, "init cache error")
 	}
 
-	// 覆盖服务配置
-	cfg.coverServerConfig(server)
-
 	return nil
-}
-
-// 覆盖预设服务配置
-func (cfg *Config) coverServerConfig(server *serverx.Config) {
-	if cfg.Server == nil {
-		return
-	}
-	if server != nil {
-		cfg.Server.Cover(server)
-		return
-	}
-	if nacosx.Initialized() {
-		var config = &Config{}
-		if err := nacosx.NewReader(constx.DefaultConfigName).Read(config); err == nil {
-			cfg.Server.Cover(config.Server)
-			return
-		}
-	}
 }
 
 // 初始化nacos
@@ -111,12 +85,26 @@ func (cfg *Config) initNacos() error {
 	return nil
 }
 
-// 注册nacos服务实例
-func (cfg *Config) registerNacosServer() error {
-	if nacos := cfg.Nacos; nacos != nil && nacos.EnableNaming() {
-		serverx.Init(&nacosx.ServerCenter{})
-		if err := serverx.Register(cfg.Server); err != nil {
-			return errorx.Wrap(err, "nacos register server instance error")
+// 初始化服务
+func (cfg *Config) initServer(server *serverx.Config) error {
+	if cfg.Server != nil {
+		// 覆盖nacos配置
+		if nacosx.Initialized() {
+			var config = &Config{}
+			if err := nacosx.NewReader(constx.DefaultConfigName).Read(config); err == nil {
+				cfg.Server.Cover(config.Server)
+			}
+		}
+
+		// 覆盖传入配置
+		cfg.Server.Cover(server)
+
+		// 如果nacos配置启用了服务发现，则自动注册当前服务
+		if cfg.Nacos != nil && cfg.Nacos.EnableNaming() {
+			serverx.Init(&nacosx.ServerCenter{})
+			if err := serverx.Register(cfg.Server); err != nil {
+				return errorx.Wrap(err, "register nacos server instance error")
+			}
 		}
 	}
 	return nil
@@ -151,7 +139,7 @@ func (cfg *Config) initDatabase() error {
 	return nil
 }
 
-// 初始化缓存
+// 初始化redis
 func (cfg *Config) initRedis() error {
 	// 读取redis配置并初始化
 	rds := anyx.IfZero(cfg.Redis, &redisx.Configs{})

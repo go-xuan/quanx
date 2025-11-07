@@ -11,6 +11,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// NewJwtValidator 创建JWT验证器
 func NewJwtValidator(secret string, ignore ...string) *JwtValidator {
 	return &JwtValidator{
 		secret: []byte(secret),
@@ -18,6 +19,7 @@ func NewJwtValidator(secret string, ignore ...string) *JwtValidator {
 	}
 }
 
+// JwtValidator JWT验证器
 type JwtValidator struct {
 	secret []byte   // 密钥
 	ignore []string // 白名单
@@ -97,8 +99,8 @@ func (v *JwtValidator) validate(ctx *gin.Context, ciphertext string) (*JwtUser, 
 	}); err != nil || !jt.Valid {
 		return nil, errorx.Wrap(err, "jwt decrypt error")
 	}
-	if !AuthCache().Exist(ctx, user.UserId().String()) {
-		return nil, errorx.New("auth cache has expired:" + user.UserId().String())
+	if !AuthCache().Exist(ctx, user.GetUserId().String()) {
+		return nil, errorx.New("auth cache has expired:" + user.GetUserId().String())
 	}
 	user.Update = time.Now().Unix()
 	return user, nil
@@ -127,14 +129,14 @@ func (u *JwtUser) Valid() error {
 	return nil
 }
 
-func (u *JwtUser) UserId() typex.Value {
+func (u *JwtUser) GetUserId() typex.Value {
 	return typex.Int64Value(u.Id)
 }
 
-func (u *JwtUser) Username() string {
+func (u *JwtUser) GetUsername() string {
 	return u.Name
 }
 
-func (u *JwtUser) TTL() int {
+func (u *JwtUser) GetTTL() int {
 	return anyx.IfZero(u.Age, 3600)
 }

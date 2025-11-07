@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 // Cors 跨域处理
@@ -23,22 +22,14 @@ func Cors(ctx *gin.Context) {
 	ctx.Next()
 }
 
-// DefaultLogFormatter gin请求日志格式化
-func DefaultLogFormatter(ctx *gin.Context) {
-	start := time.Now()
-	// 处理请求
+// Trace traceId
+func Trace(ctx *gin.Context) {
+	ctx.Set(traceIdKey, uuid.NewString())
 	ctx.Next()
-	// 日志格式化
-	GetLogger(ctx).Infof("[%3d][%dms][%-4s %s]",
-		ctx.Writer.Status(),
-		time.Since(start).Milliseconds(),
-		ctx.Request.Method,
-		ctx.Request.URL.Path,
-	)
 }
 
-// JsonLogFormatter gin请求日志格式化
-func JsonLogFormatter(ctx *gin.Context) {
+// LogFormatter gin请求日志格式化
+func LogFormatter(ctx *gin.Context) {
 	start := time.Now()
 	// 处理请求
 	ctx.Next()
@@ -47,22 +38,5 @@ func JsonLogFormatter(ctx *gin.Context) {
 		WithField("url", ctx.Request.URL.Path).
 		WithField("status", ctx.Writer.Status()).
 		WithField("duration", time.Since(start).Milliseconds()).
-		Info()
-}
-
-// GetLogger 获取日志包装
-func GetLogger(ctx *gin.Context) *log.Entry {
-	entry := log.WithContext(ctx).
-		WithField("traceId", TraceId(ctx)).
-		WithField("clientIp", ClientIP(ctx))
-	if user := GetSessionUser(ctx); user != nil {
-		entry = entry.WithField("userId", user.UserId())
-	}
-	return entry
-}
-
-// Trace traceId
-func Trace(ctx *gin.Context) {
-	ctx.Set(traceIdKey, uuid.NewString())
-	ctx.Next()
+		Info("new request")
 }
