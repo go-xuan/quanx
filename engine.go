@@ -23,7 +23,7 @@ import (
 const (
 	StepInitConfig  = "init_config"  // 初始化配置
 	StepRunExecutes = "run_executes" // 运行自定义函数
-	StepRunServer   = "run_server"   // 运行服务
+	StepStartServer = "start_server" // 启动服务
 	engineRunning   = "running"
 )
 
@@ -33,7 +33,7 @@ var engine *Engine
 func GetEngine() *Engine {
 	if engine == nil {
 		engine = NewEngine(
-			InitServerConfig(serverx.DefaultConfig()),
+			InitHttpConfig(serverx.DefaultConfig()),
 		)
 	}
 	return engine
@@ -87,17 +87,18 @@ func (e *Engine) RUN(ctx context.Context) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger := log.WithField("error", err)
-			if _, file, line, ok := runtime.Caller(4); ok {
+			if _, file, line, ok := runtime.Caller(2); ok {
 				logger = logger.WithField("file", file).WithField("line", line)
 			}
-			logger.Panic("engine run panic")
+			logger.Error("engine run panic")
 			return
 		}
 	}()
 
 	// 以队列形式依次执行启动步骤
 	if err := e.queue.Execute(ctx); err != nil {
-		log.WithField("error", err.Error()).Panic("engine run error")
+		log.WithField("error", err.Error()).Error("engine queue execute error")
+		panic(err)
 	}
 }
 
@@ -113,18 +114,17 @@ func (e *Engine) initQueue() {
 	queue := taskx.NewQueue("engine")
 	queue.Add(StepInitConfig, engine.initConfig)   // 1.初始化配置
 	queue.Add(StepRunExecutes, engine.runExecutes) // 2.运行自定义函数
-	queue.Add(StepRunServer, engine.runServer)     // 3.运行服务
+	queue.Add(StepStartServer, engine.startServer) // 3.运行服务
 	e.queue = queue
 }
 
 // 初始化配置
-func (e *Engine) initConfig(ctx context.Context) error {
+func (e *Engine) initConfig(_ context.Context) error {
 	e.runningCheck()
 	e.flags[StepInitConfig] = true
 
 	// 初始化配置
-	reader := configx.DefaultReader()
-	if err := e.config.Init(reader); err != nil {
+	if err := e.config.Init(configx.DefaultReader()); err != nil {
 		return errorx.Wrap(err, "init config error")
 	}
 
@@ -170,16 +170,14 @@ func (e *Engine) runExecutes(ctx context.Context) error {
 }
 
 // 启动服务
-func (e *Engine) runServer(ctx context.Context) error {
+func (e *Engine) startServer(ctx context.Context) error {
 	e.runningCheck()
-	e.flags[StepRunServer] = true
+	e.flags[StepStartServer] = true
 
 	// 启动服务
-	if srv := e.config.Server; srv != nil {
-		for _, server := range e.servers {
-			if err := server.Run(srv); err != nil {
-				return errorx.Wrap(err, "server run error")
-			}
+	if config := e.config.Server; config != nil {
+		if err := serverx.StartAll(ctx, config, e.servers...); err != nil {
+			return errorx.Wrap(err, "start server error")
 		}
 	}
 	// 服务运行标识
@@ -202,9 +200,7 @@ func (e *Engine) runServer(ctx context.Context) error {
 
 // 关闭服务
 func (e *Engine) shutdownServer(ctx context.Context) {
-	for _, server := range e.servers {
-		server.Shutdown(ctx)
-	}
+	serverx.ShutdownAll(ctx, e.servers...)
 	e.flags[engineRunning] = false
 }
 

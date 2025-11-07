@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/quanx/gormx"
 	"github.com/go-xuan/utilx/excelx"
 	"github.com/go-xuan/utilx/timex"
 	"gorm.io/gorm"
@@ -14,9 +15,10 @@ import (
 	"github.com/go-xuan/quanx/modelx"
 )
 
-func NewCrudApi[T any](router *gin.RouterGroup, db *gorm.DB) {
+// NewCrudApi 新增CRUD API
+func NewCrudApi[T any](router *gin.RouterGroup, dbSource string) {
 	var api = &Model[T]{
-		DB: db,
+		Source: dbSource,
 	}
 	router.GET("list", api.List)        // 列表
 	router.GET("detail", api.Detail)    // 明细
@@ -25,21 +27,34 @@ func NewCrudApi[T any](router *gin.RouterGroup, db *gorm.DB) {
 	router.DELETE("delete", api.Delete) // 删除
 }
 
-func NewExcelApi[T any](group *gin.RouterGroup, db *gorm.DB) {
-	var api = &Model[T]{DB: db}
-	group.POST("import", api.Import) // 新增
-	group.POST("export", api.Export) // 修改
+// NewExcelApi 新增 Excel API
+func NewExcelApi[T any](group *gin.RouterGroup, dbSource string) {
+	var api = &Model[T]{
+		Source: dbSource,
+	}
+	group.POST("import", api.Import) // 导入
+	group.POST("export", api.Export) // 导出
 }
 
+// Model 通用模型
 type Model[T any] struct {
-	DB *gorm.DB
+	Source string
+	DB     *gorm.DB
+}
+
+// GetDB 获取数据库连接
+func (m *Model[T]) GetDB() *gorm.DB {
+	if m.DB == nil {
+		m.DB = gormx.GetInstance(m.Source)
+	}
+	return m.DB
 }
 
 // List 列表
 func (m *Model[T]) List(ctx *gin.Context) {
 	var err error
 	var result []*T
-	if err = m.DB.Find(&result).Error; err != nil {
+	if err = m.GetDB().Find(&result).Error; err != nil {
 		Error(ctx, err)
 	} else {
 		Success(ctx, result)
@@ -54,7 +69,7 @@ func (m *Model[T]) Create(ctx *gin.Context) {
 		ParamError(ctx, err)
 		return
 	}
-	if err = m.DB.Create(&create).Error; err != nil {
+	if err = m.GetDB().Create(&create).Error; err != nil {
 		Error(ctx, err)
 	} else {
 		Success(ctx, nil)
@@ -69,7 +84,7 @@ func (m *Model[T]) Update(ctx *gin.Context) {
 		ParamError(ctx, err)
 		return
 	}
-	if err = m.DB.Updates(&update).Error; err != nil {
+	if err = m.GetDB().Updates(&update).Error; err != nil {
 		Error(ctx, err)
 	} else {
 		Success(ctx, nil)
@@ -85,7 +100,7 @@ func (m *Model[T]) Delete(ctx *gin.Context) {
 		return
 	}
 	var t T
-	if err = m.DB.Where("id = ? ", id.Id).Delete(&t).Error; err != nil {
+	if err = m.GetDB().Where("id = ? ", id.Id).Delete(&t).Error; err != nil {
 		Error(ctx, err)
 	} else {
 		Success(ctx, nil)
@@ -101,7 +116,7 @@ func (m *Model[T]) Detail(ctx *gin.Context) {
 		return
 	}
 	var result T
-	if err = m.DB.Where("id = ? ", id.Id).Find(&result).Error; err != nil {
+	if err = m.GetDB().Where("id = ? ", id.Id).Find(&result).Error; err != nil {
 		Error(ctx, err)
 	} else {
 		Success(ctx, result)
@@ -127,7 +142,7 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 		Custom(ctx, http.StatusBadRequest, NewResponse(ExportFailedCode, err.Error()))
 		return
 	}
-	if err = m.DB.Model(obj).Create(&data).Error; err != nil {
+	if err = m.GetDB().Model(obj).Create(&data).Error; err != nil {
 		Error(ctx, err)
 	} else {
 		Success(ctx, nil)
@@ -137,7 +152,7 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 // Export 导出
 func (m *Model[T]) Export(ctx *gin.Context) {
 	var result []*T
-	if err := m.DB.Find(&result).Error; err != nil {
+	if err := m.GetDB().Find(&result).Error; err != nil {
 		Custom(ctx, http.StatusBadRequest, NewResponse(ExportFailedCode, err.Error()))
 		return
 	}

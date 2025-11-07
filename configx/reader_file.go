@@ -59,6 +59,7 @@ func (r *FileReader) Write(v any) error {
 	return nil
 }
 
+// GetPath 获取配置文件路径
 func (r *FileReader) GetPath() string {
 	r.Anchor(constx.DefaultConfigDir)
 	return filepath.Join(r.Dir, r.Name)

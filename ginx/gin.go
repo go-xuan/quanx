@@ -1,6 +1,9 @@
 package ginx
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
+)
 
 const (
 	userCookieKey  = "GIN_COOKIE_USER"
@@ -9,19 +12,28 @@ const (
 	traceIdKey     = "GIN_TRACE_ID"
 )
 
-// PrepareFunc gin引擎准备函数
-type PrepareFunc func(*gin.Engine)
+// DefaultEngine 创建gin引擎
+func DefaultEngine() *gin.Engine {
+	gin.SetMode(gin.ReleaseMode)
+	engine := gin.New()
+	engine.Use(
+		gin.Recovery(), // 恢复中间件
+		Trace,          // 跟踪中间件
+		LogFormatter,   // 日志格式化中间件
+	)
+	return engine
+}
 
-// TraceId 获取traceId
-func TraceId(ctx *gin.Context) string {
+// GetTraceId 获取traceId
+func GetTraceId(ctx *gin.Context) string {
 	if traceId, ok := ctx.Get(traceIdKey); ok {
 		return traceId.(string)
 	}
 	return ""
 }
 
-// ClientIP 获取客户端IP
-func ClientIP(ctx *gin.Context) string {
+// GetClientIP 获取客户端IP
+func GetClientIP(ctx *gin.Context) string {
 	var clientIp string
 	if ip, ok := ctx.Get(clientIpKey); ok {
 		clientIp = ip.(string)
@@ -30,4 +42,15 @@ func ClientIP(ctx *gin.Context) string {
 		ctx.Set(clientIpKey, clientIp)
 	}
 	return clientIp
+}
+
+// GetLogger 获取日志包装
+func GetLogger(ctx *gin.Context) *log.Entry {
+	entry := log.WithContext(ctx).
+		WithField("traceId", GetTraceId(ctx)).
+		WithField("clientIp", GetClientIP(ctx))
+	if user := GetSessionUser(ctx); user != nil {
+		entry = entry.WithField("userId", user.GetUserId())
+	}
+	return entry
 }

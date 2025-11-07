@@ -14,7 +14,7 @@ func Initialized() bool {
 
 func this() *typex.Enum[string, *Client] {
 	if !Initialized() {
-		panic("elastic client not initialized, please check the relevant config")
+		panic("elastic client pool not initialized, please check the relevant config")
 	}
 	return pool
 }

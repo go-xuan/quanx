@@ -8,9 +8,9 @@ import (
 
 // Configurator 配置器
 type Configurator interface {
+	Valid() bool       // 配置是否有效, 用于决定配置器是否需要继续读取
 	Readers() []Reader // 配置读取器, 配置读取器的顺序会影响配置的读取顺序
-	Execute() error    // 配置器运行, 根据配置内容执行相关逻辑
-	Valid() bool       // 是否有效, 用于判断配置是否需要继续读取
+	Execute() error    // 配置器运行, 根据配置值执行相关逻辑
 }
 
 // ConfiguratorReadAndExecute 读取配置并运行
