@@ -32,9 +32,7 @@ var engine *Engine
 // GetEngine 获取当前Engine
 func GetEngine() *Engine {
 	if engine == nil {
-		engine = NewEngine(
-			InitHttpConfig(serverx.DefaultConfig()),
-		)
+		engine = NewEngine(InitServerConfig(serverx.DefaultConfig()))
 	}
 	return engine
 }

@@ -7,19 +7,18 @@ import (
 )
 
 // NewHttpServer 创建http服务器
-func NewHttpServer(builders ...EngineBuilder) *http.Server {
+func NewHttpServer(options ...EngineOption) *http.Server {
 	engine := DefaultEngine()
-	// 构造引擎
-	for _, builder := range builders {
-		builder(engine)
+	for _, option := range options {
+		option(engine)
 	}
 	return &http.Server{
 		Handler: engine,
 	}
 }
 
-// EngineBuilder engine构造方法
-type EngineBuilder func(engine *gin.Engine)
+// EngineOption engine选项
+type EngineOption func(engine *gin.Engine)
 
 // SetDebugMode 设置gin为调试模式
 func SetDebugMode(_ *gin.Engine) {

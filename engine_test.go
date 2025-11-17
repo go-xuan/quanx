@@ -13,7 +13,7 @@ import (
 
 func TestEngineRun(t *testing.T) {
 	NewEngine(
-		InitHttpConfig(&serverx.Config{
+		InitServerConfig(&serverx.Config{
 			Name: "quanx-test", // 服务名称
 			Port: map[string]int{
 				"http": 8080,

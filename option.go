@@ -12,8 +12,8 @@ import (
 // EngineOption 配置选项
 type EngineOption = func(e *Engine)
 
-// InitHttpConfig 初始化http服务配置
-func InitHttpConfig(server *serverx.Config) EngineOption {
+// InitServerConfig 初始化服务配置
+func InitServerConfig(server *serverx.Config) EngineOption {
 	return func(e *Engine) {
 		e.config.Server = server
 	}
