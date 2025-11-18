@@ -5,18 +5,20 @@ import (
 	"github.com/olivere/elastic/v7"
 )
 
+// 客户端池
 var pool *typex.Enum[string, *Client]
 
-// Initialized 是否初始化
-func Initialized() bool {
-	return pool != nil
-}
-
+// 获取客户端池
 func this() *typex.Enum[string, *Client] {
 	if !Initialized() {
 		panic("elastic client pool not initialized, please check the relevant config")
 	}
 	return pool
+}
+
+// Initialized 是否初始化
+func Initialized() bool {
+	return pool != nil
 }
 
 // GetClient 获取客户端

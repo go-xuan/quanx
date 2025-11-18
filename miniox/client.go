@@ -3,19 +3,24 @@ package miniox
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"io"
 	"mime/multipart"
+	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/go-xuan/utilx/errorx"
-	"github.com/go-xuan/utilx/filex"
 	"github.com/minio/minio-go/v7"
 )
 
 const Region = "cn-north-1"
 
+// 客户端
 var _client *Client
 
+// 获取客户端
 func this() *Client {
 	if _client == nil {
 		panic("minio client not initialized, please check the relevant config")
@@ -143,7 +148,7 @@ func (c *Client) PresignedGetObjects(ctx context.Context, minioPaths []string) (
 
 // UploadFileByUrl 通过文件路径上传文件到桶
 func (c *Client) UploadFileByUrl(ctx context.Context, bucketName string, fileName string, url string) (string, error) {
-	if fileBytes, err := filex.GetFileBytesByUrl(url); err != nil {
+	if fileBytes, err := GetFileBytesByUrl(url); err != nil {
 		return "", errorx.Wrap(err, "get file bytes error")
 	} else {
 		minioPath := c.Config().MinioPath(fileName)
@@ -152,4 +157,30 @@ func (c *Client) UploadFileByUrl(ctx context.Context, bucketName string, fileNam
 		}
 		return minioPath, nil
 	}
+}
+
+// GetFileBytesByUrl 通过url获取文件字节
+func GetFileBytesByUrl(fileUrl string) ([]byte, error) {
+	var tr = &http.Transport{
+		IdleConnTimeout:       time.Second * 2048,
+		ResponseHeaderTimeout: time.Second * 10,
+	}
+	if strings.Index(fileUrl, "https") != -1 {
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		requestURI, _ := url.ParseRequestURI(fileUrl)
+		fileUrl = requestURI.String()
+	}
+	var client = &http.Client{Transport: tr}
+	resp, err := client.Get(fileUrl)
+	if err != nil {
+		return nil, errorx.Wrap(err, "get http client error")
+	}
+	var body []byte
+	if body, err = io.ReadAll(resp.Body); err != nil {
+		return nil, errorx.Wrap(err, "response body read error")
+	}
+	if err = resp.Body.Close(); err != nil {
+		return nil, errorx.Wrap(err, "response body close error")
+	}
+	return body, nil
 }

@@ -19,18 +19,16 @@ func (r *PageReq) PageTotal(total int) int {
 		} else {
 			return total / r.PageSize
 		}
-	} else {
-		return 0
 	}
+	return 0
 }
 
 // Offset 计算offset
 func (r *PageReq) Offset() int {
 	if r.PageNo != 0 && r.PageSize != 0 {
 		return (r.PageNo - 1) * r.PageSize
-	} else {
-		return 0
 	}
+	return 0
 }
 
 // PgPageSql 获取PG分页SQL

@@ -6,10 +6,9 @@ import (
 )
 
 const (
-	userCookieKey  = "GIN_COOKIE_USER"
-	sessionUserKey = "GIN_SESSION_USER"
-	clientIpKey    = "GIN_CLIENT_IP"
-	traceIdKey     = "GIN_TRACE_ID"
+	sessionUserKey = "X_SESSION_USER"
+	clientIpKey    = "X_CLIENT_IP"
+	traceIdKey     = "X_TRACE_ID"
 )
 
 // DefaultEngine 创建gin引擎
@@ -47,10 +46,10 @@ func GetClientIP(ctx *gin.Context) string {
 // GetLogger 获取日志包装
 func GetLogger(ctx *gin.Context) *log.Entry {
 	entry := log.WithContext(ctx).
-		WithField("traceId", GetTraceId(ctx)).
-		WithField("clientIp", GetClientIP(ctx))
+		WithField("trace_id", GetTraceId(ctx)).
+		WithField("client_ip", GetClientIP(ctx))
 	if user := GetSessionUser(ctx); user != nil {
-		entry = entry.WithField("userId", user.GetUserId())
+		entry = entry.WithField("user_id", user.GetUserId())
 	}
 	return entry
 }

@@ -6,11 +6,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type Id[T int | int64 | string] struct {
+type Id[T int | uint | int64 | uint64 | string] struct {
 	Id T `form:"id" json:"id" binding:"required"`
 }
 
-type Ids[T int | int64 | string] struct {
+type Ids[T int | uint | int64 | uint64 | string] struct {
 	Ids []T `form:"ids" json:"ids" binding:"required"`
 }
 

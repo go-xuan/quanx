@@ -52,13 +52,12 @@ func (m *Model[T]) GetDB() *gorm.DB {
 
 // List 列表
 func (m *Model[T]) List(ctx *gin.Context) {
-	var err error
 	var result []*T
-	if err = m.GetDB().Find(&result).Error; err != nil {
+	if err := m.GetDB().Find(&result).Error; err != nil {
 		Error(ctx, err)
-	} else {
-		Success(ctx, result)
+		return
 	}
+	Success(ctx, result)
 }
 
 // Create 新增
@@ -78,75 +77,71 @@ func (m *Model[T]) Create(ctx *gin.Context) {
 
 // Update 修改
 func (m *Model[T]) Update(ctx *gin.Context) {
-	var err error
 	var update T
-	if err = ctx.ShouldBindJSON(&update); err != nil {
+	if err := ctx.ShouldBindJSON(&update); err != nil {
 		ParamError(ctx, err)
 		return
 	}
-	if err = m.GetDB().Updates(&update).Error; err != nil {
+	if err := m.GetDB().Updates(&update).Error; err != nil {
 		Error(ctx, err)
-	} else {
-		Success(ctx, nil)
+		return
 	}
+	Success(ctx, nil)
 }
 
 // Delete 删除
 func (m *Model[T]) Delete(ctx *gin.Context) {
-	var err error
 	var id modelx.Id[string]
-	if err = ctx.ShouldBindQuery(&id); err != nil {
+	if err := ctx.ShouldBindQuery(&id); err != nil {
 		ParamError(ctx, err)
 		return
 	}
 	var t T
-	if err = m.GetDB().Where("id = ? ", id.Id).Delete(&t).Error; err != nil {
+	if err := m.GetDB().Where("id = ? ", id.Id).Delete(&t).Error; err != nil {
 		Error(ctx, err)
-	} else {
-		Success(ctx, nil)
+		return
 	}
+	Success(ctx, nil)
 }
 
 // Detail 明细
 func (m *Model[T]) Detail(ctx *gin.Context) {
-	var err error
 	var id modelx.Id[string]
-	if err = ctx.ShouldBindQuery(&id); err != nil {
+	if err := ctx.ShouldBindQuery(&id); err != nil {
 		ParamError(ctx, err)
 		return
 	}
 	var result T
-	if err = m.GetDB().Where("id = ? ", id.Id).Find(&result).Error; err != nil {
+	if err := m.GetDB().Where("id = ? ", id.Id).Find(&result).Error; err != nil {
 		Error(ctx, err)
-	} else {
-		Success(ctx, result)
+		return
 	}
+	Success(ctx, result)
 }
 
 // Import 导入
 func (m *Model[T]) Import(ctx *gin.Context) {
-	var err error
 	var file modelx.File
-	if err = ctx.ShouldBind(&file); err != nil {
+	if err := ctx.ShouldBind(&file); err != nil {
 		ParamError(ctx, err)
 		return
 	}
 	var filePath = filepath.Join(constx.DefaultResourceDir, file.File.Filename)
-	if err = ctx.SaveUploadedFile(file.File, filePath); err != nil {
+	if err := ctx.SaveUploadedFile(file.File, filePath); err != nil {
 		ParamError(ctx, err)
 		return
 	}
 	var obj T
-	var data []*T
-	if data, err = excelx.ReadAny(filePath, "", obj); err != nil {
+	data, err := excelx.ReadAny(filePath, "", obj)
+	if err != nil {
 		Custom(ctx, http.StatusBadRequest, NewResponse(ExportFailedCode, err.Error()))
 		return
 	}
 	if err = m.GetDB().Model(obj).Create(&data).Error; err != nil {
 		Error(ctx, err)
-	} else {
-		Success(ctx, nil)
+		return
 	}
+	Success(ctx, nil)
 }
 
 // Export 导出

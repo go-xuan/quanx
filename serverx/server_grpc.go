@@ -50,7 +50,6 @@ func (s *GrpcServer) BindConfig(config *Config) {
 	}
 }
 
-// Start 启动grpc服务
 func (s *GrpcServer) Start(ctx context.Context) error {
 	// 检查服务是否已运行或配置是否存在
 	if s.running {
@@ -74,7 +73,6 @@ func (s *GrpcServer) Start(ctx context.Context) error {
 	return nil
 }
 
-// Shutdown 关闭grpc服务
 func (s *GrpcServer) Shutdown(_ context.Context) {
 	logger := log.WithField("type", "grpc").WithField("name", s.name).WithField("port", s.port)
 	if !s.running {

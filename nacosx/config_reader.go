@@ -53,8 +53,10 @@ func (r *Reader) Read(v any) error {
 		}
 
 		// 配置文件锚点为Group分组
-		r.Anchor(this().GetGroup())
+		group := this().GetGroup()
+		r.Anchor(group)
 
+		// 读取配置
 		param := r.ConfigParam()
 		if data, err := this().ReadConfig(v, param); err != nil {
 			return errorx.Wrap(err, "read nacos config error")
@@ -91,7 +93,8 @@ func (r *Reader) Write(v any) error {
 	}
 
 	// 配置文件锚点为Group分组
-	r.Anchor(this().GetGroup())
+	group := this().GetGroup()
+	r.Anchor(group)
 
 	// 发布配置
 	param := r.ConfigParam()

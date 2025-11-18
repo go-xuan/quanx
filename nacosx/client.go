@@ -12,18 +12,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// 客户端
 var _client *Client
 
-// Initialized 是否初始化
-func Initialized() bool {
-	return _client != nil
-}
-
+// 获取客户端
 func this() *Client {
 	if _client == nil {
 		panic("nacos client not initialized, please check the relevant config")
 	}
 	return _client
+}
+
+// Initialized 是否初始化
+func Initialized() bool {
+	return _client != nil
 }
 
 // GetClient 获取客户端

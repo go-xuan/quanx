@@ -38,6 +38,7 @@ func (c *Config) Execute() error {
 	return nil
 }
 
+// GetProxy 获取服务代理
 func (c *Config) GetProxy(url string) *Proxy {
 	for _, proxy := range c.Proxies {
 		if proxy.Match(url) {

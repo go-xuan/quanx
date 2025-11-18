@@ -1,8 +1,6 @@
 package ginx
 
 import (
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
@@ -10,10 +8,28 @@ import (
 	"github.com/go-xuan/quanx/cachex"
 )
 
-var (
-	authValidator   AuthValidator // 鉴权验证器
-	authCacheClient cachex.Client // token缓存客户端
+// AuthMethod 鉴权方式
+type AuthMethod string
+
+const (
+	CookieAuth    AuthMethod = "cookie"        // cookie方式鉴权
+	TokenAuth     AuthMethod = "token"         // token方式鉴权
+	cookieAuthKey            = "COOKIE_USER"   // cookie获取键
+	tokenAuthKey             = "Authorization" // token获取键
 )
+
+var (
+	authValidator AuthValidator // 鉴权验证器
+	authCache     cachex.Client // token缓存客户端
+)
+
+// AuthValidate 获取鉴权验证器
+func AuthValidate() AuthValidator {
+	if authValidator == nil {
+		authValidator = NewJwtValidator("default")
+	}
+	return authValidator
+}
 
 // SetAuthValidator 设置鉴权验证器
 func SetAuthValidator(validator AuthValidator) {
@@ -22,36 +38,47 @@ func SetAuthValidator(validator AuthValidator) {
 	}
 }
 
-// AuthValidate 身份验证器
-func AuthValidate() AuthValidator {
-	if authValidator == nil {
-		authValidator = NewJwtValidator("123456")
-	}
-	return authValidator
-}
-
-// AuthCache 获取token缓存客户端
+// AuthCache 获取auth缓存
 func AuthCache() cachex.Client {
-	if authCacheClient == nil {
-		authCacheClient = cachex.GetClient("auth")
+	if authCache == nil {
+		authCache = cachex.GetClient("auth")
 	}
-	return authCacheClient
+	return authCache
 }
 
-// AuthValidator 验证器
+// AuthValidator 鉴权验证器
 type AuthValidator interface {
-	Encrypt(user AuthUser) (string, error) // 用户信息加密
-	TokenValidate(ctx *gin.Context)        // token方式鉴权
-	CookieValidate(ctx *gin.Context)       // cookie方式鉴权
-	Ignore(ignores ...string)              // 添加白名单
-	IsIgnore(ctx *gin.Context) bool        // 白名单免鉴权
+	AddWhite(url ...string)                     // 添加白名单
+	MatchWhite(ctx *gin.Context) bool           // 匹配白名单
+	Validate(method AuthMethod) gin.HandlerFunc // token方式鉴权
 }
 
 // AuthUser 鉴权用户
 type AuthUser interface {
 	GetUserId() typex.Value // 用户ID
 	GetUsername() string    // 用户名
-	GetTTL() int            // 存活时长，秒
+}
+
+// GetAuthString 获取鉴权字符串
+func GetAuthString(ctx *gin.Context, method AuthMethod) (string, error) {
+	switch method {
+	case CookieAuth:
+		cookie, err := ctx.Cookie(cookieAuthKey)
+		if err != nil {
+			return "", errorx.Wrap(err, "get cookie error")
+		} else if cookie == "" {
+			return "", errorx.New("auth cookie is empty")
+		}
+		return cookie, nil
+	case TokenAuth:
+		token := ctx.Request.Header.Get(tokenAuthKey)
+		if token == "" {
+			return "", errorx.New("auth token is empty")
+		}
+		return token, nil
+	default:
+		return "", errorx.New("auth method not support")
+	}
 }
 
 // SetSessionUser 设置会话用户
@@ -61,45 +88,10 @@ func SetSessionUser(ctx *gin.Context, user AuthUser) {
 
 // GetSessionUser 获取会话用户
 func GetSessionUser(ctx *gin.Context) AuthUser {
-	if value, has := ctx.Get(sessionUserKey); has {
+	if value, exist := ctx.Get(sessionUserKey); exist {
 		if user, ok := value.(AuthUser); ok {
 			return user
 		}
 	}
 	return nil
-}
-
-// SetAuthCookie 设置身份验证cookie
-func SetAuthCookie(ctx *gin.Context, user AuthUser) (string, error) {
-	if cookie, err := AuthValidate().Encrypt(user); err != nil {
-		return "", errorx.Wrap(err, "new cookie error")
-	} else if err = AuthCache().Set(ctx, user.GetUserId().String(), cookie, time.Duration(user.GetTTL())*time.Second); err != nil {
-		return "", errorx.Wrap(err, "save cookie to cache error")
-	} else {
-		ctx.SetCookie(userCookieKey, cookie, user.GetTTL(), "", "", false, true)
-		SetSessionUser(ctx, user)
-		return cookie, nil
-	}
-}
-
-// RemoveAuthCookie 移除身份验证cookie maxAge=-1即可移除cookie
-func RemoveAuthCookie(ctx *gin.Context) {
-	ctx.SetCookie(userCookieKey, "", -1, "", "", false, true)
-}
-
-// SetAuthToken 生成并缓存token
-func SetAuthToken(ctx *gin.Context, user AuthUser) (string, error) {
-	if token, err := AuthValidate().Encrypt(user); err != nil {
-		return "", errorx.Wrap(err, "new token error")
-	} else if err = AuthCache().Set(ctx, user.GetUserId().String(), token, time.Duration(user.GetTTL())*time.Second); err != nil {
-		return "", errorx.Wrap(err, "save token to cache error")
-	} else {
-		SetSessionUser(ctx, user)
-		return token, nil
-	}
-}
-
-// RemoveAuthToken 移除token
-func RemoveAuthToken(ctx *gin.Context, userId string) {
-	AuthCache().Delete(ctx, userId)
 }
