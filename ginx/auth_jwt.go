@@ -1,11 +1,8 @@
 package ginx
 
 import (
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/typex"
-	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/stringx"
 	"github.com/golang-jwt/jwt/v4"
@@ -21,45 +18,40 @@ func NewJwtValidator(secret string, ignore ...string) *JwtValidator {
 
 // JwtValidator JWT验证器
 type JwtValidator struct {
-	secret []byte   // 密钥
-	ignore []string // 白名单
+	secret []byte   // jwt密钥
+	ignore []string // 鉴权白名单
 }
 
+// Encrypt 加密用户信息
 func (v *JwtValidator) Encrypt(user AuthUser) (string, error) {
 	if jwtUser, ok := user.(*JwtUser); ok {
-		if ciphertext, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtUser).SignedString(v.secret); err != nil {
-			return "", errorx.Wrap(err, "jwt encrypt error")
-		} else {
-			return ciphertext, nil
+		ciphertext, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtUser).SignedString(v.secret)
+		if err != nil {
+			return "", errorx.Wrap(err, "jwt encrypt token error")
 		}
-	} else {
-		return "", errorx.New("user is not of type JwtUser")
+		return ciphertext, nil
 	}
+	return "", errorx.New("user is not of type JwtUser")
 }
 
-func (v *JwtValidator) TokenValidate(ctx *gin.Context) {
-	if !v.IsIgnore(ctx) {
-		if err := v.tokenValidate(ctx); err != nil {
-			Forbidden(ctx, errorx.Wrap(err, "auth validate failed"))
-			ctx.Abort()
-		}
+// Decrypt 解密用户信息
+func (v *JwtValidator) Decrypt(ciphertext string) (AuthUser, error) {
+	var user = &JwtUser{}
+	if jt, err := jwt.ParseWithClaims(ciphertext, user, func(*jwt.Token) (interface{}, error) {
+		return v.secret, nil
+	}); err != nil || !jt.Valid {
+		return nil, errorx.Wrap(err, "jwt decrypt error")
 	}
+	return user, nil
 }
 
-func (v *JwtValidator) CookieValidate(ctx *gin.Context) {
-	if !v.IsIgnore(ctx) {
-		if err := v.cookieValidate(ctx); err != nil {
-			Forbidden(ctx, errorx.Wrap(err, "auth validate failed"))
-			ctx.Abort()
-		}
-	}
+// AddWhite 添加白名单
+func (v *JwtValidator) AddWhite(url ...string) {
+	v.ignore = append(v.ignore, url...)
 }
 
-func (v *JwtValidator) Ignore(ignores ...string) {
-	v.ignore = append(v.ignore, ignores...)
-}
-
-func (v *JwtValidator) IsIgnore(ctx *gin.Context) bool {
+// MatchWhite 匹配白名单
+func (v *JwtValidator) MatchWhite(ctx *gin.Context) bool {
 	url := ctx.Request.URL.Path
 	for _, ignore := range v.ignore {
 		if stringx.MatchUrl(url, ignore) {
@@ -69,74 +61,68 @@ func (v *JwtValidator) IsIgnore(ctx *gin.Context) bool {
 	return false
 }
 
-func (v *JwtValidator) tokenValidate(ctx *gin.Context) error {
-	if token := ctx.Request.Header.Get("Authorization"); token == "" {
-		return errorx.New("request token required")
-	} else if user, err := v.validate(ctx, token); err != nil {
-		return errorx.Wrap(err, "validate cookie error")
-	} else if _, err = SetAuthToken(ctx, user); err != nil {
-		return errorx.Wrap(err, "set cookie error")
+// Validate 验证用户信息
+func (v *JwtValidator) Validate(method AuthMethod) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		if !v.MatchWhite(ctx) {
+			user, err := v.validate(ctx, method)
+			if err != nil {
+				Forbidden(ctx, errorx.Wrap(err, "auth validate failed"))
+				ctx.Abort()
+				return
+			}
+			SetSessionUser(ctx, user)
+		}
 	}
-	return nil
 }
 
-func (v *JwtValidator) cookieValidate(ctx *gin.Context) error {
-	var user *JwtUser
-	if cookie, err := ctx.Cookie(userCookieKey); err != nil || cookie == "" {
-		return errorx.Wrap(err, "request cookie required")
-	} else if user, err = v.validate(ctx, cookie); err != nil {
-		return errorx.Wrap(err, "validate cookie error")
-	} else if _, err = SetAuthCookie(ctx, user); err != nil {
-		return errorx.Wrap(err, "set cookie error")
+func (v *JwtValidator) validate(ctx *gin.Context, method AuthMethod) (AuthUser, error) {
+	// 如果session中存在用户，直接返回，避免重复解密
+	var user AuthUser
+	if user = GetSessionUser(ctx); user != nil {
+		return user, nil
 	}
-	return nil
-}
-
-func (v *JwtValidator) validate(ctx *gin.Context, ciphertext string) (*JwtUser, error) {
-	var user = &JwtUser{}
-	if jt, err := jwt.ParseWithClaims(ciphertext, user, func(*jwt.Token) (interface{}, error) {
-		return v.secret, nil
-	}); err != nil || !jt.Valid {
-		return nil, errorx.Wrap(err, "jwt decrypt error")
+	// 获取鉴权字符串
+	authString, err := GetAuthString(ctx, method)
+	if err != nil {
+		return nil, errorx.Wrap(err, "get auth string error")
 	}
+	// 从token中解密用户信息
+	if user, err = v.Decrypt(authString); err != nil {
+		return nil, errorx.Wrap(err, "decrypt error")
+	}
+	// 验证用户信息是否有效
 	if !AuthCache().Exist(ctx, user.GetUserId().String()) {
-		return nil, errorx.New("auth cache has expired:" + user.GetUserId().String())
+		return nil, errorx.Wrap(err, "auth user is invalid")
 	}
-	user.Update = time.Now().Unix()
 	return user, nil
 }
 
+// Debug 调试模式，模拟当前会话用户，适用于免登录场景
 func (v *JwtValidator) Debug(ctx *gin.Context) {
-	SetSessionUser(ctx, &JwtUser{
-		Id:     999999999,
-		Name:   "debug",
-		Update: time.Now().Unix(),
-	})
+	SetSessionUser(ctx, &JwtUser{Id: 999999999, Name: "DEBUG"})
 }
 
 // JwtUser 实现AuthUser
 type JwtUser struct {
-	Id     int64  `json:"id"`     // 用户ID
-	Name   string `json:"name"`   // 用户名
-	Age    int    `json:"age"`    // 存活时长
-	Update int64  `json:"update"` // 更新时间
+	Id   int64  `json:"id"`   // 用户ID
+	Name string `json:"name"` // 用户名
 }
 
+// Valid 验证用户信息是否有效，用于实现 jwt.Claims 接口
 func (u *JwtUser) Valid() error {
-	if u.Update+int64(u.Age) < time.Now().Unix() {
-		return errorx.New("claims valid failed: current user expired")
+	if u.Id == 0 {
+		return errorx.New("user id is empty")
+	} else if u.Name == "" {
+		return errorx.New("user name is empty")
 	}
 	return nil
 }
 
 func (u *JwtUser) GetUserId() typex.Value {
-	return typex.Int64Value(u.Id)
+	return typex.NewInt64(u.Id)
 }
 
 func (u *JwtUser) GetUsername() string {
 	return u.Name
-}
-
-func (u *JwtUser) GetTTL() int {
-	return anyx.IfZero(u.Age, 3600)
 }

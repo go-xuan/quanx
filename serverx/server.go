@@ -12,8 +12,7 @@ type Server interface {
 	IsRunning() bool                 // 是否运行中
 }
 
-// StartAll 启动服务
-func StartAll(ctx context.Context, config *Config, servers ...Server) error {
+func Start(ctx context.Context, config *Config, servers ...Server) error {
 	for _, server := range servers {
 		server.BindConfig(config)
 		if err := server.Start(ctx); err != nil {
@@ -23,8 +22,7 @@ func StartAll(ctx context.Context, config *Config, servers ...Server) error {
 	return nil
 }
 
-// ShutdownAll 关闭服务
-func ShutdownAll(ctx context.Context, servers ...Server) {
+func Shutdown(ctx context.Context, servers ...Server) {
 	for _, server := range servers {
 		server.Shutdown(ctx)
 	}

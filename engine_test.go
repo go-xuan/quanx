@@ -22,11 +22,11 @@ func TestEngineRun(t *testing.T) {
 		// 添加http服务器
 		AddServer(httpServer()),
 
-		AddTaskBefore(StepInitConfig, "before_init_config", func(context.Context) error {
+		AddTaskBefore(FlagInitConfig, "before_init_config", func(context.Context) error {
 			fmt.Println("do something before init config")
 			return nil
 		}),
-		AddTaskAfter(StepInitConfig, "after_init_config", func(context.Context) error {
+		AddTaskAfter(FlagInitConfig, "after_init_config", func(context.Context) error {
 			fmt.Println("do something after init config")
 			return nil
 		}),

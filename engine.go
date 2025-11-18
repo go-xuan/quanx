@@ -19,12 +19,11 @@ import (
 	"github.com/go-xuan/quanx/serverx"
 )
 
-// queue task name
 const (
-	StepInitConfig  = "init_config"  // 初始化配置
-	StepRunExecutes = "run_executes" // 运行自定义函数
-	StepStartServer = "start_server" // 启动服务
-	engineRunning   = "running"
+	FlagInitConfig    = "init_config"  // 初始化配置
+	FlagRunExecutes   = "run_executes" // 运行自定义函数
+	FlagStartServer   = "start_server" // 启动服务
+	FlagServerRunning = "running"      // 服务运行标识
 )
 
 var engine *Engine
@@ -102,7 +101,7 @@ func (e *Engine) RUN(ctx context.Context) {
 
 // 检查服务运行状态
 func (e *Engine) runningCheck() {
-	if e.flags[engineRunning] {
+	if e.flags[FlagServerRunning] {
 		panic("server has already running")
 	}
 }
@@ -110,16 +109,16 @@ func (e *Engine) runningCheck() {
 // InitQueue 初始化队列
 func (e *Engine) initQueue() {
 	queue := taskx.NewQueue("engine")
-	queue.Add(StepInitConfig, engine.initConfig)   // 1.初始化配置
-	queue.Add(StepRunExecutes, engine.runExecutes) // 2.运行自定义函数
-	queue.Add(StepStartServer, engine.startServer) // 3.运行服务
+	queue.Add(FlagInitConfig, engine.initConfig)   // 1.初始化配置
+	queue.Add(FlagRunExecutes, engine.runExecutes) // 2.运行自定义函数
+	queue.Add(FlagStartServer, engine.startServer) // 3.运行服务
 	e.queue = queue
 }
 
 // 初始化配置
 func (e *Engine) initConfig(_ context.Context) error {
 	e.runningCheck()
-	e.flags[StepInitConfig] = true
+	e.flags[FlagInitConfig] = true
 
 	// 初始化配置
 	if err := e.config.Init(configx.DefaultReader()); err != nil {
@@ -158,7 +157,7 @@ func (e *Engine) initTables() error {
 // 运行自定义函数
 func (e *Engine) runExecutes(ctx context.Context) error {
 	e.runningCheck()
-	e.flags[StepRunExecutes] = true
+	e.flags[FlagRunExecutes] = true
 	for _, execute := range e.executes {
 		if err := execute(ctx); err != nil {
 			return errorx.Wrap(err, "execute error")
@@ -170,16 +169,16 @@ func (e *Engine) runExecutes(ctx context.Context) error {
 // 启动服务
 func (e *Engine) startServer(ctx context.Context) error {
 	e.runningCheck()
-	e.flags[StepStartServer] = true
+	e.flags[FlagStartServer] = true
 
 	// 启动服务
 	if config := e.config.Server; config != nil {
-		if err := serverx.StartAll(ctx, config, e.servers...); err != nil {
+		if err := serverx.Start(ctx, config, e.servers...); err != nil {
 			return errorx.Wrap(err, "start server error")
 		}
 	}
 	// 服务运行标识
-	e.flags[engineRunning] = true
+	e.flags[FlagServerRunning] = true
 
 	// 接收 SIGINT（Ctrl+C）、SIGTERM（kill 命令）信号
 	quit := make(chan os.Signal, 1)
@@ -198,8 +197,8 @@ func (e *Engine) startServer(ctx context.Context) error {
 
 // 关闭服务
 func (e *Engine) shutdownServer(ctx context.Context) {
-	serverx.ShutdownAll(ctx, e.servers...)
-	e.flags[engineRunning] = false
+	serverx.Shutdown(ctx, e.servers...)
+	e.flags[FlagServerRunning] = false
 }
 
 // 添加服务
