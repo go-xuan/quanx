@@ -7,26 +7,31 @@ import (
 	"net/http"
 
 	"github.com/go-xuan/utilx/errorx"
-	log "github.com/sirupsen/logrus"
 )
 
 // NewHttpServer 创建http服务
 func NewHttpServer(server *http.Server, port ...int) *HttpServer {
-	httpServer := HttpServer{
-		server: server,
+	return &HttpServer{
+		BaseServer: NewBaseServer(HTTP, port...),
+		server:     server,
 	}
-	if len(port) > 0 && port[0] > 0 {
-		httpServer.port = port[0]
+}
+
+// NewPprofServer 创建pprof服务
+func NewPprofServer(port ...int) *HttpServer {
+	return &HttpServer{
+		BaseServer: NewBaseServer(PPROF, port...),
+		server: &http.Server{
+			// 使用默认的 http.DefaultServeMux，当import pprof包时，会自动注册pprof路由
+			Handler: http.DefaultServeMux,
+		},
 	}
-	return &httpServer
 }
 
 // HttpServer http服务
 type HttpServer struct {
-	running bool         // 服务运行标识
-	name    string       // 服务名称
-	port    int          // http服务端口
-	server  *http.Server // http服务
+	BaseServer              // 基础服务配置
+	server     *http.Server // http服务
 }
 
 // IsRunning 是否运行中
@@ -36,52 +41,34 @@ func (s *HttpServer) IsRunning() bool {
 
 // BindConfig 绑定服务配置
 func (s *HttpServer) BindConfig(config *Config) {
-	if config == nil {
-		return
-	}
-
-	// 绑定服务名称
-	if name := config.Name; s.name == "" && name != "" {
-		s.name = name
-	}
-
-	// 绑定端口
-	if port := config.Port["http"]; s.port == 0 && port > 0 {
-		s.port = port
-	}
+	s.bindConfig(config)
 }
 
-func (s *HttpServer) Start(ctx context.Context) error {
-	// 检查服务是否已运行或配置是否存在
+func (s *HttpServer) Start(_ context.Context) error {
 	if s.running {
-		return errorx.New("http server is running")
+		return nil
 	} else if s.port == 0 {
-		return errorx.New("http server port is not set")
+		return errorx.New("server port is invalid")
 	}
-	logger := log.WithField("type", "http").WithField("name", s.name).WithField("port", s.port)
 	go func() {
 		// 启动服务（非阻塞）
 		s.server.Addr = fmt.Sprintf(":%d", s.port)
 		if err := s.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.WithError(err).Fatal("server run failed")
+			s.logger.WithError(err).Fatal("server run failed")
 		}
 	}()
-	logger.Info("server run success")
+	s.logger.Info("server start success")
 	s.running = true
 	return nil
 }
 
 func (s *HttpServer) Shutdown(ctx context.Context) {
-	logger := log.WithField("type", "http").WithField("name", s.name).WithField("port", s.port)
-	if !s.running {
-		logger.Warn("server not running")
-		return
+	if s.running {
+		if err := s.server.Shutdown(ctx); err != nil {
+			s.logger.WithError(err).Error("server shutdown failed")
+			return
+		}
+		s.running = false
 	}
-	s.running = false
-	if err := s.server.Shutdown(ctx); err != nil {
-		logger.WithError(err).Error("server shutdown failed")
-		return
-	}
-	logger.Info("server shutdown success")
-
+	s.logger.Info("server shutdown success")
 }

@@ -38,5 +38,5 @@ func LogFormatter(ctx *gin.Context) {
 		WithField("url", ctx.Request.URL.Path).
 		WithField("status", ctx.Writer.Status()).
 		WithField("duration", time.Since(start).Milliseconds()).
-		Info("new request")
+		Info("request")
 }

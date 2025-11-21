@@ -6,6 +6,7 @@ import (
 	"github.com/go-xuan/utilx/errorx"
 
 	"github.com/go-xuan/quanx/cachex"
+	"github.com/go-xuan/quanx/constx"
 )
 
 // AuthMethod 鉴权方式
@@ -26,16 +27,9 @@ var (
 // AuthValidate 获取鉴权验证器
 func AuthValidate() AuthValidator {
 	if authValidator == nil {
-		authValidator = NewJwtValidator("default")
+		authValidator = NewJwtValidator(constx.Default)
 	}
 	return authValidator
-}
-
-// SetAuthValidator 设置鉴权验证器
-func SetAuthValidator(validator AuthValidator) {
-	if validator != nil {
-		authValidator = validator
-	}
 }
 
 // AuthCache 获取auth缓存
@@ -46,10 +40,25 @@ func AuthCache() cachex.Client {
 	return authCache
 }
 
+// SetAuthValidator 自定义鉴权验证器
+func SetAuthValidator(validator AuthValidator) {
+	if validator != nil {
+		authValidator = validator
+	}
+}
+
+// SetAuthCache 自定义auth缓存
+func SetAuthCache(cache cachex.Client) {
+	if cache == nil {
+		authCache = cachex.GetClient("auth")
+	}
+}
+
 // AuthValidator 鉴权验证器
 type AuthValidator interface {
 	AddWhite(url ...string)                     // 添加白名单
-	MatchWhite(ctx *gin.Context) bool           // 匹配白名单
+	Encrypt(user AuthUser) (string, error)      // 加密用户信息
+	Decrypt(auth string) (AuthUser, error)      // 解密用户信息
 	Validate(method AuthMethod) gin.HandlerFunc // token方式鉴权
 }
 
@@ -94,4 +103,14 @@ func GetSessionUser(ctx *gin.Context) AuthUser {
 		}
 	}
 	return nil
+}
+
+// SetAuthCookie 设置身份验证cookie
+func SetAuthCookie(ctx *gin.Context, cookie string, maxAge int) {
+	ctx.SetCookie(cookieAuthKey, cookie, maxAge, "", "", false, true)
+}
+
+// RemoveAuthCookie 移除身份验证cookie maxAge=-1即可移除cookie
+func RemoveAuthCookie(ctx *gin.Context) {
+	ctx.SetCookie(cookieAuthKey, "", -1, "", "", false, true)
 }

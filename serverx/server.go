@@ -2,6 +2,14 @@ package serverx
 
 import (
 	"context"
+
+	log "github.com/sirupsen/logrus"
+)
+
+const (
+	HTTP  = "http"  // http服务类型
+	GRPC  = "grpc"  // grpc服务类型
+	PPROF = "pprof" // pprof服务类型
 )
 
 // Server 服务
@@ -9,7 +17,46 @@ type Server interface {
 	BindConfig(config *Config)       // 绑定服务配置
 	Start(ctx context.Context) error // 启动服务
 	Shutdown(ctx context.Context)    // 关闭服务
-	IsRunning() bool                 // 是否运行中
+}
+
+// NewBaseServer 创建基础服务
+func NewBaseServer(category string, port ...int) BaseServer {
+	baseServer := BaseServer{
+		category: category,
+	}
+	if len(port) > 0 && port[0] > 0 {
+		baseServer.port = port[0]
+	}
+	return baseServer
+}
+
+// BaseServer 基础服务配置
+type BaseServer struct {
+	name     string     // 服务名称
+	category string     // 服务分类
+	port     int        // 服务端口
+	running  bool       // 服务运行标识
+	logger   *log.Entry // 日志记录器
+}
+
+// 绑定服务配置
+func (s *BaseServer) bindConfig(config *Config) {
+	if config == nil {
+		return
+	}
+	// 绑定服务名称
+	if name := config.Name; s.name == "" && name != "" {
+		s.name = name
+	}
+	// 绑定端口
+	if port := config.Port[s.category]; s.port == 0 && port > 0 {
+		s.port = port
+	}
+	s.logger = log.WithFields(log.Fields{
+		"name":     s.name,
+		"category": s.category,
+		"port":     s.port,
+	})
 }
 
 func Start(ctx context.Context, config *Config, servers ...Server) error {

@@ -5,9 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"gopkg.in/natefinch/lumberjack.v2"
+	
 	"github.com/go-xuan/quanx/elasticx"
 	"github.com/go-xuan/quanx/mongox"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // NewWriter 创建日志写入器

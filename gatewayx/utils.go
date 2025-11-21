@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-xuan/quanx/serverx"
 	"github.com/go-xuan/utilx/errorx"
+	
+	"github.com/go-xuan/quanx/serverx"
 )
 
 // GetServerProxyURL 获取服务代理url
@@ -22,5 +23,5 @@ func GetServerProxyURL(url string) (string, error) {
 			}
 		}
 	}
-	return "", errorx.Errorf("this url [%s] not match any gateway proxy", url)
+	return "", errorx.Newf("this url [%s] not match any gateway proxy", url)
 }

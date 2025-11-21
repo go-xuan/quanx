@@ -2,6 +2,8 @@ package cachex
 
 import (
 	"github.com/go-xuan/typex"
+	
+	"github.com/go-xuan/quanx/constx"
 )
 
 var pool *typex.Enum[string, Client]
@@ -26,14 +28,14 @@ func GetClient(source ...string) Client {
 			return client
 		}
 	}
-	return this().Get("default")
+	return this().Get(constx.Default)
 }
 
 // AddClient 添加客户端
 func AddClient(source string, client Client) {
 	if !Initialized() {
 		pool = typex.NewStringEnum[Client]()
-		this().Add("default", client)
+		pool.Add(constx.Default, client)
 	}
 	this().Add(source, client)
 }

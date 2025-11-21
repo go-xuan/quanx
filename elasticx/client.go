@@ -26,7 +26,7 @@ func (c *Client) Config() *Config {
 func (c *Client) CreateIndex(ctx context.Context, index string) (bool, error) {
 	logger := log.WithField("index", index)
 	if resp, err := c.Instance().CreateIndex(index).Do(ctx); err != nil {
-		logger.WithField("error", err.Error()).Error("create index failed")
+		logger.WithError(err).Error("create index failed")
 		return false, errorx.Wrap(err, "create index failed")
 	} else {
 		logger.Info("create index success")
@@ -51,7 +51,7 @@ func (c *Client) AllIndices(ctx context.Context) ([]string, error) {
 func (c *Client) DeleteIndex(ctx context.Context, index string) (bool, error) {
 	logger := log.WithField("index", index)
 	if resp, err := c.Instance().DeleteIndex(index).Do(ctx); err != nil {
-		logger.WithField("error", err.Error()).Error("delete index failed")
+		logger.WithError(err).Error("delete index failed")
 		return false, errorx.Wrap(err, "delete index failed")
 	} else {
 		logger.Info("delete index success")
@@ -61,11 +61,11 @@ func (c *Client) DeleteIndex(ctx context.Context, index string) (bool, error) {
 
 // DeleteIndicesInBatches 批量删除索引
 func (c *Client) DeleteIndicesInBatches(ctx context.Context, indices []string, limit int) error {
-	if err := taskx.NewSplitter(limit).Execute(ctx, len(indices), func(ctx context.Context, start int, end, batch int) error {
+	if err := taskx.NewSplitterStrategy(limit).Execute(ctx, len(indices), func(ctx context.Context, start, end, batch int) error {
 		indices_ := indices[start:end]
 		logger := log.WithField("start", start).WithField("end", end).WithField("batch", batch)
 		if _, err := c.DeleteIndices(ctx, indices_); err != nil {
-			logger.WithField("error", err.Error()).Error("delete indices in batches failed")
+			logger.WithError(err).Error("delete indices in batches failed")
 			return errorx.Wrap(err, "delete indices in batches failed")
 		}
 		logger.Info("delete indices in batches success")
@@ -81,7 +81,7 @@ func (c *Client) DeleteIndices(ctx context.Context, indices []string) (bool, err
 	logger := log.WithField("indices", indices)
 	resp, err := c.Instance().DeleteIndex(indices...).Do(ctx)
 	if err != nil {
-		logger.WithField("error", err.Error()).Error("delete indices failed")
+		logger.WithError(err).Error("delete indices failed")
 		return false, errorx.Wrap(err, "delete indices failed")
 	}
 	logger.Info("delete indices success")
@@ -91,7 +91,7 @@ func (c *Client) DeleteIndices(ctx context.Context, indices []string) (bool, err
 func (c *Client) Create(ctx context.Context, index, id string, body any) error {
 	logger := log.WithField("index", index).WithField("id", id)
 	if resp, err := c.Instance().Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
-		logger.WithField("error", err.Error()).Error("create failed")
+		logger.WithError(err).Error("create failed")
 		return errorx.Wrap(err, "create failed")
 	} else {
 		logger.WithField("type", resp.Type).Info("create success")
@@ -102,7 +102,7 @@ func (c *Client) Create(ctx context.Context, index, id string, body any) error {
 func (c *Client) Update(ctx context.Context, index, id string, body any) error {
 	logger := log.WithField("index", index).WithField("id", id)
 	if resp, err := c.Instance().Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
-		logger.WithField("error", err.Error()).Error("update failed")
+		logger.WithError(err).Error("update failed")
 		return errorx.Wrap(err, "update failed")
 	} else {
 		logger.WithField("type", resp.Type).Info("update success")
@@ -113,7 +113,7 @@ func (c *Client) Update(ctx context.Context, index, id string, body any) error {
 func (c *Client) Delete(ctx context.Context, index, id string) error {
 	logger := log.WithField("index", index).WithField("id", id)
 	if resp, err := c.Instance().Delete().Index(index).Id(id).Do(ctx); err != nil {
-		logger.WithField("error", err.Error()).Error("delete failed: ", err)
+		logger.WithError(err).Error("delete failed")
 		return errorx.Wrap(err, "delete index failed")
 	} else {
 		logger.WithField("type", resp.Type).Info("delete success")

@@ -6,52 +6,69 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Configurator 配置器
+// Configurator 配置器接口，实现该接口的结构体可以作为配置器使用，用于读取和处理配置信息
+// 配置器的工作流程：
+// 1. 调用Readers()获取配置读取器列表
+// 2. 按顺序使用读取器读取配置数据
+// 3. 调用Valid()检查读取的配置是否有效
+// 4. 配置有效则调用Execute()执行相关的业务逻辑
 type Configurator interface {
-	Valid() bool       // 配置是否有效, 用于决定配置器是否需要继续读取
-	Readers() []Reader // 配置读取器, 配置读取器的顺序会影响配置的读取顺序
-	Execute() error    // 配置器运行, 根据配置值执行相关逻辑
+	// Readers 获取配置读取器列表
+	// 返回配置读取器列表，程序会按照读取器顺序依次尝试读取配置
+	Readers() []Reader
+
+	// Valid 验证配置是否有效
+	// 用于决定配置器是否需要继续读取配置数据，通常在配置读取完成后检查关键配置项是否已正确设置
+	Valid() bool
+
+	// Execute 执行配置器逻辑
+	// 用于根据读取到的配置值执行相关的业务逻辑，在配置读取完成且验证有效后调用此方法
+	Execute() error
 }
 
-// ConfiguratorReadAndExecute 读取配置并运行
-func ConfiguratorReadAndExecute(configurator Configurator) error {
-	var logger = log.WithField("type", anyx.TypeOf(configurator).String())
-
-	location, err := ConfiguratorRead(configurator)
-	logger = logger.WithField("location", location)
-	if err != nil {
-		return errorx.Wrap(err, "configurator read error")
-	}
-
-	if !configurator.Valid() {
-		logger.Info("configurator is invalid")
+// LoadConfigurator 加载配置器
+func LoadConfigurator(configurator Configurator) error {
+	if configurator == nil {
 		return nil
 	}
+
+	logger := log.WithField("type", anyx.TypeOf(configurator).String())
+
+	// 读取配置器
+	location, err := ReadConfigurator(configurator)
+	if err != nil {
+		logger.WithError(err).Error("read configurator error")
+		return errorx.Wrap(err, "read configurator error")
+	}
+	logger = logger.WithField("location", location)
+
+	// 执行配置器逻辑
 	if err = configurator.Execute(); err != nil {
-		logger.WithField("error", err.Error()).Error("configurator run error")
+		logger.WithError(err).Error("configurator execute error")
 		return errorx.Wrap(err, "configurator execute error")
 	}
-	logger.Info("configurator run success")
+	logger.Info("configurator load success")
 	return nil
 }
 
-// ConfiguratorRead 读取配置
-func ConfiguratorRead(configurator Configurator) (string, error) {
-	if configurator.Valid() {
-		return "", nil
+// ReadConfigurator 读取配置器，返回配置文件位置
+func ReadConfigurator(configurator Configurator) (string, error) {
+	if configurator == nil {
+		return "nil", errorx.New("configurator is nil")
+	} else if configurator.Valid() {
+		return "none", nil
 	}
 
+	// 获取配置读取器
 	readers := configurator.Readers()
 	if len(readers) == 0 {
-		return "", errorx.New("configurator reader is empty")
+		return "", errorx.New("configurator reader not found")
 	}
-
 	// 按照读取器的先后顺序依次读取配置
 	for _, reader := range readers {
-		if err := ReadWithReader(configurator, reader); err == nil && configurator.Valid() {
+		if err := ReaderRead(reader, configurator); err == nil && configurator.Valid() {
 			return reader.Location(), nil
 		}
 	}
-
-	return "", errorx.New("configurator all readers are invalid")
+	return "", errorx.New("all readers are invalid")
 }

@@ -3,7 +3,6 @@ package cachex
 import (
 	"time"
 
-	"github.com/go-xuan/quanx/logx"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/marshalx"
 	"github.com/go-xuan/utilx/stringx"
@@ -21,23 +20,23 @@ const (
 )
 
 type Config struct {
-	Type    string `json:"type" yaml:"type" default:"local"`       // 缓存类型（local/redis）
-	Source  string `json:"source" yaml:"source" default:"default"` // 缓存存储数据源名称
-	Prefix  string `json:"prefix" yaml:"prefix" default:"local"`   // 缓存key前缀前缀
-	Marshal string `json:"marshal" yaml:"marshal" default:"json"`  // 序列化方式（json/yaml/msgpack/properties/toml）
+	Source  string `json:"source" yaml:"source" default:"default"` // 缓存源名称
+	Storage string `json:"storage" yaml:"storage" default:"redis"` // 缓存存储类型（redis/local）
+	Prefix  string `json:"prefix" yaml:"prefix" default:"local"`   // 缓存key前缀
+	Marshal string `json:"marshal" yaml:"marshal" default:"json"`  // 序列化方式（json/yaml）
 }
 
 func (c *Config) LogFields() log.Fields {
 	return log.Fields{
-		"type":    c.Type,
 		"source":  c.Source,
+		"storage": c.Storage,
 		"prefix":  c.Prefix,
 		"marshal": c.Marshal,
 	}
 }
 
 func (c *Config) Valid() bool {
-	return c.Type != "" && c.Source != ""
+	return c.Storage != "" && c.Source != ""
 }
 
 func (c *Config) Readers() []configx.Reader {
@@ -50,10 +49,10 @@ func (c *Config) Readers() []configx.Reader {
 
 func (c *Config) Execute() error {
 	if client, err := c.NewClient(); err != nil {
-		logx.WithEntity(c).WithField("error", err.Error()).Error("cache client init failed")
+		log.WithFields(c.LogFields()).WithError(err).Error("cache client init failed")
 		return errorx.Wrap(err, "new cache client error")
 	} else {
-		logx.WithEntity(c).Info("cache client init success")
+		log.WithFields(c.LogFields()).Info("cache client init success")
 		AddClient(c.Source, client)
 	}
 	return nil
@@ -61,7 +60,7 @@ func (c *Config) Execute() error {
 
 // NewClient 根据缓存配置初始化缓存客户端
 func (c *Config) NewClient() (Client, error) {
-	switch c.Type {
+	switch c.Storage {
 	case REDIS:
 		return &RedisClient{
 			config:  c,
@@ -75,7 +74,7 @@ func (c *Config) NewClient() (Client, error) {
 			marshal: marshalx.Apply(c.Marshal),
 		}, nil
 	default:
-		return nil, errorx.New("not support cache client type: " + c.Type)
+		return nil, errorx.Newf("not support cache storage: %s", c.Storage)
 	}
 }
 

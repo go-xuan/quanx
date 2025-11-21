@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/filex"
 	"github.com/go-xuan/utilx/marshalx"
+	
+	"github.com/go-xuan/quanx/constx"
 )
 
 // NewFileReader 默认本地文件读取器
@@ -38,7 +39,7 @@ func (r *FileReader) Location() string {
 func (r *FileReader) Read(v any) error {
 	if r.Data == nil {
 		if path := r.GetPath(); !filex.Exists(path) {
-			return errorx.Errorf("file not exist: %s", filex.Pwd(path))
+			return errorx.Newf("file not exist: %s", filex.Pwd(path))
 		} else if data, err := filex.ReadFile(path); err != nil {
 			return errorx.Wrap(err, "file reader read error")
 		} else {

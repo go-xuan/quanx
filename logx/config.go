@@ -4,6 +4,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
@@ -32,18 +33,24 @@ const (
 
 var config *Config
 
+// GetConfig 获取日志配置
 func GetConfig() *Config {
+	if config == nil {
+		config = NewConfig()
+	}
 	return config
+}
+
+// NewConfig 创建日志配置
+func NewConfig() *Config {
+	cfg := new(Config)
+	errorx.Panic(configx.LoadConfigurator(cfg))
+	return cfg
 }
 
 func init() {
 	log.SetOutput(NewConsoleWriter()) // 设置默认日志输出
-	config = new(Config)
-	if err := configx.ReadWithReader(config, configx.NewTagReader()); err != nil {
-		panic(err)
-	} else if err = config.Execute(); err != nil {
-		panic(err)
-	}
+	config = NewConfig()
 }
 
 // Config 日志配置

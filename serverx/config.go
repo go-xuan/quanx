@@ -4,7 +4,7 @@ import (
 	"github.com/go-xuan/utilx/osx"
 )
 
-// DefaultConfig 默认服务配置
+// DefaultConfig 默认服务运行配置
 func DefaultConfig() *Config {
 	return &Config{
 		Name: "quanx-server",
@@ -13,14 +13,14 @@ func DefaultConfig() *Config {
 	}
 }
 
-// Config 服务配置
+// Config 服务运行配置
 type Config struct {
 	Name string         `json:"name" yaml:"name"` // 服务名称
 	Host string         `json:"host" yaml:"host"` // host, 为空时默认获取本地IP
-	Port map[string]int `json:"port" yaml:"port"` // 服务端口
+	Port map[string]int `json:"port" yaml:"port"` // 服务端口, 键为服务类型, 值为端口号
 }
 
-// Cover 覆盖配置
+// Cover 覆盖配置，仅合并非空字段
 func (c *Config) Cover(config *Config) {
 	if config == nil {
 		return
@@ -36,8 +36,8 @@ func (c *Config) Cover(config *Config) {
 		if c.Port == nil {
 			c.Port = make(map[string]int)
 		}
-		for k, v := range config.Port {
-			c.Port[k] = v
+		for type_, port := range config.Port {
+			c.Port[type_] = port
 		}
 	}
 }
@@ -57,8 +57,8 @@ func (c *Config) GetHost() string {
 
 // GetPort 获取服务端口
 func (c *Config) GetPort() int {
-	if len(c.Port) > 0 && c.Port["http"] > 0 {
-		return c.Port["http"]
+	if len(c.Port) > 0 && c.Port[HTTP] > 0 {
+		return c.Port[HTTP]
 	}
 	return 0
 }
