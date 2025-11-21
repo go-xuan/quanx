@@ -6,6 +6,8 @@ import (
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/redis/go-redis/v9"
+	
+	"github.com/go-xuan/quanx/constx"
 )
 
 // 客户端池
@@ -31,14 +33,14 @@ func GetClient(source ...string) *Client {
 			return client
 		}
 	}
-	return this().Get("default")
+	return this().Get(constx.Default)
 }
 
 // AddClient 添加客户端
 func AddClient(client *Client) {
 	if !Initialized() {
 		pool = typex.NewStringEnum[*Client]()
-		this().Add("default", client)
+		pool.Add(constx.Default, client)
 	}
 	this().Add(client.GetConfig().Source, client)
 }

@@ -86,7 +86,7 @@ func (c *Config) Readers() []configx.Reader {
 func (c *Config) Execute() error {
 	if c.Enable {
 		if client, err := c.NewClient(); err != nil {
-			c.LogEntry().WithField("error", err.Error()).Error("database init failed")
+			c.LogEntry().WithError(err).Error("database init failed")
 			return errorx.Wrap(err, "new gorm client error")
 		} else {
 			AddClient(client)
@@ -118,7 +118,7 @@ func (c *Config) NewGormDB() (*gorm.DB, error) {
 		dial = postgres.Open(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
 			c.Host, c.Port, c.Username, c.Password, c.Database))
 	default:
-		return nil, errorx.Errorf("database type only support : %v", []string{MYSQL, POSTGRES, PGSQL})
+		return nil, errorx.Newf("database type only support: %v", []string{MYSQL, POSTGRES, PGSQL})
 	}
 	gormDB, err := gorm.Open(dial, &gorm.Config{
 		Logger: c.GetLogger(),

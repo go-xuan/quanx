@@ -73,7 +73,7 @@ func (c *Config) Valid() bool {
 func (c *Config) Execute() error {
 	if c.Enable {
 		if client, err := c.NewClient(); err != nil {
-			c.LogEntry().WithField("error", err.Error()).Error("mongo init failed")
+			c.LogEntry().WithError(err).Error("mongo init failed")
 			return errorx.Wrap(err, "mongo init client error")
 		} else {
 			c.LogEntry().Info("mongo init success")

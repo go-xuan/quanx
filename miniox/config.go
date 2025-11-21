@@ -51,7 +51,7 @@ func (c *Config) Readers() []configx.Reader {
 
 func (c *Config) Execute() error {
 	if client, err := c.NewClient(); err != nil {
-		c.LogEntry().WithField("error", err.Error()).Error("minio init failed")
+		c.LogEntry().WithError(err).Error("minio init failed")
 		return errorx.Wrap(err, "new minio client failed")
 	} else {
 		_client = &Client{config: c, client: client}

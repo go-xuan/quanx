@@ -36,7 +36,7 @@ func getCenter() Center {
 // ValidateInstance 验证服务实例
 func ValidateInstance(instance Instance) error {
 	if instance.GetName() == "" {
-		return errorx.New("server instance name is empty")
+		return errorx.New("server instance app is empty")
 	}
 	if instance.GetHost() == "" {
 		return errorx.New("server instance host is empty")

@@ -56,25 +56,25 @@ func Logger(ctx *gin.Context) *log.Entry {
 // Success 请求成功
 func Success(ctx *gin.Context, data any) {
 	ctx.JSON(http.StatusOK, NewResponse(SuccessCode, data))
-	Logger(ctx).WithField("http_code", http.StatusOK).WithField("data", data).Info("request success")
+	Logger(ctx).WithField("http_code", http.StatusOK).Info("request success")
 }
 
 // Error 请求失败
 func Error(ctx *gin.Context, err error) {
 	ctx.JSON(http.StatusInternalServerError, NewResponse(FailedCode, err.Error()))
-	Logger(ctx).WithField("http_code", http.StatusInternalServerError).WithField("error", err.Error()).Error("request error")
+	Logger(ctx).WithField("http_code", http.StatusInternalServerError).WithError(err).Error("request error")
 }
 
 // ParamError 请求参数错误
 func ParamError(ctx *gin.Context, err error) {
 	ctx.JSON(http.StatusBadRequest, NewResponse(ParamErrorCode, err.Error()))
-	Logger(ctx).WithField("http_code", http.StatusBadRequest).WithField("error", err.Error()).Error("request parameter error")
+	Logger(ctx).WithField("http_code", http.StatusBadRequest).WithError(err).Error("request parameter error")
 }
 
 // Forbidden 鉴权失败
 func Forbidden(ctx *gin.Context, err error) {
 	ctx.JSON(http.StatusForbidden, NewResponse(AuthFailedCode, err.Error()))
-	Logger(ctx).WithField("http_code", http.StatusForbidden).WithField("error", err.Error()).Error("request auth validate error")
+	Logger(ctx).WithField("http_code", http.StatusForbidden).WithError(err).Error("request auth validate error")
 }
 
 // Custom 自定义响应体

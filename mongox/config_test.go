@@ -7,7 +7,7 @@ import (
 )
 
 func TestMongo(t *testing.T) {
-	if err := configx.ConfiguratorReadAndExecute(&Config{}); err != nil {
+	if err := configx.LoadConfigurator(&Config{}); err != nil {
 		panic(err)
 	}
 }

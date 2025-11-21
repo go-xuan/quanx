@@ -29,7 +29,7 @@ func (t *test) Execute() error {
 func TestConfigurator(t *testing.T) {
 	var config = &test{}
 	fmt.Println("before execute :", config)
-	if err := ConfiguratorReadAndExecute(config); err != nil {
+	if err := LoadConfigurator(config); err != nil {
 		t.Error(err)
 		return
 	}

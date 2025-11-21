@@ -44,7 +44,7 @@ func (c *Config) Readers() []configx.Reader {
 func (c *Config) Execute() error {
 	if c.Enable {
 		if client, err := c.NewClient(); err != nil {
-			c.LogEntry().WithField("error", err.Error()).Error("elastic-search init failed")
+			c.LogEntry().WithError(err).Error("elastic-search init failed")
 			return errorx.Wrap(err, "new elasticx client error")
 		} else {
 			c.LogEntry().Info("elastic-search init success")

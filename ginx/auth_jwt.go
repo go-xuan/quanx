@@ -1,31 +1,56 @@
 package ginx
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/stringx"
 	"github.com/golang-jwt/jwt/v4"
+
+	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/nacosx"
 )
 
 // NewJwtValidator 创建JWT验证器
-func NewJwtValidator(secret string, ignore ...string) *JwtValidator {
+func NewJwtValidator(secret string, white ...string) *JwtValidator {
+	whiteMap := make(map[string]struct{})
+	for _, w := range white {
+		whiteMap[w] = struct{}{}
+	}
 	return &JwtValidator{
-		secret: []byte(secret),
-		ignore: ignore,
+		Secret: secret,
+		White:  whiteMap,
 	}
 }
 
 // JwtValidator JWT验证器
 type JwtValidator struct {
-	secret []byte   // jwt密钥
-	ignore []string // 鉴权白名单
+	Secret string              `json:"secret" yaml:"secret"` // jwt密钥
+	White  map[string]struct{} `json:"white" yaml:"white"`   // 鉴权白名单
+}
+
+func (v *JwtValidator) Valid() bool {
+	return v.Secret != ""
+}
+
+func (v *JwtValidator) Readers() []configx.Reader {
+	return []configx.Reader{
+		nacosx.NewReader("auth.yaml"),
+		configx.NewFileReader("auth.yaml"),
+	}
+}
+
+func (v *JwtValidator) Execute() error {
+	SetAuthValidator(v)
+	return nil
 }
 
 // Encrypt 加密用户信息
 func (v *JwtValidator) Encrypt(user AuthUser) (string, error) {
 	if jwtUser, ok := user.(*JwtUser); ok {
-		ciphertext, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtUser).SignedString(v.secret)
+		ciphertext, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtUser).SignedString([]byte(v.Secret))
 		if err != nil {
 			return "", errorx.Wrap(err, "jwt encrypt token error")
 		}
@@ -38,7 +63,7 @@ func (v *JwtValidator) Encrypt(user AuthUser) (string, error) {
 func (v *JwtValidator) Decrypt(ciphertext string) (AuthUser, error) {
 	var user = &JwtUser{}
 	if jt, err := jwt.ParseWithClaims(ciphertext, user, func(*jwt.Token) (interface{}, error) {
-		return v.secret, nil
+		return []byte(v.Secret), nil
 	}); err != nil || !jt.Valid {
 		return nil, errorx.Wrap(err, "jwt decrypt error")
 	}
@@ -47,14 +72,19 @@ func (v *JwtValidator) Decrypt(ciphertext string) (AuthUser, error) {
 
 // AddWhite 添加白名单
 func (v *JwtValidator) AddWhite(url ...string) {
-	v.ignore = append(v.ignore, url...)
+	for _, u := range url {
+		v.White[u] = struct{}{}
+	}
 }
 
-// MatchWhite 匹配白名单
-func (v *JwtValidator) MatchWhite(ctx *gin.Context) bool {
+// matchWhite 匹配白名单
+func (v *JwtValidator) matchWhite(ctx *gin.Context) bool {
+	if len(v.White) == 0 {
+		return false
+	}
 	url := ctx.Request.URL.Path
-	for _, ignore := range v.ignore {
-		if stringx.MatchUrl(url, ignore) {
+	for w := range v.White {
+		if stringx.MatchUrl(url, w) {
 			return true
 		}
 	}
@@ -64,38 +94,30 @@ func (v *JwtValidator) MatchWhite(ctx *gin.Context) bool {
 // Validate 验证用户信息
 func (v *JwtValidator) Validate(method AuthMethod) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if !v.MatchWhite(ctx) {
-			user, err := v.validate(ctx, method)
-			if err != nil {
+		if !v.matchWhite(ctx) {
+			if err := v.validate(ctx, method); err != nil {
 				Forbidden(ctx, errorx.Wrap(err, "auth validate failed"))
 				ctx.Abort()
 				return
 			}
-			SetSessionUser(ctx, user)
 		}
 	}
 }
 
-func (v *JwtValidator) validate(ctx *gin.Context, method AuthMethod) (AuthUser, error) {
-	// 如果session中存在用户，直接返回，避免重复解密
-	var user AuthUser
-	if user = GetSessionUser(ctx); user != nil {
-		return user, nil
+// validate 验证用户信息
+func (v *JwtValidator) validate(ctx *gin.Context, method AuthMethod) error {
+	if user := GetSessionUser(ctx); user == nil {
+		// 获取鉴权字符串
+		if authString, err := GetAuthString(ctx, method); err != nil {
+			return errorx.Wrap(err, "get auth string error")
+		} else if user, err = v.Decrypt(authString); err != nil {
+			return errorx.Wrap(err, "decrypt error")
+		} else if !AuthCache().Exist(ctx, user.GetUserId().String()) {
+			return errorx.New("auth user is invalid")
+		}
+		SetSessionUser(ctx, user)
 	}
-	// 获取鉴权字符串
-	authString, err := GetAuthString(ctx, method)
-	if err != nil {
-		return nil, errorx.Wrap(err, "get auth string error")
-	}
-	// 从token中解密用户信息
-	if user, err = v.Decrypt(authString); err != nil {
-		return nil, errorx.Wrap(err, "decrypt error")
-	}
-	// 验证用户信息是否有效
-	if !AuthCache().Exist(ctx, user.GetUserId().String()) {
-		return nil, errorx.Wrap(err, "auth user is invalid")
-	}
-	return user, nil
+	return nil
 }
 
 // Debug 调试模式，模拟当前会话用户，适用于免登录场景
@@ -105,8 +127,9 @@ func (v *JwtValidator) Debug(ctx *gin.Context) {
 
 // JwtUser 实现AuthUser
 type JwtUser struct {
-	Id   int64  `json:"id"`   // 用户ID
-	Name string `json:"name"` // 用户名
+	Id     int64  `json:"id"`     // 用户ID
+	Name   string `json:"name"`   // 用户名
+	Expire int64  `json:"expire"` // 有效期时间戳
 }
 
 // Valid 验证用户信息是否有效，用于实现 jwt.Claims 接口
@@ -115,6 +138,8 @@ func (u *JwtUser) Valid() error {
 		return errorx.New("user id is empty")
 	} else if u.Name == "" {
 		return errorx.New("user name is empty")
+	} else if u.Expire < time.Now().Unix() {
+		return errorx.New("user has expired")
 	}
 	return nil
 }

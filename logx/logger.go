@@ -4,20 +4,13 @@ import (
 	"context"
 
 	"github.com/go-xuan/utilx/contextx"
-	"github.com/go-xuan/utilx/idx"
 	log "github.com/sirupsen/logrus"
 )
-
-func NewEntry() *log.Entry {
-	return log.WithField("app", config.Name)
-}
 
 // NewLogger 创建日志实例
 func NewLogger() *Logger {
 	return &Logger{
-		app:    config.Name,
-		trace:  idx.UUID(),
-		entity: NewEntry(),
+		entity: log.WithField("app", GetConfig().Name),
 	}
 }
 
@@ -26,20 +19,17 @@ func NewCtxLogger(ctx context.Context) *Logger {
 	return NewLogger().WithContext(ctx)
 }
 
+// Logger 日志实例
 type Logger struct {
-	app    string
-	trace  string
 	entity *log.Entry
 }
 
 func (l *Logger) WithContext(ctx context.Context) *Logger {
 	if app := contextx.GetValue(ctx, "app"); app.Valid() {
-		l.app = app.String()
-		l.entity = l.entity.WithField("app", l.app)
+		l.entity = l.entity.WithField("app", app)
 	}
 	if trace := contextx.GetValue(ctx, "trace"); trace.Valid() {
-		l.trace = trace.String()
-		l.entity = l.entity.WithField("trace", l.trace)
+		l.entity = l.entity.WithField("trace", trace)
 	}
 	l.entity = l.entity.WithContext(ctx)
 	return l
@@ -56,12 +46,12 @@ func (l *Logger) WithFields(fields map[string]interface{}) *Logger {
 }
 
 func (l *Logger) WithError(err error) *Logger {
-	l.entity = l.entity.WithField("error", err.Error())
+	l.entity = l.entity.WithError(err)
 	return l
 }
 
-func (l *Logger) WithEntity(entity Entry) *Logger {
-	l.entity = log.WithFields(entity.LogFields())
+func (l *Logger) WithErrorMsg(err error) *Logger {
+	l.entity = l.entity.WithField(log.ErrorKey, err.Error())
 	return l
 }
 
@@ -91,12 +81,4 @@ func (l *Logger) Fatal(args ...interface{}) {
 
 func (l *Logger) Panic(args ...interface{}) {
 	l.entity.Panic(args...)
-}
-
-type Entry interface {
-	LogFields() log.Fields // 日志字段
-}
-
-func WithEntity(entity Entry) *log.Entry {
-	return log.WithFields(entity.LogFields())
 }

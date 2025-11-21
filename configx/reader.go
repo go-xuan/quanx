@@ -1,8 +1,9 @@
 package configx
 
 import (
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/utilx/errorx"
+	
+	"github.com/go-xuan/quanx/constx"
 )
 
 // DefaultReader 默认配置读取器
@@ -13,15 +14,25 @@ func DefaultReader() Reader {
 	}
 }
 
-// Reader 配置读取器
+// Reader 配置读取器接口
+// 读取器负责从不同来源（如文件、环境变量、远程配置中心等）读取配置数据
 type Reader interface {
-	Anchor(anchor string) // 配置文件锚点
-	Read(v any) error     // 配置读取
-	Location() string     // 配置文件位置
+	// Read 从数据源读取配置并反序列化到目标结构体
+	// 根据读取器类型从相应的配置源获取配置数据，并将其解析到传入的结构体中
+	Read(v any) error
+
+	// Anchor 设置配置文件锚点
+	// 锚点用于标识配置数据在不同配置源中的具体位置
+	// 例如：文件读取器使用文件路径作为锚点，而Nacos读取器使用group作为锚点
+	Anchor(anchor string)
+
+	// Location 返回配置数据源的位置信息
+	// 用于标识配置数据的具体来源位置，便于调试和日志记录
+	Location() string
 }
 
-// ReadWithReader 使用指定的配置读取器读取配置
-func ReadWithReader(v any, reader Reader) error {
+// ReaderRead 使用指定的配置读取器读取配置
+func ReaderRead(reader Reader, v any) error {
 	if reader == nil {
 		return errorx.New("reader is nil")
 	}

@@ -3,9 +3,10 @@ package gormx
 import (
 	"strings"
 
-	"github.com/go-xuan/utilx/errorx"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+
+	"github.com/go-xuan/utilx/errorx"
 )
 
 // InitTabler 初始化表数据
@@ -20,6 +21,9 @@ type CommentTabler interface {
 
 // InitTable 初始化表
 func InitTable(source string, tablers ...interface{}) error {
+	if !Initialized() {
+		return errorx.New("gorm not initialized")
+	}
 	if client := GetClient(source); client != nil {
 		if db, conf := client.GetInstance(), client.GetConfig(); db != nil && conf != nil && len(tablers) > 0 {
 			migrator := db.Migrator()
@@ -28,26 +32,26 @@ func InitTable(source string, tablers ...interface{}) error {
 					if migrator.HasTable(tabler) {
 						if err := db.Migrator().AutoMigrate(tabler); err != nil {
 							if err.Error() != "insufficient arguments" {
-								return errorx.Wrap(err, "table auto migrate error")
+								return errorx.Wrap(err, "auto migrate table error")
 							}
 						}
 						if err := initTableData(db, tabler); err != nil {
-							return errorx.Wrap(err, "table init data error")
+							return errorx.Wrap(err, "init table data error")
 						}
 					} else {
 						if err := db.Migrator().CreateTable(tabler); err != nil {
-							return errorx.Wrap(err, "table create error")
+							return errorx.Wrap(err, "create table error")
 						}
 						if err := alterTableComment(db, schemaTabler, conf.Type); err != nil {
 							return errorx.Wrap(err, "alter table comment error")
 						}
 						if err := initTableData(db, tabler); err != nil {
-							return errorx.Wrap(err, "table init data error")
+							return errorx.Wrap(err, "init table data error")
 						}
 					}
 				} else {
 					if err := migrator.AutoMigrate(tabler); err != nil {
-						return errorx.Wrap(err, "table create error")
+						return errorx.Wrap(err, "create table error")
 					}
 				}
 			}
@@ -61,10 +65,10 @@ func initTableData(db *gorm.DB, tabler interface{}) error {
 	if initTabler, ok := tabler.(InitTabler); ok {
 		var count int64
 		if err := db.Model(tabler).Count(&count).Error; err != nil {
-			return errorx.Wrap(err, "table count error")
+			return errorx.Wrap(err, "count table data error")
 		} else if initData := initTabler.InitData(); initData != nil && count == 0 {
 			if err = db.Create(initData).Error; err != nil {
-				return errorx.Wrap(err, "table insert error")
+				return errorx.Wrap(err, "insert table data error")
 			}
 		}
 	}
@@ -76,7 +80,7 @@ func alterTableComment(db *gorm.DB, tabler schema.Tabler, dbType string) error {
 	if commentTabler, ok := tabler.(CommentTabler); ok {
 		if name, comment := tabler.TableName(), commentTabler.TableComment(); name != "" && comment != "" {
 			if err := db.Exec(commentTableSql(dbType, name, comment)).Error; err != nil {
-				return errorx.Wrap(err, "table alter comment error")
+				return errorx.Wrap(err, "alter table comment error")
 			}
 		}
 	}

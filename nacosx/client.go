@@ -126,7 +126,7 @@ func (c *Client) ListenConfig(config any, param vo.ConfigParam) error {
 			WithField("data", data)
 		logger.Info("the nacos config data has changed !!!")
 		if err := marshalx.Apply(dataId).Unmarshal([]byte(data), config); err != nil {
-			logger.WithField("error", err.Error()).Error("update config error")
+			logger.WithError(err).Error("update config error")
 		}
 	}
 	if err := c.GetConfigClient().ListenConfig(param); err != nil {

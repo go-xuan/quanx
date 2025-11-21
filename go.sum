@@ -43,8 +43,8 @@ github.com/go-sql-driver/mysql v1.8.1 h1:LedoTUt/eveggdHS9qUFC1EFSa8bU2+1pZjSRpv
 github.com/go-sql-driver/mysql v1.8.1/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqwuVSjsCm7DZg=
 github.com/go-xuan/typex v1.25.4 h1:7TU1beYKTLKLYq2vDr4i0329eniPRGSQ1LK+tnygRPI=
 github.com/go-xuan/typex v1.25.4/go.mod h1:q7/j65RGZYHwX0PEpPdd8hZCBcusUzwXvJzzyjW5kao=
-github.com/go-xuan/utilx v1.25.12 h1:BlJLbcLkS4PqBGc3Kb5p5aNmCgdB5KF+pUaRNwOHqbA=
-github.com/go-xuan/utilx v1.25.12/go.mod h1:pchsNmGEj5aG4F17zE6zNZTnMcmmVuipoNYhNKKCJfo=
+github.com/go-xuan/utilx v1.25.14 h1:BsyXlnov3DMN/0qlt8dIX/qC14yMO6mstIj0/gZECBU=
+github.com/go-xuan/utilx v1.25.14/go.mod h1:pchsNmGEj5aG4F17zE6zNZTnMcmmVuipoNYhNKKCJfo=
 github.com/goccy/go-json v0.10.0 h1:mXKd9Qw4NuzShiRlOXKews24ufknHO7gx30lsDyokKA=
 github.com/goccy/go-json v0.10.0/go.mod h1:6MelG93GURQebXPDq3khkgXZkazVtN9CRI+MGFi0w8I=
 github.com/goji/httpauth v0.0.0-20160601135302-2da839ab0f4d/go.mod h1:nnjvkQ9ptGaCkuDUx6wNykzzlUixGxvkme+H/lnzb+A=

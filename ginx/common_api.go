@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-xuan/quanx/gormx"
 	"github.com/go-xuan/utilx/excelx"
 	"github.com/go-xuan/utilx/timex"
 	"gorm.io/gorm"
 
 	"github.com/go-xuan/quanx/constx"
+	"github.com/go-xuan/quanx/gormx"
 	"github.com/go-xuan/quanx/modelx"
 )
 

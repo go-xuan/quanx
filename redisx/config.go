@@ -76,7 +76,7 @@ func (c *Config) Valid() bool {
 func (c *Config) Execute() error {
 	if c.Enable {
 		if client, err := c.NewClient(); err != nil {
-			c.LogEntry().WithField("error", err.Error()).Error("redis init failed")
+			c.LogEntry().WithError(err).Error("redis init failed")
 			return errorx.Wrap(err, "new redis client error")
 		} else {
 			AddClient(client)
@@ -134,7 +134,7 @@ func (c *Config) NewRedisClient() (redis.UniversalClient, error) {
 		if err != nil {
 			result = err.Error()
 		}
-		c.LogEntry().WithField("error", result).Error("client ping failed")
+		c.LogEntry().WithError(err).Error("client ping failed")
 		return client, errorx.Wrap(err, "client ping error")
 	}
 	return client, nil

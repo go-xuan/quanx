@@ -22,7 +22,7 @@ func (c *Client) Copy(target string, database string) (*Client, error) {
 	config.Source = target
 	config.Database = database
 	if client, err := config.NewClient(); err != nil {
-		config.LogEntry().WithField("error", err.Error()).Error("new mongo client failed")
+		config.LogEntry().WithError(err).Error("new mongo client failed")
 		return nil, err
 	} else {
 		config.LogEntry().Info("new mongo client success")
