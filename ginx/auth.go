@@ -56,10 +56,10 @@ func SetAuthCache(cache cachex.Client) {
 
 // AuthValidator 鉴权验证器
 type AuthValidator interface {
-	AddWhite(url ...string)                     // 添加白名单
+	AddWhite(url, method string)                // 添加白名单
 	Encrypt(user AuthUser) (string, error)      // 加密用户信息
 	Decrypt(auth string) (AuthUser, error)      // 解密用户信息
-	Validate(method AuthMethod) gin.HandlerFunc // token方式鉴权
+	Validate(method AuthMethod) gin.HandlerFunc // 鉴权中间件
 }
 
 // AuthUser 鉴权用户

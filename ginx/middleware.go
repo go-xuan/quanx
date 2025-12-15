@@ -22,7 +22,7 @@ func Cors(ctx *gin.Context) {
 	ctx.Next()
 }
 
-// Trace traceId
+// Trace 为gin上下文添加traceId
 func Trace(ctx *gin.Context) {
 	ctx.Set(traceIdKey, uuid.NewString())
 	ctx.Next()
@@ -35,8 +35,8 @@ func LogFormatter(ctx *gin.Context) {
 	ctx.Next()
 	// 日志格式化
 	GetLogger(ctx).WithField("method", ctx.Request.Method).
-		WithField("url", ctx.Request.URL.Path).
+		WithField("url", ctx.Request.URL.String()).
 		WithField("status", ctx.Writer.Status()).
-		WithField("duration", time.Since(start).Milliseconds()).
-		Info("request")
+		WithField("duration", time.Since(start).String()).
+		Info("gin request finished")
 }

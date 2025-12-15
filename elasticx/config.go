@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-xuan/utilx/errorx"
+	"github.com/go-xuan/utilx/httpx"
 	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
 
@@ -14,11 +15,13 @@ import (
 
 // Config ES配置
 type Config struct {
-	Source string   `json:"source" yaml:"source" default:"default"` // 数据源名称
-	Enable bool     `json:"enable" yaml:"enable"`                   // 数据源启用
-	Host   string   `yaml:"host" json:"host"`                       // 主机
-	Port   int      `yaml:"port" json:"port"`                       // 端口
-	Index  []string `yaml:"index" json:"index"`                     // 索引
+	Source   string   `json:"source" yaml:"source" default:"default"` // 数据源名称
+	Enable   bool     `json:"enable" yaml:"enable"`                   // 数据源启用
+	Host     string   `json:"host" yaml:"host"`                       // 主机
+	Port     int      `json:"port" yaml:"port"`                       // 端口
+	Username string   `json:"username" yaml:"username"`               // 用户名
+	Password string   `json:"password" yaml:"password"`               // 密码
+	Index    []string `json:"index" yaml:"index"`                     // 索引
 }
 
 // LogEntry 日志打印实体类
@@ -45,7 +48,7 @@ func (c *Config) Execute() error {
 	if c.Enable {
 		if client, err := c.NewClient(); err != nil {
 			c.LogEntry().WithError(err).Error("elastic-search init failed")
-			return errorx.Wrap(err, "new elasticx client error")
+			return errorx.Wrap(err, "init elasticx client error")
 		} else {
 			c.LogEntry().Info("elastic-search init success")
 			AddClient(c, client)
@@ -54,19 +57,32 @@ func (c *Config) Execute() error {
 	return nil
 }
 
-func (c *Config) Url() string {
-	return fmt.Sprintf("http://%s:%d", c.Host, c.Port)
+// GetUrl 构建ES连接URL
+func (c *Config) GetUrl() string {
+	protocol, host, port := httpx.ParseHost(c.Host)
+	if port == 0 && c.Port > 0 {
+		port = c.Port
+	}
+	if protocol != "" {
+		return fmt.Sprintf("%s://%s:%d", protocol, host, port)
+	} else {
+		return fmt.Sprintf("%s:%d", host, port)
+	}
 }
 
 func (c *Config) NewClient() (*elastic.Client, error) {
-	url := c.Url()
-	client, err := elastic.NewClient(elastic.SetURL(url), elastic.SetSniff(false))
+	url := c.GetUrl()
+	client, err := elastic.NewClient(
+		elastic.SetURL(url),
+		elastic.SetSniff(false),
+		elastic.SetBasicAuth(c.Username, c.Password),
+		elastic.SetHttpClient(httpx.NewClient()),
+	)
 	if err != nil {
 		return nil, errorx.Wrap(err, "new elastic client failed")
 	}
-	var result *elastic.PingResult
-	var code int
-	if result, code, err = client.Ping(url).Do(context.Background()); err != nil || code != 200 {
+	result, code, err := client.Ping(url).Do(context.Background())
+	if err != nil || code != 200 {
 		return nil, errorx.Wrap(err, "elastic-search ping failed")
 	}
 	log.Info("elastic-search version: ", result.Version.Number)

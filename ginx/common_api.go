@@ -3,11 +3,10 @@ package ginx
 import (
 	"net/http"
 	"path/filepath"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/utilx/excelx"
-	"github.com/go-xuan/utilx/timex"
+	"github.com/go-xuan/utilx/idx"
 	"gorm.io/gorm"
 
 	"github.com/go-xuan/quanx/constx"
@@ -151,7 +150,8 @@ func (m *Model[T]) Export(ctx *gin.Context) {
 		Custom(ctx, http.StatusBadRequest, NewResponse(ExportFailedCode, err.Error()))
 		return
 	}
-	var filePath = filepath.Join(constx.DefaultResourceDir, time.Now().Format(timex.TimestampFmt)+".xlsx")
+
+	var filePath = filepath.Join(constx.DefaultResourceDir, idx.Timestamp()+".xlsx")
 	if len(result) > 0 {
 		if err := excelx.WriteAny(filePath, result); err != nil {
 			CustomError(ctx, NewResponse(ExportFailedCode, err.Error()))

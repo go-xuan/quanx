@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-xuan/utilx/errorx"
-	
+
 	"github.com/go-xuan/quanx/serverx"
 )
 
@@ -23,5 +23,5 @@ func GetServerProxyURL(url string) (string, error) {
 			}
 		}
 	}
-	return "", errorx.Newf("this url [%s] not match any gateway proxy", url)
+	return "", errorx.Sprintf("this url [%s] not match any gateway proxy", url)
 }

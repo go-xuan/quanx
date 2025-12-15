@@ -3,18 +3,15 @@ package configx
 import (
 	"fmt"
 
+	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
-	
-	"github.com/go-xuan/quanx/constx"
+	"github.com/go-xuan/utilx/stringx"
 )
 
 // NewTagReader 创建tag读取器
 func NewTagReader(tags ...string) *TagReader {
-	tag := constx.Default
-	if len(tags) > 0 && tags[0] != "" {
-		tag = tags[0]
-	}
+	tag := stringx.Default(constx.Default, tags...)
 	return &TagReader{
 		Tag: tag,
 	}
@@ -33,7 +30,7 @@ func (r *TagReader) Anchor(tag string) {
 
 func (r *TagReader) Read(v any) error {
 	r.Anchor(constx.Default)
-	if err := anyx.SetDefaultValue(v, r.Tag); err != nil {
+	if err := anyx.SetFieldValueFromTag(v, r.Tag); err != nil {
 		return errorx.Wrap(err, "read config from tag error")
 	}
 	return nil
