@@ -118,7 +118,7 @@ func (c *Config) NewGormDB() (*gorm.DB, error) {
 		dial = postgres.Open(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
 			c.Host, c.Port, c.Username, c.Password, c.Database))
 	default:
-		return nil, errorx.Newf("database type only support: %v", []string{MYSQL, POSTGRES, PGSQL})
+		return nil, errorx.Sprintf("database type only support: %v", []string{MYSQL, POSTGRES, PGSQL})
 	}
 	gormDB, err := gorm.Open(dial, &gorm.Config{
 		Logger: c.GetLogger(),

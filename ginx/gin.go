@@ -15,11 +15,7 @@ const (
 func DefaultEngine() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
-	engine.Use(
-		gin.Recovery(), // 恢复中间件
-		Trace,          // 跟踪中间件
-		LogFormatter,   // 日志格式化中间件
-	)
+	engine.Use(gin.Recovery()) // 恢复中间件
 	return engine
 }
 

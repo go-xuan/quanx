@@ -1,6 +1,7 @@
 package ginx
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -8,27 +9,26 @@ import (
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/stringx"
 	"github.com/golang-jwt/jwt/v4"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/go-xuan/quanx/cachex"
 	"github.com/go-xuan/quanx/configx"
 	"github.com/go-xuan/quanx/nacosx"
 )
 
 // NewJwtValidator 创建JWT验证器
-func NewJwtValidator(secret string, white ...string) *JwtValidator {
-	whiteMap := make(map[string]struct{})
-	for _, w := range white {
-		whiteMap[w] = struct{}{}
-	}
+func NewJwtValidator(secret string) *JwtValidator {
 	return &JwtValidator{
 		Secret: secret,
-		White:  whiteMap,
+		White:  make(map[string]string),
 	}
 }
 
 // JwtValidator JWT验证器
 type JwtValidator struct {
-	Secret string              `json:"secret" yaml:"secret"` // jwt密钥
-	White  map[string]struct{} `json:"white" yaml:"white"`   // 鉴权白名单
+	Secret string            `json:"secret" yaml:"secret"` // jwt密钥
+	White  map[string]string `json:"white" yaml:"white"`   // 鉴权白名单，map[URL路径]HTTP方法，*表示支持所有方法
+	Cache  *cachex.Config    `json:"cache" yaml:"cache"`   // 缓存客户端
 }
 
 func (v *JwtValidator) Valid() bool {
@@ -43,7 +43,17 @@ func (v *JwtValidator) Readers() []configx.Reader {
 }
 
 func (v *JwtValidator) Execute() error {
+	if !v.Valid() {
+		return nil
+	}
 	SetAuthValidator(v)
+	// 设置缓存客户端
+	if cache := v.Cache; cache != nil && cache.Valid() {
+		if client, err := cache.NewClient(); err == nil {
+			log.WithField("source", cache.Source).Info("auth cache exchange success")
+			SetAuthCache(client)
+		}
+	}
 	return nil
 }
 
@@ -71,30 +81,32 @@ func (v *JwtValidator) Decrypt(ciphertext string) (AuthUser, error) {
 }
 
 // AddWhite 添加白名单
-func (v *JwtValidator) AddWhite(url ...string) {
-	for _, u := range url {
-		v.White[u] = struct{}{}
-	}
+func (v *JwtValidator) AddWhite(url string, method string) {
+	v.White[url] = strings.ToUpper(method)
 }
 
-// matchWhite 匹配白名单
-func (v *JwtValidator) matchWhite(ctx *gin.Context) bool {
+// MatchWhite 匹配白名单
+func (v *JwtValidator) MatchWhite(ctx *gin.Context) bool {
 	if len(v.White) == 0 {
 		return false
 	}
-	url := ctx.Request.URL.Path
-	for w := range v.White {
-		if stringx.MatchUrl(url, w) {
+	method, url := ctx.Request.Method, ctx.Request.URL.Path
+	for u, m := range v.White {
+		if stringx.MatchUrl(url, u) && matchMethod(method, strings.ToUpper(m)) {
 			return true
 		}
 	}
 	return false
 }
 
+func matchMethod(method, rule string) bool {
+	return rule == "*" || strings.Contains(rule, method)
+}
+
 // Validate 验证用户信息
 func (v *JwtValidator) Validate(method AuthMethod) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if !v.matchWhite(ctx) {
+		if !v.MatchWhite(ctx) {
 			if err := v.validate(ctx, method); err != nil {
 				Forbidden(ctx, errorx.Wrap(err, "auth validate failed"))
 				ctx.Abort()

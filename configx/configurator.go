@@ -32,7 +32,7 @@ func LoadConfigurator(configurator Configurator) error {
 		return nil
 	}
 
-	logger := log.WithField("type", anyx.TypeOf(configurator).String())
+	logger := log.WithField("configurator", anyx.TypeOf(configurator).String())
 
 	// 读取配置器
 	location, err := ReadConfigurator(configurator)
@@ -56,13 +56,13 @@ func ReadConfigurator(configurator Configurator) (string, error) {
 	if configurator == nil {
 		return "nil", errorx.New("configurator is nil")
 	} else if configurator.Valid() {
-		return "none", nil
+		return "self", nil
 	}
 
 	// 获取配置读取器
 	readers := configurator.Readers()
 	if len(readers) == 0 {
-		return "", errorx.New("configurator reader not found")
+		return "", errorx.New("the configurator's reader is empty")
 	}
 	// 按照读取器的先后顺序依次读取配置
 	for _, reader := range readers {
@@ -70,5 +70,5 @@ func ReadConfigurator(configurator Configurator) (string, error) {
 			return reader.Location(), nil
 		}
 	}
-	return "", errorx.New("all readers are invalid")
+	return "", errorx.New("no available reader")
 }

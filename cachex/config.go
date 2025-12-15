@@ -74,7 +74,7 @@ func (c *Config) NewClient() (Client, error) {
 			marshal: marshalx.Apply(c.Marshal),
 		}, nil
 	default:
-		return nil, errorx.Newf("not support cache storage: %s", c.Storage)
+		return nil, errorx.Sprintf("not support cache storage: %s", c.Storage)
 	}
 }
 

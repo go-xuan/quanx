@@ -2,7 +2,6 @@ package nacosx
 
 import (
 	"path/filepath"
-	"strings"
 
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/stringx"
@@ -119,18 +118,18 @@ func (c *Config) ClientConfig() *constant.ClientConfig {
 
 // ServerConfigs nacos服务中间件配置
 func (c *Config) ServerConfigs() []constant.ServerConfig {
-	var addrs = strings.Split(c.Address, ",")
+	addrs := stringx.Split(c.Address, ",")
 	if len(addrs) == 0 {
 		log.Error("the address of nacos cannot be empty")
 		return nil
 	}
 	var configs []constant.ServerConfig
 	for _, addr := range addrs {
-		host, port, _ := strings.Cut(addr, ":")
+		host, port := stringx.Cut(addr, ":")
 		configs = append(configs, constant.ServerConfig{
 			ContextPath: "/nacos",
 			IpAddr:      host,
-			Port:        uint64(stringx.ParseInt64(port)),
+			Port:        uint64(stringx.ParseInt64(port, 8848)),
 		})
 	}
 	return configs

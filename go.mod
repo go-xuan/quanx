@@ -4,22 +4,22 @@ go 1.18
 
 require (
 	github.com/gin-gonic/gin v1.9.0 // v1.9.1版本需要升级到go 1.20
-	github.com/go-xuan/typex v1.25.4
-	github.com/go-xuan/utilx v1.25.14
+	github.com/go-xuan/typex v1.25.5
+	github.com/go-xuan/utilx v1.25.16
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/minio/minio-go/v7 v7.0.61 // v7.0.61以上版本依赖的github.com/klauspost/compress的v1.16.7版本需要升级go 1.22
 	github.com/nacos-group/nacos-sdk-go v1.1.6
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/redis/go-redis/v9 v9.14.0
+	github.com/redis/go-redis/v9 v9.17.0
 	github.com/sirupsen/logrus v1.9.3
 	go.mongodb.org/mongo-driver v1.16.1 // v0.16.1以上版本依赖golang.org/x/crypto的版本v0.26.0需要升级go 1.23
 	google.golang.org/grpc v1.57.0 // v1.58.0需要升级到go 1.19
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/driver/postgres v1.4.7 // v1.4.7以上版本依赖github.com/jackc/pgx/v5的版本v5.3.0需要升级go 1.19
-	gorm.io/gorm v1.31.0
+	gorm.io/gorm v1.31.1
 )
 
 require (

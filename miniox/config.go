@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-xuan/utilx/errorx"
-	"github.com/go-xuan/utilx/timex"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -78,8 +77,8 @@ func (c *Config) NewClient() (*minio.Client, error) {
 }
 
 func (c *Config) MinioPath(fileName string) string {
-	fileSuffix := filepath.Ext(filepath.Base(fileName))
-	minioPath := filepath.Join(time.Now().Format(timex.TimestampFmt), uuid.NewString()+fileSuffix)
+	filename := uuid.NewString() + filepath.Ext(filepath.Base(fileName))
+	minioPath := filepath.Join(time.Now().Format("20060102"), filename)
 	if c.PrefixPath != "" {
 		minioPath = filepath.Join(c.PrefixPath, minioPath)
 	}
