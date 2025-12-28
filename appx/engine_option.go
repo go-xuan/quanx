@@ -25,7 +25,7 @@ func AddConfigurator(configurators ...configx.Configurator) Option {
 
 // AddTable 添加表结构（默认数据源）
 func AddTable(tablers ...interface{}) Option {
-	return AddSourceTable(constx.Default, tablers...)
+	return AddSourceTable(constx.DefaultSource, tablers...)
 }
 
 // AddSourceTable 添加表结构（指定数据源）

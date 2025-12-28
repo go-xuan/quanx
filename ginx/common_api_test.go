@@ -13,5 +13,5 @@ func TestCrudApiRouter(t *testing.T) {
 		Id   int64  `json:"id" gorm:"type:bigint; primary_key; comment:用户ID;"`
 		Name string `json:"name" gorm:"type:varchar(100); not null; comment:姓名;"`
 	}
-	NewCrudApi[User](e.Group("/test/user"), constx.Default)
+	NewCrudApi[User](e.Group("/test/user"), constx.DefaultSource)
 }

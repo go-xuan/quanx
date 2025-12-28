@@ -1,8 +1,8 @@
 package configx
 
 import (
-	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
+	"github.com/go-xuan/utilx/reflectx"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -32,7 +32,7 @@ func LoadConfigurator(configurator Configurator) error {
 		return nil
 	}
 
-	logger := log.WithField("configurator", anyx.TypeOf(configurator).String())
+	logger := log.WithField("configurator", reflectx.TypeOf(configurator).String())
 
 	// 读取配置器
 	location, err := ReadConfigurator(configurator)

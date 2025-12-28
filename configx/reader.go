@@ -2,17 +2,12 @@ package configx
 
 import (
 	"github.com/go-xuan/utilx/errorx"
-	
-	"github.com/go-xuan/quanx/constx"
 )
 
-// DefaultReader 默认配置读取器
-func DefaultReader() Reader {
-	return &FileReader{
-		Dir:  constx.DefaultConfigDir,
-		Name: constx.DefaultConfigName,
-	}
-}
+var (
+	defaultFileAnchor = "conf"    // 默认文件读取器锚点
+	defaultTagAnchor  = "default" // 默认tag读取器锚点
+)
 
 // Reader 配置读取器接口
 // 读取器负责从不同来源（如文件、环境变量、远程配置中心等）读取配置数据

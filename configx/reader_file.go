@@ -7,9 +7,14 @@ import (
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/filex"
 	"github.com/go-xuan/utilx/marshalx"
-
-	"github.com/go-xuan/quanx/constx"
 )
+
+// SetFileReaderAnchor 设置本地文件读取器锚点
+func SetFileReaderAnchor(anchor string) {
+	if anchor != "" && filex.Exists(anchor) {
+		defaultFileAnchor = anchor
+	}
+}
 
 // NewFileReader 默认本地文件读取器
 func NewFileReader(name string) *FileReader {
@@ -20,9 +25,9 @@ func NewFileReader(name string) *FileReader {
 
 // FileReader 本地文件读取器
 type FileReader struct {
-	Dir  string `json:"dir"`  // 配置文件路径
-	Name string `json:"name"` // 配置文件名
-	Data []byte `json:"data"` // 配置文件内容
+	Dir  string `json:"dir"`  // 文件路径
+	Name string `json:"name"` // 文件名称
+	Data []byte `json:"data"` // 文件内容
 }
 
 func (r *FileReader) Anchor(dir string) {
@@ -38,13 +43,15 @@ func (r *FileReader) Location() string {
 // Read 读取配置文件
 func (r *FileReader) Read(v any) error {
 	if r.Data == nil {
-		if path := r.GetPath(); !filex.Exists(path) {
+		path := r.GetPath()
+		if !filex.Exists(path) {
 			return errorx.Sprintf("file not exist: %s", filex.Pwd(path))
-		} else if data, err := filex.ReadFile(path); err != nil {
-			return errorx.Wrap(err, "file reader read error")
-		} else {
-			r.Data = data
 		}
+		data, err := filex.ReadFile(path)
+		if err != nil {
+			return errorx.Wrap(err, "file reader read error")
+		}
+		r.Data = data
 	}
 	if err := marshalx.Apply(r.Name).Unmarshal(r.Data, v); err != nil {
 		return errorx.Wrap(err, "file reader unmarshal error")
@@ -62,6 +69,6 @@ func (r *FileReader) Write(v any) error {
 
 // GetPath 获取配置文件路径
 func (r *FileReader) GetPath() string {
-	r.Anchor(constx.DefaultConfigDir)
+	r.Anchor(defaultFileAnchor)
 	return filepath.Join(r.Dir, r.Name)
 }

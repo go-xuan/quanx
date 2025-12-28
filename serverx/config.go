@@ -9,7 +9,9 @@ func DefaultConfig() *Config {
 	return &Config{
 		Name: "quanx-server",
 		Host: osx.GetLocalIP(),
-		Port: make(map[string]int),
+		Port: map[string]int{
+			HTTP: 8888,
+		},
 	}
 }
 

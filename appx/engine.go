@@ -17,6 +17,8 @@ import (
 )
 
 const (
+	DefaultConfigName = "config.yaml"
+
 	FlagInit    = "init"    // 初始化标识
 	FlagRunning = "running" // 服务运行标识
 )
@@ -119,7 +121,8 @@ func (e *Engine) initOnce(_ context.Context) error {
 		return nil
 	}
 	// 初始化应用配置（日志、nacos、数据库、redis、缓存等）
-	if err := e.config.Init(configx.DefaultReader()); err != nil {
+	reader := configx.NewFileReader(DefaultConfigName)
+	if err := e.config.Init(reader); err != nil {
 		return errorx.Wrap(err, "init config error")
 	}
 	// 初始化配置器

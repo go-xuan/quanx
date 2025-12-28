@@ -3,17 +3,21 @@ package configx
 import (
 	"fmt"
 
-	"github.com/go-xuan/quanx/constx"
-	"github.com/go-xuan/utilx/anyx"
 	"github.com/go-xuan/utilx/errorx"
-	"github.com/go-xuan/utilx/stringx"
+	"github.com/go-xuan/utilx/reflectx"
 )
 
+// SetTagReaderAnchor 设置tag读取器锚点
+func SetTagReaderAnchor(anchor string) {
+	if anchor != "" {
+		defaultTagAnchor = anchor
+	}
+}
+
 // NewTagReader 创建tag读取器
-func NewTagReader(tags ...string) *TagReader {
-	tag := stringx.Default(constx.Default, tags...)
+func NewTagReader() *TagReader {
 	return &TagReader{
-		Tag: tag,
+		Tag: defaultTagAnchor,
 	}
 }
 
@@ -29,9 +33,19 @@ func (r *TagReader) Anchor(tag string) {
 }
 
 func (r *TagReader) Read(v any) error {
-	r.Anchor(constx.Default)
-	if err := anyx.SetFieldValueFromTag(v, r.Tag); err != nil {
-		return errorx.Wrap(err, "read config from tag error")
+	r.Anchor(defaultTagAnchor)
+	if !reflectx.IsStructPointer(v) {
+		return errorx.New("the kind must be struct pointer")
+	}
+	tag := r.Tag
+	val := reflectx.ValueOf(v)
+	typ := val.Type()
+	for i := 0; i < val.NumField(); i++ {
+		if field := val.Field(i); field.IsZero() && field.CanSet() {
+			if value := typ.Field(i).Tag.Get(tag); value != "" {
+				reflectx.SetValue(field, value)
+			}
+		}
 	}
 	return nil
 }

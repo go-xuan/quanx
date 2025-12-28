@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	
+
 	"github.com/go-xuan/quanx/ginx"
 	"github.com/go-xuan/quanx/serverx"
 )
@@ -36,8 +36,9 @@ func bindRouter(engine *gin.Engine) {
 func serverConfig() *serverx.Config {
 	return &serverx.Config{
 		Name: "quanx-test", // 服务名称
+		Host: "localhost",  // host, 为空时默认获取本地IP
 		Port: map[string]int{
-			serverx.HTTP: 8080,
+			serverx.HTTP: 8082,
 		},
 	}
 }

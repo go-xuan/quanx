@@ -4,15 +4,15 @@ go 1.18
 
 require (
 	github.com/gin-gonic/gin v1.9.0 // v1.9.1版本需要升级到go 1.20
-	github.com/go-xuan/typex v1.25.5
-	github.com/go-xuan/utilx v1.25.16
+	github.com/go-xuan/typex v1.25.6
+	github.com/go-xuan/utilx v1.25.17
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/minio/minio-go/v7 v7.0.61 // v7.0.61以上版本依赖的github.com/klauspost/compress的v1.16.7版本需要升级go 1.22
 	github.com/nacos-group/nacos-sdk-go v1.1.6
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/redis/go-redis/v9 v9.17.0
+	github.com/redis/go-redis/v9 v9.17.2
 	github.com/sirupsen/logrus v1.9.3
 	go.mongodb.org/mongo-driver v1.16.1 // v0.16.1以上版本依赖golang.org/x/crypto的版本v0.26.0需要升级go 1.23
 	google.golang.org/grpc v1.57.0 // v1.58.0需要升级到go 1.19
@@ -24,7 +24,7 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/BurntSushi/toml v1.5.0 // indirect
+	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.18 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/bytedance/sonic v1.8.0 // indirect
