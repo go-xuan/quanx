@@ -12,7 +12,7 @@ func TestRedis(t *testing.T) {
 		panic(err)
 	}
 
-	if err := CopyDatabase(constx.Default, "target", 1); err != nil {
+	if err := CopyDatabase(constx.DefaultSource, "target", 1); err != nil {
 		panic(err)
 	}
 }

@@ -1,7 +1,6 @@
 package ginx
 
 import (
-	"net/http"
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
@@ -133,7 +132,7 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 	var obj T
 	data, err := excelx.ReadAny(filePath, "", obj)
 	if err != nil {
-		Custom(ctx, http.StatusBadRequest, NewResponse(ExportFailedCode, err.Error()))
+		CustomResponse(ctx, NewResponse(ExportFailedCode, err.Error()))
 		return
 	}
 	if err = m.GetDB().Model(obj).Create(&data).Error; err != nil {
@@ -147,16 +146,16 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 func (m *Model[T]) Export(ctx *gin.Context) {
 	var result []*T
 	if err := m.GetDB().Find(&result).Error; err != nil {
-		Custom(ctx, http.StatusBadRequest, NewResponse(ExportFailedCode, err.Error()))
+		CustomResponse(ctx, NewResponse(ExportFailedCode, err.Error()))
 		return
 	}
 
-	var filePath = filepath.Join(constx.DefaultResourceDir, idx.Timestamp()+".xlsx")
+	filePath := filepath.Join(constx.DefaultResourceDir, idx.Timestamp()+".xlsx")
 	if len(result) > 0 {
 		if err := excelx.WriteAny(filePath, result); err != nil {
-			CustomError(ctx, NewResponse(ExportFailedCode, err.Error()))
+			CustomResponse(ctx, NewResponse(ExportFailedCode, err.Error()))
 			return
 		}
 	}
-	File(ctx, filePath)
+	ctx.File(filePath)
 }

@@ -3,7 +3,7 @@ package elasticx
 import (
 	"github.com/go-xuan/typex"
 	"github.com/olivere/elastic/v7"
-	
+
 	"github.com/go-xuan/quanx/constx"
 )
 
@@ -30,7 +30,7 @@ func GetClient(source ...string) *Client {
 			return client
 		}
 	}
-	return this().Get(constx.Default)
+	return this().Get(constx.DefaultSource)
 }
 
 // AddClient 添加客户端
@@ -41,7 +41,7 @@ func AddClient(config *Config, cli *elastic.Client) {
 	client := &Client{config, cli}
 	if !Initialized() {
 		pool = typex.NewStringEnum[*Client]()
-		pool.Add(constx.Default, client)
+		pool.Add(constx.DefaultSource, client)
 	}
 	this().Add(config.Source, client)
 }

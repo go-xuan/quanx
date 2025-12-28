@@ -27,7 +27,7 @@ var (
 // AuthValidate 获取鉴权验证器
 func AuthValidate() AuthValidator {
 	if authValidator == nil {
-		authValidator = NewJwtValidator(constx.Default)
+		authValidator = NewJwtValidator(constx.DefaultSource)
 	}
 	return authValidator
 }

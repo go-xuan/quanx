@@ -1,6 +1,8 @@
 package ginx
 
 import (
+	"bytes"
+	"io"
 	"net/http"
 	"time"
 
@@ -39,4 +41,23 @@ func LogFormatter(ctx *gin.Context) {
 		WithField("status", ctx.Writer.Status()).
 		WithField("duration", time.Since(start).String()).
 		Info("gin request finished")
+}
+
+// AdvanceBindJSON 提前绑定JSON数据，一般用于在前置中间件中绑定JSON数据，后续中间件可以使用绑定的数据
+func AdvanceBindJSON(ctx *gin.Context, data interface{}) error {
+	// 提前拿出请求体
+	body, _ := io.ReadAll(ctx.Request.Body)
+	defer SetCtxBody(ctx, body)
+
+	SetCtxBody(ctx, body)
+	// 绑定数据
+	if err := ctx.ShouldBindJSON(data); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetCtxBody 设置gin请求体
+func SetCtxBody(ctx *gin.Context, body []byte) {
+	ctx.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 }
