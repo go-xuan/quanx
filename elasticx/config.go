@@ -24,17 +24,17 @@ type Config struct {
 	Index    []string `json:"index" yaml:"index"`                     // 索引
 }
 
-// LogEntry 日志打印实体类
-func (c *Config) LogEntry() *log.Entry {
-	return log.WithFields(log.Fields{
-		"source": c.Source,
-		"host":   c.Host,
-		"port":   c.Port,
-	})
+// LogFields 日志字段
+func (c *Config) LogFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	fields["source"] = c.Source
+	fields["host"] = c.Host
+	fields["port"] = c.Port
+	return fields
 }
 
 func (c *Config) Valid() bool {
-	return c.Host != "" && c.Port != 0
+	return c.Source != "" && c.Host != "" && c.Port != 0
 }
 
 func (c *Config) Readers() []configx.Reader {
@@ -46,13 +46,14 @@ func (c *Config) Readers() []configx.Reader {
 
 func (c *Config) Execute() error {
 	if c.Enable {
-		if client, err := c.NewClient(); err != nil {
-			c.LogEntry().WithError(err).Error("elastic-search init failed")
-			return errorx.Wrap(err, "init elasticx client error")
-		} else {
-			c.LogEntry().Info("elastic-search init success")
-			AddClient(c, client)
+		logger := log.WithFields(c.LogFields())
+		client, err := c.NewClient()
+		if err != nil {
+			logger.WithError(err).Error("elastic-search init failed")
+			return errorx.Wrap(err, "elastic-search client init error")
 		}
+		logger.Info("elastic-search client init success")
+		AddClient(&Client{c, client})
 	}
 	return nil
 }

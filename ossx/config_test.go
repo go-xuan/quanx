@@ -1,4 +1,4 @@
-package gormx
+package ossx
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/go-xuan/quanx/configx"
 )
 
-func TestDatabase(t *testing.T) {
+func TestOss(t *testing.T) {
 	if err := configx.LoadConfigurator(&Config{}); err != nil {
 		panic(err)
 	}

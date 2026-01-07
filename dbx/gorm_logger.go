@@ -1,4 +1,4 @@
-package gormx
+package dbx
 
 import (
 	"context"
@@ -13,19 +13,29 @@ import (
 )
 
 const (
-	Debug = logger.Info + 1
+	Debug                = logger.Info + 1
+	defaultLogLevel      = logger.Silent
+	defaultSlowThreshold = time.Millisecond * 200
 )
 
-// DefaultLogger 默认日志
-func DefaultLogger() *Logger {
-	return &Logger{
-		LogLevel:      logger.Silent,
-		SlowThreshold: 200 * time.Millisecond,
+// NewGormLogger 创建Gorm日志器
+func NewGormLogger(level string, slowThreshold time.Duration) *Logger {
+	l := &Logger{
+		LogLevel:      defaultLogLevel,
+		SlowThreshold: defaultSlowThreshold,
 	}
+	if level != "" {
+		l.LogLevel = GormLogLevel(level)
+	}
+	if slowThreshold > 0 {
+		l.SlowThreshold = slowThreshold
+	}
+	return l
+
 }
 
-// LogLevel 日志级别映射，默认Silent
-func LogLevel(level string) logger.LogLevel {
+// GormLogLevel 日志级别映射，默认Silent
+func GormLogLevel(level string) logger.LogLevel {
 	switch strings.ToLower(level) {
 	case "debug":
 		return Debug
@@ -47,9 +57,9 @@ type Logger struct {
 }
 
 func (l *Logger) LogMode(level logger.LogLevel) logger.Interface {
-	newLogger := *l
-	newLogger.LogLevel = level
-	return &newLogger
+	instance := *l
+	instance.LogLevel = level
+	return &instance
 }
 
 func (l *Logger) Info(ctx context.Context, format string, args ...interface{}) {

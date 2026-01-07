@@ -14,49 +14,49 @@ type Client struct {
 	client *elastic.Client
 }
 
-func (c *Client) Instance() *elastic.Client {
-	return c.client
+func (c *Client) GetConfig() *Config {
+	return c.config
 }
 
-func (c *Client) Config() *Config {
-	return c.config
+func (c *Client) GetInstance() *elastic.Client {
+	return c.client
 }
 
 // CreateIndex 创建索引
 func (c *Client) CreateIndex(ctx context.Context, index string) (bool, error) {
 	logger := log.WithField("index", index)
-	if resp, err := c.Instance().CreateIndex(index).Do(ctx); err != nil {
+	resp, err := c.GetInstance().CreateIndex(index).Do(ctx)
+	if err != nil {
 		logger.WithError(err).Error("create index failed")
 		return false, errorx.Wrap(err, "create index failed")
-	} else {
-		logger.Info("create index success")
-		return resp.Acknowledged, nil
 	}
+	logger.Info("create index success")
+	return resp.Acknowledged, nil
 }
 
 // AllIndices 查询所有索引
 func (c *Client) AllIndices(ctx context.Context) ([]string, error) {
-	if resp, err := c.Instance().CatIndices().Do(ctx); err != nil {
+	resp, err := c.GetInstance().CatIndices().Do(ctx)
+	if err != nil {
 		return nil, errorx.Wrap(err, "cat indices failed")
-	} else {
-		var indices []string
-		for _, row := range resp {
-			indices = append(indices, row.Index)
-		}
-		return indices, nil
 	}
+	var indices []string
+	for _, row := range resp {
+		indices = append(indices, row.Index)
+	}
+	return indices, nil
 }
 
 // DeleteIndex 删除索引
 func (c *Client) DeleteIndex(ctx context.Context, index string) (bool, error) {
 	logger := log.WithField("index", index)
-	if resp, err := c.Instance().DeleteIndex(index).Do(ctx); err != nil {
+	resp, err := c.GetInstance().DeleteIndex(index).Do(ctx)
+	if err != nil {
 		logger.WithError(err).Error("delete index failed")
 		return false, errorx.Wrap(err, "delete index failed")
-	} else {
-		logger.Info("delete index success")
-		return resp.Acknowledged, nil
 	}
+	logger.Info("delete index success")
+	return resp.Acknowledged, nil
 }
 
 // DeleteIndicesInBatches 批量删除索引
@@ -79,7 +79,7 @@ func (c *Client) DeleteIndicesInBatches(ctx context.Context, indices []string, l
 // DeleteIndices 删除索引
 func (c *Client) DeleteIndices(ctx context.Context, indices []string) (bool, error) {
 	logger := log.WithField("indices", indices)
-	resp, err := c.Instance().DeleteIndex(indices...).Do(ctx)
+	resp, err := c.GetInstance().DeleteIndex(indices...).Do(ctx)
 	if err != nil {
 		logger.WithError(err).Error("delete indices failed")
 		return false, errorx.Wrap(err, "delete indices failed")
@@ -90,43 +90,43 @@ func (c *Client) DeleteIndices(ctx context.Context, indices []string) (bool, err
 
 func (c *Client) Create(ctx context.Context, index, id string, body any) error {
 	logger := log.WithField("index", index).WithField("id", id)
-	if resp, err := c.Instance().Index().Index(index).Id(id).BodyJson(body).Do(ctx); err != nil {
+	resp, err := c.GetInstance().Index().Index(index).Id(id).BodyJson(body).Do(ctx)
+	if err != nil {
 		logger.WithError(err).Error("create failed")
 		return errorx.Wrap(err, "create failed")
-	} else {
-		logger.WithField("type", resp.Type).Info("create success")
-		return nil
 	}
+	logger.WithField("type", resp.Type).Info("create success")
+	return nil
 }
 
 func (c *Client) Update(ctx context.Context, index, id string, body any) error {
 	logger := log.WithField("index", index).WithField("id", id)
-	if resp, err := c.Instance().Update().Index(index).Id(id).Doc(body).Do(ctx); err != nil {
+	resp, err := c.GetInstance().Update().Index(index).Id(id).Doc(body).Do(ctx)
+	if err != nil {
 		logger.WithError(err).Error("update failed")
 		return errorx.Wrap(err, "update failed")
-	} else {
-		logger.WithField("type", resp.Type).Info("update success")
-		return nil
 	}
+	logger.WithField("type", resp.Type).Info("update success")
+	return nil
 }
 
 func (c *Client) Delete(ctx context.Context, index, id string) error {
 	logger := log.WithField("index", index).WithField("id", id)
-	if resp, err := c.Instance().Delete().Index(index).Id(id).Do(ctx); err != nil {
+	resp, err := c.GetInstance().Delete().Index(index).Id(id).Do(ctx)
+	if err != nil {
 		logger.WithError(err).Error("delete failed")
 		return errorx.Wrap(err, "delete index failed")
-	} else {
-		logger.WithField("type", resp.Type).Info("delete success")
-		return nil
 	}
+	logger.WithField("type", resp.Type).Info("delete success")
+	return nil
 }
 
 func (c *Client) Get(ctx context.Context, index, id string) (*elastic.GetResult, error) {
-	return c.Instance().Get().Index(index).Id(id).Do(ctx)
+	return c.GetInstance().Get().Index(index).Id(id).Do(ctx)
 }
 
 func (c *Client) Search(ctx context.Context, index string, query elastic.Query) (*elastic.SearchResult, error) {
-	return c.Instance().Search().Index(index).Query(query).Do(ctx)
+	return c.GetInstance().Search().Index(index).Query(query).Do(ctx)
 }
 
 // AllDocId 获取索引中全部文档ID，sortField字段必须支持排序
@@ -136,7 +136,7 @@ func (c *Client) AllDocId(ctx context.Context, index string, query elastic.Query
 	var ids []string
 	for offset <= total {
 		var server *elastic.SearchService
-		server = c.Instance().Search().Index(index).
+		server = c.GetInstance().Search().Index(index).
 			Query(query).
 			TrackTotalHits(true).
 			Sort(sortField, true).
@@ -144,17 +144,17 @@ func (c *Client) AllDocId(ctx context.Context, index string, query elastic.Query
 		if sortValue != 0 {
 			server = server.SearchAfter(sortValue)
 		}
-		if result, err := server.Do(ctx); result == nil || err != nil {
+		result, err := server.Do(ctx)
+		if result == nil || err != nil {
 			total, offset = 0, 10000
 			return nil, err
-		} else {
-			for _, hit := range result.Hits.Hits {
-				ids = append(ids, hit.Id)
-				sortValue = hit.Sort[0].(float64)
-			}
-			total = result.Hits.TotalHits.Value
-			offset += 10000
 		}
+		for _, hit := range result.Hits.Hits {
+			ids = append(ids, hit.Id)
+			sortValue = hit.Sort[0].(float64)
+		}
+		total = result.Hits.TotalHits.Value
+		offset += 10000
 	}
 	return ids, nil
 }

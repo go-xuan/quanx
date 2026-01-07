@@ -12,13 +12,13 @@ import (
 func NewLogWriter[T any](source, index string) io.Writer {
 	if Initialized() {
 		client := GetClient(source)
-		ctx := context.Background()
-		if exist, err := client.Instance().IndexExists(index).Do(ctx); err != nil || !exist {
+		ctx, ins := context.Background(), client.GetInstance()
+		if exist, err := ins.IndexExists(index).Do(ctx); err != nil || !exist {
 			_, _ = client.CreateIndex(ctx, index)
 		}
 		return &LogWriter[T]{
 			index:  index,
-			client: client.Instance(),
+			client: ins,
 		}
 	}
 	return nil

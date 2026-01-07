@@ -1,6 +1,8 @@
 package configx
 
 import (
+	"strings"
+
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/reflectx"
 	log "github.com/sirupsen/logrus"
@@ -36,16 +38,16 @@ func LoadConfigurator(configurator Configurator) error {
 
 	// 读取配置器
 	location, err := ReadConfigurator(configurator)
-	if err != nil {
-		logger.WithError(err).Error("read configurator error")
-		return errorx.Wrap(err, "read configurator error")
-	}
 	logger = logger.WithField("location", location)
+	if err != nil {
+		logger.WithError(err).Warn("read configurator failed")
+		return errorx.Wrap(err, "read configurator failed")
+	}
 
 	// 执行配置器逻辑
 	if err = configurator.Execute(); err != nil {
-		logger.WithError(err).Error("configurator execute error")
-		return errorx.Wrap(err, "configurator execute error")
+		logger.WithError(err).Warn("configurator execute failed")
+		return errorx.Wrap(err, "configurator execute failed")
 	}
 	logger.Info("configurator load success")
 	return nil
@@ -65,10 +67,12 @@ func ReadConfigurator(configurator Configurator) (string, error) {
 		return "", errorx.New("the configurator's reader is empty")
 	}
 	// 按照读取器的先后顺序依次读取配置
+	var locations []string
 	for _, reader := range readers {
+		locations = append(locations, reader.Location())
 		if err := ReaderRead(reader, configurator); err == nil && configurator.Valid() {
 			return reader.Location(), nil
 		}
 	}
-	return "", errorx.New("no available reader")
+	return strings.Join(locations, ","), errorx.New("no available reader")
 }

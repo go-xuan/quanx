@@ -34,14 +34,14 @@ type Config struct {
 	Mode      int    `yaml:"mode" json:"mode"`            // 模式（0-仅配置中心；1-仅服务发现；2-配置中心和服务发现）
 }
 
-// LogEntry 日志打印实体类
-func (c *Config) LogEntry() *log.Entry {
-	return log.WithFields(log.Fields{
-		"address":   c.AddressUrl(),
-		"group":     c.Group,
-		"namespace": c.Namespace,
-		"mode":      c.Mode,
-	})
+// LogFields 日志字段
+func (c *Config) LogFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	fields["address"] = c.Address
+	fields["group"] = c.Group
+	fields["namespace"] = c.Namespace
+	fields["mode"] = c.Mode
+	return fields
 }
 
 func (c *Config) Readers() []configx.Reader {
@@ -56,12 +56,14 @@ func (c *Config) Valid() bool {
 
 func (c *Config) Execute() error {
 	if _client == nil {
+		logger := log.WithFields(c.LogFields())
 		var err error
 		if _client, err = c.NewClient(); err != nil {
-			return errorx.Wrap(err, "init nacos client error")
+			logger.WithError(err).Error("nacos client init error")
+			return errorx.Wrap(err, "nacos client init error")
 		}
+		logger.Info("nacos client init success")
 	}
-	c.LogEntry().Info("nacos init success")
 	return nil
 }
 
@@ -73,18 +75,18 @@ func (c *Config) NewClient() (*Client, error) {
 	switch c.Mode {
 	case OnlyConfig: // 仅初始化配置中心
 		if client.configClient, err = c.ConfigClient(param); err != nil {
-			return nil, errorx.Wrap(err, "init nacos config client error")
+			return nil, errorx.Wrap(err, "init nacos config client failed")
 		}
 	case OnlyNaming: // 仅初始化服务发现
 		if client.namingClient, err = c.NamingClient(param); err != nil {
-			return nil, errorx.Wrap(err, "init nacos naming client error")
+			return nil, errorx.Wrap(err, "init nacos naming client failed")
 		}
 	case ConfigAndNaming: // 初始化配置中心和服务发现
 		if client.configClient, err = c.ConfigClient(param); err != nil {
-			return nil, errorx.Wrap(err, "init nacos config client error")
+			return nil, errorx.Wrap(err, "init nacos config client failed")
 		}
 		if client.namingClient, err = c.NamingClient(param); err != nil {
-			return nil, errorx.Wrap(err, "init nacos naming client error")
+			return nil, errorx.Wrap(err, "init nacos naming client failed")
 		}
 	}
 	return client, nil
@@ -144,20 +146,24 @@ func (c *Config) ClientParam() vo.NacosClientParam {
 
 // ConfigClient 初始化Nacos配置中心客户端
 func (c *Config) ConfigClient(param vo.NacosClientParam) (config_client.IConfigClient, error) {
-	if client, err := clients.NewConfigClient(param); err != nil {
-		c.LogEntry().WithError(err).Error("nacos config client init failed")
+	logger := log.WithFields(c.LogFields())
+	client, err := clients.NewConfigClient(param)
+	if err != nil {
+		logger.WithError(err).Error("nacos config client init failed")
 		return nil, errorx.Wrap(err, "nacos config client init failed")
-	} else {
-		return client, nil
 	}
+	logger.Info("nacos config client init success")
+	return client, nil
 }
 
 // NamingClient 初始化Nacos服务发现客户端
 func (c *Config) NamingClient(param vo.NacosClientParam) (naming_client.INamingClient, error) {
-	if client, err := clients.NewNamingClient(param); err != nil {
-		c.LogEntry().WithError(err).Error("nacos naming client init failed")
+	logger := log.WithFields(c.LogFields())
+	client, err := clients.NewNamingClient(param)
+	if err != nil {
+		logger.WithError(err).Error("nacos naming client init failed")
 		return nil, errorx.Wrap(err, "nacos naming client init failed")
-	} else {
-		return client, nil
 	}
+	logger.Info("nacos naming client init success")
+	return client, nil
 }

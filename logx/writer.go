@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"gopkg.in/natefinch/lumberjack.v2"
-	
+
 	"github.com/go-xuan/quanx/elasticx"
 	"github.com/go-xuan/quanx/mongox"
 )
@@ -23,9 +23,9 @@ func NewWriter(writer string, name string, level ...string) io.Writer {
 		name = filepath.Join("log", name+".log")
 		return NewFileWriter(name)
 	case WriterMongo:
-		return mongox.NewLogWriter[LogRecord](logWriterSource, name)
+		return mongox.NewLogWriter[Record](logWriterSource, name)
 	case WriterElasticSearch:
-		return elasticx.NewLogWriter[LogRecord](logWriterSource, name)
+		return elasticx.NewLogWriter[Record](logWriterSource, name)
 	}
 	return nil
 }

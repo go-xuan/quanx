@@ -1,21 +1,10 @@
-package gormx
+package dbx
 
 import (
-	"database/sql"
-	"fmt"
-	"strings"
-	"time"
-
-	"github.com/go-xuan/utilx/errorx"
-	log "github.com/sirupsen/logrus"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-	"gorm.io/gorm/schema"
-
 	"github.com/go-xuan/quanx/configx"
 	"github.com/go-xuan/quanx/nacosx"
+	"github.com/go-xuan/utilx/errorx"
+	log "github.com/sirupsen/logrus"
 )
 
 // 数据库类型
@@ -27,6 +16,7 @@ const (
 
 type Config struct {
 	Source          string `json:"source" yaml:"source" default:"default"`              // 数据源名称
+	Client          string `json:"client" yaml:"client" default:"gorm"`                 // 客户端选型
 	Enable          bool   `json:"enable" yaml:"enable"`                                // 数据源启用
 	Type            string `json:"type" yaml:"type"`                                    // 数据库类型
 	Host            string `json:"host" yaml:"host" default:"localhost"`                // 数据库Host
@@ -45,6 +35,7 @@ type Config struct {
 func (c *Config) Copy() *Config {
 	return &Config{
 		Source:          c.Source,
+		Client:          c.Client,
 		Enable:          c.Enable,
 		Type:            c.Type,
 		Host:            c.Host,
@@ -61,19 +52,20 @@ func (c *Config) Copy() *Config {
 	}
 }
 
-// LogEntry 日志打印实体类
-func (c *Config) LogEntry() *log.Entry {
-	return log.WithFields(log.Fields{
-		"source":   c.Source,
-		"type":     c.Type,
-		"host":     c.Host,
-		"port":     c.Port,
-		"database": c.Database,
-	})
+// LogFields 日志字段
+func (c *Config) LogFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	fields["source"] = c.Source
+	fields["client"] = c.Client
+	fields["type"] = c.Type
+	fields["host"] = c.Host
+	fields["port"] = c.Port
+	fields["database"] = c.Database
+	return fields
 }
 
 func (c *Config) Valid() bool {
-	return c.Host != "" && c.Port != 0
+	return c.Source != "" && c.Host != "" && c.Port > 0
 }
 
 func (c *Config) Readers() []configx.Reader {
@@ -85,80 +77,24 @@ func (c *Config) Readers() []configx.Reader {
 
 func (c *Config) Execute() error {
 	if c.Enable {
-		if client, err := c.NewClient(); err != nil {
-			c.LogEntry().WithError(err).Error("database init failed")
-			return errorx.Wrap(err, "new gorm client error")
-		} else {
-			AddClient(client)
-			c.LogEntry().Info("database init success")
+		logger_ := log.WithFields(c.LogFields())
+		client, err := c.NewClient()
+		if err != nil {
+			logger_.WithError(err).Error("database client init failed")
+			return errorx.Wrap(err, "init database client failed")
 		}
+		AddClient(client)
+		logger_.Info("database client init success")
 	}
 	return nil
 }
 
-func (c *Config) GetLogger() logger.Interface {
-	l := DefaultLogger()
-	if c.LogLevel != "" {
-		l.LogLevel = LogLevel(c.LogLevel)
-	}
-	if c.SlowThreshold > 0 {
-		l.SlowThreshold = time.Duration(c.SlowThreshold) * time.Millisecond
-	}
-	return l
-}
-
-// NewGormDB 创建数据库连接
-func (c *Config) NewGormDB() (*gorm.DB, error) {
-	var dial gorm.Dialector
-	switch strings.ToLower(c.Type) {
-	case MYSQL:
-		dial = mysql.Open(fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?clientFoundRows=false&parseTime=true&timeout=1800s&charset=utf8&collation=utf8_general_ci&loc=Local",
-			c.Username, c.Password, c.Host, c.Port, c.Database))
-	case POSTGRES, PGSQL:
-		dial = postgres.Open(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
-			c.Host, c.Port, c.Username, c.Password, c.Database))
-	default:
-		return nil, errorx.Sprintf("database type only support: %v", []string{MYSQL, POSTGRES, PGSQL})
-	}
-	gormDB, err := gorm.Open(dial, &gorm.Config{
-		Logger: c.GetLogger(),
-		NamingStrategy: schema.NamingStrategy{
-			SingularTable: true,
-		},
-	})
+func (c *Config) NewClient() (Client, error) {
+	client, err := NewClient(c)
 	if err != nil {
-		return nil, errorx.Wrap(err, "gorm open failed")
+		return nil, errorx.Wrap(err, "new database client failed")
 	}
-	var sqlDB *sql.DB
-	if sqlDB, err = gormDB.DB(); err != nil {
-		return nil, errorx.Wrap(err, "get sql db failed")
-	}
-	sqlDB.SetMaxIdleConns(c.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(c.MaxOpenConns)
-	sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
-	return gormDB, nil
-}
-
-func (c *Config) NewClient() (*Client, error) {
-	if db, err := c.NewGormDB(); err != nil {
-		return nil, errorx.Wrap(err, "new gorm db error")
-	} else {
-		return &Client{
-			config: c,
-			db:     db,
-		}, nil
-	}
-}
-
-// CommentTableSql 生成表备注
-func (c *Config) CommentTableSql(table, comment string) string {
-	switch strings.ToLower(c.Type) {
-	case MYSQL:
-		return "alter table " + table + " comment = '" + comment + "'"
-	case POSTGRES, PGSQL:
-		return "comment on table " + table + " is '" + comment + "'"
-	}
-	return ""
+	return client, nil
 }
 
 type Configs []*Config
@@ -177,7 +113,7 @@ func (s Configs) Readers() []configx.Reader {
 func (s Configs) Execute() error {
 	for _, config := range s {
 		if err := config.Execute(); err != nil {
-			return errorx.Wrap(err, "gorm config execute error")
+			return errorx.Wrap(err, "database config execute error")
 		}
 	}
 	if !Initialized() {

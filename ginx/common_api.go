@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/go-xuan/quanx/constx"
-	"github.com/go-xuan/quanx/gormx"
+	"github.com/go-xuan/quanx/dbx"
 	"github.com/go-xuan/quanx/modelx"
 )
 
@@ -43,7 +43,7 @@ type Model[T any] struct {
 // GetDB 获取数据库连接
 func (m *Model[T]) GetDB() *gorm.DB {
 	if m.DB == nil {
-		m.DB = gormx.GetInstance(m.Source)
+		m.DB = dbx.GetGormDB(m.Source)
 	}
 	return m.DB
 }

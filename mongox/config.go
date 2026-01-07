@@ -49,14 +49,14 @@ func (c *Config) Copy() *Config {
 	}
 }
 
-// LogEntry 日志打印实体类
-func (c *Config) LogEntry() *log.Entry {
-	return log.WithFields(log.Fields{
-		"source":   c.Source,
-		"uri":      c.URI,
-		"database": c.Database,
-		"debug":    c.Debug,
-	})
+// LogFields 日志字段
+func (c *Config) LogFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	fields["source"] = c.Source
+	fields["uri"] = c.URI
+	fields["database"] = c.Database
+	fields["debug"] = c.Debug
+	return fields
 }
 
 func (c *Config) Readers() []configx.Reader {
@@ -72,13 +72,14 @@ func (c *Config) Valid() bool {
 
 func (c *Config) Execute() error {
 	if c.Enable {
-		if client, err := c.NewClient(); err != nil {
-			c.LogEntry().WithError(err).Error("mongo init failed")
-			return errorx.Wrap(err, "mongo init client error")
-		} else {
-			c.LogEntry().Info("mongo init success")
-			AddClient(c, client)
+		logger := log.WithFields(c.LogFields())
+		client, err := c.NewClient()
+		if err != nil {
+			logger.WithError(err).Error("init mongo client failed")
+			return errorx.Wrap(err, "init mongo client failed")
 		}
+		logger.Info("init mongo client init success")
+		AddClient(&Client{c, client})
 	}
 	return nil
 }
@@ -138,13 +139,14 @@ func (c *Config) NewClient() (*mongo.Client, error) {
 	}
 
 	// 建立连接
-	if client, err := mongo.Connect(ctx, opts); err != nil {
+	client, err := mongo.Connect(ctx, opts)
+	if err != nil {
 		return nil, errorx.Wrap(err, "mongo connect failed")
-	} else if err = client.Ping(ctx, readpref.PrimaryPreferred()); err != nil {
-		return nil, errorx.Wrap(err, "mongo ping failed")
-	} else {
-		return client, nil
 	}
+	if err = client.Ping(ctx, readpref.PrimaryPreferred()); err != nil {
+		return nil, errorx.Wrap(err, "mongo ping failed")
+	}
+	return client, nil
 }
 
 type Configs []*Config

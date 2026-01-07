@@ -1,11 +1,8 @@
-package cachex
+package ossx
 
 import (
-	"errors"
-
 	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/typex"
-	"github.com/go-xuan/utilx/errorx"
 )
 
 var pool *typex.Enum[string, Client]
@@ -29,7 +26,7 @@ func AddClient(client Client) {
 		pool = typex.NewStringEnum[Client]()
 		pool.Add(constx.DefaultSource, client)
 	}
-	pool.Add(client.GetConfig().Source, client)
+	this().Add(client.GetConfig().Source, client)
 }
 
 // GetClient 获取客户端
@@ -55,28 +52,4 @@ func GetInstance[INS any](source ...string) INS {
 	}
 	var ins INS
 	return ins
-}
-
-// GetRedisClient 获取客户端
-func GetRedisClient(source ...string) (*RedisClient, error) {
-	if client, ok := GetClient(source...).(*RedisClient); ok {
-		return client, nil
-	}
-	return nil, errors.New(source[0] + " is not redis client")
-}
-
-// CopyClient 复制缓存客户端
-func CopyClient(source, target string, database int) error {
-	if source != "" && target != "" {
-		sourceClient := GetClient(source)
-		if sourceClient == nil {
-			return errorx.New("source cache client not exist")
-		}
-		targetClient, err := sourceClient.Copy(target, database)
-		if err != nil {
-			return errorx.Wrap(err, "copy cache client failed")
-		}
-		this().Add(target, targetClient)
-	}
-	return nil
 }

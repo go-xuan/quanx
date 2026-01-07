@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
-	"github.com/go-xuan/quanx/gormx"
+	"github.com/go-xuan/quanx/dbx"
 	"github.com/go-xuan/quanx/serverx"
 )
 
@@ -89,7 +89,8 @@ func (e *Engine) LoadConfigurator(configurators ...configx.Configurator) {
 
 // InitTable 初始化数据库表结构以及数据
 func (e *Engine) InitTable(source string, tablers ...interface{}) {
-	errorx.Panic(gormx.InitTable(source, tablers...))
+	client := dbx.GetClient(source)
+	errorx.Panic(dbx.InitGormTable(client, tablers...))
 }
 
 // Shutdown 关闭服务
@@ -123,23 +124,17 @@ func (e *Engine) initOnce(_ context.Context) error {
 	// 初始化应用配置（日志、nacos、数据库、redis、缓存等）
 	reader := configx.NewFileReader(DefaultConfigName)
 	if err := e.config.Init(reader); err != nil {
-		return errorx.Wrap(err, "init config error")
+		return errorx.Wrap(err, "init default config error")
 	}
 	// 初始化配置器
 	for _, configurator := range e.configurators {
 		if err := configx.LoadConfigurator(configurator); err != nil {
-			return errorx.Wrap(err, "init configurators error")
+			return errorx.Wrap(err, "load configurators error")
 		}
 	}
 	// 初始化数据库表结构
-	if gormx.Initialized() {
-		for _, source := range gormx.Sources() {
-			if tablers, ok := e.tablers[source]; ok {
-				if err := gormx.InitTable(source, tablers...); err != nil {
-					return errorx.Wrap(err, "init table struct and data failed")
-				}
-			}
-		}
+	if err := dbx.InitTable(e.tablers); err != nil {
+		return errorx.Wrap(err, "init table error")
 	}
 	// 设置初始化标识
 	e.flags[FlagInit] = true
