@@ -25,7 +25,7 @@ func RedisClientBuilder(config *Config) (Client, error) {
 
 // NewRedisClient 创建redis缓存客户端
 func NewRedisClient(config *Config) (*RedisClient, error) {
-	client, err := newRedisUniversalClient(config)
+	client, err := NewRedisUniversalClient(config)
 	if err != nil {
 		return nil, errorx.Wrap(err, "new redis universal client failed")
 	}
@@ -36,8 +36,8 @@ func NewRedisClient(config *Config) (*RedisClient, error) {
 	}, nil
 }
 
-// 创建redis universal客户端
-func newRedisUniversalClient(config *Config) (redis.UniversalClient, error) {
+// NewRedisUniversalClient 创建redis universal客户端
+func NewRedisUniversalClient(config *Config) (redis.UniversalClient, error) {
 	opts := &redis.UniversalOptions{
 		Addrs:      strings.Split(config.Address, ","),
 		ClientName: config.Source,
@@ -86,7 +86,16 @@ func (c *RedisClient) GetInstance() interface{} {
 	return c.client
 }
 
-// GetKey 获取缓存键
+func (c *RedisClient) Close() error {
+	logger := log.WithFields(c.config.LogFields())
+	if err := c.GetClient().Close(); err != nil {
+		logger.WithError(err).Error("redis universal client close failed")
+		return errorx.Wrap(err, "redis universal client close failed")
+	}
+	logger.Info("cache client close success")
+	return nil
+}
+
 func (c *RedisClient) GetKey(key string) string {
 	return c.GetConfig().GetKey(key)
 }
@@ -136,18 +145,4 @@ func (c *RedisClient) Expire(ctx context.Context, key string, expiration time.Du
 		return errorx.Wrap(err, "redis expire error")
 	}
 	return nil
-}
-
-func (c *RedisClient) Copy(source string, database int) (Client, error) {
-	config := c.config.Copy()
-	config.Source = source
-	config.Database = database
-	logger := log.WithFields(config.LogFields())
-	client, err := NewRedisClient(config)
-	if err != nil {
-		logger.WithError(err).Error("new redis client failed")
-		return nil, err
-	}
-	logger.Info("redis client copy success")
-	return client, nil
 }

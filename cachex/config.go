@@ -12,7 +12,7 @@ import (
 // Config 缓存配置
 type Config struct {
 	Source   string `json:"source" yaml:"source" default:"default"`     // 缓存源名称
-	Client   string `json:"client" yaml:"client" default:"local"`       // 客户端选型（redis/local）
+	Builder  string `json:"builder" yaml:"builder" default:"local"`     // 客户端选型（redis/local）
 	Enable   bool   `json:"enable" yaml:"enable"`                       // 数据源启用
 	Address  string `json:"address" yaml:"address" default:"localhost"` // 主机
 	Username string `json:"username" yaml:"username"`                   // 用户名
@@ -29,7 +29,7 @@ type Config struct {
 func (c *Config) Copy() *Config {
 	return &Config{
 		Source:   c.Source,
-		Client:   c.Client,
+		Builder:  c.Builder,
 		Enable:   c.Enable,
 		Address:  c.Address,
 		Username: c.Username,
@@ -46,7 +46,7 @@ func (c *Config) Copy() *Config {
 func (c *Config) LogFields() map[string]interface{} {
 	fields := make(map[string]interface{})
 	fields["source"] = c.Source
-	fields["client"] = c.Client
+	fields["client"] = c.Builder
 	fields["address"] = c.Address
 	fields["database"] = c.Database
 	fields["mode"] = c.Mode
@@ -55,8 +55,12 @@ func (c *Config) LogFields() map[string]interface{} {
 	return fields
 }
 
+func (c *Config) GetClientName() string {
+	return c.Builder
+}
+
 func (c *Config) Valid() bool {
-	return c.Source != "" && c.Address != ""
+	return c.Address != ""
 }
 
 func (c *Config) Readers() []configx.Reader {
@@ -69,34 +73,15 @@ func (c *Config) Readers() []configx.Reader {
 func (c *Config) Execute() error {
 	if c.Enable {
 		logger := log.WithFields(c.LogFields())
-		client, err := c.NewClient()
+		client, err := NewClient(c)
 		if err != nil {
-			logger.WithError(err).Error("cache client init failed")
-			return errorx.Wrap(err, "cache client init failed")
+			logger.WithError(err).Error("init cache client failed")
+			return errorx.Wrap(err, "init cache client failed")
 		}
-		AddClient(client)
-		logger.Info("cache client init success")
+		AddClient(c.Source, client)
+		logger.Info("init cache client success")
 	}
 	return nil
-}
-
-// NewClient 根据缓存配置初始化缓存客户端
-func (c *Config) NewClient() (Client, error) {
-	// 矫正配置
-	c.correct()
-	// 创建缓存客户端
-	client, err := NewClient(c)
-	if err != nil {
-		return nil, errorx.Wrap(err, "new cache client failed")
-	}
-	return client, nil
-}
-
-// Prefix 矫正配置
-func (c *Config) correct() {
-	if c.Prefix != "" {
-		c.Prefix = stringx.AddSuffix(c.Prefix, ":")
-	}
 }
 
 // GetKey 获取缓存key

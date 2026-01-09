@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-xuan/utilx/errorx"
-	
+
 	"github.com/go-xuan/quanx/serverx"
 )
 
@@ -40,7 +40,7 @@ func (s *ServerInstance) GetPort() int {
 type ServerCenter struct{}
 
 func (c *ServerCenter) Register(instance serverx.Instance) error {
-	if err := this().RegisterInstance(&ServerInstance{
+	if err := GetClient().RegisterInstance(&ServerInstance{
 		Name: instance.GetName(),
 		Host: instance.GetHost(),
 		Port: instance.GetPort(),
@@ -51,7 +51,7 @@ func (c *ServerCenter) Register(instance serverx.Instance) error {
 }
 
 func (c *ServerCenter) Deregister(instance serverx.Instance) error {
-	if err := this().DeregisterInstance(&ServerInstance{
+	if err := GetClient().DeregisterInstance(&ServerInstance{
 		Name: instance.GetName(),
 		Host: instance.GetHost(),
 		Port: instance.GetPort(),
@@ -62,7 +62,7 @@ func (c *ServerCenter) Deregister(instance serverx.Instance) error {
 }
 
 func (c *ServerCenter) SelectOne(server string) (serverx.Instance, error) {
-	if instance, err := this().SelectOneHealthyInstance(server); err != nil {
+	if instance, err := GetClient().SelectOneHealthyInstance(server); err != nil {
 		return nil, errorx.Wrap(err, "nacos server center select one healthy instance failed")
 	} else {
 		return &ServerInstance{
@@ -75,7 +75,7 @@ func (c *ServerCenter) SelectOne(server string) (serverx.Instance, error) {
 }
 
 func (c *ServerCenter) SelectAll(server string) ([]serverx.Instance, error) {
-	if instances, err := this().SelectInstances(server); err != nil {
+	if instances, err := GetClient().SelectInstances(server); err != nil {
 		return nil, errorx.Wrap(err, "nacos server center select server instances failed")
 	} else {
 		var result []serverx.Instance

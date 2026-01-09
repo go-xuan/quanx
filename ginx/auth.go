@@ -21,7 +21,7 @@ const (
 
 var (
 	authValidator AuthValidator // 鉴权验证器
-	authCache     cachex.Client // token缓存客户端
+	authCache     cachex.Client // auth缓存客户端
 )
 
 // AuthValidate 获取鉴权验证器
@@ -44,13 +44,6 @@ func AuthCache() cachex.Client {
 func SetAuthValidator(validator AuthValidator) {
 	if validator != nil {
 		authValidator = validator
-	}
-}
-
-// SetAuthCache 自定义auth缓存
-func SetAuthCache(cache cachex.Client) {
-	if cache == nil {
-		authCache = cachex.GetClient("auth")
 	}
 }
 

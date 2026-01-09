@@ -9,7 +9,7 @@ import (
 
 type Config struct {
 	Source          string `json:"source" yaml:"source"`                   // oss源名称
-	Client          string `json:"client" yaml:"client" default:"minio"`   // 客户端选型
+	Builder         string `json:"builder" yaml:"builder" default:"minio"` // 客户端选型
 	Enable          bool   `json:"enable" yaml:"enable"`                   // 启用
 	Endpoint        string `json:"endpoint" yaml:"endpoint"`               // 主机
 	AccessKeyId     string `json:"accessKeyId" yaml:"accessKeyId"`         // 访问id
@@ -19,25 +19,17 @@ type Config struct {
 	Bucket          string `json:"bucket" yaml:"bucket"`                   // 桶名
 }
 
-func (c *Config) NewClient() (Client, error) {
-	client, err := NewClient(c)
-	if err != nil {
-		return nil, errorx.Wrap(err, "new oss client failed")
-	}
-	return client, nil
-}
-
 func (c *Config) LogFields() map[string]interface{} {
 	fields := make(map[string]interface{})
 	fields["source"] = c.Source
-	fields["client"] = c.Client
+	fields["client"] = c.Builder
 	fields["endpoint"] = c.Endpoint
 	fields["bucket"] = c.Bucket
 	return fields
 }
 
 func (c *Config) Valid() bool {
-	return c.Source != "" && c.Endpoint != ""
+	return c.Endpoint != ""
 }
 
 func (c *Config) Readers() []configx.Reader {
@@ -50,13 +42,13 @@ func (c *Config) Readers() []configx.Reader {
 
 func (c *Config) Execute() error {
 	if c.Enable {
-		client, err := c.NewClient()
+		client, err := NewClient(c)
 		if err != nil {
-			log.WithFields(c.LogFields()).WithError(err).Error("oss client init failed")
-			return errorx.Wrap(err, "oss client init failed")
+			log.WithFields(c.LogFields()).WithError(err).Error("init oss client failed")
+			return errorx.Wrap(err, "init oss client failed")
 		}
-		log.WithFields(c.LogFields()).Info("oss client init success")
-		AddClient(client)
+		log.WithFields(c.LogFields()).Info("init oss client success")
+		AddClient(c.Source, client)
 	}
 	return nil
 }

@@ -15,6 +15,10 @@ import (
 // 3. 调用Valid()检查读取的配置是否有效
 // 4. 配置有效则调用Execute()执行相关的业务逻辑
 type Configurator interface {
+
+	// GetClientName 获取客户端名称
+	//GetClientName() string
+
 	// Readers 获取配置读取器列表
 	// 返回配置读取器列表，程序会按照读取器顺序依次尝试读取配置
 	Readers() []Reader

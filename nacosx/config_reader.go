@@ -53,12 +53,11 @@ func (r *Reader) Read(v any) error {
 		}
 
 		// 配置文件锚点为group分组
-		group := this().GetGroup()
-		r.Anchor(group)
+		r.Anchor(GetClient().GetGroup())
 
 		// 读取配置
 		param := r.ConfigParam()
-		data, err := this().ReadConfig(v, param)
+		data, err := GetClient().ReadConfig(v, param)
 		if err != nil {
 			return errorx.Wrap(err, "read nacos config error")
 		}
@@ -66,7 +65,7 @@ func (r *Reader) Read(v any) error {
 
 		if r.Listen {
 			// 监听配置变化
-			if err = this().ListenConfig(v, param); err != nil {
+			if err = GetClient().ListenConfig(v, param); err != nil {
 				return errorx.Wrap(err, "listen nacos config error")
 			}
 		}
@@ -93,12 +92,11 @@ func (r *Reader) Write(v any) error {
 	r.Data = data
 
 	// 配置文件锚点为group分组
-	group := this().GetGroup()
-	r.Anchor(group)
+	r.Anchor(GetClient().GetGroup())
 
 	// 发布配置
 	param := r.ConfigParam()
-	if err = this().PublishConfig(param); err != nil {
+	if err = GetClient().PublishConfig(param); err != nil {
 		return errorx.Wrap(err, "publish config to nacos error")
 	}
 	return nil

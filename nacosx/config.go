@@ -58,38 +58,13 @@ func (c *Config) Execute() error {
 	if _client == nil {
 		logger := log.WithFields(c.LogFields())
 		var err error
-		if _client, err = c.NewClient(); err != nil {
-			logger.WithError(err).Error("nacos client init error")
-			return errorx.Wrap(err, "nacos client init error")
+		if _client, err = NewClient(c); err != nil {
+			logger.WithError(err).Error("init nacos client failed")
+			return errorx.Wrap(err, "init nacos client failed")
 		}
-		logger.Info("nacos client init success")
+		logger.Info("init nacos client success")
 	}
 	return nil
-}
-
-// NewClient 创建nacos客户端
-func (c *Config) NewClient() (*Client, error) {
-	client := &Client{config: c}
-	var param = c.ClientParam()
-	var err error
-	switch c.Mode {
-	case OnlyConfig: // 仅初始化配置中心
-		if client.configClient, err = c.ConfigClient(param); err != nil {
-			return nil, errorx.Wrap(err, "init nacos config client failed")
-		}
-	case OnlyNaming: // 仅初始化服务发现
-		if client.namingClient, err = c.NamingClient(param); err != nil {
-			return nil, errorx.Wrap(err, "init nacos naming client failed")
-		}
-	case ConfigAndNaming: // 初始化配置中心和服务发现
-		if client.configClient, err = c.ConfigClient(param); err != nil {
-			return nil, errorx.Wrap(err, "init nacos config client failed")
-		}
-		if client.namingClient, err = c.NamingClient(param); err != nil {
-			return nil, errorx.Wrap(err, "init nacos naming client failed")
-		}
-	}
-	return client, nil
 }
 
 // AddressUrl nacos访问地址

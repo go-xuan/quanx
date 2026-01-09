@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 
 	"github.com/go-xuan/quanx/configx"
 	"github.com/go-xuan/quanx/dbx"
@@ -17,10 +18,9 @@ import (
 )
 
 const (
-	DefaultConfigName = "config.yaml"
-
-	FlagInit    = "init"    // 初始化标识
-	FlagRunning = "running" // 服务运行标识
+	DefaultConfigName = "config.yaml" // 默认配置文件
+	FlagInit          = "init"        // 初始化标识
+	FlagRunning       = "running"     // 服务运行标识
 )
 
 var (
@@ -49,9 +49,7 @@ func NewEngine(options ...Option) *Engine {
 // GetEngine 获取当前Engine
 func GetEngine() *Engine {
 	if engine == nil {
-		engine = NewEngine(
-			SetServerConfig(serverx.DefaultConfig()),
-		)
+		engine = NewEngine(SetServerConfig(serverx.DefaultConfig()))
 	}
 	return engine
 }
@@ -89,8 +87,7 @@ func (e *Engine) LoadConfigurator(configurators ...configx.Configurator) {
 
 // InitTable 初始化数据库表结构以及数据
 func (e *Engine) InitTable(source string, tablers ...interface{}) {
-	client := dbx.GetClient(source)
-	errorx.Panic(dbx.InitGormTable(client, tablers...))
+	errorx.Panic(dbx.InitGormTable(dbx.GetGormDB(source), tablers...))
 }
 
 // Shutdown 关闭服务
@@ -133,8 +130,24 @@ func (e *Engine) initOnce(_ context.Context) error {
 		}
 	}
 	// 初始化数据库表结构
-	if err := dbx.InitTable(e.tablers); err != nil {
-		return errorx.Wrap(err, "init table error")
+	if dbx.Initialized() && len(e.tablers) > 0 {
+		var err error
+		dbx.Pool().Range(func(source string, client dbx.Client) bool {
+			if tablers, ok := e.tablers[source]; ok && len(tablers) > 0 {
+				var db *gorm.DB
+				if db, ok = client.GetInstance().(*gorm.DB); ok && db != nil {
+					if err = dbx.InitGormTable(db, tablers...); err != nil {
+						err = errorx.Wrap(err, "init gorm table error")
+						return true
+					}
+				}
+			}
+			return false
+		})
+		if err != nil {
+			return errorx.Wrap(err, "init table error")
+		}
+		return nil
 	}
 	// 设置初始化标识
 	e.flags[FlagInit] = true

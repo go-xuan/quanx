@@ -12,33 +12,28 @@ import (
 
 func TestEngine(t *testing.T) {
 	NewEngine(
-		SetServerConfig(serverConfig()), // 设置服务配置
-		AddServer(httpServer()),         // 添加http服务
+		// 设置服务配置
+		SetServerConfig(&serverx.Config{
+			Name: "quanx-test", // 服务名称
+			Host: "localhost",  // host, 为空时默认获取本地IP
+			Port: map[string]int{
+				serverx.HTTP: 8080,
+			},
+		}),
+		// 添加服务
+		AddServer(
+			// 添加http服务
+			serverx.NewHttpServer(ginx.NewHttpServer(
+				// 开启调试模式
+				ginx.SetDebugMode,
+				// 绑定路由
+				func(engine *gin.Engine) {
+					engine.GET("/ping", func(ctx *gin.Context) {
+						ctx.String(http.StatusOK, "pong")
+						return
+					})
+				},
+			), 8081),
+		),
 	).RUN(t.Context())
-}
-
-// 创建http服务
-func httpServer() *serverx.HttpServer {
-	return serverx.NewHttpServer(ginx.NewHttpServer(
-		ginx.SetDebugMode, // 开启调试模式
-		bindRouter,        // 绑定路由
-	))
-}
-
-// 绑定路由
-func bindRouter(engine *gin.Engine) {
-	engine.GET("/ping", func(ctx *gin.Context) {
-		ctx.String(http.StatusOK, "pong")
-		return
-	})
-}
-
-func serverConfig() *serverx.Config {
-	return &serverx.Config{
-		Name: "quanx-test", // 服务名称
-		Host: "localhost",  // host, 为空时默认获取本地IP
-		Port: map[string]int{
-			serverx.HTTP: 8082,
-		},
-	}
 }
