@@ -15,138 +15,148 @@ go get github.com/go-xuan/quanx
 ```go
 package main
 
-import "github.com/go-xuan/quanx"
+import (
+	"context"
+
+	"github.com/go-xuan/quanx/appx"
+)
 
 func main() {
-    quanx.NewEngine().RUN()
+	appx.NewEngine().RUN(context.Background())
 }
+
 ```
 
 ### 初始化表结构
 
 ```go
+package main
+
+import (
+	"context"
+	"time"
+
+	"github.com/go-xuan/quanx/appx"
+)
+
 func main() {
-    // 初始化Engine
-    engine := quanx.NewEngine(
-        quanx.AddTable(&User{}), // 初始化表结构
-    )
-	
-    // 启动服务
-    engine.RUN(context.Background())
+	appx.NewEngine(
+		appx.AddTable(&User{}), // 初始化表结构
+	).RUN(context.Background())
 }
 
-// User 用户表结构必须实现gormx.Tabler接口
+// User 用户表结构必须实现 dbx.Tabler 接口
 type User struct {
-    Id           int64     `json:"id" gorm:"type:bigint; not null; comment:用户ID;"`
-    Name         string    `json:"name" gorm:"type:varchar(100); not null; comment:姓名;"`
-    CreateUserId int64     `json:"createUserId" gorm:"type:bigint; not null; comment:创建人ID;"`
-    CreateTime   time.Time `json:"createTime" gorm:"type:timestamp(0); default:now(); comment:创建时间;"`
-    UpdateUserId int64     `json:"updateUserId" gorm:"type:bigint; not null; comment:更新人ID;"`
-    UpdateTime   time.Time `json:"updateTime" gorm:"type:timestamp(0); default:now(); comment:更新时间;"`
+	Id           int64     `json:"id" gorm:"type:bigint; not null; comment:用户ID;"`
+	Name         string    `json:"name" gorm:"type:varchar(100); not null; comment:姓名;"`
+	CreateUserId int64     `json:"createUserId" gorm:"type:bigint; not null; comment:创建人ID;"`
+	CreateTime   time.Time `json:"createTime" gorm:"type:timestamp(0); default:now(); comment:创建时间;"`
+	UpdateUserId int64     `json:"updateUserId" gorm:"type:bigint; not null; comment:更新人ID;"`
+	UpdateTime   time.Time `json:"updateTime" gorm:"type:timestamp(0); default:now(); comment:更新时间;"`
 }
 
 // TableName 定义表名
 func (User) TableName() string {
-    return "user_test"
+	return "user_test"
 }
+
 ```
 
 ### 注册api路由
 
 ```go
+package main
+
+import (
+	"context"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/quanx/appx"
+	"github.com/go-xuan/quanx/ginx"
+	"github.com/go-xuan/quanx/serverx"
+)
+
 func main() {
-    engine := quanx.NewEngine(
-        quanx.AddServer(serverx.NewGinServer(BindRouter)),  // 添加gin的路由加载函数
-        quanx.AddTable(&User{}), // 初始化表结构
-    )
-    // 启动服务
-    engine.RUN()
+	appx.NewEngine(
+		appx.AddServer(HttpServer()), // 添加http服务
+		appx.AddTable(&User{}),       // 初始化表结构
+	).RUN(context.Background())
+}
+
+// HttpServer 创建http服务
+func HttpServer() *serverx.HttpServer {
+	return serverx.NewHttpServer(ginx.NewHttpServer(
+		ginx.SetDebugMode, // 开启调试模式
+		BindRouter,        // 绑定路由
+	))
 }
 
 // BindRouter 绑定api路由
 func BindRouter(engine *gin.Engine) {
-    group := engine.Group("/user")
-    // 用户表增删改查接口注册，仅一行代码就可以实现CRUD
-    ginx.NewCrudApi[User](group, gormx.DB())
+	group := engine.Group("/user")
+	// 用户表增删改查接口注册，仅一行代码就可以实现CRUD
+	ginx.NewCrudApi[User](group, "default")
 }
 
 // User 用户表结构必须实现 schema.Tabler 接口
 type User struct {
-    Id           int64     `json:"id" gorm:"type:bigint; not null; comment:用户ID;"`
-    Name         string    `json:"name" gorm:"type:varchar(100); not null; comment:姓名;"`
-    CreateUserId int64     `json:"createUserId" gorm:"type:bigint; not null; comment:创建人ID;"`
-    CreateTime   time.Time `json:"createTime" gorm:"type:timestamp(0); default:now(); comment:创建时间;"`
-    UpdateUserId int64     `json:"updateUserId" gorm:"type:bigint; not null; comment:更新人ID;"`
-    UpdateTime   time.Time `json:"updateTime" gorm:"type:timestamp(0); default:now(); comment:更新时间;"`
+	Id           int64     `json:"id" gorm:"type:bigint; not null; comment:用户ID;"`
+	Name         string    `json:"name" gorm:"type:varchar(100); not null; comment:姓名;"`
+	CreateUserId int64     `json:"createUserId" gorm:"type:bigint; not null; comment:创建人ID;"`
+	CreateTime   time.Time `json:"createTime" gorm:"type:timestamp(0); default:now(); comment:创建时间;"`
+	UpdateUserId int64     `json:"updateUserId" gorm:"type:bigint; not null; comment:更新人ID;"`
+	UpdateTime   time.Time `json:"updateTime" gorm:"type:timestamp(0); default:now(); comment:更新时间;"`
 }
 
 // TableName 定义表名
 func (User) TableName() string {
-    return "user_test"
+	return "user_test"
 }
+
 ```
 
-### 初始化方法
-
-```go
-func main() {
-    // 初始化服务引擎 
-    engine := quanx.NewEngine( 
-        // 按照添加顺序先后执行 
-        quanx.AddTaskBefore(quanx.StepInitConfig, "init1", Init1)
-        quanx.AddTaskAfter(quanx.StepInitConfig,, "init2", Init2)
-    )
-	
-    // 服务启动
-    engine.RUN()
-}
-
-func Init1() error {
-    fmt.Println("before_init_config", time.Now().Format("2006-01-02 15:04:05"))
-    return nil
-}
-
-func Init2() error {
-    fmt.Println("after_init_config", time.Now().Format("2006-01-02 15:04:05"))
-    return nil
-}
-
-
-```
 
 ### 加载自定义配置
 
 ```go
+package main
+
+import (
+	"context"
+
+	"github.com/go-xuan/quanx/appx"
+	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/nacosx"
+)
+
 func main() {
-    // 初始化服务引擎
-    engine := quanx.NewEngine(
-        quanx.AddConfigurator(Config)
-    )
-	
-    // 服务启动
-    engine.RUN()
+	// 初始化服务引擎
+	appx.NewEngine(
+		appx.AddConfigurator(config),
+	).RUN(context.Background())
 }
 
-var Config = &config{}
+var config = &Config{}
 
-// 此配置必须实现Configurator配置器接口
-type config struct{}
+type Config struct{}
 
-func (c *config) Valid() bool {
-    return false
+func (c *Config) Valid() bool {
+	return false
 }
 
-func (c *config) Readers() []configx.Reader {
-    return []configx.Reader{
-        nacosx.NewReader("my_config.json"),
-        configx.NewFileReader("my_config.json"),
-    }
+func (c *Config) Readers() []configx.Reader {
+	return []configx.Reader{
+		nacosx.NewReader("xxxx.json"),
+		configx.NewFileReader("xxxx.json"),
+	}
 }
 
-func (c *config) Execute() error {
-    // todo 配置读取后的业务操作
-    return nil
+func (c *Config) Execute() error {
+	// todo 配置读取后的业务操作
+	return nil
 }
+
 
 ```
 
@@ -164,10 +174,11 @@ quanx框架本身已实现了一些常规配置项的读取和初始化，开发
 
 ```yaml
 server:
-  name: demo                  # 应用名
-  port: 8888                  # 服务端口
-  debug: true                 # 服务api前缀
-  http: 8888                  # http端口
+  name: quanx-test
+  host: localhost
+  port:
+    http: 8080
+    grpc: 8081
 ```
 
 #### nacos配置
@@ -189,6 +200,7 @@ mode: 2                       # int 模式（0-仅配置中心；1-仅服务发�
 
 ```yaml
 source: "default"             # string 数据源名称
+client: "gorm"                # string 客户端选型
 enable: false                 # bool 是否启用
 type: "mysql"                 # string 数据库类型(mysql/postgres)
 host: "127.0.0.1"             # string host
@@ -229,15 +241,15 @@ slowThreshold: 200            # int 慢查询阈值（毫秒）
   debug: true
 ```
 
-#### redis配置
+#### 缓存配置
 
-redis配置文件路径：conf/redis.yaml
+redis配置文件路径：conf/cache.yaml
 
 ```yaml
 source: "default"             # string 数据源名称
-enable: false                 # bool 是否启用
-host: "127.0.0.1"             # string host
-port: 6379                    # int 端口
+client: "local"               # string 客户端选型（redis/local）
+enable: true                  # bool 是否启用
+address: "localhost"          # string 地址
 password: ""                  # string 密码
 database: 0                   # int 数据库
 mode: 0                       # int 模式（0-单机；1-集群），默认单机模式
@@ -249,16 +261,16 @@ mode: 0                       # int 模式（0-单机；1-集群），默认单�
 
 ```yaml
 - name: default
-  enable: 
-  host: 
-  port: 
+  client: local
+  enable:
+  address: 
   password: 
   database: 
   mode: 0
 - name: redis_db1
-  enable: 
-  host: 
-  port: 
+  client: redis
+  enable:
+  address: 
   password: 
   database: 
   mode: 0
@@ -282,44 +294,50 @@ key3:
 对应结构体：
 
 ```go
-// 此配置需要实现Configurator配置器接口
+package main
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/go-xuan/quanx/appx"
+	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/nacosx"
+)
+
+func main() {
+	appx.NewEngine(
+		appx.AddConfigurator(&demo{}),
+	).RUN(context.Background())
+}
+
 type demo struct {
 	Key1 int      `json:"key1" yaml:"key1"`
 	Key2 string   `json:"key2" yaml:"key2"`
 	Key3 []string `json:"key3" yaml:"key3"`
 }
 
-func (t *test) Unread() bool {
-    if t.Key1 == 0 && t.Key2 == "" {
-        return true
-    }
-    return false
+func (d *demo) Valid() bool {
+	return d.Key1 > 0 && d.Key2 != "" && d.Key3 != nil
 }
 
-func (d *demo) Reader(from configx.From) confx.Reader {
-    switch from {
-    case configx.FormNacos: 
-        // nacos配置文件读取器
-        return &nacosx.Reader{
-            DataId: "demo.yaml",
-        }
-    case configx.FromLocal: 
-        // 本地配置文件读取器
-        return &configx.LocalReader{
-            Name: "demo.yaml",
-        }
-    default:
-        return nil
-    }
+func (d *demo) Readers() []configx.Reader {
+	return []configx.Reader{
+		configx.NewFileReader("demo.yaml"),
+		configx.NewFileReader("demo.json"),
+		nacosx.NewReader("demo.yaml"),
+	}
 }
 
 func (d *demo) Execute() error {
 	// todo 完成配置读取后需要进行的操作
-	fmt.Println(c.Key1)
-	fmt.Println(c.Key2)
-	fmt.Println(c.Key3)
+	fmt.Println(d.Key1)
+	fmt.Println(d.Key2)
+	fmt.Println(d.Key3)
 	return nil
 }
+
+
 ```
 
 

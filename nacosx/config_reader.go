@@ -16,7 +16,7 @@ func NewReader(dataId string) *Reader {
 
 // Reader nacos配置读取器
 type Reader struct {
-	DataId string `json:"dataId"` // 配置文件ID
+	DataId string `json:"dataId"` // 配置文件id
 	Group  string `json:"group"`  // 配置所在分组
 	Type   string `json:"type"`   // 配置文件类型
 	Data   []byte `json:"data"`   // 配置文件内容
@@ -52,21 +52,20 @@ func (r *Reader) Read(v any) error {
 			return errorx.New("nacos not initialized")
 		}
 
-		// 配置文件锚点为Group分组
-		group := this().GetGroup()
-		r.Anchor(group)
+		// 配置文件锚点为group分组
+		r.Anchor(GetClient().GetGroup())
 
 		// 读取配置
 		param := r.ConfigParam()
-		if data, err := this().ReadConfig(v, param); err != nil {
+		data, err := GetClient().ReadConfig(v, param)
+		if err != nil {
 			return errorx.Wrap(err, "read nacos config error")
-		} else {
-			r.Data = data
 		}
+		r.Data = data
 
 		if r.Listen {
 			// 监听配置变化
-			if err := this().ListenConfig(v, param); err != nil {
+			if err = GetClient().ListenConfig(v, param); err != nil {
 				return errorx.Wrap(err, "listen nacos config error")
 			}
 		}
@@ -86,19 +85,18 @@ func (r *Reader) Write(v any) error {
 	}
 
 	// 序列化配置
-	if data, err := marshalx.Apply(r.GetType()).Marshal(v); err != nil {
+	data, err := marshalx.Apply(r.GetType()).Marshal(v)
+	if err != nil {
 		return errorx.Wrap(err, "marshal config error")
-	} else {
-		r.Data = data
 	}
+	r.Data = data
 
-	// 配置文件锚点为Group分组
-	group := this().GetGroup()
-	r.Anchor(group)
+	// 配置文件锚点为group分组
+	r.Anchor(GetClient().GetGroup())
 
 	// 发布配置
 	param := r.ConfigParam()
-	if err := this().PublishConfig(param); err != nil {
+	if err = GetClient().PublishConfig(param); err != nil {
 		return errorx.Wrap(err, "publish config to nacos error")
 	}
 	return nil

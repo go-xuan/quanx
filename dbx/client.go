@@ -1,24 +1,20 @@
-package cachex
+package dbx
 
 import (
-	"context"
-	"time"
-
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
-	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 
 	"github.com/go-xuan/quanx/constx"
 )
 
 var (
-	pool     *typex.Enum[string, Client]
-	builders *typex.Enum[string, ClientBuilder]
+	pool     *typex.Enum[string, Client]        // 客户端池
+	builders *typex.Enum[string, ClientBuilder] // 客户端构造函数池
 )
 
 func init() {
-	RegisterClientBuilder("local", LocalClientBuilder) // 注册本地缓存客户端构建器
-	RegisterClientBuilder("redis", RedisClientBuilder) // 注册redis缓存客户端构建器
+	RegisterClientBuilder("gorm", GormClientBuilder) // 注册gorm客户端构建器
 }
 
 // RegisterClientBuilder 注册客户端构造函数
@@ -32,7 +28,7 @@ func RegisterClientBuilder(name string, builder ClientBuilder) {
 // NewClient 创建客户端
 func NewClient(config *Config) (Client, error) {
 	if config.Builder == "" {
-		return LocalClientBuilder(config)
+		return GormClientBuilder(config)
 	}
 	if builders != nil {
 		if builder, ok := builders.Exist(config.Builder); ok && builder != nil {
@@ -45,19 +41,14 @@ func NewClient(config *Config) (Client, error) {
 // ClientBuilder 客户端构造函数
 type ClientBuilder func(*Config) (Client, error)
 
-// Client 缓存客户端接口
+// Client 数据库客户端接口
 type Client interface {
 	GetInstance() interface{} // 获取实例
 	GetConfig() *Config       // 获取配置
-	Close() error             // 关闭客户端,
+	Close() error             // 关闭客户端, 释放资源
 
-	GetKey(key string) string                                                       // 获取缓存key
-	Set(ctx context.Context, key string, value any, expiration time.Duration) error // 更新缓存
-	Get(ctx context.Context, key string, value any) bool                            // 获取缓存（指针，任意类型）
-	GetString(ctx context.Context, key string) string                               // 获取缓存（字符串类型）
-	Expire(ctx context.Context, key string, expiration time.Duration) error         // 续期缓存
-	Delete(ctx context.Context, key string) bool                                    // 删除缓存
-	Exist(ctx context.Context, key string) bool                                     // 是否存在缓存
+	Raw(sql string, dest interface{}) error // 查询SQL, 将结果存储到dest中
+	Exec(sql string) error                  // 执行SQL, 不返回结果
 }
 
 // Pool 获取客户端池
@@ -109,9 +100,9 @@ func GetInstance[T any](source ...string) T {
 	return instance
 }
 
-// GetRedisUniversalClient 获取客户端
-func GetRedisUniversalClient(source ...string) redis.UniversalClient {
-	return GetInstance[redis.UniversalClient](source...)
+// GetGormDB 获取数据库连接
+func GetGormDB(source ...string) *gorm.DB {
+	return GetInstance[*gorm.DB](source...)
 }
 
 // Close 关闭所有数据库客户端

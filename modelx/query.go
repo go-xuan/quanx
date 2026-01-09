@@ -35,16 +35,24 @@ func (b Between) Where(db *gorm.DB) *gorm.DB {
 	return db
 }
 
+// Order 排序参数
 type Order struct {
 	Column string `json:"column"` // 排序字段
-	Type   string `json:"type"`   // 排序方式(asc/desc)
+	Desc   bool   `json:"desc"`   // 是否降序排序
+}
+
+func (o Order) Value() string {
+	if o.Desc {
+		return o.Column + " desc"
+	}
+	return o.Column + " asc"
 }
 
 // Query 分页参数
 type Query struct {
-	Keyword string   `json:"keyword"` // 关键字
-	OrderBy []*Order `json:"orderBy"` // 排序参数
-	*PageReq
+	Page
+	Keyword string  `json:"keyword"` // 关键字
+	OrderBy []Order `json:"orderBy"` // 排序参数
 }
 
 func (q *Query) DoLike(db *gorm.DB, fields ...string) *gorm.DB {
@@ -58,16 +66,16 @@ func (q *Query) DoLike(db *gorm.DB, fields ...string) *gorm.DB {
 }
 
 func (q *Query) DoPage(db *gorm.DB) *gorm.DB {
-	if q.PageReq != nil && q.PageReq.PageSize > 0 {
-		db = db.Limit(q.PageReq.PageSize).Offset(q.PageReq.Offset())
+	if q.Page.PageSize > 0 {
+		db = db.Limit(q.Page.PageSize).Offset(q.Page.Offset())
 	}
 	return db
 }
 
-func (q *Query) DoOrder(db *gorm.DB, def string) *gorm.DB {
+func (q *Query) SetOrder(db *gorm.DB, def string) *gorm.DB {
 	if q.OrderBy != nil {
 		for _, order := range q.OrderBy {
-			db = db.Order(order.Column + " " + order.Type)
+			db = db.Order(order.Value())
 		}
 	} else {
 		db = db.Order(def)

@@ -6,10 +6,9 @@ import (
 
 	"github.com/go-xuan/quanx/cachex"
 	"github.com/go-xuan/quanx/configx"
-	"github.com/go-xuan/quanx/gormx"
+	"github.com/go-xuan/quanx/dbx"
 	"github.com/go-xuan/quanx/logx"
 	"github.com/go-xuan/quanx/nacosx"
-	"github.com/go-xuan/quanx/redisx"
 	"github.com/go-xuan/quanx/serverx"
 )
 
@@ -17,9 +16,8 @@ import (
 type Config struct {
 	Server   *serverx.Config `json:"server" yaml:"server"`     // 服务配置
 	Log      *logx.Config    `json:"log" yaml:"log"`           // 日志配置
-	Nacos    *nacosx.Config  `json:"nacos" yaml:"nacos"`       // nacos访问配置
-	Database *gormx.Configs  `json:"database" yaml:"database"` // 数据源配置
-	Redis    *redisx.Configs `json:"redis" yaml:"redis"`       // redis配置
+	Nacos    *nacosx.Config  `json:"nacos" yaml:"nacos"`       // nacos配置
+	Database *dbx.Configs    `json:"database" yaml:"database"` // 数据源配置
 	Cache    *cachex.Configs `json:"cache" yaml:"cache"`       // 缓存配置
 }
 
@@ -65,10 +63,6 @@ func (cfg *Config) Init(reader configx.Reader) error {
 	// 初始化数据库
 	if err := cfg.initDatabase(); err != nil {
 		return errorx.Wrap(err, "init database error")
-	}
-	// 初始化redis
-	if err := cfg.initRedis(); err != nil {
-		return errorx.Wrap(err, "init redis error")
 	}
 	// 初始化缓存
 	if err := cfg.initCache(); err != nil {
@@ -135,34 +129,15 @@ func (cfg *Config) initDatabase() error {
 	// 读取数据库配置并初始化
 	dbs := cfg.Database
 	if dbs == nil {
-		dbs = &gormx.Configs{}
+		dbs = &dbx.Configs{}
 	}
 	if err := configx.LoadConfigurator(dbs); err != nil {
 		cfg.Database = dbs
 	}
-	if !gormx.Initialized() {
-		database := &gormx.Config{}
+	if !dbx.Initialized() {
+		database := &dbx.Config{}
 		if err := configx.LoadConfigurator(database); err == nil {
-			cfg.Database = &gormx.Configs{database}
-		}
-	}
-	return nil
-}
-
-// 初始化redis
-func (cfg *Config) initRedis() error {
-	// 读取redis配置并初始化
-	rds := cfg.Redis
-	if rds == nil {
-		rds = &redisx.Configs{}
-	}
-	if err := configx.LoadConfigurator(rds); err == nil {
-		cfg.Redis = rds
-	}
-	if !redisx.Initialized() {
-		redis := &redisx.Config{}
-		if err := configx.LoadConfigurator(redis); err == nil {
-			cfg.Redis = &redisx.Configs{redis}
+			cfg.Database = &dbx.Configs{database}
 		}
 	}
 	return nil
@@ -170,19 +145,17 @@ func (cfg *Config) initRedis() error {
 
 // 初始化缓存
 func (cfg *Config) initCache() error {
-	if redisx.Initialized() {
-		caches := cfg.Cache
-		if caches == nil {
-			caches = &cachex.Configs{}
-		}
-		if err := configx.LoadConfigurator(caches); err == nil {
-			cfg.Cache = caches
-		}
-		if !cachex.Initialized() {
-			var cache = &cachex.Config{}
-			if err := configx.LoadConfigurator(cache); err == nil {
-				cfg.Cache = &cachex.Configs{cache}
-			}
+	caches := cfg.Cache
+	if caches == nil {
+		caches = &cachex.Configs{}
+	}
+	if err := configx.LoadConfigurator(caches); err == nil {
+		cfg.Cache = caches
+	}
+	if !cachex.Initialized() {
+		var cache = &cachex.Config{}
+		if err := configx.LoadConfigurator(cache); err == nil {
+			cfg.Cache = &cachex.Configs{cache}
 		}
 	}
 	return nil

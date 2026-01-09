@@ -5,15 +5,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-xuan/quanx/cachex"
+	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/nacosx"
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/stringx"
 	"github.com/golang-jwt/jwt/v4"
-	log "github.com/sirupsen/logrus"
-
-	"github.com/go-xuan/quanx/cachex"
-	"github.com/go-xuan/quanx/configx"
-	"github.com/go-xuan/quanx/nacosx"
 )
 
 // NewJwtValidator 创建JWT验证器
@@ -26,7 +24,7 @@ func NewJwtValidator(secret string) *JwtValidator {
 
 // JwtValidator JWT验证器
 type JwtValidator struct {
-	Secret string            `json:"secret" yaml:"secret"` // jwt密钥
+	Secret string            `json:"secret" yaml:"secret"` // JWT密钥
 	White  map[string]string `json:"white" yaml:"white"`   // 鉴权白名单，map[URL路径]HTTP方法，*表示支持所有方法
 	Cache  *cachex.Config    `json:"cache" yaml:"cache"`   // 缓存客户端
 }
@@ -43,15 +41,15 @@ func (v *JwtValidator) Readers() []configx.Reader {
 }
 
 func (v *JwtValidator) Execute() error {
-	if !v.Valid() {
-		return nil
-	}
-	SetAuthValidator(v)
-	// 设置缓存客户端
-	if cache := v.Cache; cache != nil && cache.Valid() {
-		if client, err := cache.NewClient(); err == nil {
-			log.WithField("source", cache.Source).Info("auth cache exchange success")
-			SetAuthCache(client)
+	if v.Valid() {
+		SetAuthValidator(v)
+		// 设置缓存客户端
+		if v.Cache != nil && v.Cache.Valid() {
+			client, err := cachex.NewClient(v.Cache)
+			if err != nil {
+				return errorx.Wrap(err, "cache client init failed")
+			}
+			authCache = client
 		}
 	}
 	return nil

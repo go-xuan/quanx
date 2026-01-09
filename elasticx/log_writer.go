@@ -11,14 +11,14 @@ import (
 // NewLogWriter 创建ES日志写入器
 func NewLogWriter[T any](source, index string) io.Writer {
 	if Initialized() {
-		client := GetClient(source)
+		client := GetESClient(source)
 		ctx := context.Background()
-		if exist, err := client.Instance().IndexExists(index).Do(ctx); err != nil || !exist {
-			_, _ = client.CreateIndex(ctx, index)
+		if exist, err := client.IndexExists(index).Do(ctx); err != nil || !exist {
+			_, _ = client.CreateIndex(index).Do(ctx)
 		}
 		return &LogWriter[T]{
 			index:  index,
-			client: client.Instance(),
+			client: client,
 		}
 	}
 	return nil
@@ -36,7 +36,8 @@ func (w *LogWriter[T]) Write(bytes []byte) (int, error) {
 		if err := json.Unmarshal(bytes, &log); err != nil {
 			return
 		}
-		_, _ = w.client.Index().Index(w.index).BodyJson(log).Do(context.Background())
+		ctx := context.Background()
+		_, _ = w.client.Index().Index(w.index).BodyJson(log).Do(ctx)
 	}()
 	return 0, nil
 }

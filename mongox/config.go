@@ -1,13 +1,10 @@
 package mongox
 
 import (
-	"context"
 	"time"
 
 	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/event"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
@@ -18,7 +15,7 @@ import (
 type Config struct {
 	Source          string `json:"source" yaml:"source" default:"default"`                   // 数据源名称
 	Enable          bool   `json:"enable" yaml:"enable"`                                     // 数据源启用
-	URI             string `json:"uri" yaml:"uri"`                                           // 连接uri
+	Uri             string `json:"uri" yaml:"uri"`                                           // 连接uri
 	AuthMechanism   string `json:"authMechanism" yaml:"authMechanism" default:"SCRAM-SHA-1"` // 认证加密方式
 	AuthSource      string `json:"authSource" yaml:"authSource"`                             // 认证数据库
 	Username        string `json:"username" yaml:"username"`                                 // 用户名
@@ -31,11 +28,44 @@ type Config struct {
 	Debug           bool   `json:"debug" yaml:"debug"`                                       // debug模式（日志打印）
 }
 
+// ClientOptions 连接选项
+func (c *Config) ClientOptions() *options.ClientOptions {
+	opts := options.Client().
+		ApplyURI(c.Uri).                               // 设置uri
+		SetReadPreference(readpref.PrimaryPreferred()) // 设置读取偏好为主节点优先
+
+	// 设置认证信息
+	if c.Username != "" && c.Password != "" {
+		opts.SetAuth(options.Credential{
+			AuthMechanism: c.AuthMechanism,
+			AuthSource:    c.AuthSource,
+			Username:      c.Username,
+			Password:      c.Password,
+		})
+	}
+	if c.Timeout > 0 {
+		opts.SetTimeout(time.Duration(c.Timeout) * time.Millisecond)
+	}
+	if c.MaxPoolSize > 0 {
+		opts.SetMaxPoolSize(c.MaxPoolSize)
+	}
+	if c.MinPoolSize > 0 {
+		opts.SetMinPoolSize(c.MinPoolSize)
+	}
+	if c.MaxConnIdleTime > 0 {
+		opts.SetMaxConnIdleTime(time.Duration(c.MaxConnIdleTime) * time.Millisecond)
+	}
+	if c.Debug {
+		opts.SetMonitor(DebugCommandMonitor())
+	}
+	return opts
+}
+
 func (c *Config) Copy() *Config {
 	return &Config{
 		Source:          c.Source,
 		Enable:          c.Enable,
-		URI:             c.URI,
+		Uri:             c.Uri,
 		AuthMechanism:   c.AuthMechanism,
 		AuthSource:      c.AuthSource,
 		Username:        c.Username,
@@ -49,14 +79,14 @@ func (c *Config) Copy() *Config {
 	}
 }
 
-// LogEntry 日志打印实体类
-func (c *Config) LogEntry() *log.Entry {
-	return log.WithFields(log.Fields{
-		"source":   c.Source,
-		"uri":      c.URI,
-		"database": c.Database,
-		"debug":    c.Debug,
-	})
+// LogFields 日志字段
+func (c *Config) LogFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	fields["source"] = c.Source
+	fields["uri"] = c.Uri
+	fields["database"] = c.Database
+	fields["debug"] = c.Debug
+	return fields
 }
 
 func (c *Config) Readers() []configx.Reader {
@@ -67,84 +97,21 @@ func (c *Config) Readers() []configx.Reader {
 }
 
 func (c *Config) Valid() bool {
-	return c.URI != ""
+	return c.Uri != ""
 }
 
 func (c *Config) Execute() error {
 	if c.Enable {
-		if client, err := c.NewClient(); err != nil {
-			c.LogEntry().WithError(err).Error("mongo init failed")
-			return errorx.Wrap(err, "mongo init client error")
-		} else {
-			c.LogEntry().Info("mongo init success")
-			AddClient(c, client)
+		logger := log.WithFields(c.LogFields())
+		client, err := NewClient(c)
+		if err != nil {
+			logger.WithError(err).Error("init mongo client failed")
+			return errorx.Wrap(err, "init mongo client failed")
 		}
+		logger.Info("init mongo client success")
+		AddClient(c.Source, client)
 	}
 	return nil
-}
-
-func (c *Config) NewClient() (*mongo.Client, error) {
-	ctx := context.TODO()
-	if c.Timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(c.Timeout)*time.Millisecond)
-		defer cancel()
-	}
-	// 设置连接选项
-	opts := options.Client().ApplyURI(c.URI)
-	if c.Username != "" && c.Password != "" {
-		opts.SetAuth(options.Credential{
-			AuthMechanism: c.AuthMechanism,
-			AuthSource:    c.AuthSource,
-			Username:      c.Username,
-			Password:      c.Password,
-		})
-	}
-	if c.MaxPoolSize > 0 {
-		opts.SetMaxPoolSize(c.MaxPoolSize)
-	}
-	if c.MinPoolSize > 0 {
-		opts.SetMinPoolSize(c.MinPoolSize)
-	}
-	if c.MaxConnIdleTime > 0 {
-		opts.SetMaxConnIdleTime(time.Duration(c.MaxConnIdleTime) * time.Millisecond)
-	}
-	opts.SetReadPreference(readpref.PrimaryPreferred())
-
-	if c.Debug {
-		opts.SetMonitor(&event.CommandMonitor{
-			Started: func(ctx context.Context, event *event.CommandStartedEvent) {
-				if name := event.CommandName; name != "ping" {
-					log.WithField("command_name", event.CommandName).
-						WithField("command", event.Command.String()).
-						Info("mongo command start")
-				}
-			},
-			Succeeded: func(ctx context.Context, event *event.CommandSucceededEvent) {
-				if name := event.CommandName; name != "ping" {
-					log.WithField("command_name", event.CommandName).
-						WithField("duration", event.Duration.String()).
-						Info("mongo command success")
-				}
-			},
-			Failed: func(ctx context.Context, event *event.CommandFailedEvent) {
-				if name := event.CommandName; name != "ping" {
-					log.WithField("command_name", event.CommandName).
-						WithField("duration", event.Duration.String()).
-						Info("mongo command failed")
-				}
-			},
-		})
-	}
-
-	// 建立连接
-	if client, err := mongo.Connect(ctx, opts); err != nil {
-		return nil, errorx.Wrap(err, "mongo connect failed")
-	} else if err = client.Ping(ctx, readpref.PrimaryPreferred()); err != nil {
-		return nil, errorx.Wrap(err, "mongo ping failed")
-	} else {
-		return client, nil
-	}
 }
 
 type Configs []*Config

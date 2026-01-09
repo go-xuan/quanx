@@ -1,4 +1,4 @@
-package gormx
+package dbx
 
 import (
 	"time"

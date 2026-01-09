@@ -5,103 +5,92 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/go-xuan/utilx/osx"
-	"github.com/go-xuan/utilx/stringx"
 	log "github.com/sirupsen/logrus"
 )
 
-// NewFormatter 日志格式化器
-func NewFormatter(formatter, timeFormat string) log.Formatter {
-	timeFormat = stringx.IfZero(timeFormat, TimeFormat)
-	switch formatter {
-	case FormatterJson:
-		return &jsonFormatter{
-			timeFormat: timeFormat,
-			hostname:   osx.Hostname(),
-		}
-	case FormatterText:
-		return &textFormatter{
-			timeFormat: timeFormat,
-			hostname:   osx.Hostname(),
-		}
-	default:
-		return DefaultFormatter()
-	}
-}
-
-// DefaultFormatter 默认日志格式化器
-func DefaultFormatter() log.Formatter {
-	return &textFormatter{
-		timeFormat: TimeFormat,
-		hostname:   osx.Hostname(),
-	}
-}
-
-// LogRecord 日志记录
-type LogRecord struct {
-	Time     string      `json:"create_time" bson:"create_time"`
+// Record 日志记录
+type Record struct {
+	Time     string      `json:"time" bson:"time"`
 	Level    string      `json:"level" bson:"level"`
 	Hostname string      `json:"hostname" bson:"hostname"`
-	Message  string      `json:"message" bson:"message"`
+	Msg      string      `json:"msg" bson:"msg"`
 	Data     interface{} `json:"data" bson:"data"`
 }
 
-type jsonFormatter struct {
-	timeFormat string
-	hostname   string
+// Formatter 日志格式化器
+type Formatter struct {
+	Formatter  string // 日志格式化器，json或text
+	TimeLayout string // 时间格式化
+	Hostname   string // 主机名
+	Color      bool   // 是否使用颜色
 }
 
 // Format 日志格式化
-func (f *jsonFormatter) Format(entry *log.Entry) ([]byte, error) {
-	var buffer = bytes.Buffer{}
-	if marshal, err := json.Marshal(LogRecord{
-		Time:     entry.Time.Format(f.timeFormat),
-		Level:    LevelString(entry.Level, 5),
-		Hostname: f.hostname,
-		Message:  entry.Message,
-		Data:     entry.Data,
-	}); err != nil {
-		return nil, err
-	} else {
-		buffer.Write(marshal)
+func (f *Formatter) Format(entry *log.Entry) ([]byte, error) {
+	var data []byte
+	var err error
+	switch f.Formatter {
+	case FormatterJson:
+		data, err = f.FormatJson(entry)
+	case FormatterText:
+		data, err = f.FormatText(entry)
 	}
-	buffer.WriteString("\n")
-	return buffer.Bytes(), nil
+	if err != nil {
+		return nil, err
+	}
+	if f.Color {
+		data = Color(entry.Level, data)
+	}
+	return data, nil
 }
 
-type textFormatter struct {
-	timeFormat string
-	hostname   string
-	color      bool
+// FormatJson 日志json格式化
+func (f *Formatter) FormatJson(entry *log.Entry) ([]byte, error) {
+	time, level := entry.Time.Format(f.TimeLayout), LevelString(entry.Level, 5)
+	data, err := json.Marshal(Record{
+		Time:     time,
+		Level:    level,
+		Hostname: f.Hostname,
+		Msg:      entry.Message,
+		Data:     entry.Data,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return append(data, "\n"...), nil
 }
 
-func (f *textFormatter) Format(entry *log.Entry) ([]byte, error) {
-	var buffer = bytes.Buffer{}
-	timeStr, level := entry.Time.Format(f.timeFormat), LevelString(entry.Level, 5)
-	buffer.WriteString(fmt.Sprintf("[%-23s][%s][%-5s]", timeStr, f.hostname, level))
+// FormatText 日志文本格式化
+func (f *Formatter) FormatText(entry *log.Entry) ([]byte, error) {
+	buffer := bytes.Buffer{}
+	time, level := entry.Time.Format(f.TimeLayout), LevelString(entry.Level, 5)
+	buffer.WriteString(fmt.Sprintf("[%-23s][%s][%-5s]", time, f.Hostname, level))
 	buffer.WriteString(entry.Message)
 	for key, value := range entry.Data {
 		buffer.WriteString(fmt.Sprintf(", %s:%+v", key, value))
 	}
 	buffer.WriteString("\n")
-	if f.color {
-		return Color(entry.Level, buffer.Bytes()), nil
-	}
 	return buffer.Bytes(), nil
 }
 
 // Color 日志颜色，根据日志级别对日志内容染色
 func Color(level log.Level, data []byte) []byte {
+	var color string
 	switch level {
 	case log.InfoLevel:
-		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 32, string(data)))
+		color = "\x1b[32m" // green
 	case log.WarnLevel:
-		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 33, string(data)))
+		color = "\x1b[33m" // yellow
 	case log.ErrorLevel:
-		return []byte(fmt.Sprintf("\x1b[%dm%s\x1b[0m", 31, string(data)))
+		color = "\x1b[31m" // red
 	default:
 		return data
 	}
+	buffer := bytes.Buffer{}
+	buffer.WriteString(color)
+	buffer.Write(data)
+	buffer.WriteString("\x1b[0m")
+	return buffer.Bytes()
 }
 
 // LevelString 日志级别字符串

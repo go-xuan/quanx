@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/go-xuan/utilx/errorx"
+	"github.com/go-xuan/utilx/osx"
+	"github.com/go-xuan/utilx/stringx"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
@@ -22,12 +24,12 @@ const (
 
 	WriterConsole       = "console" // 控制台打印
 	WriterFile          = "file"    // 写入日志文件
-	WriterMongo         = "mongo"   // 写入Mongo
-	WriterElasticSearch = "es"      // 写入ES
+	WriterMongo         = "mongo"   // 写入mongo
+	WriterElasticSearch = "es"      // 写入es
 
 	FormatterText   = "text"                    // 文本格式化
 	FormatterJson   = "json"                    // json格式化
-	TimeFormat      = "2006-01-02 15:04:05.999" // 时间格式化
+	TimeFormat      = "2006-01-02 15:04:05.000" // 时间格式化
 	logWriterSource = "log"                     // 日志写入源
 )
 
@@ -59,7 +61,7 @@ type Config struct {
 	Level      string       `json:"level" yaml:"level" default:"info"`                              // 默认日志级别
 	Formatter  string       `json:"formatter" yaml:"formatter" default:"json"`                      // 默认日志格式
 	Writer     string       `json:"writer" yaml:"writer" default:"console"`                         // 默认日志输出
-	TimeFormat string       `json:"timeFormat" yaml:"timeFormat" default:"2006-01-02 15:04:05.999"` // 时间格式化
+	TimeLayout string       `json:"timeLayout" yaml:"timeLayout" default:"2006-01-02 15:04:05.000"` //
 	Color      bool         `json:"color" yaml:"color" default:"false"`                             // 使用颜色
 	Caller     bool         `json:"caller" yaml:"caller" default:"false"`                           // caller开关
 	Hooks      []HookConfig `json:"hooks" yaml:"hooks"`                                             // 日志钩子
@@ -94,7 +96,12 @@ func (c *Config) Execute() error {
 
 // GetFormatter 获取日志格式化器
 func (c *Config) GetFormatter() log.Formatter {
-	return NewFormatter(c.Formatter, c.TimeFormat)
+	return &Formatter{
+		Formatter:  c.Formatter,
+		TimeLayout: stringx.IfZero(c.TimeLayout, TimeFormat),
+		Hostname:   osx.Hostname(),
+		Color:      c.Color && c.Writer == WriterConsole,
+	}
 }
 
 // GetWriter 获取日志写入器

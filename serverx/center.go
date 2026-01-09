@@ -14,7 +14,7 @@ func Init(center Center) {
 // Instance 服务实例
 type Instance interface {
 	GetName() string // 获取服务名
-	GetHost() string // 获取IP
+	GetHost() string // 获取ip
 	GetPort() int    // 获取端口
 }
 

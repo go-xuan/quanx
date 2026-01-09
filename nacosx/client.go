@@ -15,8 +15,8 @@ import (
 // 客户端
 var _client *Client
 
-// 获取客户端
-func this() *Client {
+// GetClient 获取客户端
+func GetClient() *Client {
 	if _client == nil {
 		panic("nacos client not initialized, please check the relevant config")
 	}
@@ -28,9 +28,29 @@ func Initialized() bool {
 	return _client != nil
 }
 
-// GetClient 获取客户端
-func GetClient() *Client {
-	return this()
+// NewClient 创建nacos客户端
+func NewClient(config *Config) (*Client, error) {
+	client := &Client{config: config}
+	var param = config.ClientParam()
+	var err error
+	switch config.Mode {
+	case OnlyConfig: // 仅初始化配置中心
+		if client.configClient, err = config.ConfigClient(param); err != nil {
+			return nil, errorx.Wrap(err, "init nacos config client failed")
+		}
+	case OnlyNaming: // 仅初始化服务发现
+		if client.namingClient, err = config.NamingClient(param); err != nil {
+			return nil, errorx.Wrap(err, "init nacos naming client failed")
+		}
+	case ConfigAndNaming: // 初始化配置中心和服务发现
+		if client.configClient, err = config.ConfigClient(param); err != nil {
+			return nil, errorx.Wrap(err, "init nacos config client failed")
+		}
+		if client.namingClient, err = config.NamingClient(param); err != nil {
+			return nil, errorx.Wrap(err, "init nacos naming client failed")
+		}
+	}
+	return client, nil
 }
 
 // Client nacos客户端

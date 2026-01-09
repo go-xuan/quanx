@@ -15,7 +15,7 @@ func NewLogWriter[T any](source, collection string) io.Writer {
 		return &LogWriter[T]{
 			database:   client.GetConfig().Database,
 			collection: collection,
-			client:     client.GetInstance(),
+			client:     client.GetClient(),
 		}
 	}
 	return nil

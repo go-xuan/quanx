@@ -1,4 +1,4 @@
-package miniox
+package dbx
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/go-xuan/quanx/configx"
 )
 
-func TestMinio(t *testing.T) {
+func TestDatabase(t *testing.T) {
 	if err := configx.LoadConfigurator(&Config{}); err != nil {
 		panic(err)
 	}
