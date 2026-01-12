@@ -12,14 +12,14 @@ import (
 // NewGrpcServer 创建grpc服务
 func NewGrpcServer(server *grpc.Server, port ...int) *GrpcServer {
 	return &GrpcServer{
-		BaseServer: NewBaseServer(GRPC, port...),
-		server:     server,
+		Base:   NewBase(GRPC, port...),
+		server: server,
 	}
 }
 
 // GrpcServer grpc服务
 type GrpcServer struct {
-	BaseServer
+	Base
 	server *grpc.Server // grpc服务
 }
 

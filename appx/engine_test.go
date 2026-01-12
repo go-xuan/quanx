@@ -23,7 +23,7 @@ func TestEngine(t *testing.T) {
 		// 添加服务
 		AddServer(
 			// 添加http服务
-			serverx.NewHttpServer(ginx.NewHttpServer(
+			serverx.NewHttpServer(ginx.HttpServer(
 				// 开启调试模式
 				ginx.SetDebugMode,
 				// 绑定路由

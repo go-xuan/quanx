@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// NewHttpServer 创建http服务器
-func NewHttpServer(options ...EngineOption) *http.Server {
+// HttpServer 创建http服务器
+func HttpServer(options ...EngineOption) *http.Server {
 	engine := DefaultEngine()
 	for _, option := range options {
 		option(engine)

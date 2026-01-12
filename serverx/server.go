@@ -19,19 +19,17 @@ type Server interface {
 	Shutdown(ctx context.Context)    // 关闭服务
 }
 
-// NewBaseServer 创建基础服务
-func NewBaseServer(category string, port ...int) BaseServer {
-	baseServer := BaseServer{
-		category: category,
-	}
+// NewBase 创建基础服务
+func NewBase(category string, port ...int) Base {
+	base := Base{category: category}
 	if len(port) > 0 && port[0] > 0 {
-		baseServer.port = port[0]
+		base.port = port[0]
 	}
-	return baseServer
+	return base
 }
 
-// BaseServer 基础服务配置
-type BaseServer struct {
+// Base 基础服务配置
+type Base struct {
 	name     string     // 服务名称
 	category string     // 服务分类
 	port     int        // 服务端口
@@ -40,7 +38,7 @@ type BaseServer struct {
 }
 
 // 绑定服务配置
-func (s *BaseServer) bindConfig(config *Config) {
+func (s *Base) bindConfig(config *Config) {
 	if config == nil {
 		return
 	}

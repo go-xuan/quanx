@@ -12,26 +12,28 @@ import (
 // NewHttpServer 创建http服务
 func NewHttpServer(server *http.Server, port ...int) *HttpServer {
 	return &HttpServer{
-		BaseServer: NewBaseServer(HTTP, port...),
-		server:     server,
+		Base:   NewBase(HTTP, port...),
+		server: server,
 	}
 }
 
 // NewPprofServer 创建pprof服务
 func NewPprofServer(port ...int) *HttpServer {
+	// 需要将 _ "net/http/pprof" 添加到项目的main.go文件的import语句中
+	// 使用默认的 http.DefaultServeMux，会自动注册pprof相关路由
+	server := &http.Server{
+		Handler: http.DefaultServeMux,
+	}
 	return &HttpServer{
-		BaseServer: NewBaseServer(PPROF, port...),
-		server: &http.Server{
-			// 使用默认的 http.DefaultServeMux，当import pprof包时，会自动注册pprof路由
-			Handler: http.DefaultServeMux,
-		},
+		Base:   NewBase(PPROF, port...),
+		server: server,
 	}
 }
 
 // HttpServer http服务
 type HttpServer struct {
-	BaseServer              // 基础服务配置
-	server     *http.Server // http服务
+	Base                // 基础服务配置
+	server *http.Server // http服务
 }
 
 // IsRunning 是否运行中
