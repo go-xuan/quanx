@@ -17,12 +17,12 @@ func (p Page) IsValid() bool {
 }
 
 // PageTotal 计算分页数量
-func (p Page) PageTotal(total int) int {
+func (p Page) PageTotal(total int64) int {
 	if total != 0 && p.PageSize != 0 {
-		if total%p.PageSize > 0 {
-			return (total / p.PageSize) + 1
+		if total%int64(p.PageSize) > 0 {
+			return int((total / int64(p.PageSize)) + 1)
 		}
-		return total / p.PageSize
+		return int(total / int64(p.PageSize))
 	}
 	return 0
 }
@@ -62,7 +62,7 @@ func (p Page) MysqlPageSql() string {
 }
 
 // BuildResp 封装分页结果
-func (p Page) BuildResp(rows any, total int) *PageResp {
+func (p Page) BuildResp(rows any, total int64) *PageResp {
 	resp := &PageResp{
 		Total: total,
 		Rows:  rows,
@@ -75,9 +75,9 @@ func (p Page) BuildResp(rows any, total int) *PageResp {
 
 // PageResp 分页结果
 type PageResp struct {
-	PageNo    int `json:"pageNo" comment:"当前页码"`
-	PageSize  int `json:"pageSize" comment:"当前页容量"`
-	PageTotal int `json:"pageTotal" comment:"总页数"`
-	Total     int `json:"total" comment:"结果总数量"`
-	Rows      any `json:"rows" comment:"返回结果集"`
+	PageNo    int   `json:"pageNo" comment:"当前页码"`
+	PageSize  int   `json:"pageSize" comment:"当前页容量"`
+	PageTotal int   `json:"pageTotal" comment:"总页数"`
+	Total     int64 `json:"total" comment:"结果总数量"`
+	Rows      any   `json:"rows" comment:"返回结果集"`
 }

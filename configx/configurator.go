@@ -44,8 +44,8 @@ func LoadConfigurator(configurator Configurator) error {
 	location, err := ReadConfigurator(configurator)
 	logger = logger.WithField("location", location)
 	if err != nil {
-		logger.WithError(err).Warn("read configurator failed")
-		return errorx.Wrap(err, "read configurator failed")
+		logger.WithError(err).Warn("configurator read failed")
+		return errorx.Wrap(err, "configurator read failed")
 	}
 
 	// 执行配置器逻辑
