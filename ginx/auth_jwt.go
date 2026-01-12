@@ -137,7 +137,7 @@ func (v *JwtValidator) Debug(ctx *gin.Context) {
 
 // JwtUser 实现AuthUser
 type JwtUser struct {
-	Id     int64  `json:"id"`     // 用户ID
+	Id     int64  `json:"id"`     // 用户id
 	Name   string `json:"name"`   // 用户名
 	Expire int64  `json:"expire"` // 有效期时间戳
 }

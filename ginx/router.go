@@ -1,8 +1,6 @@
 package ginx
 
-import (
-	"github.com/gin-gonic/gin"
-)
+import "github.com/gin-gonic/gin"
 
 // BindHandlerRouter 绑定Handler路由
 // handler必须实现 Handler 接口，按需实现 GetHandler, PostHandler ... 等接口

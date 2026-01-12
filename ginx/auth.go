@@ -57,7 +57,7 @@ type AuthValidator interface {
 
 // AuthUser 鉴权用户
 type AuthUser interface {
-	GetUserId() typex.Value // 用户ID
+	GetUserId() typex.Value // 用户id
 	GetUsername() string    // 用户名
 }
 

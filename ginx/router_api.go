@@ -13,11 +13,9 @@ import (
 	"github.com/go-xuan/quanx/modelx"
 )
 
-// NewCrudApi 新增CRUD API
-func NewCrudApi[T any](router *gin.RouterGroup, dbSource string) {
-	var api = &Model[T]{
-		Source: dbSource,
-	}
+// BindCrudRouter 新增crud路由
+func BindCrudRouter[T any](router *gin.RouterGroup, source string) {
+	api := &Model[T]{Source: source}
 	router.GET("list", api.List)        // 列表
 	router.GET("detail", api.Detail)    // 明细
 	router.POST("create", api.Create)   // 新增
@@ -25,11 +23,9 @@ func NewCrudApi[T any](router *gin.RouterGroup, dbSource string) {
 	router.DELETE("delete", api.Delete) // 删除
 }
 
-// NewExcelApi 新增 Excel API
-func NewExcelApi[T any](group *gin.RouterGroup, dbSource string) {
-	var api = &Model[T]{
-		Source: dbSource,
-	}
+// BindExcelRouter 新增 Excel 相关路由
+func BindExcelRouter[T any](group *gin.RouterGroup, source string) {
+	api := &Model[T]{Source: source}
 	group.POST("import", api.Import) // 导入
 	group.POST("export", api.Export) // 导出
 }
@@ -68,9 +64,9 @@ func (m *Model[T]) Create(ctx *gin.Context) {
 	}
 	if err = m.GetDB().Create(&create).Error; err != nil {
 		Error(ctx, err)
-	} else {
-		Success(ctx, nil)
+		return
 	}
+	Success(ctx, nil)
 }
 
 // Update 修改
