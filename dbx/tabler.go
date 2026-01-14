@@ -49,10 +49,10 @@ func InitGormTable(db *gorm.DB, tables ...interface{}) error {
 // 初始化表数据
 func initGormTableData(db *gorm.DB, table interface{}) error {
 	var data interface{}
-	if tabler, ok := table.(InitTabler); ok {
-		if data = tabler.InitData(); data == nil {
-			return nil
-		}
+	if tabler, ok := table.(InitTabler); !ok {
+		return nil
+	} else if data = tabler.InitData(); data == nil {
+		return nil
 	}
 	var count int64
 	if err := db.Model(table).Count(&count).Error; err != nil {
