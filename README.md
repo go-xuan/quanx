@@ -1,14 +1,26 @@
 # quanx
-基于gin+gorm的web微服务搭建框架
-启动项目代码量更少，操作更加简便
+web微服务搭建框架，内置配置中心，api路由，日志格式化等功能
+quanx 是一个功能强大的 web 微服务搭建框架，内置配置中心、API 路由、日志格式化等功能，帮助开发者快速构建高性能、可扩展的微服务应用。
 
-## 获取quanx
+🌟 核心特性
+
+- 简单易用：一行代码即可启动一个完整的微服务
+- 配置中心：支持多种配置源（Nacos、文件、环境变量等）
+- 多服务支持：同时支持 HTTP 和 gRPC 服务
+- 数据库集成：内置 GORM 支持，一键初始化表结构
+- 缓存管理：支持 Redis 和本地缓存
+- 日志系统：灵活的日志格式化和输出
+- API路由：基于 Gin 的高性能路由系统
+- 中间件支持：丰富的中间件生态
+- JWT认证：内置 JWT 认证机制
+
+## 📦 安装
 
 ```
 go get github.com/go-xuan/quanx
 ```
 
-## 服务启动
+## 🚀 快速开始
 
 启动简单，一行代码即可启动一个微服务
 
@@ -200,9 +212,9 @@ mode: 2                       # int 模式（0-仅配置中心；1-仅服务发�
 
 ```yaml
 source: "default"             # string 数据源名称
-client: "gorm"                # string 客户端选型
+builder: "gorm"               # string 数据库构建器(默认：gorm)
 enable: false                 # bool 是否启用
-type: "mysql"                 # string 数据库类型(mysql/postgres)
+dialect: "mysql"              # string 数据库方言(mysql/postgres)
 host: "127.0.0.1"             # string host
 port: 5432                    # int 端口
 username: "root"              # string 用户名
@@ -247,10 +259,10 @@ redis配置文件路径：conf/cache.yaml
 
 ```yaml
 source: "default"             # string 数据源名称
-client: "local"               # string 客户端选型（redis/local）
+builder: "redis"              # string 客户端构造期类型（支持redis或者local，默认：local）
 enable: true                  # bool 是否启用
-address: "localhost"          # string 地址
-password: ""                  # string 密码
+address: "localhost:6379"     # string 地址
+password: "123456"            # string 密码
 database: 0                   # int 数据库
 mode: 0                       # int 模式（0-单机；1-集群），默认单机模式
 ```
@@ -261,14 +273,14 @@ mode: 0                       # int 模式（0-单机；1-集群），默认单�
 
 ```yaml
 - name: default
-  client: local
+  builder: local
   enable:
   address: 
   password: 
   database: 
   mode: 0
 - name: redis_db1
-  client: redis
+  builder: redis
   enable:
   address: 
   password: 
@@ -307,21 +319,21 @@ import (
 
 func main() {
 	appx.NewEngine(
-		appx.AddConfigurator(&demo{}),
+		appx.AddConfigurator(&Demo{}),
 	).RUN(context.Background())
 }
 
-type demo struct {
+type Demo struct {
 	Key1 int      `json:"key1" yaml:"key1"`
 	Key2 string   `json:"key2" yaml:"key2"`
 	Key3 []string `json:"key3" yaml:"key3"`
 }
 
-func (d *demo) Valid() bool {
+func (d *Demo) Valid() bool {
 	return d.Key1 > 0 && d.Key2 != "" && d.Key3 != nil
 }
 
-func (d *demo) Readers() []configx.Reader {
+func (d *Demo) Readers() []configx.Reader {
 	return []configx.Reader{
 		configx.NewFileReader("demo.yaml"),
 		configx.NewFileReader("demo.json"),
@@ -329,7 +341,7 @@ func (d *demo) Readers() []configx.Reader {
 	}
 }
 
-func (d *demo) Execute() error {
+func (d *Demo) Execute() error {
 	// todo 完成配置读取后需要进行的操作
 	fmt.Println(d.Key1)
 	fmt.Println(d.Key2)

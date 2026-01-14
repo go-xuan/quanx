@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	pool     *typex.Enum[string, Client]
-	builders *typex.Enum[string, ClientBuilder]
+	pool     *typex.Enum[string, Client]        // 客户端池
+	builders *typex.Enum[string, ClientBuilder] // 客户端构造函数池
 )
 
 func init() {

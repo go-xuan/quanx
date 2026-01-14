@@ -131,7 +131,7 @@ func (cfg *Config) initDatabase() error {
 	if dbs == nil {
 		dbs = &dbx.Configs{}
 	}
-	if err := configx.LoadConfigurator(dbs); err != nil {
+	if err := configx.LoadConfigurator(dbs); err == nil {
 		cfg.Database = dbs
 	}
 	if !dbx.Initialized() {
@@ -153,7 +153,7 @@ func (cfg *Config) initCache() error {
 		cfg.Cache = caches
 	}
 	if !cachex.Initialized() {
-		var cache = &cachex.Config{}
+		cache := &cachex.Config{}
 		if err := configx.LoadConfigurator(cache); err == nil {
 			cfg.Cache = &cachex.Configs{cache}
 		}

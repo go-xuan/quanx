@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/nacosx"
 )
 
@@ -79,8 +80,8 @@ func (c *Config) Valid() bool {
 
 func (c *Config) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader("log.yaml"),
-		configx.NewFileReader("log.yaml"),
+		nacosx.NewReader(constx.LogConfigName),
+		configx.NewFileReader(constx.LogConfigName),
 		configx.NewTagReader(),
 	}
 }

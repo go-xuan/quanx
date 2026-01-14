@@ -46,7 +46,7 @@ func (c *Config) LogFields() map[string]interface{} {
 
 func (c *Config) Readers() []configx.Reader {
 	return []configx.Reader{
-		configx.NewFileReader("nacos.yaml"),
+		configx.NewFileReader(constx.NacosConfigName),
 	}
 }
 
@@ -62,7 +62,7 @@ func (c *Config) Execute() error {
 			logger.WithError(err).Error("create nacos client failed")
 			return errorx.Wrap(err, "create nacos client failed")
 		}
-		logger.Info("init nacos client success")
+		logger.Info("init nacos success")
 	}
 	return nil
 }

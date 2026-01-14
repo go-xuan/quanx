@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/nacosx"
 )
 
@@ -34,8 +35,8 @@ func (c *Config) Valid() bool {
 
 func (c *Config) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader("elastic.yaml"),
-		configx.NewFileReader("elastic.yaml"),
+		nacosx.NewReader(constx.ElasticConfigName),
+		configx.NewFileReader(constx.ElasticConfigName),
 	}
 }
 
@@ -47,8 +48,6 @@ func (c *Config) Execute() error {
 			logger.WithError(err).Error("create elastic search client failed")
 			return errorx.Wrap(err, "create elastic search client failed")
 		}
-		logger.Info("init elastic search client success")
-		AddClient(c.Source, client)
 		ctx := context.Background()
 		for _, index := range c.Indices {
 			if _, err = client.CreateIndex(ctx, index); err != nil {
@@ -56,6 +55,8 @@ func (c *Config) Execute() error {
 				return errorx.Wrap(err, "create index failed")
 			}
 		}
+		AddClient(c.Source, client)
+		logger.Info("init elastic search success")
 	}
 	return nil
 }
@@ -68,8 +69,8 @@ func (s Configs) Valid() bool {
 
 func (s Configs) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader("elastic.yaml"),
-		configx.NewFileReader("elastic.yaml"),
+		nacosx.NewReader(constx.ElasticConfigName),
+		configx.NewFileReader(constx.ElasticConfigName),
 	}
 }
 
@@ -80,7 +81,9 @@ func (s Configs) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("elastic not initialized because no enabled source")
+		err := errorx.New("no enabled elastic search source")
+		log.WithField("error", err.Error()).Warn("init elastic search failed")
+		return err
 	}
 	return nil
 }

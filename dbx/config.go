@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/nacosx"
 )
 
@@ -19,7 +20,7 @@ const (
 	PGSQL    = "pgsql"    // pgsql
 )
 
-// Config 数据库配置 dialect
+// Config 数据库配置
 type Config struct {
 	Source        string            `json:"source" yaml:"source" default:"default"`           // 数据源名称
 	Builder       string            `json:"builder" yaml:"builder" default:"gorm"`            // 客户端选型
@@ -127,8 +128,8 @@ func (c *Config) Valid() bool {
 
 func (c *Config) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader("database.yaml"),
-		configx.NewFileReader("database.yaml"),
+		nacosx.NewReader(constx.DatabaseConfigName),
+		configx.NewFileReader(constx.DatabaseConfigName),
 	}
 }
 
@@ -141,7 +142,7 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "create database client failed")
 		}
 		AddClient(c.Source, client)
-		logger_.Info("init database client success")
+		logger_.Info("init database success")
 	}
 	return nil
 }
@@ -154,8 +155,8 @@ func (s Configs) Valid() bool {
 
 func (s Configs) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader("database.yaml"),
-		configx.NewFileReader("database.yaml"),
+		nacosx.NewReader(constx.DatabaseConfigName),
+		configx.NewFileReader(constx.DatabaseConfigName),
 	}
 }
 
@@ -166,7 +167,9 @@ func (s Configs) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("database not initialized because no enabled source")
+		err := errorx.New("no enabled database source")
+		log.WithField("error", err.Error()).Warn("init database failed")
+		return err
 	}
 	return nil
 }

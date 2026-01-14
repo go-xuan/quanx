@@ -9,13 +9,6 @@ import (
 	"github.com/go-xuan/utilx/marshalx"
 )
 
-// SetFileReaderAnchor 设置本地文件读取器锚点
-func SetFileReaderAnchor(anchor string) {
-	if anchor != "" && filex.Exists(anchor) {
-		defaultFileAnchor = anchor
-	}
-}
-
 // NewFileReader 默认本地文件读取器
 func NewFileReader(name string) *FileReader {
 	return &FileReader{

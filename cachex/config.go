@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/nacosx"
 )
 
@@ -46,7 +47,7 @@ func (c *Config) Copy() *Config {
 func (c *Config) LogFields() map[string]interface{} {
 	fields := make(map[string]interface{})
 	fields["source"] = c.Source
-	fields["client"] = c.Builder
+	fields["builder"] = c.Builder
 	fields["address"] = c.Address
 	fields["database"] = c.Database
 	fields["mode"] = c.Mode
@@ -65,8 +66,8 @@ func (c *Config) Valid() bool {
 
 func (c *Config) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader("cache.yaml"),
-		configx.NewFileReader("cache.yaml"),
+		nacosx.NewReader(constx.CacheConfigName),
+		configx.NewFileReader(constx.CacheConfigName),
 	}
 }
 
@@ -79,7 +80,7 @@ func (c *Config) Execute() error {
 			return errorx.Wrap(err, "create cache client failed")
 		}
 		AddClient(c.Source, client)
-		logger.Info("init cache client success")
+		logger.Info("init cache success")
 	}
 	return nil
 }
@@ -113,8 +114,8 @@ func (s Configs) Valid() bool {
 
 func (s Configs) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader("cache.yaml"),
-		configx.NewFileReader("cache.yaml"),
+		nacosx.NewReader(constx.CacheConfigName),
+		configx.NewFileReader(constx.CacheConfigName),
 	}
 }
 
@@ -125,7 +126,9 @@ func (s Configs) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("cache not initialized because no enabled source")
+		err := errorx.New("no enabled cache source")
+		log.WithField("error", err.Error()).Warn("init cache failed")
+		return err
 	}
 	return nil
 }

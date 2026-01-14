@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
 	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/nacosx"
 )
 
@@ -91,8 +92,8 @@ func (c *Config) LogFields() map[string]interface{} {
 
 func (c *Config) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader("mongo.yaml"),
-		configx.NewFileReader("mongo.yaml"),
+		nacosx.NewReader(constx.MongoConfigName),
+		configx.NewFileReader(constx.MongoConfigName),
 	}
 }
 
@@ -108,7 +109,7 @@ func (c *Config) Execute() error {
 			logger.WithError(err).Error("create mongo client failed")
 			return errorx.Wrap(err, "create mongo client failed")
 		}
-		logger.Info("init mongo client success")
+		logger.Info("init mongo success")
 		AddClient(c.Source, client)
 	}
 	return nil
@@ -122,8 +123,8 @@ func (s Configs) Valid() bool {
 
 func (s Configs) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader("mongo.yaml"),
-		configx.NewFileReader("mongo.yaml"),
+		nacosx.NewReader(constx.MongoConfigName),
+		configx.NewFileReader(constx.MongoConfigName),
 	}
 }
 
@@ -134,7 +135,9 @@ func (s Configs) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("mongo not initialized because no enabled source")
+		err := errorx.New("no enabled mongo source")
+		log.WithField("error", err.Error()).Warn("init mongo failed")
+		return err
 	}
 	return nil
 }

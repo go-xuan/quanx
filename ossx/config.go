@@ -1,10 +1,12 @@
 package ossx
 
 import (
-	"github.com/go-xuan/quanx/configx"
-	"github.com/go-xuan/quanx/nacosx"
 	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/constx"
+	"github.com/go-xuan/quanx/nacosx"
 )
 
 type Config struct {
@@ -22,7 +24,7 @@ type Config struct {
 func (c *Config) LogFields() map[string]interface{} {
 	fields := make(map[string]interface{})
 	fields["source"] = c.Source
-	fields["client"] = c.Builder
+	fields["builder"] = c.Builder
 	fields["endpoint"] = c.Endpoint
 	fields["bucket"] = c.Bucket
 	return fields
@@ -34,20 +36,21 @@ func (c *Config) Valid() bool {
 
 func (c *Config) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader("oss.yaml"),
-		configx.NewFileReader("oss.yaml"),
+		nacosx.NewReader(constx.OssConfigName),
+		configx.NewFileReader(constx.OssConfigName),
 		configx.NewTagReader(),
 	}
 }
 
 func (c *Config) Execute() error {
 	if c.Enable {
+		logger := log.WithFields(c.LogFields())
 		client, err := NewClient(c)
 		if err != nil {
-			log.WithFields(c.LogFields()).WithError(err).Error("create oss client failed")
+			logger.WithError(err).Error("create oss client failed")
 			return errorx.Wrap(err, "create oss client failed")
 		}
-		log.WithFields(c.LogFields()).Info("init oss client success")
+		logger.Info("init oss success")
 		AddClient(c.Source, client)
 	}
 	return nil
@@ -61,8 +64,8 @@ func (s Configs) Valid() bool {
 
 func (s Configs) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader("oss.yaml"),
-		configx.NewFileReader("oss.yaml"),
+		nacosx.NewReader(constx.OssConfigName),
+		configx.NewFileReader(constx.OssConfigName),
 	}
 }
 
@@ -73,7 +76,9 @@ func (s Configs) Execute() error {
 		}
 	}
 	if !Initialized() {
-		log.Error("oss not initialized because no enabled source")
+		err := errorx.New("no enabled oss source")
+		log.WithField("error", err.Error()).Warn("init oss failed")
+		return err
 	}
 	return nil
 }

@@ -120,18 +120,16 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 		ParamError(ctx, err)
 		return
 	}
-	var filePath = filepath.Join(constx.DefaultResourceDir, file.File.Filename)
-	if err := ctx.SaveUploadedFile(file.File, filePath); err != nil {
+	path := filepath.Join(constx.DefaultResourceDir, file.File.Filename)
+	if err := ctx.SaveUploadedFile(file.File, path); err != nil {
 		ParamError(ctx, err)
 		return
 	}
-	var obj T
-	data, err := excelx.ReadAny(filePath, "", obj)
-	if err != nil {
+	var t T
+	if data, err := excelx.ReadAny(path, "", t); err != nil {
 		CustomResponse(ctx, NewResponse(ExportFailedCode, err.Error()))
 		return
-	}
-	if err = m.GetDB().Model(obj).Create(&data).Error; err != nil {
+	} else if err = m.GetDB().Model(t).Create(&data).Error; err != nil {
 		Error(ctx, err)
 		return
 	}
