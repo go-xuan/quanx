@@ -24,8 +24,8 @@ func init() {
 	CodeEnum.Add(SuccessCode, "success").
 		Add(FailedCode, "failed").
 		Add(AuthFailedCode, "auth failed").
-		Add(ParamErrorCode, "request parameter error").
-		Add(RequiredCode, "request parameter required").
+		Add(ParamErrorCode, "parse param failed").
+		Add(RequiredCode, "param required").
 		Add(UploadFailedCode, "upload failed").
 		Add(ImportFailedCode, "import failed").
 		Add(ExportFailedCode, "export failed")

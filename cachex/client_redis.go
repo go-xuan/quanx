@@ -27,7 +27,7 @@ func RedisClientBuilder(config *Config) (Client, error) {
 func NewRedisClient(config *Config) (*RedisClient, error) {
 	client, err := NewRedisUniversalClient(config)
 	if err != nil {
-		return nil, errorx.Wrap(err, "new redis universal client failed")
+		return nil, errorx.Wrap(err, "create redis universal client failed")
 	}
 	return &RedisClient{
 		config:  config,
@@ -62,7 +62,7 @@ func NewRedisUniversalClient(config *Config) (redis.UniversalClient, error) {
 		log.WithFields(config.LogFields()).
 			WithField("ping_result", result).
 			WithError(err).
-			Error("redis client ping failed")
+			Error("ping redis failed")
 	}
 	return client, nil
 }
@@ -89,10 +89,10 @@ func (c *RedisClient) GetInstance() interface{} {
 func (c *RedisClient) Close() error {
 	logger := log.WithFields(c.config.LogFields())
 	if err := c.GetClient().Close(); err != nil {
-		logger.WithError(err).Error("redis universal client close failed")
-		return errorx.Wrap(err, "redis universal client close failed")
+		logger.WithError(err).Error("close redis universal client failed")
+		return errorx.Wrap(err, "close redis universal client failed")
 	}
-	logger.Info("cache client close success")
+	logger.Info("close redis cache client success")
 	return nil
 }
 
@@ -102,9 +102,9 @@ func (c *RedisClient) GetKey(key string) string {
 
 func (c *RedisClient) Set(ctx context.Context, key string, value any, expiration time.Duration) error {
 	if bytes, err := c.marshal.Marshal(value); err != nil {
-		return errorx.Wrap(err, "marshal value error")
+		return errorx.Wrap(err, "marshal value failed")
 	} else if err = c.GetClient().Set(ctx, c.GetKey(key), bytes, expiration).Err(); err != nil {
-		return errorx.Wrap(err, "set value error")
+		return errorx.Wrap(err, "set value failed")
 	}
 	return nil
 }
@@ -142,7 +142,7 @@ func (c *RedisClient) Exist(ctx context.Context, key string) bool {
 
 func (c *RedisClient) Expire(ctx context.Context, key string, expiration time.Duration) error {
 	if _, err := c.GetClient().Expire(ctx, c.GetKey(key), expiration).Result(); err != nil {
-		return errorx.Wrap(err, "redis expire error")
+		return errorx.Wrap(err, "redis expire failed")
 	}
 	return nil
 }

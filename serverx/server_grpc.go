@@ -34,17 +34,18 @@ func (s *GrpcServer) Start(_ context.Context) error {
 	} else if s.port == 0 {
 		return errorx.New("server port is invalid")
 	}
-	listen, err := net.Listen("tcp", fmt.Sprintf(":%d", s.port))
+	addr := fmt.Sprintf(":%d", s.port)
+	listen, err := net.Listen("tcp", addr)
 	if err != nil {
-		return errorx.Wrap(err, "listen error")
+		return errorx.Wrap(err, "listen error "+addr)
 	}
 	go func() {
 		// 启动服务（非阻塞）
 		if err = s.server.Serve(listen); err != nil {
-			s.logger.WithError(err).Fatal("server run failed")
+			s.logger.WithError(err).Fatal("start server failed")
 		}
 	}()
-	s.logger.Info("server start success")
+	s.logger.Info("start server success")
 	s.running = true
 	return nil
 }
@@ -54,5 +55,5 @@ func (s *GrpcServer) Shutdown(_ context.Context) {
 		s.server.Stop()
 		s.running = false
 	}
-	s.logger.Info("server shutdown success")
+	s.logger.Info("shutdown server success")
 }

@@ -32,7 +32,7 @@ func ReaderRead(reader Reader, v any) error {
 		return errorx.New("reader is nil")
 	}
 	if err := reader.Read(v); err != nil {
-		return errorx.Wrap(err, "reader read error")
+		return errorx.Wrap(err, "read reader failed")
 	}
 	return nil
 }

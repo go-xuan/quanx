@@ -44,15 +44,15 @@ func (c *Config) Execute() error {
 		logger := log.WithFields(c.LogFields())
 		client, err := NewClient(c)
 		if err != nil {
-			logger.WithError(err).Error("init elastic-search client failed")
-			return errorx.Wrap(err, "init elastic-search client failed")
+			logger.WithError(err).Error("create elastic search client failed")
+			return errorx.Wrap(err, "create elastic search client failed")
 		}
-		logger.Info("init elastic-search client success")
+		logger.Info("init elastic search client success")
 		AddClient(c.Source, client)
 		ctx := context.Background()
 		for _, index := range c.Indices {
 			if _, err = client.CreateIndex(ctx, index); err != nil {
-				logger.WithError(err).Errorf("create index %s failed", index)
+				logger.WithError(err).Error("create index failed", index)
 				return errorx.Wrap(err, "create index failed")
 			}
 		}
@@ -76,7 +76,7 @@ func (s Configs) Readers() []configx.Reader {
 func (s Configs) Execute() error {
 	for _, config := range s {
 		if err := config.Execute(); err != nil {
-			return errorx.Wrap(err, "elastic config execute error")
+			return errorx.Wrap(err, "execute elastic config failed")
 		}
 	}
 	if !Initialized() {

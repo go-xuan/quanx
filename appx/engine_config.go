@@ -39,34 +39,34 @@ func (cfg *Config) Init(reader configx.Reader) error {
 				cfg.Server = serverx.DefaultConfig()
 			}
 			if err := fr.Write(cfg); err != nil {
-				return errorx.Wrap(err, "write config file error")
+				return errorx.Wrap(err, "write config file failed")
 			}
 		}
 	}
 
 	// 读取配置文件
 	if err := reader.Read(cfg); err != nil {
-		return errorx.Wrap(err, "read config error")
+		return errorx.Wrap(err, "read config failed")
 	}
 	// 初始化nacos
 	if err := cfg.initNacos(); err != nil {
-		return errorx.Wrap(err, "init nacos error")
+		return errorx.Wrap(err, "init nacos failed")
 	}
 	// 初始化服务配置
 	if err := cfg.initServer(server); err != nil {
-		return errorx.Wrap(err, "init server error")
+		return errorx.Wrap(err, "init server failed")
 	}
 	// 初始化日志
 	if err := cfg.initLog(); err != nil {
-		return errorx.Wrap(err, "init log error")
+		return errorx.Wrap(err, "init log failed")
 	}
 	// 初始化数据库
 	if err := cfg.initDatabase(); err != nil {
-		return errorx.Wrap(err, "init database error")
+		return errorx.Wrap(err, "init database failed")
 	}
 	// 初始化缓存
 	if err := cfg.initCache(); err != nil {
-		return errorx.Wrap(err, "init cache error")
+		return errorx.Wrap(err, "init cache failed")
 	}
 
 	return nil
@@ -76,7 +76,7 @@ func (cfg *Config) Init(reader configx.Reader) error {
 func (cfg *Config) initNacos() error {
 	if nacos := cfg.Nacos; nacos != nil {
 		if err := configx.LoadConfigurator(nacos); err != nil {
-			return errorx.Wrap(err, "run nacos configurator error")
+			return errorx.Wrap(err, "load nacos configurator failed")
 		}
 	}
 	return nil
@@ -101,7 +101,7 @@ func (cfg *Config) initServer(server *serverx.Config) error {
 		if cfg.Nacos != nil && cfg.Nacos.EnableNaming() {
 			serverx.Init(&nacosx.ServerCenter{})
 			if err := serverx.Register(cfg.Server); err != nil {
-				return errorx.Wrap(err, "register nacos server instance error")
+				return errorx.Wrap(err, "register nacos server instance failed")
 			}
 		}
 	}
@@ -118,7 +118,7 @@ func (cfg *Config) initLog() error {
 		log.Name = cfg.Server.Name
 	}
 	if err := configx.LoadConfigurator(log); err != nil {
-		return errorx.Wrap(err, "run log configurator error")
+		return errorx.Wrap(err, "run log configurator failed")
 	}
 	cfg.Log = log
 	return nil

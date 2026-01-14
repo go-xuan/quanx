@@ -20,21 +20,21 @@ func DebugCommandMonitor() *event.CommandMonitor {
 		if name := event.CommandName; name != "ping" {
 			log.WithField("command_name", event.CommandName).
 				WithField("command", event.Command.String()).
-				Info("mongo command start")
+				Info("monitor mongo command start")
 		}
 	}
 	monitor.Succeeded = func(ctx context.Context, event *event.CommandSucceededEvent) {
 		if name := event.CommandName; name != "ping" {
 			log.WithField("command_name", event.CommandName).
 				WithField("duration", event.Duration.String()).
-				Info("mongo command success")
+				Info("monitor mongo command succeeded")
 		}
 	}
 	monitor.Failed = func(ctx context.Context, event *event.CommandFailedEvent) {
 		if name := event.CommandName; name != "ping" {
 			log.WithField("command_name", event.CommandName).
 				WithField("duration", event.Duration.String()).
-				Info("mongo command failed")
+				Info("monitor mongo command failed")
 		}
 	}
 

@@ -46,7 +46,7 @@ func (c *LocalClient) GetInstance() interface{} {
 func (c *LocalClient) Close() error {
 	logger := log.WithFields(c.config.LogFields())
 	c.GetClient().Flush()
-	logger.Info("cache client close success")
+	logger.Info("close local cache client success")
 	return nil
 }
 
@@ -57,7 +57,7 @@ func (c *LocalClient) GetKey(key string) string {
 func (c *LocalClient) Set(_ context.Context, key string, value any, expiration time.Duration) error {
 	bytes, err := c.marshal.Marshal(value)
 	if err != nil {
-		return errorx.Wrap(err, "marshal value error")
+		return errorx.Wrap(err, "marshal value failed")
 	}
 	c.GetClient().Set(c.GetKey(key), string(bytes), expiration)
 	return nil

@@ -21,7 +21,7 @@ func GormClientBuilder(config *Config) (Client, error) {
 func NewGormClient(config *Config) (*GormClient, error) {
 	db, err := NewGormDB(config)
 	if err != nil {
-		return nil, errorx.Wrap(err, "new gorm client failed")
+		return nil, errorx.Wrap(err, "create gorm client failed")
 	}
 	return &GormClient{config: config, db: db}, nil
 }
@@ -47,10 +47,10 @@ func (c *GormClient) GetConfig() *Config {
 func (c *GormClient) Close() error {
 	logger := log.WithFields(c.config.LogFields())
 	if err := CloseGormDB(c.db); err != nil {
-		logger.WithError(err).Error("gorm close failed")
-		return errorx.Wrap(err, "gorm close failed")
+		logger.WithError(err).Error("close gorm db failed")
+		return errorx.Wrap(err, "close gorm db failed")
 	}
-	logger.Info("db client close success")
+	logger.Info("close gorm client success")
 	return nil
 }
 
@@ -92,7 +92,7 @@ func NewGormDB(config *Config) (*gorm.DB, error) {
 		},
 	})
 	if err != nil {
-		return nil, errorx.Wrap(err, "gorm open failed")
+		return nil, errorx.Wrap(err, "open gorm db failed")
 	}
 	var sqlDB *sql.DB
 	if sqlDB, err = db.DB(); err != nil {

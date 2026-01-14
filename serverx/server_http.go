@@ -56,10 +56,10 @@ func (s *HttpServer) Start(_ context.Context) error {
 		// 启动服务（非阻塞）
 		s.server.Addr = fmt.Sprintf(":%d", s.port)
 		if err := s.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.logger.WithError(err).Fatal("server run failed")
+			s.logger.WithError(err).Fatal("start server failed")
 		}
 	}()
-	s.logger.Info("server start success")
+	s.logger.Info("start server success")
 	s.running = true
 	return nil
 }
@@ -67,10 +67,10 @@ func (s *HttpServer) Start(_ context.Context) error {
 func (s *HttpServer) Shutdown(ctx context.Context) {
 	if s.running {
 		if err := s.server.Shutdown(ctx); err != nil {
-			s.logger.WithError(err).Error("server shutdown failed")
+			s.logger.WithError(err).Error("shutdown server failed")
 			return
 		}
 		s.running = false
 	}
-	s.logger.Info("server shutdown success")
+	s.logger.Info("shutdown server success")
 }

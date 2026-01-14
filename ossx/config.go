@@ -44,8 +44,8 @@ func (c *Config) Execute() error {
 	if c.Enable {
 		client, err := NewClient(c)
 		if err != nil {
-			log.WithFields(c.LogFields()).WithError(err).Error("init oss client failed")
-			return errorx.Wrap(err, "init oss client failed")
+			log.WithFields(c.LogFields()).WithError(err).Error("create oss client failed")
+			return errorx.Wrap(err, "create oss client failed")
 		}
 		log.WithFields(c.LogFields()).Info("init oss client success")
 		AddClient(c.Source, client)
@@ -69,7 +69,7 @@ func (s Configs) Readers() []configx.Reader {
 func (s Configs) Execute() error {
 	for _, config := range s {
 		if err := config.Execute(); err != nil {
-			return errorx.Wrap(err, "oss config execute error")
+			return errorx.Wrap(err, "oss config execute failed")
 		}
 	}
 	if !Initialized() {

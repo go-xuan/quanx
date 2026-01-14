@@ -59,14 +59,14 @@ func (r *Reader) Read(v any) error {
 		param := r.ConfigParam()
 		data, err := GetClient().ReadConfig(v, param)
 		if err != nil {
-			return errorx.Wrap(err, "read nacos config error")
+			return errorx.Wrap(err, "read nacos config failed")
 		}
 		r.Data = data
 
 		if r.Listen {
 			// 监听配置变化
 			if err = GetClient().ListenConfig(v, param); err != nil {
-				return errorx.Wrap(err, "listen nacos config error")
+				return errorx.Wrap(err, "listen nacos config failed")
 			}
 		}
 	}
@@ -87,7 +87,7 @@ func (r *Reader) Write(v any) error {
 	// 序列化配置
 	data, err := marshalx.Apply(r.GetType()).Marshal(v)
 	if err != nil {
-		return errorx.Wrap(err, "marshal config error")
+		return errorx.Wrap(err, "marshal config failed")
 	}
 	r.Data = data
 
@@ -97,7 +97,7 @@ func (r *Reader) Write(v any) error {
 	// 发布配置
 	param := r.ConfigParam()
 	if err = GetClient().PublishConfig(param); err != nil {
-		return errorx.Wrap(err, "publish config to nacos error")
+		return errorx.Wrap(err, "publish config to nacos failed")
 	}
 	return nil
 }

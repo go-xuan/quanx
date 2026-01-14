@@ -105,8 +105,8 @@ func (c *Config) Execute() error {
 		logger := log.WithFields(c.LogFields())
 		client, err := NewClient(c)
 		if err != nil {
-			logger.WithError(err).Error("init mongo client failed")
-			return errorx.Wrap(err, "init mongo client failed")
+			logger.WithError(err).Error("create mongo client failed")
+			return errorx.Wrap(err, "create mongo client failed")
 		}
 		logger.Info("init mongo client success")
 		AddClient(c.Source, client)
@@ -130,7 +130,7 @@ func (s Configs) Readers() []configx.Reader {
 func (s Configs) Execute() error {
 	for _, config := range s {
 		if err := config.Execute(); err != nil {
-			return errorx.Wrap(err, "mongo config execute error")
+			return errorx.Wrap(err, "mongo config execute failed")
 		}
 	}
 	if !Initialized() {

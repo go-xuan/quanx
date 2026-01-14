@@ -13,7 +13,7 @@ import (
 func NewClient(config *Config) (*Client, error) {
 	client, err := NewMongoClient(config)
 	if err != nil {
-		return nil, errorx.Wrap(err, "mongodb client failed")
+		return nil, errorx.Wrap(err, "create mongodb client failed")
 	}
 	return &Client{config: config, client: client}, nil
 }
@@ -24,11 +24,11 @@ func NewMongoClient(config *Config) (*mongo.Client, error) {
 	// 连接mongo
 	client, err := mongo.Connect(ctx, config.ClientOptions())
 	if err != nil {
-		return nil, errorx.Wrap(err, "mongo connect failed")
+		return nil, errorx.Wrap(err, "connect mongo failed")
 	}
 	// PING
 	if err = client.Ping(ctx, readpref.PrimaryPreferred()); err != nil {
-		return nil, errorx.Wrap(err, "mongo ping failed")
+		return nil, errorx.Wrap(err, "ping mongo failed")
 	}
 	return client, nil
 }
@@ -59,19 +59,19 @@ func (c *Client) Copy(target string, database string) (*Client, error) {
 	logger := log.WithFields(config.LogFields())
 	client, err := NewClient(config)
 	if err != nil {
-		logger.WithError(err).Error("mongo client copy failed")
-		return nil, errorx.Wrap(err, "mongo client copy failed")
+		logger.WithError(err).Error("copy mongo client failed")
+		return nil, errorx.Wrap(err, "copy mongo client failed")
 	}
-	logger.Info("mongo client copy success")
+	logger.Info("copy mongo client success")
 	return client, nil
 }
 
 func (c *Client) Close() error {
 	logger := log.WithFields(c.config.LogFields())
 	if err := c.GetClient().Disconnect(context.Background()); err != nil {
-		logger.Error("mongo client disconnect failed")
-		return errorx.Wrap(err, "mongo client disconnect failed")
+		logger.Error("disconnect mongo client failed")
+		return errorx.Wrap(err, "disconnect mongo client failed")
 	}
-	logger.Info("close mongo success")
+	logger.Info("close mongo client success")
 	return nil
 }

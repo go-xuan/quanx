@@ -59,8 +59,8 @@ func (c *Config) Execute() error {
 		logger := log.WithFields(c.LogFields())
 		var err error
 		if _client, err = NewClient(c); err != nil {
-			logger.WithError(err).Error("init nacos client failed")
-			return errorx.Wrap(err, "init nacos client failed")
+			logger.WithError(err).Error("create nacos client failed")
+			return errorx.Wrap(err, "create nacos client failed")
 		}
 		logger.Info("init nacos client success")
 	}
@@ -124,10 +124,10 @@ func (c *Config) ConfigClient(param vo.NacosClientParam) (config_client.IConfigC
 	logger := log.WithFields(c.LogFields())
 	client, err := clients.NewConfigClient(param)
 	if err != nil {
-		logger.WithError(err).Error("nacos config client init failed")
-		return nil, errorx.Wrap(err, "nacos config client init failed")
+		logger.WithError(err).Error("create nacos config client failed")
+		return nil, errorx.Wrap(err, "create nacos config client failed")
 	}
-	logger.Info("nacos config client init success")
+	logger.Info("create nacos config client success")
 	return client, nil
 }
 
@@ -136,9 +136,9 @@ func (c *Config) NamingClient(param vo.NacosClientParam) (naming_client.INamingC
 	logger := log.WithFields(c.LogFields())
 	client, err := clients.NewNamingClient(param)
 	if err != nil {
-		logger.WithError(err).Error("nacos naming client init failed")
-		return nil, errorx.Wrap(err, "nacos naming client init failed")
+		logger.WithError(err).Error("create nacos naming client failed")
+		return nil, errorx.Wrap(err, "create nacos naming client failed")
 	}
-	logger.Info("nacos naming client init success")
+	logger.Info("create nacos naming client success")
 	return client, nil
 }

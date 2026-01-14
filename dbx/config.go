@@ -137,8 +137,8 @@ func (c *Config) Execute() error {
 		logger_ := log.WithFields(c.LogFields())
 		client, err := NewClient(c)
 		if err != nil {
-			logger_.WithError(err).Error("init database client failed")
-			return errorx.Wrap(err, "init database client failed")
+			logger_.WithError(err).Error("create database client failed")
+			return errorx.Wrap(err, "create database client failed")
 		}
 		AddClient(c.Source, client)
 		logger_.Info("init database client success")
@@ -162,7 +162,7 @@ func (s Configs) Readers() []configx.Reader {
 func (s Configs) Execute() error {
 	for _, config := range s {
 		if err := config.Execute(); err != nil {
-			return errorx.Wrap(err, "database config execute error")
+			return errorx.Wrap(err, "execute database config failed")
 		}
 	}
 	if !Initialized() {

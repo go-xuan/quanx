@@ -13,7 +13,7 @@ import (
 func NewClient(config *Config) (*Client, error) {
 	client, err := NewEsClient(config)
 	if err != nil {
-		return nil, errorx.Wrap(err, "new elastic-search client failed")
+		return nil, errorx.Wrap(err, "create elastic-search client failed")
 	}
 	return &Client{config: config, client: client}, nil
 }
@@ -27,11 +27,11 @@ func NewEsClient(config *Config) (*elastic.Client, error) {
 		elastic.SetHttpClient(httpx.NewClient()),
 	)
 	if err != nil {
-		return nil, errorx.Wrap(err, "new elastic client failed")
+		return nil, errorx.Wrap(err, "create elastic client failed")
 	}
 	res, code, err := client.Ping(config.Url).Do(context.Background())
 	if err != nil || code != 200 {
-		return nil, errorx.Wrap(err, "elastic-search ping failed")
+		return nil, errorx.Wrap(err, "ping elastic-search failed")
 	}
 	log.Info("elastic-search version: ", res.Version.Number)
 	return client, nil
@@ -57,7 +57,7 @@ func (c *Client) GetInstance() interface{} {
 func (c *Client) Close() error {
 	logger := log.WithFields(c.config.LogFields())
 	c.client.Stop()
-	logger.Info("elastic client close success")
+	logger.Info("close elastic client success")
 	return nil
 }
 

@@ -34,7 +34,7 @@ func (c *Config) Execute() error {
 	for _, proxy := range c.Proxies {
 		fields[proxy.Url] = proxy.Server
 	}
-	log.WithFields(fields).Info("gateway init success")
+	log.WithFields(fields).Info("init gateway success")
 	return nil
 }
 

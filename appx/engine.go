@@ -121,12 +121,12 @@ func (e *Engine) initOnce(_ context.Context) error {
 	// 初始化应用配置（日志、nacos、数据库、redis、缓存等）
 	reader := configx.NewFileReader(DefaultConfigName)
 	if err := e.config.Init(reader); err != nil {
-		return errorx.Wrap(err, "init default config error")
+		return errorx.Wrap(err, "init default config failed")
 	}
 	// 初始化配置器
 	for _, configurator := range e.configurators {
 		if err := configx.LoadConfigurator(configurator); err != nil {
-			return errorx.Wrap(err, "load configurators error")
+			return errorx.Wrap(err, "load configurators failed")
 		}
 	}
 	// 初始化数据库表结构
@@ -137,7 +137,7 @@ func (e *Engine) initOnce(_ context.Context) error {
 				var db *gorm.DB
 				if db, ok = client.GetInstance().(*gorm.DB); ok && db != nil {
 					if err = dbx.InitGormTable(db, tablers...); err != nil {
-						err = errorx.Wrap(err, "init gorm table error")
+						err = errorx.Wrap(err, "init gorm table failed")
 						return true
 					}
 				}
@@ -145,7 +145,7 @@ func (e *Engine) initOnce(_ context.Context) error {
 			return false
 		})
 		if err != nil {
-			return errorx.Wrap(err, "init table error")
+			return errorx.Wrap(err, "init table failed")
 		}
 		return nil
 	}

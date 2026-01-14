@@ -19,7 +19,7 @@ func (r *EnvReader) Anchor(string) {
 
 func (r *EnvReader) Read(config any) error {
 	if err := osx.SetValueFromEnv(config); err != nil {
-		return errorx.Wrap(err, "read config from env error")
+		return errorx.Wrap(err, "read env reader failed")
 	}
 	return nil
 }

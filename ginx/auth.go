@@ -67,7 +67,7 @@ func GetAuthString(ctx *gin.Context, method AuthMethod) (string, error) {
 	case CookieAuth:
 		cookie, err := ctx.Cookie(cookieAuthKey)
 		if err != nil {
-			return "", errorx.Wrap(err, "get cookie error")
+			return "", errorx.Wrap(err, "get cookie failed")
 		} else if cookie == "" {
 			return "", errorx.New("auth cookie is empty")
 		}

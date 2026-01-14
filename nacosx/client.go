@@ -67,26 +67,24 @@ func (c *Client) GetGroup() string {
 
 // GetConfigClient 获取配置中心客户端
 func (c *Client) GetConfigClient() config_client.IConfigClient {
-	if client := c.configClient; client == nil {
+	if c.configClient == nil {
 		panic("the nacos config client has not been initialized")
-	} else {
-		return client
 	}
+	return c.configClient
 }
 
 // GetNamingClient 获取服务发现客户端
 func (c *Client) GetNamingClient() naming_client.INamingClient {
-	if client := c.namingClient; client == nil {
+	if c.namingClient == nil {
 		panic("the nacos naming client has not been initialized")
-	} else {
-		return client
 	}
+	return c.namingClient
 }
 
 // PublishConfig 发布nacos配置
 func (c *Client) PublishConfig(param vo.ConfigParam) error {
 	if _, err := c.GetConfigClient().PublishConfig(param); err != nil {
-		return errorx.Wrap(err, "nacos config client publish config error")
+		return errorx.Wrap(err, "nacos config client publish config failed")
 	}
 	return nil
 }
@@ -95,12 +93,12 @@ func (c *Client) PublishConfig(param vo.ConfigParam) error {
 func (c *Client) GetConfig(param vo.ConfigParam, publishIfNotExist bool) (string, error) {
 	content, err := c.GetConfigClient().GetConfig(param)
 	if err != nil {
-		return "", errorx.Wrap(err, "get nacos config error")
+		return "", errorx.Wrap(err, "get nacos config failed")
 	}
 	// 如果配置不存在，则发布配置
 	if content == "" && publishIfNotExist {
 		if err = c.PublishConfig(param); err != nil {
-			return "", errorx.Wrap(err, "publish nacos config error")
+			return "", errorx.Wrap(err, "publish nacos config failed")
 		}
 	}
 	return content, nil
@@ -109,7 +107,7 @@ func (c *Client) GetConfig(param vo.ConfigParam, publishIfNotExist bool) (string
 // DeleteConfig 删除nacos配置
 func (c *Client) DeleteConfig(param vo.ConfigParam) error {
 	if _, err := c.GetConfigClient().DeleteConfig(param); err != nil {
-		return errorx.Wrap(err, "nacos config client delete config error")
+		return errorx.Wrap(err, "nacos config client delete config failed")
 	}
 	return nil
 }
@@ -123,7 +121,7 @@ func (c *Client) ReadConfig(config any, param vo.ConfigParam) ([]byte, error) {
 	// 读取配置文件内容
 	content, err := c.GetConfig(param, false)
 	if err != nil {
-		return nil, errorx.Wrap(err, "read nacos config error")
+		return nil, errorx.Wrap(err, "read nacos config failed")
 	}
 	if content == "" {
 		return nil, errorx.New("read nacos config empty")
@@ -131,7 +129,7 @@ func (c *Client) ReadConfig(config any, param vo.ConfigParam) ([]byte, error) {
 	// 解析配置文件内容
 	data := []byte(content)
 	if err = marshalx.Apply(string(param.Type)).Unmarshal(data, config); err != nil {
-		return nil, errorx.Wrap(err, "unmarshal nacos config error")
+		return nil, errorx.Wrap(err, "unmarshal nacos config failed")
 	}
 	return data, nil
 }
@@ -146,11 +144,11 @@ func (c *Client) ListenConfig(config any, param vo.ConfigParam) error {
 			WithField("data", data)
 		logger.Info("the nacos config data has changed !!!")
 		if err := marshalx.Apply(dataId).Unmarshal([]byte(data), config); err != nil {
-			logger.WithError(err).Error("update config error")
+			logger.WithError(err).Error("update nacos config failed")
 		}
 	}
 	if err := c.GetConfigClient().ListenConfig(param); err != nil {
-		return errorx.Wrap(err, "nacos config client listen config failed")
+		return errorx.Wrap(err, "listen nacos config failed")
 	}
 	return nil
 }
@@ -158,7 +156,7 @@ func (c *Client) ListenConfig(config any, param vo.ConfigParam) error {
 // CancelListenConfig 取消监听nacos配置
 func (c *Client) CancelListenConfig(param vo.ConfigParam) error {
 	if err := c.GetConfigClient().CancelListenConfig(param); err != nil {
-		return errorx.Wrap(err, "nacos config client cancel listen config failed")
+		return errorx.Wrap(err, "cancel listen nacos config failed")
 	}
 	return nil
 }
@@ -167,7 +165,7 @@ func (c *Client) CancelListenConfig(param vo.ConfigParam) error {
 func (c *Client) SearchConfig(param vo.SearchConfigParam) (*model.ConfigPage, error) {
 	page, err := c.GetConfigClient().SearchConfig(param)
 	if err != nil {
-		return nil, errorx.Wrap(err, "nacos config client search config error")
+		return nil, errorx.Wrap(err, "search nacos config failed")
 	}
 	return page, nil
 }
@@ -184,7 +182,7 @@ func (c *Client) RegisterInstance(instance *ServerInstance) error {
 		GroupName:   c.GetGroup(),
 		Ephemeral:   true,
 	}); !ok || err != nil {
-		return errorx.Wrap(err, "nacos naming client register instance failed")
+		return errorx.Wrap(err, "register nacos service instance failed")
 	}
 	return nil
 }
@@ -198,32 +196,32 @@ func (c *Client) DeregisterInstance(instance *ServerInstance) error {
 		GroupName:   c.GetGroup(),
 		Ephemeral:   true,
 	}); !ok || err != nil {
-		return errorx.Wrap(err, "nacos naming client deregister instance failed")
+		return errorx.Wrap(err, "deregister nacos service instance failed")
 	}
 	return nil
 }
 
 // SelectOneHealthyInstance 选择一个健康实例
 func (c *Client) SelectOneHealthyInstance(server string) (*model.Instance, error) {
-	if instance, err := c.GetNamingClient().SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
+	instance, err := c.GetNamingClient().SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
 		ServiceName: server,
 		GroupName:   c.GetGroup(),
-	}); err != nil {
-		return nil, errorx.Wrap(err, "nacos naming client select one healthy instance failed")
-	} else {
-		return instance, nil
+	})
+	if err != nil {
+		return nil, errorx.Wrap(err, "select one healthy nacos service instance failed")
 	}
+	return instance, nil
 }
 
 // SelectInstances 选择实例列表
 func (c *Client) SelectInstances(server string) ([]model.Instance, error) {
-	if instances, err := c.GetNamingClient().SelectInstances(vo.SelectInstancesParam{
+	instances, err := c.GetNamingClient().SelectInstances(vo.SelectInstancesParam{
 		ServiceName: server,
 		GroupName:   c.GetGroup(),
 		HealthyOnly: true,
-	}); err != nil {
-		return nil, errorx.Wrap(err, "nacos naming client select instances failed")
-	} else {
-		return instances, nil
+	})
+	if err != nil {
+		return nil, errorx.Wrap(err, "select instances nacos service instance failed")
 	}
+	return instances, nil
 }

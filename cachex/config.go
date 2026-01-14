@@ -75,8 +75,8 @@ func (c *Config) Execute() error {
 		logger := log.WithFields(c.LogFields())
 		client, err := NewClient(c)
 		if err != nil {
-			logger.WithError(err).Error("init cache client failed")
-			return errorx.Wrap(err, "init cache client failed")
+			logger.WithError(err).Error("create cache client failed")
+			return errorx.Wrap(err, "create cache client failed")
 		}
 		AddClient(c.Source, client)
 		logger.Info("init cache client success")
@@ -121,7 +121,7 @@ func (s Configs) Readers() []configx.Reader {
 func (s Configs) Execute() error {
 	for _, config := range s {
 		if err := config.Execute(); err != nil {
-			return errorx.Wrap(err, "cache config execute error")
+			return errorx.Wrap(err, "cache config execute failed")
 		}
 	}
 	if !Initialized() {

@@ -49,12 +49,12 @@ func (r *FileReader) Read(v any) error {
 		}
 		data, err := filex.ReadFile(path)
 		if err != nil {
-			return errorx.Wrap(err, "file reader read error")
+			return errorx.Wrap(err, "read file reader failed")
 		}
 		r.Data = data
 	}
 	if err := marshalx.Apply(r.Name).Unmarshal(r.Data, v); err != nil {
-		return errorx.Wrap(err, "file reader unmarshal error")
+		return errorx.Wrap(err, "unmarshal file reader failed")
 	}
 	return nil
 }
@@ -62,7 +62,7 @@ func (r *FileReader) Read(v any) error {
 // Write 写入配置文件
 func (r *FileReader) Write(v any) error {
 	if err := marshalx.Apply(r.Name).Write(r.GetPath(), v); err != nil {
-		return errorx.Wrap(err, "file reader write error")
+		return errorx.Wrap(err, "write file reader failed")
 	}
 	return nil
 }

@@ -47,7 +47,7 @@ func (v *JwtValidator) Execute() error {
 		if v.Cache != nil && v.Cache.Valid() {
 			client, err := cachex.NewClient(v.Cache)
 			if err != nil {
-				return errorx.Wrap(err, "cache client init failed")
+				return errorx.Wrap(err, "create cache client failed")
 			}
 			authCache = client
 		}
@@ -60,7 +60,7 @@ func (v *JwtValidator) Encrypt(user AuthUser) (string, error) {
 	if jwtUser, ok := user.(*JwtUser); ok {
 		ciphertext, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtUser).SignedString([]byte(v.Secret))
 		if err != nil {
-			return "", errorx.Wrap(err, "jwt encrypt token error")
+			return "", errorx.Wrap(err, "jwt encrypt token failed")
 		}
 		return ciphertext, nil
 	}
@@ -73,7 +73,7 @@ func (v *JwtValidator) Decrypt(ciphertext string) (AuthUser, error) {
 	if jt, err := jwt.ParseWithClaims(ciphertext, user, func(*jwt.Token) (interface{}, error) {
 		return []byte(v.Secret), nil
 	}); err != nil || !jt.Valid {
-		return nil, errorx.Wrap(err, "jwt decrypt error")
+		return nil, errorx.Wrap(err, "jwt decrypt token failed")
 	}
 	return user, nil
 }
@@ -119,9 +119,9 @@ func (v *JwtValidator) validate(ctx *gin.Context, method AuthMethod) error {
 	if user := GetSessionUser(ctx); user == nil {
 		// 获取鉴权字符串
 		if authString, err := GetAuthString(ctx, method); err != nil {
-			return errorx.Wrap(err, "get auth string error")
+			return errorx.Wrap(err, "get auth string failed")
 		} else if user, err = v.Decrypt(authString); err != nil {
-			return errorx.Wrap(err, "decrypt error")
+			return errorx.Wrap(err, "decrypt token failed")
 		} else if !AuthCache().Exist(ctx, user.GetUserId().String()) {
 			return errorx.New("auth user is invalid")
 		}

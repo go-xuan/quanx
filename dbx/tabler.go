@@ -28,19 +28,19 @@ func InitGormTable(db *gorm.DB, tables ...interface{}) error {
 		if migrator.HasTable(table) {
 			if err := migrator.AutoMigrate(table); err != nil {
 				if err.Error() != "insufficient arguments" {
-					return errorx.Wrap(err, "auto migrate table error")
+					return errorx.Wrap(err, "auto migrate table failed")
 				}
 			}
 		} else {
 			if err := migrator.CreateTable(table); err != nil {
-				return errorx.Wrap(err, "create table error")
+				return errorx.Wrap(err, "create table failed")
 			}
 			if err := alterGormTableComment(db, table); err != nil {
-				return errorx.Wrap(err, "alter table comment error")
+				return errorx.Wrap(err, "alter table comment failed")
 			}
 		}
 		if err := initGormTableData(db, table); err != nil {
-			return errorx.Wrap(err, "init table data error")
+			return errorx.Wrap(err, "init table data failed")
 		}
 	}
 	return nil
@@ -56,10 +56,10 @@ func initGormTableData(db *gorm.DB, table interface{}) error {
 	}
 	var count int64
 	if err := db.Model(table).Count(&count).Error; err != nil {
-		return errorx.Wrap(err, "count table data error")
+		return errorx.Wrap(err, "count table data failed")
 	} else if count == 0 {
 		if err = db.Create(data).Error; err != nil {
-			return errorx.Wrap(err, "insert table data error")
+			return errorx.Wrap(err, "insert table data failed")
 		}
 	}
 	return nil
@@ -88,7 +88,7 @@ func alterGormTableComment(db *gorm.DB, table interface{}) error {
 		return errorx.Sprintf("unsupported database type: %s", typ)
 	}
 	if err := db.Exec(sql).Error; err != nil {
-		return errorx.Wrap(err, "alter table comment error")
+		return errorx.Wrap(err, "alter table comment failed")
 	}
 	return nil
 }

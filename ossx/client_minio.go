@@ -24,7 +24,7 @@ func NewMinioClient(config *Config) (*MinioClient, error) {
 		Region: "cn-north-1",
 	})
 	if err != nil {
-		return nil, errorx.Wrap(err, "new minio oss client failed")
+		return nil, errorx.Wrap(err, "create minio oss client failed")
 	}
 	return &MinioClient{config: config, client: client}, nil
 }
@@ -64,11 +64,11 @@ func (c *MinioClient) Close() error {
 
 func (c *MinioClient) CreateBucket(ctx context.Context, bucket string, options ...interface{}) error {
 	if exist, err := c.GetClient().BucketExists(ctx, bucket); err != nil {
-		return errorx.Wrap(err, "check bucket exists error")
+		return errorx.Wrap(err, "check minio bucket exists failed")
 	} else if !exist {
 		opts := convertOptions[minio.MakeBucketOptions](options...)
 		if err = c.GetClient().MakeBucket(ctx, bucket, opts); err != nil {
-			return errorx.Wrap(err, "create bucket error")
+			return errorx.Wrap(err, "create minio bucket failed")
 		}
 	}
 	return nil
@@ -78,9 +78,9 @@ func (c *MinioClient) Upload(ctx context.Context, key string, reader io.Reader, 
 	opts := convertOptions[minio.PutObjectOptions](options...)
 	info, err := c.GetClient().PutObject(ctx, c.config.Bucket, key, reader, -1, opts)
 	if err != nil {
-		return errorx.Wrap(err, "minio put object error")
+		return errorx.Wrap(err, "upload minio object failed")
 	} else if info.Size == 0 {
-		return errorx.New("minio upload info error")
+		return errorx.New("minio upload object size is zero")
 	}
 	return nil
 }
@@ -89,7 +89,7 @@ func (c *MinioClient) Get(ctx context.Context, key string, options ...interface{
 	opts := convertOptions[minio.GetObjectOptions](options...)
 	obj, err := c.GetClient().GetObject(ctx, c.config.Bucket, key, opts)
 	if err != nil {
-		return nil, errorx.Wrap(err, "minio put object error")
+		return nil, errorx.Wrap(err, "get minio object failed")
 	}
 	return obj, nil
 }
@@ -98,9 +98,9 @@ func (c *MinioClient) Exist(ctx context.Context, key string, options ...interfac
 	opts := convertOptions[minio.StatObjectOptions](options...)
 	info, err := c.GetClient().StatObject(ctx, c.config.Bucket, key, opts)
 	if err != nil {
-		return false, errorx.Wrap(err, "minio stat object error")
+		return false, errorx.Wrap(err, "stat minio object failed")
 	} else if info.Err != nil {
-		return false, errorx.Wrap(info.Err, "minio object info error")
+		return false, errorx.Wrap(info.Err, "minio object not exist")
 	}
 	return true, nil
 }
@@ -109,7 +109,7 @@ func (c *MinioClient) Remove(ctx context.Context, key string, options ...interfa
 	opts := convertOptions[minio.RemoveObjectOptions](options...)
 	err := c.GetClient().RemoveObject(ctx, c.config.Bucket, key, opts)
 	if err != nil {
-		return errorx.Wrap(err, "minio stat object error")
+		return errorx.Wrap(err, "remove minio object failed")
 	}
 	return nil
 }
@@ -118,7 +118,7 @@ func (c *MinioClient) GetUrl(ctx context.Context, key string, expires time.Durat
 	params := convertOptions[url.Values](options...)
 	URL, err := c.GetClient().PresignedGetObject(ctx, c.config.Bucket, key, expires, params)
 	if err != nil {
-		return "", errorx.Wrap(err, "aliyun delete object error")
+		return "", errorx.Wrap(err, "get minio object url failed")
 	}
 	return URL.String(), nil
 }
