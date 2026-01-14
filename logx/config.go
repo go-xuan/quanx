@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/osx"
-	"github.com/go-xuan/utilx/stringx"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
@@ -33,38 +32,45 @@ const (
 	logWriterSource = "log"                     // 日志写入源
 )
 
-var config *Config
+var _config *Config // 日志配置
+
+func init() {
+	// 设置默认日志输出
+	log.SetOutput(NewConsoleWriter())
+
+	// 初始化日志配置
+	if _config == nil {
+		_config = new(Config)
+		errorx.Panic(configx.LoadConfigurator(_config))
+	}
+}
 
 // GetConfig 获取日志配置
 func GetConfig() *Config {
-	if config == nil {
-		config = NewConfig()
-	}
-	return config
-}
-
-// NewConfig 创建日志配置
-func NewConfig() *Config {
-	cfg := new(Config)
-	errorx.Panic(configx.LoadConfigurator(cfg))
-	return cfg
-}
-
-func init() {
-	log.SetOutput(NewConsoleWriter()) // 设置默认日志输出
-	config = NewConfig()
+	return _config
 }
 
 // Config 日志配置
 type Config struct {
-	Name       string       `json:"name" yaml:"name" default:"app"`                                 // 日志文件名
-	Level      string       `json:"level" yaml:"level" default:"info"`                              // 默认日志级别
-	Formatter  string       `json:"formatter" yaml:"formatter" default:"json"`                      // 默认日志格式
-	Writer     string       `json:"writer" yaml:"writer" default:"console"`                         // 默认日志输出
-	TimeLayout string       `json:"timeLayout" yaml:"timeLayout" default:"2006-01-02 15:04:05.000"` //
-	Color      bool         `json:"color" yaml:"color" default:"false"`                             // 使用颜色
-	Caller     bool         `json:"caller" yaml:"caller" default:"false"`                           // caller开关
-	Hooks      []HookConfig `json:"hooks" yaml:"hooks"`                                             // 日志钩子
+	Name      string       `json:"name" yaml:"name" default:"app"`            // 日志文件名
+	Level     string       `json:"level" yaml:"level" default:"info"`         // 默认日志级别
+	Formatter string       `json:"formatter" yaml:"formatter" default:"json"` // 默认日志格式
+	Writer    string       `json:"writer" yaml:"writer" default:"console"`    // 默认日志输出
+	Color     bool         `json:"color" yaml:"color" default:"false"`        // 使用颜色
+	Caller    bool         `json:"caller" yaml:"caller" default:"false"`      // caller开关
+	Hooks     []HookConfig `json:"hooks" yaml:"hooks"`                        // 日志钩子
+}
+
+// LogFields 日志字段
+func (c *Config) LogFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	fields["name"] = c.Name
+	fields["level"] = c.Level
+	fields["formatter"] = c.Formatter
+	fields["writer"] = c.Writer
+	fields["color"] = c.Color
+	fields["caller"] = c.Caller
+	return fields
 }
 
 func (c *Config) Valid() bool {
@@ -84,13 +90,16 @@ func (c *Config) Execute() error {
 	formatter := c.GetFormatter()
 	if len(c.Hooks) > 0 {
 		for _, hc := range c.Hooks {
-			log.AddHook(hc.NewHook(c.Name, formatter))
+			hook := hc.NewHook(c.Name, formatter)
+			log.AddHook(hook)
 		}
 	}
 	log.SetFormatter(formatter)        // 设置默认日志格式
 	log.SetOutput(c.GetWriter())       // 设置默认日志输出
 	log.SetLevel(LogrusLevel(c.Level)) // 设置默认日志级别
 	log.SetReportCaller(c.Caller)      // 设置caller开关
+
+	log.WithFields(c.LogFields()).Info("init log success")
 	return nil
 }
 
@@ -98,7 +107,7 @@ func (c *Config) Execute() error {
 func (c *Config) GetFormatter() log.Formatter {
 	return &Formatter{
 		Formatter:  c.Formatter,
-		TimeLayout: stringx.IfZero(c.TimeLayout, TimeFormat),
+		TimeLayout: TimeFormat,
 		Hostname:   osx.Hostname(),
 		Color:      c.Color && c.Writer == WriterConsole,
 	}
