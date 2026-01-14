@@ -18,7 +18,7 @@ func (p Page) IsValid() bool {
 
 // PageTotal 计算分页数量
 func (p Page) PageTotal(total int64) int {
-	if total != 0 && p.PageSize != 0 {
+	if total > 0 && p.PageSize > 0 {
 		if total%int64(p.PageSize) > 0 {
 			return int((total / int64(p.PageSize)) + 1)
 		}
@@ -27,12 +27,17 @@ func (p Page) PageTotal(total int64) int {
 	return 0
 }
 
-// Offset 计算offset
+// Offset 获取offset
 func (p Page) Offset() int {
-	if p.PageNo != 0 && p.PageSize != 0 {
+	if p.PageNo > 0 && p.PageSize > 0 {
 		return (p.PageNo - 1) * p.PageSize
 	}
 	return 0
+}
+
+// Limit 获取limit
+func (p Page) Limit() int {
+	return p.PageSize
 }
 
 // PgPageSql 获取PG分页SQL
