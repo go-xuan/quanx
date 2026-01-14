@@ -65,7 +65,7 @@ type Engine struct {
 	configurators []configx.Configurator   // 配置器
 	tablers       map[string][]interface{} // 初始化表结构
 	servers       []serverx.Server         // http/grpc或者其他服务
-	flags         map[string]bool          // 服务运行标识
+	flags         map[string]bool          // 标识
 }
 
 // AddServer 添加服务
@@ -113,8 +113,14 @@ func (e *Engine) checkRunning() {
 	}
 }
 
+// 打开标识
+func (e *Engine) openFlag(flag string) {
+	e.flags[flag] = true
+}
+
 // 应用初始化，确保必须且仅初始化一次
 func (e *Engine) initOnce(_ context.Context) error {
+	defer e.openFlag(FlagInit)
 	if e.flags[FlagInit] {
 		return nil
 	}
@@ -147,10 +153,7 @@ func (e *Engine) initOnce(_ context.Context) error {
 		if err != nil {
 			return errorx.Wrap(err, "init table failed")
 		}
-		return nil
 	}
-	// 设置初始化标识
-	e.flags[FlagInit] = true
 	return nil
 }
 
@@ -163,7 +166,7 @@ func (e *Engine) startServer(ctx context.Context) {
 
 // 保持服务运行，等待信号量关闭服务
 func (e *Engine) keepRunning(ctx context.Context) {
-	e.flags[FlagRunning] = true
+	e.openFlag(FlagRunning)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
