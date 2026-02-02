@@ -2,7 +2,6 @@ package appx
 
 import (
 	"github.com/go-xuan/quanx/configx"
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/serverx"
 )
 
@@ -25,7 +24,7 @@ func AddConfigurator(configurators ...configx.Configurator) Option {
 
 // AddTable 添加表结构（默认数据源）
 func AddTable(tablers ...interface{}) Option {
-	return AddSourceTable(constx.DefaultSource, tablers...)
+	return AddSourceTable("default", tablers...)
 }
 
 // AddSourceTable 添加表结构（指定数据源）

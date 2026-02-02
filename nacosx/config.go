@@ -13,7 +13,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
-	"github.com/go-xuan/quanx/constx"
 )
 
 const (
@@ -46,7 +45,7 @@ func (c *Config) LogFields() map[string]interface{} {
 
 func (c *Config) Readers() []configx.Reader {
 	return []configx.Reader{
-		configx.NewFileReader(constx.NacosConfigName),
+		configx.NewFileReader("nacos.yaml"),
 	}
 }
 
@@ -88,8 +87,8 @@ func (c *Config) ClientConfig() *constant.ClientConfig {
 		TimeoutMs:           10 * 1000,
 		BeatInterval:        3 * 1000,
 		NotLoadCacheAtStart: true,
-		LogDir:              filepath.Join(constx.DefaultResourceDir, ".nacos/log"),
-		CacheDir:            filepath.Join(constx.DefaultResourceDir, ".nacos/cache"),
+		LogDir:              filepath.Join(".nacos", "log"),
+		CacheDir:            filepath.Join(".nacos", "cache"),
 	}
 }
 

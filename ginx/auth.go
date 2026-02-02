@@ -6,7 +6,6 @@ import (
 	"github.com/go-xuan/utilx/errorx"
 
 	"github.com/go-xuan/quanx/cachex"
-	"github.com/go-xuan/quanx/constx"
 )
 
 // AuthMethod 鉴权方式
@@ -27,7 +26,7 @@ var (
 // AuthValidate 获取鉴权验证器
 func AuthValidate() AuthValidator {
 	if authValidator == nil {
-		authValidator = NewJwtValidator(constx.DefaultSource)
+		authValidator = NewJwtValidator("default")
 	}
 	return authValidator
 }

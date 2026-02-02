@@ -8,34 +8,28 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// NewLogWriter 创建MongoDB日志写入器
-func NewLogWriter[T any](source, collection string) io.Writer {
+// NewWriter 创建MongoDB日志写入器
+func NewWriter(source, coll string) io.Writer {
 	if Initialized() {
-		client := GetClient(source)
-		return &LogWriter[T]{
-			database:   client.GetConfig().Database,
-			collection: collection,
-			client:     client.GetClient(),
+		if db := GetDatabase(source); db != nil {
+			collection := db.Collection(coll)
+			return &Writer{collection: collection}
 		}
 	}
 	return nil
 }
 
-// LogWriter 日志写入
-type LogWriter[T any] struct {
-	database   string
-	collection string
-	client     *mongo.Client
+// Writer 日志写入
+type Writer struct {
+	collection *mongo.Collection
 }
 
-func (w *LogWriter[T]) Write(bytes []byte) (int, error) {
-	// 异步写入
+func (w *Writer) Write(bytes []byte) (int, error) {
 	go func() {
-		var log T
-		if err := json.Unmarshal(bytes, &log); err != nil {
-			return
+		var doc interface{}
+		if err := json.Unmarshal(bytes, &doc); err == nil {
+			_, _ = w.collection.InsertOne(context.Background(), doc)
 		}
-		_, _ = w.client.Database(w.database).Collection(w.collection).InsertOne(context.Background(), log)
 	}()
 	return 0, nil
 }

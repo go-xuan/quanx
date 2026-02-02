@@ -1,31 +1,26 @@
 package logx
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
 	"gopkg.in/natefinch/lumberjack.v2"
-
-	"github.com/go-xuan/quanx/elasticx"
-	"github.com/go-xuan/quanx/mongox"
 )
 
 // NewWriter 创建日志写入器
-func NewWriter(writer string, name string, level ...string) io.Writer {
+func NewWriter(writer string, name string, level string) io.Writer {
 	switch writer {
 	case WriterConsole:
 		return NewConsoleWriter()
 	case WriterFile:
-		if len(level) > 0 && level[0] != "" {
-			name = name + "_" + level[0]
+		if level != "" {
+			name = fmt.Sprintf("%s.%s.log", name, level)
+		} else {
+			name = fmt.Sprintf("%s.log", name)
 		}
-		name = filepath.Join("log", name+".log")
-		return NewFileWriter(name)
-	case WriterMongo:
-		return mongox.NewLogWriter[Record](logWriterSource, name)
-	case WriterElasticSearch:
-		return elasticx.NewLogWriter[Record](logWriterSource, name)
+		return NewFileWriter(filepath.Join("log", name))
 	}
 	return nil
 }

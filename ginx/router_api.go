@@ -8,7 +8,6 @@ import (
 	"github.com/go-xuan/utilx/idx"
 	"gorm.io/gorm"
 
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/dbx"
 	"github.com/go-xuan/quanx/modelx"
 )
@@ -120,7 +119,7 @@ func (m *Model[T]) Import(ctx *gin.Context) {
 		ParamError(ctx, err)
 		return
 	}
-	path := filepath.Join(constx.DefaultResourceDir, file.File.Filename)
+	path := filepath.Join("import", file.File.Filename)
 	if err := ctx.SaveUploadedFile(file.File, path); err != nil {
 		ParamError(ctx, err)
 		return
@@ -144,7 +143,7 @@ func (m *Model[T]) Export(ctx *gin.Context) {
 		return
 	}
 
-	filePath := filepath.Join(constx.DefaultResourceDir, idx.Timestamp()+".xlsx")
+	filePath := filepath.Join("export", idx.Timestamp()+".xlsx")
 	if len(result) > 0 {
 		if err := excelx.WriteAny(filePath, result); err != nil {
 			CustomResponse(ctx, NewResponse(ExportFailedCode, err.Error()))

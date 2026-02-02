@@ -63,8 +63,13 @@ func (f *Formatter) FormatJson(entry *log.Entry) ([]byte, error) {
 // FormatText 日志文本格式化
 func (f *Formatter) FormatText(entry *log.Entry) ([]byte, error) {
 	buffer := bytes.Buffer{}
-	time, level := entry.Time.Format(f.TimeLayout), LevelString(entry.Level, 5)
-	buffer.WriteString(fmt.Sprintf("[%-23s][%s][%-5s]", time, f.Hostname, level))
+	buffer.WriteString("[")
+	buffer.WriteString(entry.Time.Format(f.TimeLayout))
+	buffer.WriteString("][")
+	buffer.WriteString(f.Hostname)
+	buffer.WriteString("][")
+	buffer.WriteString(LevelString(entry.Level, 5))
+	buffer.WriteString("]")
 	buffer.WriteString(entry.Message)
 	for key, value := range entry.Data {
 		buffer.WriteString(fmt.Sprintf(", %s:%+v", key, value))

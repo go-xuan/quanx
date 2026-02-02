@@ -9,7 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-xuan/quanx/configx"
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/quanx/nacosx"
 )
 
@@ -128,8 +127,8 @@ func (c *Config) Valid() bool {
 
 func (c *Config) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader(constx.DatabaseConfigName),
-		configx.NewFileReader(constx.DatabaseConfigName),
+		nacosx.NewReader("database.yaml"),
+		configx.NewFileReader("database.yaml"),
 	}
 }
 
@@ -155,8 +154,8 @@ func (s Configs) Valid() bool {
 
 func (s Configs) Readers() []configx.Reader {
 	return []configx.Reader{
-		nacosx.NewReader(constx.DatabaseConfigName),
-		configx.NewFileReader(constx.DatabaseConfigName),
+		nacosx.NewReader("database.yaml"),
+		configx.NewFileReader("database.yaml"),
 	}
 }
 

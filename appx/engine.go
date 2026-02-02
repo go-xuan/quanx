@@ -68,6 +68,15 @@ type Engine struct {
 	flags         map[string]bool          // 标识
 }
 
+// RUN 运行应用
+func (e *Engine) RUN(ctx context.Context) {
+	e.checkRunning()   // 检查服务是否已运行
+	e.MustInit(ctx)    // 初始化应用
+	e.startServer(ctx) // 启动服务
+	e.keepRunning(ctx) // 保持服务运行
+	e.Shutdown(ctx)    // 关闭服务
+}
+
 // AddServer 添加服务
 func (e *Engine) AddServer(servers ...serverx.Server) {
 	e.servers = append(e.servers, servers...)
@@ -95,15 +104,6 @@ func (e *Engine) Shutdown(ctx context.Context) {
 	serverx.Shutdown(ctx, e.servers...)
 	e.reset()
 	log.WithContext(ctx).Info("shutdown complete")
-}
-
-// RUN 运行应用
-func (e *Engine) RUN(ctx context.Context) {
-	e.checkRunning()   // 检查服务是否已运行
-	e.MustInit(ctx)    // 初始化应用
-	e.startServer(ctx) // 启动服务
-	e.keepRunning(ctx) // 保持服务运行
-	e.Shutdown(ctx)    // 关闭服务
 }
 
 // 检查服务运行状态

@@ -5,7 +5,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/go-xuan/quanx/constx"
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
 )
@@ -52,6 +51,7 @@ type Client interface {
 	CreateBucket(ctx context.Context, name string, options ...interface{}) error                           // 创建bucket
 	Upload(ctx context.Context, key string, reader io.Reader, options ...interface{}) error                // 上传文件
 	Get(ctx context.Context, key string, options ...interface{}) (io.ReadCloser, error)                    // 获取文件
+	Download(ctx context.Context, key string, options ...interface{}) error                                // 获取文件
 	Exist(ctx context.Context, key string, options ...interface{}) (bool, error)                           // 判断文件是否存在
 	Remove(ctx context.Context, key string, options ...interface{}) error                                  // 删除文件
 	GetUrl(ctx context.Context, key string, expires time.Duration, options ...interface{}) (string, error) // 获取文件url
@@ -77,7 +77,7 @@ func AddClient(source string, client Client) {
 	}
 	if !Initialized() {
 		pool = typex.NewStringEnum[Client]()
-		pool.Add(constx.DefaultSource, client)
+		pool.Add("default", client)
 	}
 	pool.Add(source, client)
 }
@@ -89,7 +89,7 @@ func GetClient(source ...string) Client {
 			return client
 		}
 	}
-	return Pool().Get(constx.DefaultSource)
+	return Pool().Get("default")
 }
 
 // GetConfig 获取配置

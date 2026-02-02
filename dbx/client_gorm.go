@@ -9,7 +9,6 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
 )
 
 // GormClientBuilder gorm客户端构建器
@@ -87,9 +86,6 @@ func NewGormDB(config *Config) (*gorm.DB, error) {
 	}
 	db, err := gorm.Open(dialector, &gorm.Config{
 		Logger: NewGormLogger(config.LogLevel, time.Duration(config.SlowThreshold)*time.Millisecond),
-		NamingStrategy: schema.NamingStrategy{
-			SingularTable: true,
-		},
 	})
 	if err != nil {
 		return nil, errorx.Wrap(err, "open gorm db failed")

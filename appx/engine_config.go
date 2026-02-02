@@ -99,7 +99,8 @@ func (cfg *Config) initServer(server *serverx.Config) error {
 
 		// 如果nacos配置启用了服务发现，则自动注册当前服务
 		if cfg.Nacos != nil && cfg.Nacos.EnableNaming() {
-			serverx.Init(&nacosx.ServerCenter{})
+
+			serverx.Init(serverx.NewNacosCenter(cfg.Nacos.Group, nacosx.GetClient().GetNamingClient()))
 			if err := serverx.Register(cfg.Server); err != nil {
 				return errorx.Wrap(err, "register nacos server instance failed")
 			}
