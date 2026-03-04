@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 // NewWriter 创建MongoDB日志写入器

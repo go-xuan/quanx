@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 
 	"github.com/go-xuan/quanx/configx"
 	"github.com/go-xuan/quanx/nacosx"

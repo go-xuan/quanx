@@ -3,7 +3,7 @@ package mongox
 import (
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 // 客户端池

@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
 // NewClient 创建客户端

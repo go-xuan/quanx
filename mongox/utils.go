@@ -4,14 +4,8 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/event"
+	"go.mongodb.org/mongo-driver/v2/event"
 )
-
-func ObjectID(id string) primitive.ObjectID {
-	objectID, _ := primitive.ObjectIDFromHex(id)
-	return objectID
-}
 
 // DebugCommandMonitor debug监听器
 func DebugCommandMonitor() *event.CommandMonitor {
