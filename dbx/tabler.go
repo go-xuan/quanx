@@ -10,7 +10,7 @@ import (
 
 // InitTabler 初始化表数据接口
 type InitTabler interface {
-	InitData() interface{}
+	InitData() any
 }
 
 // CommentTabler 添加表备注接口
@@ -19,7 +19,7 @@ type CommentTabler interface {
 }
 
 // InitGormTable 初始化gorm表
-func InitGormTable(db *gorm.DB, tables ...interface{}) error {
+func InitGormTable(db *gorm.DB, tables ...any) error {
 	if db == nil || len(tables) == 0 {
 		return nil
 	}
@@ -47,8 +47,8 @@ func InitGormTable(db *gorm.DB, tables ...interface{}) error {
 }
 
 // 初始化表数据
-func initGormTableData(db *gorm.DB, table interface{}) error {
-	var data interface{}
+func initGormTableData(db *gorm.DB, table any) error {
+	var data any
 	if tabler, ok := table.(InitTabler); !ok {
 		return nil
 	} else if data = tabler.InitData(); data == nil {
@@ -66,7 +66,7 @@ func initGormTableData(db *gorm.DB, table interface{}) error {
 }
 
 // 添加表备注
-func alterGormTableComment(db *gorm.DB, table interface{}) error {
+func alterGormTableComment(db *gorm.DB, table any) error {
 	var name, comment string
 	if tabler, ok := table.(schema.Tabler); ok {
 		if name = tabler.TableName(); name == "" {

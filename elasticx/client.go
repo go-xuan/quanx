@@ -50,7 +50,7 @@ func (c *Client) GetConfig() *Config {
 	return c.config
 }
 
-func (c *Client) GetInstance() interface{} {
+func (c *Client) GetInstance() any {
 	return c.client
 }
 

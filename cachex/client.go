@@ -4,13 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/go-xuan/quanx/configx"
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
 	"github.com/redis/go-redis/v9"
 )
 
 var (
-	pool     *typex.Enum[string, Client]        // 客户端池
+	pool     = configx.NewPool[Client]()        // 客户端池
 	builders *typex.Enum[string, ClientBuilder] // 客户端构造函数池
 )
 
@@ -45,7 +46,7 @@ type ClientBuilder func(*Config) (Client, error)
 
 // Client 缓存客户端接口
 type Client interface {
-	GetInstance() interface{} // 获取实例
+	GetInstance() any                                                             // 获取实例
 	GetConfig() *Config       // 获取配置
 	Close() error             // 关闭客户端,
 
@@ -59,7 +60,7 @@ type Client interface {
 }
 
 // Pool 获取客户端池
-func Pool() *typex.Enum[string, Client] {
+func Pool() *configx.Pool[Client] {
 	if !Initialized() {
 		panic("client pool not initialized")
 	}
@@ -68,29 +69,20 @@ func Pool() *typex.Enum[string, Client] {
 
 // Initialized 是否初始化
 func Initialized() bool {
-	return pool != nil && pool.Len() > 0
+	return pool.Initialized()
 }
 
 // AddClient 添加客户端
 func AddClient(source string, client Client) {
-	if client == nil {
+	if any(client) == nil {
 		return
-	}
-	if !Initialized() {
-		pool = typex.NewStringEnum[Client]()
-		pool.Add("default", client)
 	}
 	pool.Add(source, client)
 }
 
 // GetClient 获取客户端
 func GetClient(source ...string) Client {
-	if len(source) > 0 && source[0] != "" {
-		if client := Pool().Get(source[0]); client != nil {
-			return client
-		}
-	}
-	return Pool().Get("default")
+	return pool.Get(source...)
 }
 
 // GetConfig 获取配置
@@ -114,13 +106,7 @@ func GetRedisUniversalClient(source ...string) redis.UniversalClient {
 
 // Close 关闭所有数据库客户端
 func Close() error {
-	var err error
-	Pool().Range(func(source string, client Client) bool {
-		if err = client.Close(); err != nil {
-			err = errorx.Wrap(err, "close database client failed")
-			return true
-		}
-		return false
+	return pool.Close(func(client Client) error {
+		return client.Close()
 	})
-	return err
 }

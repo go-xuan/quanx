@@ -22,7 +22,7 @@ func NewClient(config *Config) (*Client, error) {
 func NewMongoClient(config *Config) (*mongo.Client, error) {
 	ctx := context.TODO()
 	// 连接mongo
-	client, err := mongo.Connect(ctx, config.ClientOptions())
+	client, err := mongo.Connect(config.ClientOptions())
 	if err != nil {
 		return nil, errorx.Wrap(err, "connect mongo failed")
 	}
@@ -43,7 +43,7 @@ func (c *Client) GetClient() *mongo.Client {
 	return c.client
 }
 
-func (c *Client) GetInstance() interface{} {
+func (c *Client) GetInstance() any {
 	return c.client
 }
 

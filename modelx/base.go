@@ -9,7 +9,7 @@ type Base interface {
 	GetUpdateTime() time.Time
 }
 
-var BaseModel struct {
+type BaseModel struct {
 	CreateUserId int64     `json:"createUserId" gorm:"type:bigint; not null; comment:创建人ID;"`
 	CreateTime   time.Time `json:"createTime" gorm:"type:timestamp(0); default:now(); comment:创建时间;"`
 	UpdateUserId int64     `json:"updateUserId" gorm:"type:bigint; not null; comment:更新人ID;"`

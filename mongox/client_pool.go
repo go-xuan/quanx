@@ -1,25 +1,21 @@
 package mongox
 
 import (
-	"github.com/go-xuan/typex"
-	"github.com/go-xuan/utilx/errorx"
+	"github.com/go-xuan/quanx/configx"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 // 客户端池
-var pool *typex.Enum[string, *Client]
+var pool = configx.NewPool[*Client]()
 
 // Pool 获取客户端池
-func Pool() *typex.Enum[string, *Client] {
-	if !Initialized() {
-		panic("client pool not initialized")
-	}
+func Pool() *configx.Pool[*Client] {
 	return pool
 }
 
 // Initialized 是否初始化
 func Initialized() bool {
-	return pool != nil && pool.Len() > 0
+	return pool.Initialized()
 }
 
 // AddClient 添加客户端
@@ -27,21 +23,12 @@ func AddClient(source string, client *Client) {
 	if client == nil {
 		return
 	}
-	if !Initialized() {
-		pool = typex.NewStringEnum[*Client]()
-		pool.Add("default", client)
-	}
 	pool.Add(source, client)
 }
 
 // GetClient 获取客户端
 func GetClient(source ...string) *Client {
-	if len(source) > 0 && source[0] != "" {
-		if client := Pool().Get(source[0]); client != nil {
-			return client
-		}
-	}
-	return Pool().Get("default")
+	return pool.Get(source...)
 }
 
 // GetConfig 获取配置
@@ -65,13 +52,7 @@ func GetDatabase(source ...string) *mongo.Database {
 
 // Close 关闭所有数据库客户端
 func Close() error {
-	var err error
-	Pool().Range(func(_ string, client *Client) bool {
-		if err = client.Close(); err != nil {
-			err = errorx.Wrap(err, "close mongo client failed")
-			return true
-		}
-		return false
+	return pool.Close(func(client *Client) error {
+		return client.Close()
 	})
-	return err
 }

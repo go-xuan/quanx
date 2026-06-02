@@ -1,6 +1,8 @@
 package ginx
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
@@ -18,9 +20,14 @@ const (
 	tokenAuthKey             = "Authorization" // token获取键
 )
 
+// AuthCache auth缓存接口
+type AuthCache interface {
+	Exist(ctx context.Context, key string) bool
+}
+
 var (
 	authValidator AuthValidator // 鉴权验证器
-	authCache     cachex.Client // auth缓存客户端
+	authCache     AuthCache     // auth缓存客户端
 )
 
 // AuthValidate 获取鉴权验证器
@@ -31,8 +38,8 @@ func AuthValidate() AuthValidator {
 	return authValidator
 }
 
-// AuthCache 获取auth缓存
-func AuthCache() cachex.Client {
+// GetAuthCache 获取auth缓存
+func GetAuthCache() AuthCache {
 	if authCache == nil {
 		authCache = cachex.GetClient("auth")
 	}
@@ -43,6 +50,13 @@ func AuthCache() cachex.Client {
 func SetAuthValidator(validator AuthValidator) {
 	if validator != nil {
 		authValidator = validator
+	}
+}
+
+// SetAuthCache 设置auth缓存
+func SetAuthCache(cache AuthCache) {
+	if cache != nil {
+		authCache = cache
 	}
 }
 

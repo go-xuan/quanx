@@ -45,11 +45,11 @@ func LogFormatter(ctx *gin.Context) {
 
 // AdvanceBindJSON 提前绑定JSON数据，一般用于在前置中间件中绑定JSON数据，后续中间件可以使用绑定的数据
 func AdvanceBindJSON(ctx *gin.Context, data interface{}) error {
-	// 提前拿出请求体
+	// 提前拿出请求体并恢复，确保后续可重复读取
 	body, _ := io.ReadAll(ctx.Request.Body)
+	SetCtxBody(ctx, body)
 	defer SetCtxBody(ctx, body)
 
-	SetCtxBody(ctx, body)
 	// 绑定数据
 	if err := ctx.ShouldBindJSON(data); err != nil {
 		return err

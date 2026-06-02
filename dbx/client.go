@@ -1,14 +1,15 @@
 package dbx
 
 import (
+	"github.com/go-xuan/quanx/configx"
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
 	"gorm.io/gorm"
 )
 
 var (
-	pool     *typex.Enum[string, Client]        // 客户端池
-	builders *typex.Enum[string, ClientBuilder] // 客户端构造函数池
+	pool     = configx.NewPool[Client]()          // 客户端池
+	builders *typex.Enum[string, ClientBuilder]   // 客户端构造函数池
 )
 
 func init() {
@@ -41,16 +42,16 @@ type ClientBuilder func(*Config) (Client, error)
 
 // Client 数据库客户端接口
 type Client interface {
-	GetInstance() interface{} // 获取实例
+	GetInstance() any // 获取实例
 	GetConfig() *Config       // 获取配置
 	Close() error             // 关闭客户端, 释放资源
 
-	Raw(sql string, dest interface{}) error // 查询SQL, 将结果存储到dest中
+	Raw(sql string, dest any) error // 查询SQL, 将结果存储到dest中
 	Exec(sql string) error                  // 执行SQL, 不返回结果
 }
 
 // Pool 获取客户端池
-func Pool() *typex.Enum[string, Client] {
+func Pool() *configx.Pool[Client] {
 	if !Initialized() {
 		panic("client pool not initialized")
 	}
@@ -59,7 +60,7 @@ func Pool() *typex.Enum[string, Client] {
 
 // Initialized 是否初始化
 func Initialized() bool {
-	return pool != nil && pool.Len() > 0
+	return pool.Initialized()
 }
 
 // AddClient 添加客户端
@@ -67,21 +68,12 @@ func AddClient(source string, client Client) {
 	if client == nil {
 		return
 	}
-	if !Initialized() {
-		pool = typex.NewStringEnum[Client]()
-		pool.Add("default", client)
-	}
 	pool.Add(source, client)
 }
 
 // GetClient 获取客户端
 func GetClient(source ...string) Client {
-	if len(source) > 0 && source[0] != "" {
-		if client := Pool().Get(source[0]); client != nil {
-			return client
-		}
-	}
-	return Pool().Get("default")
+	return pool.Get(source...)
 }
 
 // GetConfig 获取配置
@@ -105,13 +97,7 @@ func GetGormDB(source ...string) *gorm.DB {
 
 // Close 关闭所有数据库客户端
 func Close() error {
-	var err error
-	Pool().Range(func(source string, client Client) bool {
-		if err = client.Close(); err != nil {
-			err = errorx.Wrap(err, "close database client failed")
-			return true
-		}
-		return false
+	return pool.Close(func(client Client) error {
+		return client.Close()
 	})
-	return err
 }

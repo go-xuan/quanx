@@ -31,7 +31,7 @@ func NewMinioClient(config *Config) (*MinioClient, error) {
 }
 
 // 可选项转换
-func convertOptions[T any](options ...interface{}) T {
+func convertOptions[T any](options ...any) T {
 	if len(options) > 0 && options[0] != nil {
 		if opts, ok := options[0].(T); ok {
 			return opts
@@ -50,7 +50,7 @@ func (c *MinioClient) GetClient() *minio.Client {
 	return c.client
 }
 
-func (c *MinioClient) GetInstance() interface{} {
+func (c *MinioClient) GetInstance() any {
 	return c.client
 }
 
@@ -63,7 +63,7 @@ func (c *MinioClient) Close() error {
 	return nil
 }
 
-func (c *MinioClient) CreateBucket(ctx context.Context, bucket string, options ...interface{}) error {
+func (c *MinioClient) CreateBucket(ctx context.Context, bucket string, options ...any) error {
 	if exist, err := c.GetClient().BucketExists(ctx, bucket); err != nil {
 		return errorx.Wrap(err, "check minio bucket exists failed")
 	} else if !exist {
@@ -75,7 +75,7 @@ func (c *MinioClient) CreateBucket(ctx context.Context, bucket string, options .
 	return nil
 }
 
-func (c *MinioClient) Upload(ctx context.Context, key string, reader io.Reader, options ...interface{}) error {
+func (c *MinioClient) Upload(ctx context.Context, key string, reader io.Reader, options ...any) error {
 	opts := convertOptions[minio.PutObjectOptions](options...)
 	info, err := c.GetClient().PutObject(ctx, c.config.Bucket, key, reader, -1, opts)
 	if err != nil {
@@ -86,7 +86,7 @@ func (c *MinioClient) Upload(ctx context.Context, key string, reader io.Reader, 
 	return nil
 }
 
-func (c *MinioClient) Get(ctx context.Context, key string, options ...interface{}) (io.ReadCloser, error) {
+func (c *MinioClient) Get(ctx context.Context, key string, options ...any) (io.ReadCloser, error) {
 	opts := convertOptions[minio.GetObjectOptions](options...)
 	obj, err := c.GetClient().GetObject(ctx, c.config.Bucket, key, opts)
 	if err != nil {
@@ -95,7 +95,7 @@ func (c *MinioClient) Get(ctx context.Context, key string, options ...interface{
 	return obj, nil
 }
 
-func (c *MinioClient) Download(ctx context.Context, key string, options ...interface{}) error {
+func (c *MinioClient) Download(ctx context.Context, key string, options ...any) error {
 	// 获取对象
 	opts := convertOptions[minio.GetObjectOptions](options...)
 	obj, err := c.GetClient().GetObject(ctx, c.config.Bucket, key, opts)
@@ -114,7 +114,7 @@ func (c *MinioClient) Download(ctx context.Context, key string, options ...inter
 	return nil
 }
 
-func (c *MinioClient) Exist(ctx context.Context, key string, options ...interface{}) (bool, error) {
+func (c *MinioClient) Exist(ctx context.Context, key string, options ...any) (bool, error) {
 	opts := convertOptions[minio.StatObjectOptions](options...)
 	info, err := c.GetClient().StatObject(ctx, c.config.Bucket, key, opts)
 	if err != nil {
@@ -125,7 +125,7 @@ func (c *MinioClient) Exist(ctx context.Context, key string, options ...interfac
 	return true, nil
 }
 
-func (c *MinioClient) Remove(ctx context.Context, key string, options ...interface{}) error {
+func (c *MinioClient) Remove(ctx context.Context, key string, options ...any) error {
 	opts := convertOptions[minio.RemoveObjectOptions](options...)
 	err := c.GetClient().RemoveObject(ctx, c.config.Bucket, key, opts)
 	if err != nil {
@@ -134,7 +134,7 @@ func (c *MinioClient) Remove(ctx context.Context, key string, options ...interfa
 	return nil
 }
 
-func (c *MinioClient) GetUrl(ctx context.Context, key string, expires time.Duration, options ...interface{}) (string, error) {
+func (c *MinioClient) GetUrl(ctx context.Context, key string, expires time.Duration, options ...any) (string, error) {
 	params := convertOptions[url.Values](options...)
 	URL, err := c.GetClient().PresignedGetObject(ctx, c.config.Bucket, key, expires, params)
 	if err != nil {

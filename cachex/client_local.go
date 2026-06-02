@@ -39,7 +39,7 @@ func (c *LocalClient) GetConfig() *Config {
 	return c.config
 }
 
-func (c *LocalClient) GetInstance() interface{} {
+func (c *LocalClient) GetInstance() any {
 	return c.cache
 }
 

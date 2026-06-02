@@ -82,7 +82,7 @@ func (c *RedisClient) GetConfig() *Config {
 	return c.config
 }
 
-func (c *RedisClient) GetInstance() interface{} {
+func (c *RedisClient) GetInstance() any {
 	return c.client
 }
 

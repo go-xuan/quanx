@@ -14,51 +14,62 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// NewJwtValidator 创建JWT验证器
-func NewJwtValidator(secret string) *JwtValidator {
-	return &JwtValidator{
-		Secret: secret,
-		White:  make(map[string]string),
-	}
+// JwtConfig JWT鉴权配置，实现 configx.Configurator 接口用于自动加载
+type JwtConfig struct {
+	Secret string         `json:"secret" yaml:"secret"` // JWT密钥
+	White  map[string]string `json:"white" yaml:"white"` // 鉴权白名单，map[URL路径]HTTP方法，*表示支持所有方法
+	Cache  *cachex.Config `json:"cache" yaml:"cache"`   // 缓存客户端配置
 }
 
-// JwtValidator JWT验证器
-type JwtValidator struct {
-	Secret string            `json:"secret" yaml:"secret"` // JWT密钥
-	White  map[string]string `json:"white" yaml:"white"`   // 鉴权白名单，map[URL路径]HTTP方法，*表示支持所有方法
-	Cache  *cachex.Config    `json:"cache" yaml:"cache"`   // 缓存客户端
+func (c *JwtConfig) Valid() bool {
+	return c.Secret != ""
 }
 
-func (v *JwtValidator) Valid() bool {
-	return v.Secret != ""
-}
-
-func (v *JwtValidator) Readers() []configx.Reader {
+func (c *JwtConfig) Readers() []configx.Reader {
 	return []configx.Reader{
 		nacosx.NewReader("auth.yaml"),
 		configx.NewFileReader("auth.yaml"),
 	}
 }
 
-func (v *JwtValidator) Execute() error {
-	if v.Valid() {
-		SetAuthValidator(v)
-		// 设置缓存客户端
-		if v.Cache != nil && v.Cache.Valid() {
-			client, err := cachex.NewClient(v.Cache)
-			if err != nil {
-				return errorx.Wrap(err, "create cache client failed")
-			}
-			authCache = client
+func (c *JwtConfig) Execute() error {
+	if !c.Valid() {
+		return nil
+	}
+	validator := NewJwtValidator(c.Secret)
+	for url, method := range c.White {
+		validator.AddWhite(url, method)
+	}
+	SetAuthValidator(validator)
+	// 设置缓存客户端
+	if c.Cache != nil && c.Cache.Valid() {
+		client, err := cachex.NewClient(c.Cache)
+		if err != nil {
+			return errorx.Wrap(err, "create cache client failed")
 		}
+		SetAuthCache(client)
 	}
 	return nil
+}
+
+// NewJwtValidator 创建JWT验证器
+func NewJwtValidator(secret string) *JwtValidator {
+	return &JwtValidator{
+		secret: secret,
+		white:  make(map[string]string),
+	}
+}
+
+// JwtValidator JWT验证器
+type JwtValidator struct {
+	secret string            // JWT密钥
+	white  map[string]string // 鉴权白名单
 }
 
 // Encrypt 加密用户信息
 func (v *JwtValidator) Encrypt(user AuthUser) (string, error) {
 	if jwtUser, ok := user.(*JwtUser); ok {
-		ciphertext, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtUser).SignedString([]byte(v.Secret))
+		ciphertext, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtUser).SignedString([]byte(v.secret))
 		if err != nil {
 			return "", errorx.Wrap(err, "jwt encrypt token failed")
 		}
@@ -71,7 +82,7 @@ func (v *JwtValidator) Encrypt(user AuthUser) (string, error) {
 func (v *JwtValidator) Decrypt(ciphertext string) (AuthUser, error) {
 	var user = &JwtUser{}
 	if jt, err := jwt.ParseWithClaims(ciphertext, user, func(*jwt.Token) (interface{}, error) {
-		return []byte(v.Secret), nil
+		return []byte(v.secret), nil
 	}); err != nil || !jt.Valid {
 		return nil, errorx.Wrap(err, "jwt decrypt token failed")
 	}
@@ -80,16 +91,16 @@ func (v *JwtValidator) Decrypt(ciphertext string) (AuthUser, error) {
 
 // AddWhite 添加白名单
 func (v *JwtValidator) AddWhite(url string, method string) {
-	v.White[url] = strings.ToUpper(method)
+	v.white[url] = strings.ToUpper(method)
 }
 
 // MatchWhite 匹配白名单
 func (v *JwtValidator) MatchWhite(ctx *gin.Context) bool {
-	if len(v.White) == 0 {
+	if len(v.white) == 0 {
 		return false
 	}
 	method, url := ctx.Request.Method, ctx.Request.URL.Path
-	for u, m := range v.White {
+	for u, m := range v.white {
 		if stringx.MatchUrl(url, u) && matchMethod(method, strings.ToUpper(m)) {
 			return true
 		}
@@ -122,7 +133,7 @@ func (v *JwtValidator) validate(ctx *gin.Context, method AuthMethod) error {
 			return errorx.Wrap(err, "get auth string failed")
 		} else if user, err = v.Decrypt(authString); err != nil {
 			return errorx.Wrap(err, "decrypt token failed")
-		} else if !AuthCache().Exist(ctx, user.GetUserId().String()) {
+		} else if !GetAuthCache().Exist(ctx, user.GetUserId().String()) {
 			return errorx.New("auth user is invalid")
 		}
 		SetSessionUser(ctx, user)

@@ -35,7 +35,7 @@ func (c *GormClient) GetClient() *gorm.DB {
 	return c.db
 }
 
-func (c *GormClient) GetInstance() interface{} {
+func (c *GormClient) GetInstance() any {
 	return c.db
 }
 

@@ -1,0 +1,9 @@
+server:
+    name: quanx-test
+    host: localhost
+    port:
+        http: 8080
+log: null
+nacos: null
+database: null
+cache: null

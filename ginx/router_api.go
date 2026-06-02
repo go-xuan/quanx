@@ -12,6 +12,18 @@ import (
 	"github.com/go-xuan/quanx/modelx"
 )
 
+// DBGetter 数据库获取接口，用于解耦 ginx 与 dbx
+type DBGetter interface {
+	GetDB(source string) *gorm.DB
+}
+
+var dbGetter DBGetter
+
+// SetDBGetter 设置数据库获取器
+func SetDBGetter(getter DBGetter) {
+	dbGetter = getter
+}
+
 // BindCrudRouter 新增crud路由
 func BindCrudRouter[T any](router *gin.RouterGroup, source string) {
 	api := &Model[T]{Source: source}
@@ -38,30 +50,49 @@ type Model[T any] struct {
 // GetDB 获取数据库连接
 func (m *Model[T]) GetDB() *gorm.DB {
 	if m.DB == nil {
-		m.DB = dbx.GetGormDB(m.Source)
+		if dbGetter != nil {
+			m.DB = dbGetter.GetDB(m.Source)
+		} else {
+			m.DB = dbx.GetGormDB(m.Source)
+		}
 	}
 	return m.DB
 }
 
-// List 列表
+// List 列表（支持分页）
 func (m *Model[T]) List(ctx *gin.Context) {
-	var result []*T
-	if err := m.GetDB().Find(&result).Error; err != nil {
+	var query modelx.Query
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ParamError(ctx, err)
+		return
+	}
+
+	db := m.GetDB().Model(new(T))
+
+	// 总数查询
+	var total int64
+	if err := db.Count(&total).Error; err != nil {
 		Error(ctx, err)
 		return
 	}
-	Success(ctx, result)
+
+	// 分页查询
+	var result []*T
+	if err := dbx.QueryPage(db, &query).Find(&result).Error; err != nil {
+		Error(ctx, err)
+		return
+	}
+	Success(ctx, query.BuildResp(result, total))
 }
 
 // Create 新增
 func (m *Model[T]) Create(ctx *gin.Context) {
-	var err error
 	var create T
-	if err = ctx.ShouldBindJSON(&create); err != nil {
+	if err := ctx.ShouldBindJSON(&create); err != nil {
 		ParamError(ctx, err)
 		return
 	}
-	if err = m.GetDB().Create(&create).Error; err != nil {
+	if err := m.GetDB().Create(&create).Error; err != nil {
 		Error(ctx, err)
 		return
 	}
@@ -70,12 +101,17 @@ func (m *Model[T]) Create(ctx *gin.Context) {
 
 // Update 修改
 func (m *Model[T]) Update(ctx *gin.Context) {
+	var id modelx.Id[string]
+	if err := ctx.ShouldBindQuery(&id); err != nil {
+		ParamError(ctx, err)
+		return
+	}
 	var update T
 	if err := ctx.ShouldBindJSON(&update); err != nil {
 		ParamError(ctx, err)
 		return
 	}
-	if err := m.GetDB().Updates(&update).Error; err != nil {
+	if err := m.GetDB().Where("id = ?", id.Id).Updates(&update).Error; err != nil {
 		Error(ctx, err)
 		return
 	}
