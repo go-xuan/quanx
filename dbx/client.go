@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	pool     = configx.NewPool[Client]()          // 客户端池
-	builders *typex.Enum[string, ClientBuilder]   // 客户端构造函数池
+	pool     = configx.NewPool[Client]()        // 客户端池
+	builders *typex.Enum[string, ClientBuilder] // 客户端构造函数池
 )
 
 func init() {
@@ -26,15 +26,15 @@ func RegisterClientBuilder(name string, builder ClientBuilder) {
 
 // NewClient 创建客户端
 func NewClient(config *Config) (Client, error) {
-	if config.Builder == "" {
+	if config.Driver == "" {
 		return GormClientBuilder(config)
 	}
 	if builders != nil {
-		if builder, ok := builders.Exist(config.Builder); ok && builder != nil {
+		if builder, ok := builders.Find(config.Driver); ok && builder != nil {
 			return builder(config)
 		}
 	}
-	return nil, errorx.Sprintf("client builder is not registered: %s", config.Builder)
+	return nil, errorx.Sprintf("client driver is not registered: %s", config.Driver)
 }
 
 // ClientBuilder 客户端构造函数
@@ -42,12 +42,12 @@ type ClientBuilder func(*Config) (Client, error)
 
 // Client 数据库客户端接口
 type Client interface {
-	GetInstance() any // 获取实例
-	GetConfig() *Config       // 获取配置
-	Close() error             // 关闭客户端, 释放资源
+	GetInstance() any   // 获取实例
+	GetConfig() *Config // 获取配置
+	Close() error       // 关闭客户端, 释放资源
 
 	Raw(sql string, dest any) error // 查询SQL, 将结果存储到dest中
-	Exec(sql string) error                  // 执行SQL, 不返回结果
+	Exec(sql string) error          // 执行SQL, 不返回结果
 }
 
 // Pool 获取客户端池

@@ -29,15 +29,15 @@ func RegisterClientBuilder(name string, builder ClientBuilder) {
 
 // NewClient 创建客户端
 func NewClient(config *Config) (Client, error) {
-	if config.Builder == "" {
+	if config.Driver == "" {
 		return MinioClientBuilder(config)
 	}
 	if builders != nil {
-		if builder, ok := builders.Exist(config.Builder); ok && builder != nil {
+		if builder, ok := builders.Find(config.Driver); ok && builder != nil {
 			return builder(config)
 		}
 	}
-	return nil, errorx.Sprintf("client builder is not registered: %s", config.Builder)
+	return nil, errorx.Sprintf("client driver is not registered: %s", config.Driver)
 }
 
 // ClientBuilder 客户端构造函数
@@ -45,9 +45,9 @@ type ClientBuilder func(*Config) (Client, error)
 
 // Client oss客户端
 type Client interface {
-	GetInstance() any // 获取数据库连接
-	GetConfig() *Config       // 获取oss配置
-	Close() error             // 关闭客户端
+	GetInstance() any   // 获取数据库连接
+	GetConfig() *Config // 获取oss配置
+	Close() error       // 关闭客户端
 
 	CreateBucket(ctx context.Context, name string, options ...any) error                           // 创建bucket
 	Upload(ctx context.Context, key string, reader io.Reader, options ...any) error                // 上传文件

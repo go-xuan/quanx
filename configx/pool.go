@@ -1,6 +1,8 @@
 package configx
 
 import (
+	"errors"
+
 	"github.com/go-xuan/typex"
 	"github.com/go-xuan/utilx/errorx"
 )
@@ -56,13 +58,12 @@ func (p *Pool[C]) Len() int {
 
 // Close 遍历关闭所有客户端
 func (p *Pool[C]) Close(closeFn func(C) error) error {
-	var err error
+	var errs []error
 	p.Range(func(source string, client C) bool {
 		if e := closeFn(client); e != nil {
-			err = errorx.Wrap(e, "close client failed")
-			return true
+			errs = append(errs, errorx.Wrap(e, "close client failed"))
 		}
-		return false
+		return true
 	})
-	return err
+	return errors.Join(errs...)
 }

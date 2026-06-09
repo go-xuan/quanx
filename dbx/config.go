@@ -22,7 +22,7 @@ const (
 // Config 数据库配置
 type Config struct {
 	Source        string            `json:"source" yaml:"source" default:"default"`           // 数据源名称
-	Builder       string            `json:"builder" yaml:"builder" default:"gorm"`            // 客户端选型
+	Driver        string            `json:"driver" yaml:"driver" default:"gorm"`              // 客户端驱动
 	Enable        bool              `json:"enable" yaml:"enable"`                             // 数据源启用
 	Dialect       string            `json:"dialect" yaml:"dialect"`                           // 数据库方言
 	Dsn           string            `json:"dsn" yaml:"dsn"`                                   // DSN连接字符串
@@ -91,7 +91,7 @@ func (c *Config) GetDSN() string {
 func (c *Config) Copy() *Config {
 	return &Config{
 		Source:        c.Source,
-		Builder:       c.Builder,
+		Driver:        c.Driver,
 		Enable:        c.Enable,
 		Dialect:       c.Dialect,
 		Host:          c.Host,
@@ -113,7 +113,7 @@ func (c *Config) Copy() *Config {
 func (c *Config) LogFields() map[string]interface{} {
 	fields := make(map[string]interface{})
 	fields["source"] = c.Source
-	fields["builder"] = c.Builder
+	fields["builder"] = c.Driver
 	fields["dialect"] = c.Dialect
 	fields["host"] = c.Host
 	fields["port"] = c.Port

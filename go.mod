@@ -4,8 +4,8 @@ go 1.25.0
 
 require (
 	github.com/gin-gonic/gin v1.12.0
-	github.com/go-xuan/typex v1.26.3
-	github.com/go-xuan/utilx v1.26.5
+	github.com/go-xuan/typex v1.26.4
+	github.com/go-xuan/utilx v1.26.6
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/minio/minio-go/v7 v7.0.98

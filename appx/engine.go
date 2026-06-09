@@ -148,11 +148,11 @@ func (e *Engine) initOnce(_ context.Context) error {
 				if db, ok = client.GetInstance().(*gorm.DB); ok && db != nil {
 					if err = dbx.InitGormTable(db, tablers...); err != nil {
 						err = errorx.Wrap(err, "init gorm table failed")
-						return true
+						return false
 					}
 				}
 			}
-			return false
+			return true
 		})
 		if err != nil {
 			return errorx.Wrap(err, "init table failed")

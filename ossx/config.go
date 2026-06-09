@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	Source          string `json:"source" yaml:"source"`                   // oss源名称
-	Builder         string `json:"builder" yaml:"builder" default:"minio"` // 客户端选型
+	Driver          string `json:"driver" yaml:"driver" default:"minio"`   // 客户端驱动
 	Enable          bool   `json:"enable" yaml:"enable"`                   // 启用
 	Endpoint        string `json:"endpoint" yaml:"endpoint"`               // 主机
 	AccessKeyId     string `json:"accessKeyId" yaml:"accessKeyId"`         // 访问id
@@ -23,7 +23,7 @@ type Config struct {
 func (c *Config) LogFields() map[string]interface{} {
 	fields := make(map[string]interface{})
 	fields["source"] = c.Source
-	fields["builder"] = c.Builder
+	fields["builder"] = c.Driver
 	fields["endpoint"] = c.Endpoint
 	fields["bucket"] = c.Bucket
 	return fields

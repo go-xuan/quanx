@@ -12,7 +12,7 @@ import (
 // Config 缓存配置
 type Config struct {
 	Source   string `json:"source" yaml:"source" default:"default"`     // 缓存源名称
-	Builder  string `json:"builder" yaml:"builder" default:"local"`     // 客户端选型（redis/local）
+	Driver   string `json:"driver" yaml:"driver" default:"local"`       // 客户端驱动（redis/local）
 	Enable   bool   `json:"enable" yaml:"enable"`                       // 数据源启用
 	Address  string `json:"address" yaml:"address" default:"localhost"` // 主机
 	Username string `json:"username" yaml:"username"`                   // 用户名
@@ -29,7 +29,7 @@ type Config struct {
 func (c *Config) Copy() *Config {
 	return &Config{
 		Source:   c.Source,
-		Builder:  c.Builder,
+		Driver:   c.Driver,
 		Enable:   c.Enable,
 		Address:  c.Address,
 		Username: c.Username,
@@ -46,7 +46,7 @@ func (c *Config) Copy() *Config {
 func (c *Config) LogFields() map[string]interface{} {
 	fields := make(map[string]interface{})
 	fields["source"] = c.Source
-	fields["builder"] = c.Builder
+	fields["builder"] = c.Driver
 	fields["address"] = c.Address
 	fields["database"] = c.Database
 	fields["mode"] = c.Mode
@@ -56,7 +56,7 @@ func (c *Config) LogFields() map[string]interface{} {
 }
 
 func (c *Config) GetClientName() string {
-	return c.Builder
+	return c.Driver
 }
 
 func (c *Config) Valid() bool {

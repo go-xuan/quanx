@@ -30,15 +30,15 @@ func RegisterClientBuilder(name string, builder ClientBuilder) {
 
 // NewClient 创建客户端
 func NewClient(config *Config) (Client, error) {
-	if config.Builder == "" {
+	if config.Driver == "" {
 		return LocalClientBuilder(config)
 	}
 	if builders != nil {
-		if builder, ok := builders.Exist(config.Builder); ok && builder != nil {
+		if builder, ok := builders.Find(config.Driver); ok && builder != nil {
 			return builder(config)
 		}
 	}
-	return nil, errorx.Sprintf("client builder is not registered: %s", config.Builder)
+	return nil, errorx.Sprintf("client driver is not registered: %s", config.Driver)
 }
 
 // ClientBuilder 客户端构造函数
@@ -46,9 +46,9 @@ type ClientBuilder func(*Config) (Client, error)
 
 // Client 缓存客户端接口
 type Client interface {
-	GetInstance() any                                                             // 获取实例
-	GetConfig() *Config       // 获取配置
-	Close() error             // 关闭客户端,
+	GetInstance() any   // 获取实例
+	GetConfig() *Config // 获取配置
+	Close() error       // 关闭客户端,
 
 	GetKey(key string) string                                                       // 获取缓存key
 	Set(ctx context.Context, key string, value any, expiration time.Duration) error // 更新缓存
