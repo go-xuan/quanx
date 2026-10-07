@@ -1,8 +1,9 @@
 package ginx
 
 import (
-	"gorm.io/gorm"
 	"testing"
+
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 )
