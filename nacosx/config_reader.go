@@ -10,19 +10,24 @@ import (
 )
 
 // NewReader 创建nacos配置读取器
-func NewReader(dataId string) *Reader {
-	return &Reader{DataId: dataId}
+func NewReader(dataId string, listen ...bool) *Reader {
+	return &Reader{
+		DataId: dataId,
+		Type:   filex.GetSuffix(dataId),
+		Listen: len(listen) > 0 && listen[0],
+	}
 }
 
 // Reader nacos配置读取器
 type Reader struct {
-	DataId string `json:"dataId"` // 配置文件id
-	Group  string `json:"group"`  // 配置所在分组
-	Type   string `json:"type"`   // 配置文件类型
-	Data   []byte `json:"data"`   // 配置文件内容
-	Listen bool   `json:"listen"` // 是否启用监听
+	DataId string // 配置文件id
+	Group  string // 配置所在分组
+	Type   string // 配置文件类型
+	Data   []byte // 配置文件内容
+	Listen bool   // 是否启用监听
 }
 
+// ConfigParam 获取nacos配置参数
 func (r *Reader) ConfigParam() vo.ConfigParam {
 	return vo.ConfigParam{
 		DataId:  r.DataId,
@@ -34,7 +39,7 @@ func (r *Reader) ConfigParam() vo.ConfigParam {
 
 func (r *Reader) GetType() string {
 	if r.Type == "" {
-		r.Type = filex.GetSuffix(r.DataId)
+		r.Type = marshalx.JSON
 	}
 	return r.Type
 }
@@ -51,13 +56,13 @@ func (r *Reader) Read(v any) error {
 		if !Initialized() {
 			return errorx.New("nacos not initialized")
 		}
-
+		client := GetClient()
 		// 配置文件锚点为group分组
-		r.Anchor(GetClient().GetGroup())
+		r.Anchor(client.GetGroup())
 
 		// 读取配置
 		param := r.ConfigParam()
-		data, err := GetClient().ReadConfig(v, param)
+		data, err := client.ReadConfig(v, param)
 		if err != nil {
 			return errorx.Wrap(err, "read nacos config failed")
 		}
@@ -65,7 +70,7 @@ func (r *Reader) Read(v any) error {
 
 		if r.Listen {
 			// 监听配置变化
-			if err = GetClient().ListenConfig(v, param); err != nil {
+			if err = client.ListenConfig(v, param); err != nil {
 				return errorx.Wrap(err, "listen nacos config failed")
 			}
 		}
@@ -83,6 +88,9 @@ func (r *Reader) Write(v any) error {
 	if !Initialized() {
 		return errorx.New("nacos not initialized")
 	}
+	client := GetClient()
+	// 配置文件锚点为group分组
+	r.Anchor(client.GetGroup())
 
 	// 序列化配置
 	data, err := marshalx.Apply(r.GetType()).Marshal(v)
@@ -91,13 +99,10 @@ func (r *Reader) Write(v any) error {
 	}
 	r.Data = data
 
-	// 配置文件锚点为group分组
-	r.Anchor(GetClient().GetGroup())
-
 	// 发布配置
 	param := r.ConfigParam()
-	if err = GetClient().PublishConfig(param); err != nil {
-		return errorx.Wrap(err, "publish config to nacos failed")
+	if err = client.PublishConfig(param); err != nil {
+		return errorx.Wrap(err, "publish nacos config failed")
 	}
 	return nil
 }

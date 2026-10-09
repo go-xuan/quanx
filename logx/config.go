@@ -12,23 +12,6 @@ import (
 	"github.com/go-xuan/quanx/nacosx"
 )
 
-// 日志级别
-const (
-	LevelTrace = "trace"
-	LevelDebug = "debug"
-	LevelInfo  = "info"
-	LevelError = "error"
-	LevelFatal = "fatal"
-	LevelPanic = "panic"
-
-	WriterConsole = "console" // 控制台打印
-	WriterFile    = "file"    // 写入日志文件
-
-	FormatterText = "text"                    // 文本格式化
-	FormatterJson = "json"                    // json格式化
-	TimeLayout    = "2006-01-02 15:04:05.000" // 时间格式化
-)
-
 var _config *Config // 日志配置
 
 func init() {
@@ -52,12 +35,6 @@ type Config struct {
 	Color     bool         `json:"color" yaml:"color" default:"false"`        // 使用颜色
 	Caller    bool         `json:"caller" yaml:"caller" default:"false"`      // caller开关
 	Hooks     []HookConfig `json:"hooks" yaml:"hooks"`                        // 日志钩子
-}
-
-// HookConfig 日志钩子配置
-type HookConfig struct {
-	Writer string   `json:"writer" yaml:"writer" default:"console"`
-	Levels []string `json:"levels" yaml:"levels"`
 }
 
 // LogFields 日志字段
@@ -88,14 +65,7 @@ func (c *Config) Execute() error {
 	formatter := c.GetFormatter()
 	if len(c.Hooks) > 0 {
 		for _, hc := range c.Hooks {
-			hook := NewHook()
-			hook.SetFormatter(formatter)
-			hook.SetCaller(c.Caller)
-			for _, level := range hc.Levels {
-				if writer := NewWriter(hc.Writer, c.Name, level); writer != nil {
-					hook.AddWriter(LogrusLevel(level), writer)
-				}
-			}
+			hook := hc.NewHook(c.Name, formatter)
 			log.AddHook(hook)
 		}
 	}
@@ -113,7 +83,7 @@ func (c *Config) Execute() error {
 func (c *Config) GetFormatter() log.Formatter {
 	return &Formatter{
 		Formatter:  c.Formatter,
-		TimeLayout: TimeLayout,
+		TimeLayout: TimeFormat,
 		Hostname:   osx.Hostname(),
 		Color:      c.Color && c.Writer == WriterConsole,
 	}

@@ -8,6 +8,12 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/vo"
 )
 
+// InitNacosCenter 初始化nacos服务注册中心
+func InitNacosCenter(group string, client naming_client.INamingClient) {
+	InitCenter(&NacosCenter{group: group, client: client})
+}
+
+// NewNacosCenter 创建Nacos服务中心
 func NewNacosCenter(group string, client naming_client.INamingClient) *NacosCenter {
 	return &NacosCenter{
 		group:  group,

@@ -24,3 +24,10 @@ type EngineOption func(engine *gin.Engine)
 func SetDebugMode(_ *gin.Engine) {
 	gin.SetMode(gin.DebugMode)
 }
+
+// AddMiddleware 添加中间件
+func AddMiddleware(middlewares ...gin.HandlerFunc) EngineOption {
+	return func(engine *gin.Engine) {
+		engine.Use(middlewares...)
+	}
+}

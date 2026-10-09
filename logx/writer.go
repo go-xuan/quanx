@@ -1,26 +1,46 @@
 package logx
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
+	"github.com/go-xuan/typex"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+var (
+	writerBuilders *typex.Enum[string, WriterBuilder] // 日志写入器构造函数池
+)
+
+// WriterBuilder 日志写入器构造函数
+type WriterBuilder func(source, name string) io.Writer
+
+// RegisterClientBuilder 注册日志写入器构造函数
+func RegisterClientBuilder(name string, builder WriterBuilder) {
+	if writerBuilders == nil {
+		writerBuilders = typex.NewStringEnum[WriterBuilder]()
+	}
+	writerBuilders.Add(name, builder)
+}
+
 // NewWriter 创建日志写入器
-func NewWriter(writer string, name string, level string) io.Writer {
+func NewWriter(writer string, name string, level ...string) io.Writer {
 	switch writer {
 	case WriterConsole:
 		return NewConsoleWriter()
 	case WriterFile:
-		if level != "" {
-			name = fmt.Sprintf("%s.%s.log", name, level)
-		} else {
-			name = fmt.Sprintf("%s.log", name)
+		if len(level) > 0 && level[0] != "" {
+			name = name + "_" + level[0]
 		}
-		return NewFileWriter(filepath.Join("log", name))
+		name = filepath.Join("log", name+".log")
+		return NewFileWriter(name)
+	default:
+		if writerBuilders != nil {
+			if builder, ok := writerBuilders.Find(writer); ok && builder != nil {
+				return builder("log", name)
+			}
+		}
 	}
 	return nil
 }

@@ -4,8 +4,8 @@ import "github.com/go-xuan/utilx/errorx"
 
 var _center Center
 
-// Init 初始化服务中心
-func Init(center Center) {
+// InitCenter 初始化服务中心
+func InitCenter(center Center) {
 	if _center == nil {
 		_center = center
 	}

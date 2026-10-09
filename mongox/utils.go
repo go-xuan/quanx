@@ -4,7 +4,7 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/v2/event"
+	"go.mongodb.org/mongo-driver/event"
 )
 
 // DebugCommandMonitor debug监听器

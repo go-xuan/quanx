@@ -1,6 +1,9 @@
 package serverx
 
 import (
+	"github.com/go-xuan/quanx/configx"
+	"github.com/go-xuan/quanx/nacosx"
+	"github.com/go-xuan/utilx/errorx"
 	"github.com/go-xuan/utilx/osx"
 )
 
@@ -22,23 +25,38 @@ type Config struct {
 	Port map[string]int `json:"port" yaml:"port"` // 服务端口, 键为服务类型, 值为端口号
 }
 
+func (c *Config) Readers() []configx.Reader {
+	return []configx.Reader{
+		nacosx.NewReader("server.yaml"),
+		configx.NewFileReader("server.yaml"),
+	}
+}
+
+func (c *Config) Valid() bool {
+	return c.Name != "" && c.Host != "" && len(c.Port) > 0
+}
+
+func (c *Config) Execute() error {
+	return nil
+}
+
 // Cover 覆盖配置，仅合并非空字段
-func (c *Config) Cover(config *Config) {
-	if config == nil {
+func (c *Config) Cover(cover *Config) {
+	if cover == nil {
 		return
 	}
-	if config.Name != "" {
-		c.Name = config.Name
+	if name := cover.Name; name != "" {
+		c.Name = name
 	}
-	if config.Host != "" {
-		c.Host = config.Host
+	if host := cover.Host; host != "" {
+		c.Host = host
 	}
 	// 合并端口配置
-	if config.Port != nil {
+	if cover.Port != nil {
 		if c.Port == nil {
 			c.Port = make(map[string]int)
 		}
-		for type_, port := range config.Port {
+		for type_, port := range cover.Port {
 			c.Port[type_] = port
 		}
 	}
@@ -63,4 +81,17 @@ func (c *Config) GetPort() int {
 		return c.Port[HTTP]
 	}
 	return 0
+}
+
+// RegisterServer 注册服务
+func (c *Config) RegisterServer() error {
+	if nacosx.Initialized() {
+		if client := nacosx.GetClient().GetNamingClient(); client != nil {
+			InitNacosCenter(nacosx.GetClient().GetGroup(), client)
+			if err := Register(c); err != nil {
+				return errorx.Wrap(err, "register nacos server instance failed")
+			}
+		}
+	}
+	return nil
 }

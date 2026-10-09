@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 // NewClient 创建客户端
@@ -22,7 +22,7 @@ func NewClient(config *Config) (*Client, error) {
 func NewMongoClient(config *Config) (*mongo.Client, error) {
 	ctx := context.TODO()
 	// 连接mongo
-	client, err := mongo.Connect(config.ClientOptions())
+	client, err := mongo.Connect(ctx, config.ClientOptions())
 	if err != nil {
 		return nil, errorx.Wrap(err, "connect mongo failed")
 	}

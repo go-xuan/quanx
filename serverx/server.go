@@ -3,6 +3,7 @@ package serverx
 import (
 	"context"
 
+	"github.com/go-xuan/utilx/errorx"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -57,16 +58,22 @@ func (s *Base) bindConfig(config *Config) {
 	})
 }
 
+// Start 启动服务
 func Start(ctx context.Context, config *Config, servers ...Server) error {
 	for _, server := range servers {
 		server.BindConfig(config)
 		if err := server.Start(ctx); err != nil {
-			return err
+			return errorx.Wrap(err, "server start error")
 		}
+	}
+	// 注册服务
+	if err := config.RegisterServer(); err != nil {
+		return errorx.Wrap(err, "server register failed")
 	}
 	return nil
 }
 
+// Shutdown 关闭服务
 func Shutdown(ctx context.Context, servers ...Server) {
 	for _, server := range servers {
 		server.Shutdown(ctx)
